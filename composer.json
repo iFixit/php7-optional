@@ -1,0 +1,17 @@
+{
+    "name": "ifixit/php7-optional",
+    "description": "PHP 7 optional wrapper that provides an alternative to null",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Jarred Stelfox",
+            "email": "jarred@ifixit.com"
+        }
+    ],
+    "require": {},
+    "autoload": {
+      "psr-4": {
+         "Optional\\": "src/"
+      }
+    }
+}
