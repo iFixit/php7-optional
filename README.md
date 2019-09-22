@@ -36,6 +36,7 @@ Take a value, turn it a `Option::some($thing)` iff the `$filterFunc` returns tru
 $positiveThing = Option::someWhen(1, function($x) { return $x > 0; });
 $negativeThing = Option::someWhen(1, function($x) { return $x < 0; });
 ```
+Note: `$filterFunc` must follow this interface `function filterFunc(mixed $value): bool`
 
 #### Option::someWhen($thing, $filterFunc);
 Take a value, turn it a `Option::none()` iff the `$filterFunc` returns true
@@ -44,6 +45,8 @@ Take a value, turn it a `Option::none()` iff the `$filterFunc` returns true
 $positiveThing = Option::noneWhen(1, function($x) { return $x < 0; });
 $negativeThing = Option::noneWhen(1, function($x) { return $x > 0; });
 ```
+
+Note: `$filterFunc` must follow this interface `function filterFunc(mixed $value): bool`
 
 ### Retrieving values
 
@@ -81,6 +84,7 @@ $myVar = $someClass->valueOrCreate(function() { return new NewObject(); }); // i
 $myVar = $none->valueOrCreate(function() { return new NewObject(); }); // instance of NewObject
 ```
 
+Note: `$valueFactoryFunc` must follow this interface `function valueFactoryFunc(): mixed`
 
 ### Run a function instead of retriving the value
 
@@ -107,6 +111,9 @@ $configOption->match(
 );
 ```
 
+Note: `$someFunc` must follow this interface `function someFunc(mixed $x): mixed|void`
+Note: `$noneFunc` must follow this interface `function noneFunc(): mixed|void`
+
 #### $option->matchSome($someFunc);
 Side effect function: Runs the function iff the option is `Option::some`
 
@@ -118,6 +125,8 @@ $configOption->matchSome(
 );
 ```
 
+Note: `$someFunc` must follow this interface `function someFunc(mixed $x): mixed|void`
+
 #### $option->matchNone($noneFunc);
 Side effect function: Runs the function iff the option is `Option::none`
 
@@ -128,6 +137,8 @@ $configOption->matchNone(
    function() { var_dump("Config was missing!"); }
 );
 ```
+
+Note: `$noneFunc` must follow this interface `function noneFunc(): mixed|void`
 
 ### Transforming and filtering values
 
@@ -157,6 +168,8 @@ $none = Option::none();
 $myVar = $none->orCreate(function() { return 10; }); // A some instance, with value 10, but lazy
 ```
 
+Note: `$valueFactoryFunc` must follow this interface `function valueFactoryFunc(): mixed`
+
 #### $option->else($otherOption);
 iff `Option::none` return `$otherOption`, otherwise return the orginal `$option`
 
@@ -177,6 +190,8 @@ $none = Option::none();
 $myVar = $none->elseCreate(function() { return Option::some(10); }); // A some instance, with value 10, but lazy
 ```
 
+Note: `$otherOptionFactoryFunc` must follow this interface `function otherOptionFactoryFunc(): Option`
+
 #### $option->map($mapValueFunc);
 Maps the `$value` of a `Option::some($value)`
 
@@ -191,6 +206,8 @@ $some = Option::some(5);
 $someSquared = $some->map(function($x) { return $x * $x; });
 ```
 
+Note: `$mapValueFunc` must follow this interface `function mapValueFunc(mixed $value): mixed`
+
 #### $option->filter($filterFunc);
 ```php
 $none = Option::none();
@@ -200,6 +217,8 @@ $some = Option::some(10);
 $stillSome = $some->filter(function($x) { return $x == 10; });
 $none = $some->filter(function($x) { return $x != 10; });
 ```
+
+Note: `$filterFunc` must follow this interface `function filterFunc(mixed $value): bool`
 
 
 # Licence
