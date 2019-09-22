@@ -15,7 +15,7 @@ use Optional\Option;
 
 ```php
 $someThing = Option::some(1);
-$someClass = Option::Some(new SomeObject());
+$someClass = Option::some(new SomeObject());
 
 $none = Option::none();
 
@@ -31,7 +31,7 @@ $negativeThing = Option::noneWhen(1, function($x) { return $x > 0; });
 
 ```php
 $someThing = Option::some(1);
-$someClass = Option::Some(new SomeObject());
+$someClass = Option::some(new SomeObject());
 
 $none = Option::none();
 
@@ -47,7 +47,7 @@ Note: Since php does not have generic types it is not possible to type check the
 
 ```php
 $someThing = Option::some(1);
-$someClass = Option::Some(new SomeObject());
+$someClass = Option::some(new SomeObject());
 
 $none = Option::none();
 
