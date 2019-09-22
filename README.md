@@ -19,12 +19,17 @@ $someClass = Option::some(new SomeObject());
 
 $none = Option::none();
 
+// Take a value, turn it a Option::Some iff the filter function returns true
 $positiveThing = Option::someWhen(1, function($x) { return $x > 0; });
 $negativeThing = Option::someWhen(1, function($x) { return $x < 0; });
 
-
+// Take a value, turn it a Option::None iff the filter function returns true
 $positiveThing = Option::noneWhen(1, function($x) { return $x < 0; });
 $negativeThing = Option::noneWhen(1, function($x) { return $x > 0; });
+
+
+$someNullThing = Option::some(null); // Valid
+$none = Option::some(null)->notNull(); // Turn null into an none Option
 ```
 
 ### Retrieving values
