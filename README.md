@@ -47,6 +47,8 @@ $negativeThing = Option::noneWhen(1, function($x) { return $x > 0; });
 
 ### Retrieving values
 
+Note: Since php does not have generic types it is not possible to type check the input / output match.
+
 #### $option->valueOr($otherValue);
 Returns the options value or returns `$otherValue`
 
@@ -63,8 +65,6 @@ $myVar = $none->valueOr("Some other value!"); // "Some other value!"
 
 $none = Option::some(null)->valueOr("Some other value!"); // null, See option->notNull()
 ```
-
-Note: Since php does not have generic types it is not possible to type check the input / outpuf match.
 
 #### $option->valueOrCreate($valueFactoryFunc);
 Returns the options value or calls `$valueFactoryFunc` and returns the value of that function
@@ -118,7 +118,6 @@ $configOption->matchSome(
 );
 ```
 
-
 #### $option->matchNone($noneFunc);
 Side effect function: Runs the function iff the option is `Option::none`
 
@@ -139,7 +138,6 @@ Turn a `Option::some(null)` into an `Option::none()`
 $someThing = Option::some(null); // Valid
 $noneThing = $someThing->notNull(); // Turn null into an none Option
 ```
-
 
 #### $option->or($otherValue);
 Returns a `Option::some($value)` iff the the option orginally was `Option::none`
