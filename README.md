@@ -29,7 +29,6 @@ $negativeThing = Option::noneWhen(1, function($x) { return $x > 0; });
 
 
 $someNullThing = Option::some(null); // Valid
-$none = Option::some(null)->notNull(); // Turn null into an none Option
 ```
 
 ### Retrieving values
@@ -44,6 +43,8 @@ $myVar = $someThing->valueOr("Some other value!"); // 1
 $myVar = $someClass->valueOr("Some other value!"); // instance of SomeObject
 
 $myVar = $none->valueOr("Some other value!"); // "Some other value!"
+
+$none = Option::some(null)->notNull(); // Turn null into an none Option
 ```
 
 Note: Since php does not have generic types it is not possible to type check the input / outpuf match.
