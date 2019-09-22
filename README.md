@@ -88,7 +88,6 @@ Also side-effect matching is allowed
 ```php
 $configOption = Option::some($config)->notNull();
 
-
 $configOption->matchSome(
    function($x) { var_dump("Your config: {$x}"); }
 );
