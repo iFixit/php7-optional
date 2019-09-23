@@ -113,7 +113,7 @@ class Option {
    }
 
    public function __toString() {
-      if ($this->hasValue) {
+      if ($this->hasValue()) {
          if ($this->value == null) {
             return "Some(null)";
          }
