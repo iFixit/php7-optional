@@ -12,6 +12,7 @@ use Optional\Option;
 
 ## Creating optional values
 
+---
 ### Option::some($thing);
 Creates a option with a boxed value
 
@@ -22,6 +23,7 @@ $someClass = Option::some(new SomeObject());
 $someNullThing = Option::some(null); // Valid
 ```
 
+---
 ### Option::none();
 Creates a option which represents an empty box
 
@@ -29,6 +31,7 @@ Creates a option which represents an empty box
 $none = Option::none();
 ```
 
+---
 ### Option::someWhen($thing, $filterFunc);
 Take a value, turn it a `Option::some($thing)` iff the `$filterFunc` returns true
 
@@ -38,6 +41,7 @@ $negativeThing = Option::someWhen(1, function($x) { return $x < 0; });
 ```
 Note: `$filterFunc` must follow this interface `function filterFunc(mixed $value): bool`
 
+---
 ### Option::noneWhen($thing, $filterFunc);
 Take a value, turn it a `Option::none()` iff the `$filterFunc` returns true
 
@@ -52,6 +56,7 @@ Note: `$filterFunc` must follow this interface `function filterFunc(mixed $value
 
 Note: Since php does not have generic types it is not possible to type check the input / output match.
 
+---
 ### $option->valueOr($otherValue);
 Returns the options value or returns `$otherValue`
 
@@ -69,6 +74,7 @@ $myVar = $none->valueOr("Some other value!"); // "Some other value!"
 $none = Option::some(null)->valueOr("Some other value!"); // null, See option->notNull()
 ```
 
+---
 ### $option->valueOrCreate($valueFactoryFunc);
 Returns the options value or calls `$valueFactoryFunc` and returns the value of that function
 
@@ -88,6 +94,7 @@ Note: `$valueFactoryFunc` must follow this interface `function valueFactoryFunc(
 
 ## Run a function instead of retriving the value
 
+---
 ### $option->match($someFunc, $noneFunc);
 Runs only 1 function:
 
@@ -114,6 +121,7 @@ $configOption->match(
 Note: `$someFunc` must follow this interface `function someFunc(mixed $x): mixed|void`
 Note: `$noneFunc` must follow this interface `function noneFunc(): mixed|void`
 
+---
 ### $option->matchSome($someFunc);
 Side effect function: Runs the function iff the option is `Option::some`
 
@@ -127,6 +135,7 @@ $configOption->matchSome(
 
 Note: `$someFunc` must follow this interface `function someFunc(mixed $x): mixed|void`
 
+---
 ### $option->matchNone($noneFunc);
 Side effect function: Runs the function iff the option is `Option::none`
 
@@ -142,6 +151,7 @@ Note: `$noneFunc` must follow this interface `function noneFunc(): mixed|void`
 
 ## Transforming and filtering values
 
+---
 ### $option->notNull();
 Turn a `Option::some(null)` into an `Option::none()`
 
@@ -150,6 +160,7 @@ $someThing = Option::some(null); // Valid
 $noneThing = $someThing->notNull(); // Turn null into an none Option
 ```
 
+---
 ### $option->or($otherValue);
 Returns a `Option::some($value)` iff the the option orginally was `Option::none`
 
@@ -158,6 +169,7 @@ $none = Option::none();
 $myVar = $none->or(10); // A some instance, with value 10
 ```
 
+---
 ### $option->orCreate($valueFactoryFunc);
 Returns a `Option::some($value)` iff the the option orginally was `Option::none`
 
@@ -170,6 +182,7 @@ $myVar = $none->orCreate(function() { return 10; }); // A some instance, with va
 
 Note: `$valueFactoryFunc` must follow this interface `function valueFactoryFunc(): mixed`
 
+---
 ### $option->else($otherOption);
 iff `Option::none` return `$otherOption`, otherwise return the orginal `$option`
 
@@ -179,6 +192,7 @@ $myVar = $none->else(Option::some(10)); // A some instance, with value 10
 $myVar = $none->else(Option::none()); // A new none instance
 ```
 
+---
 ### $option->elseCreate($otherOptionFactoryFunc);
 iff `Option::none` return the `Option` returned by `$otherOptionFactoryFunc`, otherwise return the orginal `$option`
 
@@ -192,6 +206,7 @@ $myVar = $none->elseCreate(function() { return Option::some(10); }); // A some i
 
 Note: `$otherOptionFactoryFunc` must follow this interface `function otherOptionFactoryFunc(): Option`
 
+---
 ### $option->map($mapValueFunc);
 Maps the `$value` of a `Option::some($value)`
 
@@ -208,6 +223,7 @@ $someSquared = $some->map(function($x) { return $x * $x; });
 
 Note: `$mapValueFunc` must follow this interface `function mapValueFunc(mixed $value): mixed`
 
+---
 ### $option->filter($filterFunc);
 Change the `Option::some($value)` into `Option::none()` iff `$filterFunc` returns false,
 otherwise propigate the `Option::none()`
