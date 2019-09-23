@@ -112,6 +112,24 @@ class Option {
       return $this->hasValue && $this->value == null ? self::none() : $this;
    }
 
+   public function contains($value): bool {
+      if (!$this->hasValue()) {
+         return false;
+      }
+
+      return $this->value == $value;
+   }
+
+   public function exists(callable $existsFunc): bool {
+      $this->throwIfNull($existsFunc);
+
+      if (!$this->hasValue()) {
+         return false;
+      }
+
+      return $existsFunc($this->value);
+   }
+
    public function __toString() {
       if ($this->hasValue()) {
          if ($this->value == null) {
