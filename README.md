@@ -2,7 +2,7 @@
 
 ## Usage
 
-### Using the library
+## Using the library
 
 To use Optional, simply import the following namespace:
 
@@ -10,9 +10,9 @@ To use Optional, simply import the following namespace:
 use Optional\Option;
 ```
 
-### Creating optional values
+## Creating optional values
 
-#### Option::some($thing);
+### Option::some($thing);
 Creates a option with a boxed value
 
 ```php
@@ -22,14 +22,14 @@ $someClass = Option::some(new SomeObject());
 $someNullThing = Option::some(null); // Valid
 ```
 
-#### Option::none();
+### Option::none();
 Creates a option which represents an empty box
 
 ```php
 $none = Option::none();
 ```
 
-#### Option::someWhen($thing, $filterFunc);
+### Option::someWhen($thing, $filterFunc);
 Take a value, turn it a `Option::some($thing)` iff the `$filterFunc` returns true
 
 ```php
@@ -38,7 +38,7 @@ $negativeThing = Option::someWhen(1, function($x) { return $x < 0; });
 ```
 Note: `$filterFunc` must follow this interface `function filterFunc(mixed $value): bool`
 
-#### Option::noneWhen($thing, $filterFunc);
+### Option::noneWhen($thing, $filterFunc);
 Take a value, turn it a `Option::none()` iff the `$filterFunc` returns true
 
 ```php
@@ -48,11 +48,11 @@ $negativeThing = Option::noneWhen(1, function($x) { return $x > 0; });
 
 Note: `$filterFunc` must follow this interface `function filterFunc(mixed $value): bool`
 
-### Retrieving values
+## Retrieving values
 
 Note: Since php does not have generic types it is not possible to type check the input / output match.
 
-#### $option->valueOr($otherValue);
+### $option->valueOr($otherValue);
 Returns the options value or returns `$otherValue`
 
 ```php
@@ -69,7 +69,7 @@ $myVar = $none->valueOr("Some other value!"); // "Some other value!"
 $none = Option::some(null)->valueOr("Some other value!"); // null, See option->notNull()
 ```
 
-#### $option->valueOrCreate($valueFactoryFunc);
+### $option->valueOrCreate($valueFactoryFunc);
 Returns the options value or calls `$valueFactoryFunc` and returns the value of that function
 
 ```php
@@ -86,9 +86,9 @@ $myVar = $none->valueOrCreate(function() { return new NewObject(); }); // instan
 
 Note: `$valueFactoryFunc` must follow this interface `function valueFactoryFunc(): mixed`
 
-### Run a function instead of retriving the value
+## Run a function instead of retriving the value
 
-#### $option->match($someFunc, $noneFunc);
+### $option->match($someFunc, $noneFunc);
 Runs only 1 function:
 
 * `$someFunc` iff the option is `Option::some`
@@ -114,7 +114,7 @@ $configOption->match(
 Note: `$someFunc` must follow this interface `function someFunc(mixed $x): mixed|void`
 Note: `$noneFunc` must follow this interface `function noneFunc(): mixed|void`
 
-#### $option->matchSome($someFunc);
+### $option->matchSome($someFunc);
 Side effect function: Runs the function iff the option is `Option::some`
 
 ```php
@@ -127,7 +127,7 @@ $configOption->matchSome(
 
 Note: `$someFunc` must follow this interface `function someFunc(mixed $x): mixed|void`
 
-#### $option->matchNone($noneFunc);
+### $option->matchNone($noneFunc);
 Side effect function: Runs the function iff the option is `Option::none`
 
 ```php
@@ -140,9 +140,9 @@ $configOption->matchNone(
 
 Note: `$noneFunc` must follow this interface `function noneFunc(): mixed|void`
 
-### Transforming and filtering values
+## Transforming and filtering values
 
-#### $option->notNull();
+### $option->notNull();
 Turn a `Option::some(null)` into an `Option::none()`
 
 ```php
@@ -150,7 +150,7 @@ $someThing = Option::some(null); // Valid
 $noneThing = $someThing->notNull(); // Turn null into an none Option
 ```
 
-#### $option->or($otherValue);
+### $option->or($otherValue);
 Returns a `Option::some($value)` iff the the option orginally was `Option::none`
 
 ```php
@@ -158,7 +158,7 @@ $none = Option::none();
 $myVar = $none->or(10); // A some instance, with value 10
 ```
 
-#### $option->orCreate($valueFactoryFunc);
+### $option->orCreate($valueFactoryFunc);
 Returns a `Option::some($value)` iff the the option orginally was `Option::none`
 
 The `$valueFactoryFunc` is called lazily - iff the option orginally was `Option::none`
@@ -170,7 +170,7 @@ $myVar = $none->orCreate(function() { return 10; }); // A some instance, with va
 
 Note: `$valueFactoryFunc` must follow this interface `function valueFactoryFunc(): mixed`
 
-#### $option->else($otherOption);
+### $option->else($otherOption);
 iff `Option::none` return `$otherOption`, otherwise return the orginal `$option`
 
 ```php
@@ -179,7 +179,7 @@ $myVar = $none->else(Option::some(10)); // A some instance, with value 10
 $myVar = $none->else(Option::none()); // A new none instance
 ```
 
-#### $option->elseCreate($otherOptionFactoryFunc);
+### $option->elseCreate($otherOptionFactoryFunc);
 iff `Option::none` return the `Option` returned by `$otherOptionFactoryFunc`, otherwise return the orginal `$option`
 
 `$otherOptionFactoryFunc` is run lazily
@@ -192,7 +192,7 @@ $myVar = $none->elseCreate(function() { return Option::some(10); }); // A some i
 
 Note: `$otherOptionFactoryFunc` must follow this interface `function otherOptionFactoryFunc(): Option`
 
-#### $option->map($mapValueFunc);
+### $option->map($mapValueFunc);
 Maps the `$value` of a `Option::some($value)`
 
 The map function runs iff the options is a `Option::some`
@@ -208,7 +208,7 @@ $someSquared = $some->map(function($x) { return $x * $x; });
 
 Note: `$mapValueFunc` must follow this interface `function mapValueFunc(mixed $value): mixed`
 
-#### $option->filter($filterFunc);
+### $option->filter($filterFunc);
 Change the `Option::some($value)` into `Option::none()` iff `$filterFunc` returns false,
 otherwise propigate the `Option::none()`
 
