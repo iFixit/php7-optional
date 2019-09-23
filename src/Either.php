@@ -132,6 +132,19 @@ class Either {
       return $existsFunc($this->someValue);
    }
 
+   public function ToOption(): Option {
+
+      $someFunc = function($value) {
+         return Option::some($value);
+      };
+
+      $noneFunc = function($noneValue) {
+         return Option::none();
+      };
+
+      return $this->match($someFunc, $noneFunc);
+   }
+
    public function __toString() {
       if ($this->hasValue()) {
          if ($this->someValue == null) {
