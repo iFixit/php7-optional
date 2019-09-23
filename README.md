@@ -4,7 +4,7 @@
 
 ### Using the library
 
-To use Optional simply import the following namespace:
+To use Optional, simply import the following namespace:
 
 ```php
 use Optional\Option;
@@ -92,7 +92,7 @@ Note: `$valueFactoryFunc` must follow this interface `function valueFactoryFunc(
 Runs only 1 function:
 
 * `$someFunc` iff the option is `Option::some`
-* `$noneFunc` iff the option is `Option::some`
+* `$noneFunc` iff the option is `Option::none`
 
 ```php
 $someThing = Option::some(1);
@@ -196,7 +196,7 @@ Note: `$otherOptionFactoryFunc` must follow this interface `function otherOption
 Maps the `$value` of a `Option::some($value)`
 
 The map function runs iff the options is a `Option::some`
-Otherwise the `Option:none` is propigated
+Otherwise the `Option:none` is propagated
 
 ```php
 $none = Option::none();
@@ -209,7 +209,7 @@ $someSquared = $some->map(function($x) { return $x * $x; });
 Note: `$mapValueFunc` must follow this interface `function mapValueFunc(mixed $value): mixed`
 
 #### $option->filter($filterFunc);
-Change the `Option::some($value)` into `Option::none()` iif `$filterFunc` is true,
+Change the `Option::some($value)` into `Option::none()` iff `$filterFunc` returns false,
 otherwise propigate the `Option::none()`
 
 ```php
