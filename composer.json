@@ -8,7 +8,9 @@
             "email": "jarred@ifixit.com"
         }
     ],
-    "require": {},
+    "require": {
+      "php": "^7.2"
+    },
     "autoload": {
       "psr-4": {
          "Optional\\": "src/"
