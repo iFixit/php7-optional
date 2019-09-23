@@ -38,7 +38,7 @@ $negativeThing = Option::someWhen(1, function($x) { return $x < 0; });
 ```
 Note: `$filterFunc` must follow this interface `function filterFunc(mixed $value): bool`
 
-#### Option::someWhen($thing, $filterFunc);
+#### Option::noneWhen($thing, $filterFunc);
 Take a value, turn it a `Option::none()` iff the `$filterFunc` returns true
 
 ```php
