@@ -2,7 +2,12 @@
 
 ## Usage
 
-## Using the library
+There are 2 main classes:
+
+* [Optional\Option](#using-option)
+* [Optional\Either](#using-either)
+
+## Using Option
 
 To use Optional, simply import the following namespace:
 
@@ -238,6 +243,248 @@ $none = $some->filter(function($x) { return $x != 10; });
 ```
 
 Note: `$filterFunc` must follow this interface `function filterFunc(mixed $value): bool`
+
+
+## Using Either
+
+To use Either, simply import the following namespace:
+
+```php
+use Optional\Either;
+```
+
+## Creating either values
+Either is just a box which has a valid some value and none value.
+
+---
+### Either::some($thing);
+Creates an either with a boxed value
+
+```php
+$someThing = Either::some(1);
+$someClass = Either::some(new SomeObject());
+
+$someNullThing = Either::some(null); // Valid
+```
+
+---
+### Either::none($noneValue);
+Creates an either which represents an empty box
+
+```php
+$none = Either::none("This is some string to show on no value");
+```
+
+---
+### Either::someWhen($someValue, $noneValue, $filterFunc);
+Take a value, turn it a `Either::some($someValue)` iff the `$filterFunc` returns true
+otherwise an `Either::none($noneValue)`
+
+```php
+$positiveOne = Either::someWhen(1, -1, function($x) { return $x > 0; });
+$negativeOne = Either::someWhen(1, -1, function($x) { return $x < 0; });
+```
+Note: `$filterFunc` must follow this interface `function filterFunc(mixed $value): bool`
+
+---
+### Either::noneWhen($someValue, $noneValue, $filterFunc);
+Take a value, turn it a `Either::none($noneValue)` iff the `$filterFunc` returns true
+otherwise an `Either::some($someValue)`
+
+```php
+$positiveOne = Either::noneWhen(1, -1, function($x) { return $x < 0; });
+$negativeOne = Either::noneWhen(1, -1, function($x) { return $x > 0; });
+```
+
+Note: `$filterFunc` must follow this interface `function filterFunc(mixed $value): bool`
+
+## Retrieving values
+
+Note: Since php does not have generic types it is not possible to type check the input / output match.
+
+---
+### $either->valueOr($otherValue);
+Returns the either value or returns `$otherValue`
+
+```php
+$someThing = Either::some(1);
+$someClass = Either::some(new SomeObject());
+
+$none = Either::none("Error Code 123");
+
+$myVar = $someThing->valueOr("Some other value!"); // 1
+$myVar = $someClass->valueOr("Some other value!"); // instance of SomeObject
+
+$myVar = $none->valueOr("Some other value!"); // "Some other value!"
+
+$none = Either::some(null)->valueOr("Some other value!"); // null, See either->notNull()
+```
+
+---
+### $either->valueOrCreate($valueFactoryFunc);
+Returns the either's value or calls `$valueFactoryFunc` and returns the value of that function
+
+```php
+$someThing = Either::some(1);
+$someClass = Either::some(new SomeObject());
+
+$none = Either::none("Error Code 123");
+
+$myVar = $someThing->valueOrCreate(function($noneValue) { return new NewObject(); }); // 1
+$myVar = $someClass->valueOrCreate(function($noneValue) { return new NewObject(); }); // instance of SomeObject
+
+$myVar = $none->valueOrCreate(function($noneValue) { return new NewObject(); }); // instance of NewObject
+```
+
+Note: `$valueFactoryFunc` must follow this interface `function valueFactoryFunc(mixed $noneValue): mixed`
+
+## Run a function instead of retriving the value
+
+---
+### $either->match($someFunc, $noneFunc);
+Runs only 1 function:
+
+* `$someFunc` iff the either is `Either::some`
+* `$noneFunc` iff the either is `Either::none`
+
+```php
+$someThing = Either::some(1);
+
+$someThingSquared = $someThing->match(
+   function($x) { return $x * $x; },               // runs iff $someThing == Either::some
+   function($noneValue) { return $noneValue; }     // runs iff $someThing == Either::none
+);
+
+
+$configEither = Either::some($config)->notNull("Config was missing!");
+
+$configEither->match(
+   function($x) { var_dump("Your config: {$x}"); },
+   function($errorMessage) { var_dump($errorMessage); }
+);
+```
+
+Note: `$someFunc` must follow this interface `function someFunc(mixed $someValue): mixed|void`
+Note: `$noneFunc` must follow this interface `function noneFunc(mixed $noneValue): mixed|void`
+
+---
+### $either->matchSome($someFunc);
+Side effect function: Runs the function iff the either is `Either::some`
+
+```php
+$configEither = Either::some($config)->notNull("Config was missing!");
+
+$configEither->matchSome(
+   function($x) { var_dump("Your config: {$x}"); }
+);
+```
+
+Note: `$someFunc` must follow this interface `function someFunc(mixed $someValue): mixed|void`
+
+---
+### $either->matchNone($noneFunc);
+Side effect function: Runs the function iff the either is `Either::none`
+
+```php
+$configEither = Either::some($config)->notNull("Config was missing!");
+
+$configEither->matchNone(
+   function($errorMessage) { var_dump($errorMessage); }
+);
+```
+
+Note: `$noneFunc` must follow this interface `function noneFunc(mixed $noneValue): mixed|void`
+
+## Transforming and filtering values
+
+---
+### $either->notNull($noneValue);
+Turn an `Either::some(null)` into an `Either::none($noneValue)`
+
+```php
+$someThing = Either::some($myVar); // Valid
+$noneThing = $someThing->notNull("The var was null"); // Turn null into an Either::none($noneValue)
+```
+
+---
+### $either->or($otherValue);
+Returns a `Either::some($value)` iff the either orginally was `Either::none($noneValue)`
+
+```php
+$none = Either::none();
+$myVar = $none->or(10); // A some instance, with value 10
+```
+
+---
+### $either->orCreate($valueFactoryFunc);
+Returns a `Either::some($value)` iff the the either orginally was `Either::none($noneValue)`
+
+The `$valueFactoryFunc` is called lazily - iff the either orginally was `Either::none($noneValue)`
+
+```php
+$none = Either::none();
+$myVar = $none->orCreate(function($noneValue) { return 10; }); // A some instance, with value 10, but lazy
+```
+
+Note: `$valueFactoryFunc` must follow this interface `function valueFactoryFunc(mixed $noneValue): mixed`
+
+---
+### $either->else($otherEither);
+iff `Either::none($noneValue)` return `$otherEither`, otherwise return the orginal `$either`
+
+```php
+$none = Either::none("Some Error Message");
+$myVar = $none->else(Either::some(10)); // A some instance, with value 10
+$myVar = $none->else(Either::none("Different Error Message")); // A new none instance
+```
+
+---
+### $either->elseCreate($otherEitherFactoryFunc);
+iff `Either::none` return the `Either` returned by `$otherEitherFactoryFunc`, otherwise return the orginal `$either`
+
+`$otherEitherFactoryFunc` is run lazily
+
+```php
+$none = Either::none();
+
+$myVar = $none->elseCreate(function($noneValue) { return Either::some(10); }); // A some instance, with value 10, but lazy
+```
+
+Note: `$otherEitherFactoryFunc` must follow this interface `function otherEitherFactoryFunc($noneValue): Option`
+
+---
+### $either->map($mapValueFunc);
+Maps the `$value` of a `Either::some($value)`
+
+The map function runs iff the either's is a `Either::some`
+Otherwise the `Either:none($noneValue)` is propagated
+
+```php
+$none = Either::none("Some Error Message");
+$stillNone = $none->map(function($x) { return $x * $x; });
+
+$some = Either::some(5);
+$someSquared = $some->map(function($x) { return $x * $x; });
+```
+
+Note: `$mapValueFunc` must follow this interface `function mapValueFunc(mixed $someValue): mixed`
+
+---
+### $option->filterIf($filterFunc, $noneValue);
+Change the `Either::some($value)` into `Either::none()` iff `$filterFunc` returns false,
+otherwise propigate the `Either::none()`
+
+```php
+$none = Either::none("Some Error Message");
+$stillNone = $none->filterIf(function($x) { return $x > 10; }, "New none value");
+
+$some = Either::some(10);
+$stillSome = $some->filterIf(function($x) { return $x == 10; }, "New none value");
+$none = $some->filterIf(function($x) { return $x != 10; }, "New none value");
+```
+
+Note: `$filterFunc` must follow this interface `function filterFunc(mixed $value): bool`
+
 
 
 # Licence
