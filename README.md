@@ -235,6 +235,20 @@ $someSquared = $some->map(function($x) { return $x * $x; });
 Note: `$mapValueFunc` must follow this interface `function mapValueFunc(mixed $value): mixed`
 
 ---
+### $option->flatMap($mapFunc);
+
+
+```php
+$none = Option::none();
+$noneNotNull = $none->flatMap(function($x) { return Option::some($x)->notNull(); });
+
+$some = Option::some(null);
+$someNotNull = $some->flatMap(function($x) { return Option::some($x)->notNull(); });
+```
+
+Note: `$mapFunc` must follow this interface `function mapFunc(mixed $value): Option`
+
+---
 ### $option->filterIf($filterFunc);
 Change the `Option::some($value)` into `Option::none()` iff `$filterFunc` returns false,
 otherwise propigate the `Option::none()`
@@ -250,6 +264,33 @@ $none = $some->filterIf(function($x) { return $x != 10; });
 
 Note: `$filterFunc` must follow this interface `function filterFunc(mixed $value): bool`
 
+---
+### $option->contains($value);
+Returns true if the option's value == `$value`, otherwise false.
+
+```php
+$none = Option::none();
+$false = $none->contains(1);
+
+$some = Option::some(10);
+$true = $some->contains(10);
+$false = $some->contains("Thing");
+```
+
+---
+### $option->exists($existsFunc);
+Returns true if the `$existsFunc` returns true, otherwise false.
+
+```php
+$none = Option::none();
+$false = $none->exists(function($x) { return $x == 10; });
+
+$some = Option::some(10);
+$true = $some->exists(function($x) { return $x >= 10; });
+$false = $some->exists(function($x) { return $x == "Thing"; });
+```
+
+Note: `$existsFunc` must follow this interface `function existsFunc(mixed $value): bool`
 
 ## Using Either
 
@@ -456,7 +497,7 @@ $none = Either::none();
 $myVar = $none->elseCreate(function($noneValue) { return Either::some(10); }); // A some instance, with value 10, but lazy
 ```
 
-Note: `$otherEitherFactoryFunc` must follow this interface `function otherEitherFactoryFunc($noneValue): Option`
+Note: `$otherEitherFactoryFunc` must follow this interface `function otherEitherFactoryFunc($noneValue): Either`
 
 ---
 ### $either->map($mapValueFunc);
@@ -491,7 +532,56 @@ $none = $some->filterIf(function($x) { return $x != 10; }, "New none value");
 
 Note: `$filterFunc` must follow this interface `function filterFunc(mixed $value): bool`
 
+---
+### $either->contains($value);
+Returns true if the either's value == `$value`, otherwise false.
 
+```php
+$none = Either::none("Some Error Message");
+$false = $none->contains(1);
+
+$some = Either::some(10);
+$true = $some->contains(10);
+$false = $some->contains("Thing");
+```
+
+---
+### $either->exists($existsFunc);
+Returns true if the `$existsFunc` returns true, otherwise false.
+
+```php
+$none = Either::none("Some Error Message");
+$false = $none->exists(function($x) { return $x == 10; });
+
+$some = Either::some(10);
+$true = $some->exists(function($x) { return $x >= 10; });
+$false = $some->exists(function($x) { return $x == "Thing"; });
+```
+
+Note: `$existsFunc` must follow this interface `function existsFunc(mixed $value): bool`
+
+---
+### $either->flatMap($mapFunc);
+
+```php
+$none = Either::none(null);
+$noneNotNull = $none->flatMap(function($noneValue) { return Either::some($noneValue)->notNull(); });
+
+$some = Either::some(null);
+$someNotNull = $some->flatMap(function($someValue) { return Either::some($someValue)->notNull(); });
+```
+
+Note: `$mapFunc` must follow this interface `function mapFunc(mixed $value): Either`
+
+
+---
+### $either->toOption();
+Returns an `Option` which drops the none value.
+
+```php
+$either = Either::none("Some Error Message");
+$option = $either->toOption();
+```
 
 # Licence
  MIT
