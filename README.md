@@ -1,5 +1,11 @@
 # php7-optional
 
+## Installation
+
+```sh
+composer require ifixit/php7-optional
+```
+
 ## Usage
 
 There are 2 main classes:
