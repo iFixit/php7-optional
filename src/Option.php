@@ -109,17 +109,6 @@ class Option {
       return $existsFunc($this->value);
    }
 
-   public function __toString() {
-      if ($this->hasValue()) {
-         if ($this->value == null) {
-            return "Some(null)";
-         }
-          return "Some({$this->value})";
-      }
-
-      return "None";
-   }
-
    //////////////////////////////
    // STATIC FACTORY FUNCTIONS //
    //////////////////////////////
