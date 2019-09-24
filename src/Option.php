@@ -22,14 +22,22 @@ class Option {
       return $this->hasValue;
    }
 
+   /**
+    * @param mixed $alternative
+    * @return mixed
+    **/
    public function valueOr($alternative) {
       return $this->hasValue ? $this->value : $alternative;
    }
 
+   /**
+    * @return mixed
+    **/
    public function valueOrCreate(callable $func) {
       return $this->hasValue ? $this->value : $func();
    }
 
+   /** @param mixed $alternative */
    public function or($alternative): self {
       return $this->hasValue ? $this : self::some($alternative);
    }
@@ -67,11 +75,11 @@ class Option {
    }
 
    public function map(callable $mapFunc): self {
-      $someFunc = function($value) use ($mapFunc) {
+      $someFunc = function($value) use ($mapFunc): self {
          return self::some($mapFunc($value));
       };
 
-      $noneFunc = function() {
+      $noneFunc = function(): self {
          return self::none();
       };
 
@@ -79,7 +87,7 @@ class Option {
    }
 
    public function flatMap(callable $mapFunc): self {
-      $noneFunc = function() {
+      $noneFunc = function(): self {
          return self::none();
       };
 
@@ -98,6 +106,7 @@ class Option {
       return $this->hasValue && $this->value == null ? self::none() : $this;
    }
 
+   /** @param mixed $value */
    public function contains($value): bool {
       if (!$this->hasValue()) {
          return false;
@@ -121,9 +130,10 @@ class Option {
    /**
     * Wraps an existing value in an Option instance.
     * Returns An optional containing the specified value.
-    */
-    public static function some($thing): self {
-      return new self($thing, true);
+    *
+    * @param T $someValue */
+   public static function some($someValue): self {
+      return new self($someValue, true);
    }
 
    /**
@@ -134,17 +144,19 @@ class Option {
       return new self(null, false);
    }
 
-   public static function someWhen($thing, callable $filterFunc): self {
-      if ($filterFunc($thing)) {
-         return self::some($thing);
+   /** @param T $someValue */
+   public static function someWhen($someValue, callable $filterFunc): self {
+      if ($filterFunc($someValue)) {
+         return self::some($someValue);
       }
       return self::none();
    }
 
-   public static function noneWhen($thing, callable $filterFunc): self {
-      if ($filterFunc($thing)) {
+   /** @param T $someValue */
+   public static function noneWhen($someValue, callable $filterFunc): self {
+      if ($filterFunc($someValue)) {
          return self::none();
       }
-      return self::some($thing);
+      return self::some($someValue);
    }
 }
