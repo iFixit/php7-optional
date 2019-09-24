@@ -23,21 +23,21 @@ class Option {
    }
 
    /**
-    * @param mixed $alternative
-    * @return mixed
+    * @param T $alternative
+    * @return T
     **/
    public function valueOr($alternative) {
       return $this->hasValue ? $this->value : $alternative;
    }
 
    /**
-    * @return mixed
+    * @return T
     **/
    public function valueOrCreate(callable $func) {
       return $this->hasValue ? $this->value : $func();
    }
 
-   /** @param mixed $alternative */
+   /** @param T $alternative */
    public function or($alternative): self {
       return $this->hasValue ? $this : self::some($alternative);
    }
