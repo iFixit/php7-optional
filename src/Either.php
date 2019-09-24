@@ -4,13 +4,15 @@ declare(strict_types = 1);
 
 namespace Optional;
 
-class Option {
+class Either {
    private $hasValue;
-   private $value;
+   private $someValue;
+   private $noneValue;
 
-   private function __construct($value, bool $hasValue) {
+   private function __construct($someValue, $noneValue, bool $hasValue) {
       $this->hasValue = $hasValue;
-      $this->value = $value;
+      $this->someValue = $someValue;
+      $this->noneValue = $noneValue;
    }
 
    public function hasValue() {
@@ -18,13 +20,13 @@ class Option {
    }
 
    public function valueOr($alternative) {
-      return $this->hasValue ? $this->value : $alternative;
+      return $this->hasValue ? $this->someValue : $alternative;
    }
 
    public function valueOrCreate(callable $func) {
       $this->throwIfNull($func);
 
-      return $this->hasValue ? $this->value : $func();
+      return $this->hasValue ? $this->someValue : $func($this->noneValue);
    }
 
    public function or($alternative): self {
@@ -34,7 +36,7 @@ class Option {
    public function orCreate(callable $func): self {
       $this->throwIfNull($func);
 
-      return $this->hasValue ? $this : self::some($func());
+      return $this->hasValue ? $this : self::some($func($this->noneValue));
    }
 
    public function else(self $alternativeOption): self {
@@ -44,14 +46,14 @@ class Option {
    public function elseCreate(callable $func): self {
       $this->throwIfNull($func);
 
-      return $this->hasValue ? $this : $func();
+      return $this->hasValue ? $this : $func($this->noneValue);
    }
 
    public function match(callable $some, callable $none) {
       $this->throwIfNull($some);
       $this->throwIfNull($none);
 
-      return $this->hasValue ? $some($this->value) : $none();
+      return $this->hasValue ? $some($this->someValue) : $none($this->noneValue);
    }
 
    public function matchSome(callable $some): void {
@@ -61,7 +63,7 @@ class Option {
          return;
       }
 
-      $some($this->value);
+      $some($this->someValue);
    }
 
    public function matchNone(callable $none): void {
@@ -71,7 +73,7 @@ class Option {
          return;
       }
 
-      $none();
+      $none($this->noneValue);
    }
 
    public function map(callable $mapFunc): self {
@@ -81,8 +83,8 @@ class Option {
          return self::some($mapFunc($value));
       };
 
-      $noneFunc = function() {
-         return self::none();
+      $noneFunc = function($noneValue) {
+         return self::none($noneValue);
       };
 
       return $this->match($someFunc, $noneFunc);
@@ -91,25 +93,25 @@ class Option {
    public function flatMap(callable $mapFunc): self {
       $this->throwIfNull($mapFunc);
 
-      $noneFunc = function() {
-         return self::none();
+      $noneFunc = function($noneValue) {
+         return self::none($noneValue);
       };
 
       return $this->match($mapFunc, $noneFunc);
    }
 
-   public function filter(bool $condition): self {
-      return $this->hasValue && !$condition ? self::none() : $this;
+   public function filter(bool $condition, $noneValue): self {
+      return $this->hasValue && !$condition ? self::none($noneValue) : $this;
    }
 
-   public function filterIf(callable $filterFunc): self {
+   public function filterIf(callable $filterFunc, $noneValue): self {
       $this->throwIfNull($filterFunc);
 
-      return $this->hasValue && !$filterFunc($this->value) ? self::none() : $this;
+      return $this->hasValue && !$filterFunc($this->someValue) ? self::none($noneValue) : $this;
    }
 
-   public function notNull(): self {
-      return $this->hasValue && $this->value == null ? self::none() : $this;
+   public function notNull($noneValue): self {
+      return $this->hasValue && $this->someValue == null ? self::none($noneValue) : $this;
    }
 
    public function contains($value): bool {
@@ -117,7 +119,7 @@ class Option {
          return false;
       }
 
-      return $this->value == $value;
+      return $this->someValue == $value;
    }
 
    public function exists(callable $existsFunc): bool {
@@ -127,52 +129,61 @@ class Option {
          return false;
       }
 
-      return $existsFunc($this->value);
+      return $existsFunc($this->someValue);
+   }
+
+   public function ToOption(): Option {
+
+      $someFunc = function($value) {
+         return Option::some($value);
+      };
+
+      $noneFunc = function($noneValue) {
+         return Option::none();
+      };
+
+      return $this->match($someFunc, $noneFunc);
    }
 
    public function __toString() {
       if ($this->hasValue()) {
-         if ($this->value == null) {
+         if ($this->someValue == null) {
             return "Some(null)";
          }
-          return "Some({$this->value})";
+          return "Some({$this->someValue})";
       }
 
-      return "None";
+      if ($this->noneValue == null) {
+         return "None(null)";
+      }
+
+      return "None({$this->noneValue})";
    }
 
    //////////////////////////////
    // STATIC FACTORY FUNCTIONS //
    //////////////////////////////
 
-   /**
-    * Wraps an existing value in an Option instance.
-    * Returns An optional containing the specified value.
-    */
-    public static function some($thing): self {
-      return new self($thing, true);
+   public static function some($someValue): self {
+      return new self($someValue, null, true);
    }
 
-   /**
-    * Creates an empty Option instance.
-    * Returns An empty optional.
-    */
-   public static function none(): self {
-      return new self(null, false);
+   public static function none($noneValue): self {
+      return new self(null, $noneValue, false);
    }
 
-   public static function someWhen($thing, callable $filterFunc): self {
-      if ($filterFunc($thing)) {
-         return self::some($thing);
+   public static function someWhen($someValue, $noneValue, callable $filterFunc): self {
+      if ($filterFunc($someValue)) {
+         return self::some($someValue);
       }
-      return self::none();
+      return self::none($noneValue);
    }
 
-   public static function noneWhen($thing, callable $filterFunc): self {
-      if ($filterFunc($thing)) {
-         return self::none();
+   public static function noneWhen($someValue, $noneValue, callable $filterFunc): self {
+      if ($filterFunc($someValue)) {
+         return self::none($noneValue);
       }
-      return self::some($thing);
+      return self::some($someValue);
    }
 
 
