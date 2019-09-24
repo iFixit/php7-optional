@@ -229,17 +229,17 @@ $someSquared = $some->map(function($x) { return $x * $x; });
 Note: `$mapValueFunc` must follow this interface `function mapValueFunc(mixed $value): mixed`
 
 ---
-### $option->filter($filterFunc);
+### $option->filterIf($filterFunc);
 Change the `Option::some($value)` into `Option::none()` iff `$filterFunc` returns false,
 otherwise propigate the `Option::none()`
 
 ```php
 $none = Option::none();
-$stillNone = $none->filter(function($x) { return $x > 10; });
+$stillNone = $none->filterIf(function($x) { return $x > 10; });
 
 $some = Option::some(10);
-$stillSome = $some->filter(function($x) { return $x == 10; });
-$none = $some->filter(function($x) { return $x != 10; });
+$stillSome = $some->filterIf(function($x) { return $x == 10; });
+$none = $some->filterIf(function($x) { return $x != 10; });
 ```
 
 Note: `$filterFunc` must follow this interface `function filterFunc(mixed $value): bool`
