@@ -124,21 +124,6 @@ class Either {
       return $this->match($someFunc, $noneFunc);
    }
 
-   public function __toString() {
-      if ($this->hasValue()) {
-         if ($this->someValue == null) {
-            return "Some(null)";
-         }
-          return "Some({$this->someValue})";
-      }
-
-      if ($this->noneValue == null) {
-         return "None(null)";
-      }
-
-      return "None({$this->noneValue})";
-   }
-
    //////////////////////////////
    // STATIC FACTORY FUNCTIONS //
    //////////////////////////////
