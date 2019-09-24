@@ -22,8 +22,6 @@ class Option {
    }
 
    public function valueOrCreate(callable $func) {
-      $this->throwIfNull($func);
-
       return $this->hasValue ? $this->value : $func();
    }
 
@@ -32,8 +30,6 @@ class Option {
    }
 
    public function orCreate(callable $func): self {
-      $this->throwIfNull($func);
-
       return $this->hasValue ? $this : self::some($func());
    }
 
@@ -42,21 +38,14 @@ class Option {
    }
 
    public function elseCreate(callable $func): self {
-      $this->throwIfNull($func);
-
       return $this->hasValue ? $this : $func();
    }
 
    public function match(callable $some, callable $none) {
-      $this->throwIfNull($some);
-      $this->throwIfNull($none);
-
       return $this->hasValue ? $some($this->value) : $none();
    }
 
    public function matchSome(callable $some): void {
-      $this->throwIfNull($some);
-
       if (!$this->hasValue) {
          return;
       }
@@ -65,8 +54,6 @@ class Option {
    }
 
    public function matchNone(callable $none): void {
-      $this->throwIfNull($none);
-
       if ($this->hasValue) {
          return;
       }
@@ -75,8 +62,6 @@ class Option {
    }
 
    public function map(callable $mapFunc): self {
-      $this->throwIfNull($mapFunc);
-
       $someFunc = function($value) use ($mapFunc) {
          return self::some($mapFunc($value));
       };
@@ -89,8 +74,6 @@ class Option {
    }
 
    public function flatMap(callable $mapFunc): self {
-      $this->throwIfNull($mapFunc);
-
       $noneFunc = function() {
          return self::none();
       };
@@ -103,8 +86,6 @@ class Option {
    }
 
    public function filterIf(callable $filterFunc): self {
-      $this->throwIfNull($filterFunc);
-
       return $this->hasValue && !$filterFunc($this->value) ? self::none() : $this;
    }
 
@@ -121,8 +102,6 @@ class Option {
    }
 
    public function exists(callable $existsFunc): bool {
-      $this->throwIfNull($existsFunc);
-
       if (!$this->hasValue()) {
          return false;
       }
@@ -173,16 +152,5 @@ class Option {
          return self::none();
       }
       return self::some($thing);
-   }
-
-
-   //////////////////////////////
-   //     Private Functions    //
-   //////////////////////////////
-
-   private function throwIfNull(callable $func) {
-      if ($func == null) {
-         throw new Exception("Function provided can not be null.");
-      }
    }
 }

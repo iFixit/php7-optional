@@ -24,8 +24,6 @@ class Either {
    }
 
    public function valueOrCreate(callable $func) {
-      $this->throwIfNull($func);
-
       return $this->hasValue ? $this->someValue : $func($this->noneValue);
    }
 
@@ -34,8 +32,6 @@ class Either {
    }
 
    public function orCreate(callable $func): self {
-      $this->throwIfNull($func);
-
       return $this->hasValue ? $this : self::some($func($this->noneValue));
    }
 
@@ -44,21 +40,14 @@ class Either {
    }
 
    public function elseCreate(callable $func): self {
-      $this->throwIfNull($func);
-
       return $this->hasValue ? $this : $func($this->noneValue);
    }
 
    public function match(callable $some, callable $none) {
-      $this->throwIfNull($some);
-      $this->throwIfNull($none);
-
       return $this->hasValue ? $some($this->someValue) : $none($this->noneValue);
    }
 
    public function matchSome(callable $some): void {
-      $this->throwIfNull($some);
-
       if (!$this->hasValue) {
          return;
       }
@@ -67,8 +56,6 @@ class Either {
    }
 
    public function matchNone(callable $none): void {
-      $this->throwIfNull($none);
-
       if ($this->hasValue) {
          return;
       }
@@ -77,8 +64,6 @@ class Either {
    }
 
    public function map(callable $mapFunc): self {
-      $this->throwIfNull($mapFunc);
-
       $someFunc = function($value) use ($mapFunc) {
          return self::some($mapFunc($value));
       };
@@ -91,8 +76,6 @@ class Either {
    }
 
    public function flatMap(callable $mapFunc): self {
-      $this->throwIfNull($mapFunc);
-
       $noneFunc = function($noneValue) {
          return self::none($noneValue);
       };
@@ -105,8 +88,6 @@ class Either {
    }
 
    public function filterIf(callable $filterFunc, $noneValue): self {
-      $this->throwIfNull($filterFunc);
-
       return $this->hasValue && !$filterFunc($this->someValue) ? self::none($noneValue) : $this;
    }
 
@@ -123,8 +104,6 @@ class Either {
    }
 
    public function exists(callable $existsFunc): bool {
-      $this->throwIfNull($existsFunc);
-
       if (!$this->hasValue()) {
          return false;
       }
@@ -184,16 +163,5 @@ class Either {
          return self::none($noneValue);
       }
       return self::some($someValue);
-   }
-
-
-   //////////////////////////////
-   //     Private Functions    //
-   //////////////////////////////
-
-   private function throwIfNull(callable $func) {
-      if ($func == null) {
-         throw new Exception("Function provided can not be null.");
-      }
    }
 }
