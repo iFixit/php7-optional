@@ -470,7 +470,7 @@ $someSquared = $some->map(function($x) { return $x * $x; });
 Note: `$mapValueFunc` must follow this interface `function mapValueFunc(mixed $someValue): mixed`
 
 ---
-### $option->filterIf($filterFunc, $noneValue);
+### $either->filterIf($filterFunc, $noneValue);
 Change the `Either::some($value)` into `Either::none()` iff `$filterFunc` returns false,
 otherwise propigate the `Either::none()`
 
