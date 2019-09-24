@@ -4,10 +4,15 @@ declare(strict_types = 1);
 
 namespace Optional;
 
+/**
+ * @template T
+ */
 class Option {
    private $hasValue;
+   /** @var T */
    private $value;
 
+   /** @param T $value */
    private function __construct($value, bool $hasValue) {
       $this->hasValue = $hasValue;
       $this->value = $value;
