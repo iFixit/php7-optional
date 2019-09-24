@@ -3,6 +3,9 @@ env:
     - GIT_COMMITTED_AT=$(if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then git log -1 --pretty=format:%ct; else git log -1 --skip 1 --pretty=format:%ct; fi)
 language: php
 php:
-     - 7.3
+     - 7.1
+before_script:
+     - curl -s http://getcomposer.org/installer | php
+     - php composer.phar install
 script:
-  - phpunit tests
+     - vendor/bin/phpunit tests
