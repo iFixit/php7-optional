@@ -1,4 +1,5 @@
 # php7-optional
+# [![Build Status](https://travis-ci.org/iFixit/php7-optional.svg?branch=master)](https://travis-ci.org/iFixit/php7-optional)
 
 ## Installation
 
