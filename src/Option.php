@@ -18,7 +18,7 @@ class Option {
       $this->value = $value;
    }
 
-   public function hasValue() {
+   public function hasValue(): bool {
       return $this->hasValue;
    }
 

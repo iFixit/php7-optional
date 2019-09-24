@@ -23,7 +23,7 @@ class Either {
       $this->noneValue = $noneValue;
    }
 
-   public function hasValue() {
+   public function hasValue(): bool {
       return $this->hasValue;
    }
 
