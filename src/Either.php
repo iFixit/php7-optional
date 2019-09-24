@@ -15,8 +15,10 @@ class Either {
    /** @var TNone */
    private $noneValue;
 
-   /** @param TSome $someValue */
-   /** @param TNone $noneValue */
+   /**
+    * @param TSome $someValue
+    * @param TNone $noneValue
+    **/
    private function __construct($someValue, $noneValue, bool $hasValue) {
       $this->hasValue = $hasValue;
       $this->someValue = $someValue;
@@ -27,6 +29,10 @@ class Either {
       return $this->hasValue;
    }
 
+   /**
+    * @param mixed $alternative
+    * @return mixed
+    **/
    public function valueOr($alternative) {
       return $this->hasValue ? $this->someValue : $alternative;
    }
@@ -35,6 +41,7 @@ class Either {
       return $this->hasValue ? $this->someValue : $func($this->noneValue);
    }
 
+   /** @param mixed $alternative */
    public function or($alternative): self {
       return $this->hasValue ? $this : self::some($alternative);
    }
@@ -136,14 +143,20 @@ class Either {
    // STATIC FACTORY FUNCTIONS //
    //////////////////////////////
 
+   /** @param TSome $someValue */
    public static function some($someValue): self {
       return new self($someValue, null, true);
    }
 
+   /** @param TNone $noneValue */
    public static function none($noneValue): self {
       return new self(null, $noneValue, false);
    }
 
+   /**
+    * @param TSome $someValue
+    * @param TNone $noneValue
+    **/
    public static function someWhen($someValue, $noneValue, callable $filterFunc): self {
       if ($filterFunc($someValue)) {
          return self::some($someValue);
@@ -151,6 +164,10 @@ class Either {
       return self::none($noneValue);
    }
 
+   /**
+    * @param TSome $someValue
+    * @param TNone $noneValue
+    **/
    public static function noneWhen($someValue, $noneValue, callable $filterFunc): self {
       if ($filterFunc($someValue)) {
          return self::none($noneValue);
