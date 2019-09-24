@@ -4,11 +4,19 @@ declare(strict_types = 1);
 
 namespace Optional;
 
+/**
+ * @template TSome
+ * @template TNone
+ */
 class Either {
    private $hasValue;
+   /** @var TSome */
    private $someValue;
+   /** @var TNone */
    private $noneValue;
 
+   /** @param TSome $someValue */
+   /** @param TNone $noneValue */
    private function __construct($someValue, $noneValue, bool $hasValue) {
       $this->hasValue = $hasValue;
       $this->someValue = $someValue;
