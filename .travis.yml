@@ -18,3 +18,8 @@ jobs:
       script:
       - docker run -v $(pwd):/data --rm phpunit/phpunit
       - docker run --rm --volume $(pwd):/data phpqa/psalm
+    - stage: Generate/Deploy Docs
+      before_script:
+      - curl -O http://get.sensiolabs.org/sami.phar
+      script:
+      - php sami.phar update sami-config.php --force
