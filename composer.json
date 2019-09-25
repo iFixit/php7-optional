@@ -11,19 +11,9 @@
     "require": {
       "php": "^7.1"
     },
-    "require-dev": {
-      "phpunit/phpunit": "^7.0",
-        "vimeo/psalm": "^3.5"
-    },
     "autoload": {
       "psr-4": {
          "Optional\\": "src/"
       }
-    },
-    "scripts": {
-      "test": [
-          "@phpunit"
-      ],
-      "phpunit": "php vendor/bin/phpunit"
-  }
+    }
 }
