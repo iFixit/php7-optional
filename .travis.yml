@@ -23,3 +23,10 @@ jobs:
       - curl -O http://get.sensiolabs.org/sami.phar
       script:
       - php sami.phar update sami-config.php --force
+      deploy:
+       provider: surge
+       skip_cleanup: true
+       project: ./build/
+       domain: php7-optional.surge.sh
+       on:
+         branch: master
