@@ -17,6 +17,8 @@ There are 2 main classes:
 * [Optional\Option](#using-option)
 * [Optional\Either](#using-either)
 
+## [Read the full docs](https://php7-optional.surge.sh/)
+
 ## Using Option
 
 To use Optional, simply import the following namespace:
