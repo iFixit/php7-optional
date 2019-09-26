@@ -28,5 +28,3 @@ jobs:
        skip_cleanup: true
        project: ./build/
        domain: php7-optional.surge.sh
-       on:
-         branch: master
