@@ -26,11 +26,30 @@ class Either {
       $this->noneValue = $noneValue;
    }
 
+   /**
+    * Returns true iff the either is `Either::some`
+    **/
    public function hasValue(): bool {
       return $this->hasValue;
    }
 
    /**
+    * Returns the either value or returns `$alternative`
+    *
+    * ```php
+    * $someThing = Either::some(1);
+    * $someClass = Either::some(new SomeObject());
+    *
+    * $none = Either::none("Error Code 123");
+    *
+    * $myVar = $someThing->valueOr("Some other value!"); // 1
+    * $myVar = $someClass->valueOr("Some other value!"); // instance of SomeObject
+    *
+    * $myVar = $none->valueOr("Some other value!"); // "Some other value!"
+    *
+    * $none = Either::some(null)->valueOr("Some other value!"); // null, See either->notNull()
+    * ```
+    *
     * @param TSome $alternative
     * @return TSome
     **/
@@ -39,6 +58,24 @@ class Either {
    }
 
    /**
+    * Returns the either's value or calls `$valueFactoryFunc` and returns the value of that function
+    *
+    * ```php
+    * $someThing = Either::some(1);
+    * $someClass = Either::some(new SomeObject());
+    *
+    * $none = Either::none("Error Code 123");
+    *
+    * $myVar = $someThing->valueOrCreate(function($noneValue) { return new NewObject(); }); // 1
+    * $myVar = $someClass->valueOrCreate(function($noneValue) { return new NewObject(); }); // instance of SomeObject
+    *
+    * $myVar = $none->valueOrCreate(function($noneValue) { return new NewObject(); }); // instance of NewObject
+    * ```
+    *
+    * _Notes:_
+    *
+    *  - `$valueFactoryFunc` must follow this interface `callable(TNone):TSome`
+    *
     * @param callable(TNone):TSome $alternativeFactory
     * @return TSome
     **/
@@ -47,6 +84,17 @@ class Either {
    }
 
    /**
+    * Returns a `Either::some($value)` iff the either orginally was `Either::none($noneValue)`
+    *
+    * ```php
+    * $none = Either::none();
+    * $myVar = $none->or(10); // A some instance, with value 10
+    * ```
+    *
+    * _Notes:_
+    *
+    *  - Returns `Either<TSome, TNone>`
+    *
     * @param TSome $alternative
     * @return Either<TSome, TNone>
     **/
@@ -55,6 +103,20 @@ class Either {
    }
 
    /**
+    * Returns a `Either::some($value)` iff the the either orginally was `Either::none($noneValue)`
+    *
+    * The `$valueFactoryFunc` is called lazily - iff the either orginally was `Either::none($noneValue)`
+    *
+    * ```php
+    * $none = Either::none();
+    * $myVar = $none->orCreate(function($noneValue) { return 10; }); // A some instance, with value 10, but lazy
+    * ```
+    *
+    * _Notes:_
+    *
+    *  - `$valueFactoryFunc` must follow this interface `callable(TNone):TSome`
+    *  - Returns `Either<TSome, TNone>`
+    *
     * @param callable(TNone):TSome $alternativeFactory
     * @return Either<TSome, TNone>
     **/
@@ -63,6 +125,19 @@ class Either {
    }
 
    /**
+    * iff `Either::none($noneValue)` return `$otherEither`, otherwise return the orginal `$either`
+    *
+    * ```php
+    * $none = Either::none("Some Error Message");
+    * $myVar = $none->else(Either::some(10)); // A some instance, with value 10
+    * $myVar = $none->else(Either::none("Different Error Message")); // A new none instance
+    * ```
+    *
+    * _Notes:_
+    *
+    *  - `$alternativeEither` must be of type `Either<TSome, TNone>`
+    *  - Returns `Either<TSome, TNone>`
+    *
     * @param Either<TSome, TNone> $alternativeEither
     * @return Either<TSome, TNone>
     **/
@@ -71,6 +146,21 @@ class Either {
    }
 
    /**
+    * iff `Either::none` return the `Either` returned by `$otherEitherFactoryFunc`, otherwise return the orginal `$either`
+    *
+    * `$otherEitherFactoryFunc` is run lazily
+    *
+    * ```php
+    * $none = Either::none();
+    *
+    * $myVar = $none->elseCreate(function($noneValue) { return Either::some(10); }); // A some instance, with value 10, but lazy
+    * ```
+    *
+    * _Notes:_
+    *
+    *  - `$alternativeEither` must be of type `callable(TNone):Either<TSome, TNone> `
+    *  - Returns `Either<TSome, TNone>`
+    *
     * @param callable(TNone):Either<TSome, TNone> $alternativeEitherFactory
     * @return Either<TSome, TNone>
     **/
@@ -79,6 +169,33 @@ class Either {
    }
 
    /**
+    * Runs only 1 function:
+    *
+    *  - `$some` iff the either is `Either::some`
+    *  - `$none` iff the either is `Either::none`
+    *
+    * ```php
+    * $someThing = Either::some(1);
+    *
+    * $someThingSquared = $someThing->match(
+    *    function($x) { return $x * $x; },               // runs iff $someThing == Either::some
+    *    function($noneValue) { return $noneValue; }     // runs iff $someThing == Either::none
+    * );
+    *
+    *
+    * $configEither = Either::some($config)->notNull("Config was missing!");
+    *
+    * $configEither->match(
+    *    function($x) { var_dump("Your config: {$x}"); },
+    *    function($errorMessage) { var_dump($errorMessage); }
+    * );
+    * ```
+    *
+    * _Notes:_
+    *
+    *  - `$some` must follow this interface `callable(TSome):U`
+    *  - `$none` must follow this interface `callable(TNone):U`
+    *
     * @template U
     * @param callable(TSome):U $some
     * @param callable(TNone):U $none
@@ -89,6 +206,20 @@ class Either {
    }
 
    /**
+    * Side effect function: Runs the function iff the either is `Either::some`
+    *
+    * ```php
+    * $configEither = Either::some($config)->notNull("Config was missing!");
+    *
+    * $configEither->matchSome(
+    *    function($x) { var_dump("Your config: {$x}"); }
+    * );
+    * ```
+    *
+    * _Notes:_
+    *
+    *  - `$some` must follow this interface `callable(TSome):U`
+    *
     * @param callable(TSome) $some
     **/
    public function matchSome(callable $some): void {
@@ -100,6 +231,20 @@ class Either {
    }
 
    /**
+    * Side effect function: Runs the function iff the either is `Either::none`
+    *
+    * ```php
+    * $configEither = Either::some($config)->notNull("Config was missing!");
+    *
+    * $configEither->matchNone(
+    *    function($errorMessage) { var_dump($errorMessage); }
+    * );
+    * ```
+    *
+    * _Notes:_
+    *
+    *  - `$none` must follow this interface `callable(TNone):U`
+    *
     * @param callable(TNone) $none
     **/
    public function matchNone(callable $none): void {
@@ -111,6 +256,24 @@ class Either {
    }
 
    /**
+    * Maps the `$value` of a `Either::some($value)`
+    *
+    * The map function runs iff the either's is a `Either::some`
+    * Otherwise the `Either:none($noneValue)` is propagated
+    *
+    * ```php
+    * $none = Either::none("Some Error Message");
+    * $stillNone = $none->map(function($x) { return $x * $x; });
+    *
+    * $some = Either::some(5);
+    * $someSquared = $some->map(function($x) { return $x * $x; });
+    * ```
+    *
+    * _Notes:_
+    *
+    *  - `$mapFunc` must follow this interface `callable(TSome):Either<USome, TNone>`
+    *  - Returns `Either<TSome, TNone>`
+    *
     * @template USome
     * @param callable(TSome):Either<USome, TNone> $mapFunc
     * @return Either<USome, TNone>
@@ -134,6 +297,19 @@ class Either {
    }
 
    /**
+    * ```php
+    * $none = Either::none(null);
+    * $noneNotNull = $none->flatMap(function($noneValue) { return Either::some($noneValue)->notNull(); });
+    *
+    * $some = Either::some(null);
+    * $someNotNull = $some->flatMap(function($someValue) { return Either::some($someValue)->notNull(); });
+    * ```
+    *
+    * _Notes:_
+    *
+    *  - `$alternativeFactory` must follow this interface `callable(TSome):Either<USome, TNone>`
+    *  - Returns `Either<USome, TNone>`
+    *
     * @template USome
     * @param callable(TSome):Either<USome, TNone> $mapFunc
     * @return Either<USome, TNone>
@@ -150,6 +326,7 @@ class Either {
    }
 
    /**
+    * @param bool $condition
     * @param TNone $noneValue
     * @return Either<TSome, TNone>
     **/
@@ -158,6 +335,23 @@ class Either {
    }
 
    /**
+    * Change the `Either::some($value)` into `Either::none()` iff `$filterFunc` returns false,
+    * otherwise propigate the `Either::none()`
+    *
+    * ```php
+    * $none = Either::none("Some Error Message");
+    * $stillNone = $none->filterIf(function($x) { return $x > 10; }, "New none value");
+    *
+    * $some = Either::some(10);
+    * $stillSome = $some->filterIf(function($x) { return $x == 10; }, "New none value");
+    * $none = $some->filterIf(function($x) { return $x != 10; }, "New none value");
+    * ```
+    *
+    * _Notes:_
+    *
+    *  - `$filterFunc` must follow this interface `callable(TSome):bool`
+    *  - Returns `Either<TSome, TNone>`
+    *
     * @param callable(TSome):bool $filterFunc
     * @param TNone $noneValue
     * @return Either<TSome, TNone>
@@ -167,6 +361,17 @@ class Either {
    }
 
    /**
+    * Turn an `Either::some(null)` into an `Either::none($noneValue)`
+    *
+    * ```php
+    * $someThing = Either::some($myVar); // Valid
+    * $noneThing = $someThing->notNull("The var was null"); // Turn null into an Either::none($noneValue)
+    * ```
+    *
+    * _Notes:_
+    *
+    *  - Returns `Either<TSome, TNone>`
+    *
     * @param TNone $noneValue
     * @return Either<TSome, TNone>
     **/
@@ -174,7 +379,19 @@ class Either {
       return $this->hasValue && $this->someValue == null ? self::none($noneValue) : $this;
    }
 
-   /** @param mixed $value */
+   /**
+    * Returns true if the either's value == `$value`, otherwise false.
+    *
+    * ```php
+    * $none = Either::none("Some Error Message");
+    * $false = $none->contains(1);
+    *
+    * $some = Either::some(10);
+    * $true = $some->contains(10);
+    * $false = $some->contains("Thing");
+    * ```
+    * @param mixed $value
+    **/
    public function contains($value): bool {
       if (!$this->hasValue()) {
          return false;
@@ -184,6 +401,21 @@ class Either {
    }
 
    /**
+    * Returns true if the `$existsFunc` returns true, otherwise false.
+    *
+    * ```php
+    * $none = Either::none("Some Error Message");
+    * $false = $none->exists(function($x) { return $x == 10; });
+    *
+    * $some = Either::some(10);
+    * $true = $some->exists(function($x) { return $x >= 10; });
+    * $false = $some->exists(function($x) { return $x == "Thing"; });
+    * ```
+    *
+    * _Notes:_
+    *
+    *  - `$filterFunc` must follow this interface `callable(TSome):bool`
+    *
     * @param callable(TSome):bool $existsFunc
     **/
    public function exists(callable $existsFunc): bool {
@@ -195,6 +427,17 @@ class Either {
    }
 
    /**
+    * Returns an `Option` which drops the none value.
+    *
+    * ```php
+    * $either = Either::none("Some Error Message");
+    * $option = $either->toOption();
+    * ```
+    *
+    * _Notes:_
+    *
+    *  - Returns `Option<U>`
+    *
     * @template U
     * @return Option<U>
     **/
@@ -222,6 +465,19 @@ class Either {
    //////////////////////////////
 
    /**
+    * Creates an either with a boxed value
+    *
+    * ```php
+    * $someThing = Either::some(1);
+    * $someClass = Either::some(new SomeObject());
+    *
+    * $someNullThing = Either::some(null); // Valid
+    * ```
+    *
+    * _Notes:_
+    *
+    *  - Returns `Either<TSome, mixed>`
+    *
     * @param TSome $someValue
     * @return Either<TSome, mixed>
     **/
@@ -230,6 +486,16 @@ class Either {
    }
 
    /**
+    * Creates an either which represents an empty box
+    *
+    * ```php
+    * $none = Either::none("This is some string to show on no value");
+    * ```
+    *
+    * _Notes:_
+    *
+    *  - Returns `Either<mixed, TNone>`
+    *
     * @param TNone $noneValue
     * @return Either<mixed, TNone>
     **/
@@ -238,8 +504,23 @@ class Either {
    }
 
    /**
+    * Take a value, turn it a `Either::some($someValue)` iff the `$filterFunc` returns true
+    * otherwise an `Either::none($noneValue)`
+    *
+    * ```php
+    * $positiveOne = Either::someWhen(1, -1, function($x) { return $x > 0; });
+    * $negativeOne = Either::someWhen(1, -1, function($x) { return $x < 0; });
+    * ```
+    * Note: `$filterFunc` must follow this interface `function filterFunc(mixed $value): bool`
+    *
+    * _Notes:_
+    *
+    *  - `$filterFunc` must follow this interface `callable():T`
+    *  - Returns `Either<mixed, TNone>`
+    *
     * @param TSome $someValue
     * @param TNone $noneValue
+    * @param callable(TSome): bool $filterFunc
     * @return Either<TSome, TNone>
     **/
    public static function someWhen($someValue, $noneValue, callable $filterFunc): self {
@@ -250,8 +531,22 @@ class Either {
    }
 
    /**
+    * Take a value, turn it a `Either::none($noneValue)` iff the `$filterFunc` returns true
+    * otherwise an `Either::some($someValue)`
+    *
+    * ```php
+    * $positiveOne = Either::noneWhen(1, -1, function($x) { return $x < 0; });
+    * $negativeOne = Either::noneWhen(1, -1, function($x) { return $x > 0; });
+    * ```
+    *
+    * _Notes:_
+    *
+    *  - `$filterFunc` must follow this interface `callable():T`
+    *  - Returns `Either<mixed, TNone>`
+    *
     * @param TSome $someValue
     * @param TNone $noneValue
+    * @param callable(TSome): bool $filterFunc
     * @return Either<TSome, TNone>
     **/
    public static function noneWhen($someValue, $noneValue, callable $filterFunc): self {
