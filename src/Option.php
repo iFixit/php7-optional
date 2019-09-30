@@ -499,4 +499,26 @@ class Option {
       }
       return self::some($someValue);
    }
+
+   /**
+    * Creates a option if the `$key` exists in `$array`
+    *
+    * ```php
+    * $some = Option::fromArray(['hello' => ' world'], 'hello');
+    * $none = Option::fromArray(['hello' => ' world'], 'nope');
+    * ```
+    * _Notes:_
+    *
+    * - Returns `Option<T>`
+    *
+    * @param T $someValue
+    * @return Option<T>
+    **/
+   public static function fromArray(array $array, $key): self {
+      if (isset($array[$key])) {
+         return self::some($array[$key]);
+      }
+
+      return self::none();
+   }
 }
