@@ -592,4 +592,27 @@ class Either {
     public static function someNotNull($someValue, $noneValue): self {
       return self::some($someValue)->notNull($noneValue);
    }
+
+   /**
+    * Creates a either if the `$key` exists in `$array`
+    *
+    * ```php
+    * $some = Either::fromArray(['hello' => ' world'], 'hello', 'oh no');
+    * $none = Either::fromArray(['hello' => ' world'], 'nope', 'oh no');
+    * ```
+    * _Notes:_
+    *
+    * - Returns `Either<T>`
+    *
+    * @param array $array
+    * @param mixed $key The key of the array
+    * @return Either<T>
+    **/
+    public static function fromArray(array $array, $key, $noneValue): self {
+      if (isset($array[$key])) {
+         return self::some($array[$key]);
+      }
+
+      return self::none($noneValue);
+   }
 }
