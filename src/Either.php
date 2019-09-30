@@ -361,7 +361,7 @@ class Either {
    }
 
    /**
-    * Turn an `Either::some(null)` into an `Either::none($noneValue)`
+    * Turn an `Either::some(null)` into an `Either::none($noneValue)` iff `is_null($value)`
     *
     * ```php
     * $someThing = Either::some($myVar); // Valid
@@ -376,7 +376,26 @@ class Either {
     * @return Either<TSome, TNone>
     **/
    public function notNull($noneValue): self {
-      return $this->hasValue && $this->someValue == null ? self::none($noneValue) : $this;
+      return $this->hasValue && is_null($this->someValue) ? self::none($noneValue) : $this;
+   }
+
+   /**
+    * Turn an `Either::some(null)` into an `Either::none($noneValue)` iff `!$value == true`
+    *
+    * ```php
+    * $someThing = Either::some($myVar); // Valid
+    * $noneThing = $someThing->notNull("The var was null"); // Turn null into an Either::none($noneValue)
+    * ```
+    *
+    * _Notes:_
+    *
+    *  - Returns `Either<TSome, TNone>`
+    *
+    * @param TNone $noneValue
+    * @return Either<TSome, TNone>
+    **/
+   public function notFalsy($noneValue): self {
+      return $this->hasValue && !$this->someValue ? self::none($noneValue) : $this;
    }
 
    /**

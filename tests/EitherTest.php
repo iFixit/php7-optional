@@ -233,5 +233,15 @@ class EitherTest extends PHPUnit\Framework\TestCase {
       $this->assertFalse($someNotA->hasValue());
       $this->assertFalse($noneA->hasValue());
       $this->assertTrue($someA->hasValue());
+
+      $someNull = Either::some(null);
+      $this->assertTrue($someNull->hasValue());
+      $noneNull = $someNull->notNull($noneValue);
+      $this->assertFalse($noneNull->hasValue());
+
+      $someEmpty = Either::some("");
+      $this->assertTrue($someEmpty->hasValue());
+      $noneEmpty = $someEmpty->notFalsy($noneValue);
+      $this->assertFalse($noneEmpty->hasValue());
    }
 }
