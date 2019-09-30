@@ -256,4 +256,55 @@ class EitherTest extends PHPUnit\Framework\TestCase {
       $noneEmpty = $someEmpty->notFalsy($noneValue);
       $this->assertFalse($noneEmpty->hasValue());
    }
+
+   public function testFlatMap() {
+      $somePerson = [
+         'name' => [
+            'first' => 'First',
+            'last' => 'Last'
+         ]
+      ];
+
+      $person = Either::fromArray($somePerson, 'name', 'name was missing');
+
+      $name = $person->andThen(function($person) {
+         $fullName = $person['first'] . $person['last'];
+
+         try {
+            $thing = SomeComplexThing::doWork($fullName);
+         } catch (ErrorException $e) {
+            return Either::none('SomeComplexThing had an error!');
+         }
+
+         return Either::some($thing);
+      });
+
+      $this->assertSame($name->valueOr(''), 'FirstLast');
+   }
+
+   public function testFlatMapWithException() {
+      $somePerson = [
+         'name' => [
+            'first' => 'First',
+            'last' => 'Last'
+         ]
+      ];
+
+      $person = Either::fromArray($somePerson, 'name', 'name was missing');
+
+      $name = $person->andThen(function($person) {
+         $fullName = $person['first'] . $person['last'];
+
+         try {
+            $thing = SomeComplexThing::doWork($fullName, "Forcing some exception");
+         } catch (\Exception $e) {
+            return Either::none('SomeComplexThing had an error!');
+         }
+
+         return Either::some($thing);
+      });
+
+      $this->assertFalse($name->hasValue());
+      $this->assertSame($name->valueOr('oh no'), 'oh no');
+   }
 }

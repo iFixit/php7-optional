@@ -323,13 +323,14 @@ class Option {
     *   $name = $person->andThen(function($person) {
     *      $fullName = $person['first'] . $person['last'];
     *      try {
-    *         $thing = SomeComplexThing::doWork($fullName, "Forcing some exception");
+    *         $thing = SomeComplexThing::doWork($fullName);
     *      } catch (\Exception $e) {
     *         return Option::none();
     *      }
     *      return Option::some($thing);
     *  });
     * ```
+    *
     * Note: `$mapFunc` must follow this interface `function mapFunc(mixed $value): Option`
     * @template U
     * @param callable(T):Option<U> $mapFunc
