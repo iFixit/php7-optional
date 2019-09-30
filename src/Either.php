@@ -296,6 +296,37 @@ class Either {
       return $this->match($someFunc, $noneFunc);
    }
 
+
+   /**
+    * `map`, but if an exception occurs, return `Either::none(exception)`
+    *
+    * Maps the `$value` of a `Either::some($value)`
+    *
+    * The map function runs iff the either's is a `Either::some`
+    * Otherwise the `Either:none($noneValue)` is propagated
+    *
+    * ```php
+    * $some = Either::some(['key' => 'value']);
+    * $none = $some->safeMap(function($array) { $thing = $array['Missing Key will cause error']; return 5; });
+    * ```
+    *
+    * _Notes:_
+    *
+    *  - `$mapFunc` must follow this interface `callable(TSome):Either<USome, TNone>`
+    *  - Returns `Either<TSome, TNone>`
+    *
+    * @template USome
+    * @param callable(TSome):Either<USome, TNone> $mapFunc
+    * @return Either<USome, TNone>
+    **/
+   public function mapSafely(callable $mapFunc): self {
+      try {
+         return $this->map($mapFunc);
+      } catch (\Exception $e) {
+         return Either::none($e);
+      }
+   }
+
    /**
     * A passthrough for FlatMap.
     * A nicer name through

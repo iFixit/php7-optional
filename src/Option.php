@@ -284,12 +284,57 @@ class Option {
    }
 
    /**
-    * ```php
-    * $none = Option::none();
-    * $noneNotNull = $none->flatMap(function($x) { return Option::some($x)->notNull(); });
+    * `map`, but if an exception occurs, return `Option::none`
     *
-    * $some = Option::some(null);
-    * $someNotNull = $some->flatMap(function($x) { return Option::some($x)->notNull(); });
+    * Maps the `$value` of a `Option::some($value)`
+    *
+    * The map function runs iff the options is a `Option::some`
+    * Otherwise the `Option:none` is propagated
+    *
+    * ```php
+    * $some = Option::some(['key' => 'value']);
+    * $none = $some->safeMap(function($array) { $thing = $array['Missing Key will cause error']; return 5; });
+    * ```
+    *
+    * _Notes:_
+    *
+    *  - `$mapFunc` must follow this interface `callable(T):U`
+    *  - Returns `Option<U>`
+    *
+    * @template U
+    * @param $mapFunc callable(T):U
+    * @return Option<U>
+    **/
+   public function mapSafely(callable $mapFunc): self {
+      try {
+         return $this->map($mapFunc);
+      } catch (\Exception $e) {
+         return Option::none();
+      }
+   }
+
+   /**
+    * Allows a function to map over the internal value, the function returns an option
+    *
+    * ```php
+    * $somePerson = [
+    *     'name' => [
+    *        'first' => 'First',
+    *        'last' => 'Last'
+    *     ]
+    *  ];
+    *
+    * $person = Option::fromArray($somePerson, 'name');
+    *
+    *   $name = $person->flatMap(function($person) {
+    *      $fullName = $person['first'] . $person['last'];
+    *      try {
+    *         $thing = SomeComplexThing::doWork($fullName, "Forcing some exception");
+    *      } catch (\Exception $e) {
+    *         return Option::none();
+    *      }
+    *      return Option::some($thing);
+    *  });
     * ```
     *
     * Note: `$mapFunc` must follow this interface `function mapFunc(mixed $value): Option`
