@@ -219,6 +219,14 @@ class OptionTest extends PHPUnit\Framework\TestCase {
       $this->assertFalse($noneNotNull->hasValue());
       $this->assertTrue($someNotNull->hasValue());
       $this->assertFalse($someNullNotNull->hasValue());
+
+      $noneNotNull = $none->andThen(function($x) { return Option::some($x)->notNull(); });
+      $someNotNull = $some->andThen(function($x) { return Option::some($x)->notNull(); });
+      $someNullNotNull = $someNull->andThen(function($x) { return Option::some($x)->notNull(); });
+
+      $this->assertFalse($noneNotNull->hasValue());
+      $this->assertTrue($someNotNull->hasValue());
+      $this->assertFalse($someNullNotNull->hasValue());
    }
 
    public function testFiltering() {
@@ -256,7 +264,7 @@ class OptionTest extends PHPUnit\Framework\TestCase {
 
       $person = Option::fromArray($somePerson, 'name');
 
-      $name = $person->flatMap(function($person) {
+      $name = $person->andThen(function($person) {
          $fullName = $person['first'] . $person['last'];
 
          try {
@@ -281,7 +289,7 @@ class OptionTest extends PHPUnit\Framework\TestCase {
 
       $person = Option::fromArray($somePerson, 'name');
 
-      $name = $person->flatMap(function($person) {
+      $name = $person->andThen(function($person) {
          $fullName = $person['first'] . $person['last'];
 
          try {
