@@ -307,4 +307,33 @@ class EitherTest extends PHPUnit\Framework\TestCase {
       $this->assertFalse($name->hasValue());
       $this->assertSame($name->valueOr('oh no'), 'oh no');
    }
+
+   public function testSafelyMapWithException() {
+      $somePerson = [
+         'name' => [
+            'first' => 'First',
+            'last' => 'Last'
+         ]
+      ];
+
+      $person = Either::fromArray($somePerson, 'name', 'name was missing');
+
+      $name = $person->mapSafely(function($person) {
+         $fullName = $person['first'] . $person['last'];
+         $thing = SomeComplexThing::doWork($fullName, "Forcing some exception");
+         return Either::some($thing);
+      });
+
+      $this->assertFalse($name->hasValue());
+      $this->assertSame($name->valueOr('oh no'), 'oh no');
+
+      $out = 'This should change';
+
+      $name->match(
+         function ($someValue) { $this->fail('Callback should not have been run!'); },
+         function ($exception) use(&$out) { $out = $exception->getMessage(); }
+      );
+
+      $this->assertSame($out, "Forcing some exception");
+   }
 }

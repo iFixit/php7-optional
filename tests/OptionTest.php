@@ -304,6 +304,26 @@ class OptionTest extends PHPUnit\Framework\TestCase {
       $this->assertFalse($name->hasValue());
       $this->assertSame($name->valueOr('oh no'), 'oh no');
    }
+
+   public function testSafelyMapWithException() {
+      $somePerson = [
+         'name' => [
+            'first' => 'First',
+            'last' => 'Last'
+         ]
+      ];
+
+      $person = Option::fromArray($somePerson, 'name');
+
+      $name = $person->mapSafely(function($person) {
+         $fullName = $person['first'] . $person['last'];
+         $thing = SomeComplexThing::doWork($fullName, "Forcing some exception");
+         return Option::some($thing);
+      });
+
+      $this->assertFalse($name->hasValue());
+      $this->assertSame($name->valueOr('oh no'), 'oh no');
+   }
 }
 
 class SomeObject {};
