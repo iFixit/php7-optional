@@ -297,6 +297,44 @@ class Either {
    }
 
    /**
+    * A passthrough for FlatMap.
+    * A nicer name through
+    *
+    * ```php
+    * $somePerson = [
+    *     'name' => [
+    *        'first' => 'First',
+    *        'last' => 'Last'
+    *     ]
+    *  ];
+    *
+    * $person = Either::fromArray($somePerson, 'name', 'name was missing');
+    *
+    *   $name = $person->andThen(function($person) {
+    *      $fullName = $person['first'] . $person['last'];
+    *      try {
+    *         $thing = SomeComplexThing::doWork($fullName);
+    *      } catch (\Exception $e) {
+    *         return Either::none('SomeComplexThing had an error!');
+    *      }
+    *      return Either::some($thing);
+    *  });
+    * ```
+    *
+    * _Notes:_
+    *
+    *  - `$mapFunc` must follow this interface `callable(TSome):Either<USome, TNone>`
+    *  - Returns `Either<TSome, TNone>`
+    *
+    * @template USome
+    * @param callable(TSome):Either<USome, TNone> $mapFunc
+    * @return Either<USome, TNone>
+    **/
+    public function andThen(callable $mapFunc): self {
+      return $this->flatMap($mapFunc);
+    }
+
+   /**
     * ```php
     * $none = Either::none(null);
     * $noneNotNull = $none->flatMap(function($noneValue) { return Either::some($noneValue)->notNull(); });
