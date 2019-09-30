@@ -239,6 +239,66 @@ class OptionTest extends PHPUnit\Framework\TestCase {
       $noneEmpty = $someEmpty->notFalsy();
       $this->assertFalse($noneEmpty->hasValue());
    }
+
+   public function testFlatMap() {
+      $somePerson = [
+         'name' => [
+            'first' => 'First',
+            'last' => 'Last'
+         ]
+      ];
+
+      $person = Option::fromArray($somePerson, 'name');
+
+      $name = $person->flatMap(function($person) {
+         $fullName = $person['first'] . $person['last'];
+
+         try {
+            $thing = SomeComplexThing::doWork($fullName);
+         } catch (ErrorException $e) {
+            return Option::none();
+         }
+
+         return Option::some($thing);
+      });
+
+      $this->assertSame($name->valueOr(''), 'FirstLast');
+   }
+
+   public function testFlatMapWithException() {
+      $somePerson = [
+         'name' => [
+            'first' => 'First',
+            'last' => 'Last'
+         ]
+      ];
+
+      $person = Option::fromArray($somePerson, 'name');
+
+      $name = $person->flatMap(function($person) {
+         $fullName = $person['first'] . $person['last'];
+
+         try {
+            $thing = SomeComplexThing::doWork($fullName, "Forcing some exception");
+         } catch (\Exception $e) {
+            return Option::none();
+         }
+
+         return Option::some($thing);
+      });
+
+      $this->assertFalse($name->hasValue());
+      $this->assertSame($name->valueOr('oh no'), 'oh no');
+   }
 }
 
 class SomeObject {};
+class SomeComplexThing {
+   public static function doWork(string $thing, string $ex = null): string {
+      if($ex) {
+         throw new \Exception($ex);
+      }
+
+      return $thing;
+   }
+};
