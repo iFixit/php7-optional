@@ -19,6 +19,12 @@ class OptionTest extends PHPUnit\Framework\TestCase {
       $this->assertTrue($someThing->hasValue());
       $this->assertTrue($someNullable->hasValue());
       $this->assertTrue($someClass->hasValue());
+
+      $noname = Option::fromArray(['name' => 'value'], 'noname');
+      $this->assertFalse($noname->hasValue());
+
+      $name = Option::fromArray(['name' => 'value'], 'name');
+      $this->assertTrue($name->hasValue());
    }
 
    public function testCreateAndCheckExistenceWhen() {
