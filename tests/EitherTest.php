@@ -20,6 +20,12 @@ class EitherTest extends PHPUnit\Framework\TestCase {
       $this->assertTrue($someThing->hasValue());
       $this->assertTrue($someNullable->hasValue());
       $this->assertTrue($someClass->hasValue());
+
+      $none = Either::someNotNull(null, $noneValue);
+      $some = Either::someNotNull('', $noneValue);
+
+      $this->assertFalse($none->hasValue());
+      $this->assertTrue($some->hasValue());
    }
 
    public function testCreateAndCheckExistenceWhen() {
