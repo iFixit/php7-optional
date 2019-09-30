@@ -336,7 +336,7 @@ class Option {
    }
 
    /**
-    * Turn a `Option::some(null)` into an `Option::none()`
+    * Turn a `Option::some(null)` into an `Option::none()` iff `is_null($value)`
     *
     * ```php
     * $someThing = Option::some(null); // Valid
@@ -346,7 +346,22 @@ class Option {
     * @return Option<T>
     **/
    public function notNull(): self {
-      return $this->hasValue && $this->value == null ? self::none() : $this;
+      return $this->hasValue && is_null($this->value) ? self::none() : $this;
+   }
+
+   /**
+    * Turn a `Option::some(null)` into an `Option::none()` iff `!$value == true`
+    *
+    * ```php
+    * $someThing = Option::some(null); // Valid
+    * $none = $someThing->notFalsy(); // Turn null into an none Option
+    * $none =  Option::some("")->notFalsy(); // Turn empty string into an none Option
+    * ```
+    *
+    * @return Option<T>
+    **/
+    public function notFalsy(): self {
+      return $this->hasValue && !$this->value ? self::none() : $this;
    }
 
    /**
