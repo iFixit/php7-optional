@@ -22,7 +22,7 @@ jobs:
       before_script:
       - curl -O http://get.sensiolabs.org/sami.phar
       script:
-      - php sami.phar update sami-config.php --force
+      - php sami.phar update sami-config.php --force -vvv
       deploy:
        provider: surge
        skip_cleanup: true
