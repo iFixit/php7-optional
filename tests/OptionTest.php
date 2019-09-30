@@ -222,6 +222,16 @@ class OptionTest extends PHPUnit\Framework\TestCase {
       $this->assertFalse($someNotA->hasValue());
       $this->assertFalse($noneA->hasValue());
       $this->assertTrue($someA->hasValue());
+
+      $someNull = Option::some(null);
+      $this->assertTrue($someNull->hasValue());
+      $noneNull = $someNull->notNull();
+      $this->assertFalse($noneNull->hasValue());
+
+      $someEmpty = Option::some("");
+      $this->assertTrue($someEmpty->hasValue());
+      $noneEmpty = $someEmpty->notFalsy();
+      $this->assertFalse($noneEmpty->hasValue());
    }
 }
 
