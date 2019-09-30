@@ -587,6 +587,7 @@ class Either {
     * - Returns `Either<TSome, TNone>`
     *
     * @param T $someValue
+    * @param TNone $noneValue
     * @return Either<TSome, TNone>
     **/
     public static function someNotNull($someValue, $noneValue): self {
@@ -602,11 +603,12 @@ class Either {
     * ```
     * _Notes:_
     *
-    * - Returns `Either<T>`
+    * - Returns `Either<TSome, TNone>`
     *
     * @param array $array
     * @param mixed $key The key of the array
-    * @return Either<T>
+    * @param TNone $noneValue
+    *  @return Either<TSome, TNone>
     **/
     public static function fromArray(array $array, $key, $noneValue): self {
       if (isset($array[$key])) {
