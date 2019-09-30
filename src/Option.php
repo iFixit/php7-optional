@@ -306,6 +306,39 @@ class Option {
       return $this->match($mapFunc, $noneFunc);
    }
 
+   /**
+    * A passthrough for FlatMap.
+    * A nicer name through
+    *
+    * ```php
+    * $somePerson = [
+    *     'name' => [
+    *        'first' => 'First',
+    *        'last' => 'Last'
+    *     ]
+    *  ];
+    *
+    * $person = Option::fromArray($somePerson, 'name');
+    *
+    *   $name = $person->andThen(function($person) {
+    *      $fullName = $person['first'] . $person['last'];
+    *      try {
+    *         $thing = SomeComplexThing::doWork($fullName, "Forcing some exception");
+    *      } catch (\Exception $e) {
+    *         return Option::none();
+    *      }
+    *      return Option::some($thing);
+    *  });
+    * ```
+    * Note: `$mapFunc` must follow this interface `function mapFunc(mixed $value): Option`
+    * @template U
+    * @param callable(T):Option<U> $mapFunc
+    * @return Option<U>
+    **/
+    public function andThen(callable $mapFunc): self {
+       return $this->flatMap($mapFunc);
+    }
+
    public function filter(bool $condition): self {
       return $this->hasValue && !$condition ? self::none() : $this;
    }
@@ -504,9 +537,8 @@ class Option {
     * Take a value, turn it a `Option::some($value)` iff `!is_null($value)`, otherwise returns `Option::none()`
     *
     * ```php
-    * $someNullThing = Option::some(null); // Valid, returns Some(null)
+    * $some = Option::some(null); // Valid, returns Some(null)
     * $none = Option::someNotNull(null); // Valid, returns None()
-    *
     * ```
     * _Notes:_
     *
