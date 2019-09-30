@@ -574,4 +574,22 @@ class Either {
       }
       return self::some($someValue);
    }
+
+   /**
+    * Take a value, turn it a `Either::some($someValue)` iff `!is_null($someValue)`, otherwise returns `Either::none($noneValue)`
+    *
+    * ```php
+    * $some = Either::some(null); // Valid, returns Some(null)
+    * $none = Either::someNotNull(null); // Valid, returns None()
+    * ```
+    * _Notes:_
+    *
+    * - Returns `Either<TSome, TNone>`
+    *
+    * @param T $someValue
+    * @return Either<TSome, TNone>
+    **/
+    public static function someNotNull($someValue, $noneValue): self {
+      return self::some($someValue)->notNull($noneValue);
+   }
 }
