@@ -562,7 +562,8 @@ class Option {
     *
     * - Returns `Option<T>`
     *
-    * @param T $someValue
+    * @param array $array
+    * @param mixed $key The key of the array
     * @return Option<T>
     **/
    public static function fromArray(array $array, $key): self {
