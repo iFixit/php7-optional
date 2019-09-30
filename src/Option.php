@@ -336,7 +336,7 @@ class Option {
     * @return Option<U>
     **/
     public function andThen(callable $mapFunc): self {
-       return $this->flatMap($mapFunc);
+      return $this->flatMap($mapFunc);
     }
 
    public function filter(bool $condition): self {
