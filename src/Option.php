@@ -501,6 +501,25 @@ class Option {
    }
 
    /**
+    * Take a value, turn it a `Option::some($value)` iff `!is_null($value)`, otherwise returns `Option::none()`
+    *
+    * ```php
+    * $someNullThing = Option::some(null); // Valid, returns Some(null)
+    * $none = Option::someNotNull(null); // Valid, returns None()
+    *
+    * ```
+    * _Notes:_
+    *
+    * - Returns `Option<T>`
+    *
+    * @param T $someValue
+    * @return Option<T>
+    **/
+   public static function someNotNull($someValue): self {
+      return self::some($someValue)->notNull();
+   }
+
+   /**
     * Creates a option if the `$key` exists in `$array`
     *
     * ```php
