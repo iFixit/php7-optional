@@ -366,6 +366,8 @@ class Either {
     }
 
    /**
+    * Allows a function to map over the internal value, the function returns an Either
+    *
     * ```php
     * $none = Either::none(null);
     * $noneNotNull = $none->flatMap(function($noneValue) { return Either::some($noneValue)->notNull(); });
