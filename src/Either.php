@@ -5,25 +5,25 @@ declare(strict_types = 1);
 namespace Optional;
 
 /**
- * @template TSome
- * @template TNone
+ * @template TLeft
+ * @template TRight
  */
 class Either {
    /** @var bool */
    private $hasValue;
-   /** @var TSome */
-   private $someValue;
-   /** @var TNone */
-   private $noneValue;
+   /** @var TLeft */
+   private $leftValue;
+   /** @var TRight */
+   private $rightValue;
 
    /**
-    * @param TSome $someValue
-    * @param TNone $noneValue
+    * @param TLeft $leftValue
+    * @param TRight $rightValue
     **/
-   private function __construct($someValue, $noneValue, bool $hasValue) {
+   private function __construct($leftValue, $rightValue, bool $hasValue) {
       $this->hasValue = $hasValue;
-      $this->someValue = $someValue;
-      $this->noneValue = $noneValue;
+      $this->leftValue = $leftValue;
+      $this->rightValue = $rightValue;
    }
 
    /**
@@ -50,11 +50,11 @@ class Either {
     * $none = Either::some(null)->valueOr("Some other value!"); // null, See either->notNull()
     * ```
     *
-    * @param TSome $alternative
-    * @return TSome
+    * @param TLeft $alternative
+    * @return TLeft
     **/
    public function valueOr($alternative) {
-      return $this->hasValue ? $this->someValue : $alternative;
+      return $this->hasValue ? $this->leftValue : $alternative;
    }
 
    /**
@@ -66,25 +66,25 @@ class Either {
     *
     * $none = Either::none("Error Code 123");
     *
-    * $myVar = $someThing->valueOrCreate(function($noneValue) { return new NewObject(); }); // 1
-    * $myVar = $someClass->valueOrCreate(function($noneValue) { return new NewObject(); }); // instance of SomeObject
+    * $myVar = $someThing->valueOrCreate(function($rightValue) { return new NewObject(); }); // 1
+    * $myVar = $someClass->valueOrCreate(function($rightValue) { return new NewObject(); }); // instance of SomeObject
     *
-    * $myVar = $none->valueOrCreate(function($noneValue) { return new NewObject(); }); // instance of NewObject
+    * $myVar = $none->valueOrCreate(function($rightValue) { return new NewObject(); }); // instance of NewObject
     * ```
     *
     * _Notes:_
     *
-    *  - `$valueFactoryFunc` must follow this interface `callable(TNone):TSome`
+    *  - `$valueFactoryFunc` must follow this interface `callable(TRight):TLeft`
     *
-    * @param callable(TNone):TSome $alternativeFactory
-    * @return TSome
+    * @param callable(TRight):TLeft $alternativeFactory
+    * @return TLeft
     **/
    public function valueOrCreate(callable $alternativeFactory) {
-      return $this->hasValue ? $this->someValue : $alternativeFactory($this->noneValue);
+      return $this->hasValue ? $this->leftValue : $alternativeFactory($this->rightValue);
    }
 
    /**
-    * Returns a `Either::some($value)` iff the either orginally was `Either::none($noneValue)`
+    * Returns a `Either::some($value)` iff the either orginally was `Either::none($rightValue)`
     *
     * ```php
     * $none = Either::none();
@@ -93,39 +93,39 @@ class Either {
     *
     * _Notes:_
     *
-    *  - Returns `Either<TSome, TNone>`
+    *  - Returns `Either<TLeft, TRight>`
     *
-    * @param TSome $alternative
-    * @return Either<TSome, TNone>
+    * @param TLeft $alternative
+    * @return Either<TLeft, TRight>
     **/
    public function or($alternative): self {
       return $this->hasValue ? $this : self::some($alternative);
    }
 
    /**
-    * Returns a `Either::some($value)` iff the the either orginally was `Either::none($noneValue)`
+    * Returns a `Either::some($value)` iff the the either orginally was `Either::none($rightValue)`
     *
-    * The `$valueFactoryFunc` is called lazily - iff the either orginally was `Either::none($noneValue)`
+    * The `$valueFactoryFunc` is called lazily - iff the either orginally was `Either::none($rightValue)`
     *
     * ```php
     * $none = Either::none();
-    * $myVar = $none->orCreate(function($noneValue) { return 10; }); // A some instance, with value 10, but lazy
+    * $myVar = $none->orCreate(function($rightValue) { return 10; }); // A some instance, with value 10, but lazy
     * ```
     *
     * _Notes:_
     *
-    *  - `$valueFactoryFunc` must follow this interface `callable(TNone):TSome`
-    *  - Returns `Either<TSome, TNone>`
+    *  - `$valueFactoryFunc` must follow this interface `callable(TRight):TLeft`
+    *  - Returns `Either<TLeft, TRight>`
     *
-    * @param callable(TNone):TSome $alternativeFactory
-    * @return Either<TSome, TNone>
+    * @param callable(TRight):TLeft $alternativeFactory
+    * @return Either<TLeft, TRight>
     **/
    public function orCreate(callable $alternativeFactory): self {
-      return $this->hasValue ? $this : self::some($alternativeFactory($this->noneValue));
+      return $this->hasValue ? $this : self::some($alternativeFactory($this->rightValue));
    }
 
    /**
-    * iff `Either::none($noneValue)` return `$otherEither`, otherwise return the orginal `$either`
+    * iff `Either::none($rightValue)` return `$otherEither`, otherwise return the orginal `$either`
     *
     * ```php
     * $none = Either::none("Some Error Message");
@@ -135,11 +135,11 @@ class Either {
     *
     * _Notes:_
     *
-    *  - `$alternativeEither` must be of type `Either<TSome, TNone>`
-    *  - Returns `Either<TSome, TNone>`
+    *  - `$alternativeEither` must be of type `Either<TLeft, TRight>`
+    *  - Returns `Either<TLeft, TRight>`
     *
-    * @param Either<TSome, TNone> $alternativeEither
-    * @return Either<TSome, TNone>
+    * @param Either<TLeft, TRight> $alternativeEither
+    * @return Either<TLeft, TRight>
     **/
    public function else(self $alternativeEither): self {
       return $this->hasValue ? $this : $alternativeEither;
@@ -153,19 +153,19 @@ class Either {
     * ```php
     * $none = Either::none();
     *
-    * $myVar = $none->elseCreate(function($noneValue) { return Either::some(10); }); // A some instance, with value 10, but lazy
+    * $myVar = $none->elseCreate(function($rightValue) { return Either::some(10); }); // A some instance, with value 10, but lazy
     * ```
     *
     * _Notes:_
     *
-    *  - `$alternativeEither` must be of type `callable(TNone):Either<TSome, TNone> `
-    *  - Returns `Either<TSome, TNone>`
+    *  - `$alternativeEither` must be of type `callable(TRight):Either<TLeft, TRight> `
+    *  - Returns `Either<TLeft, TRight>`
     *
-    * @param callable(TNone):Either<TSome, TNone> $alternativeEitherFactory
-    * @return Either<TSome, TNone>
+    * @param callable(TRight):Either<TLeft, TRight> $alternativeEitherFactory
+    * @return Either<TLeft, TRight>
     **/
    public function elseCreate(callable $alternativeEitherFactory): self {
-      return $this->hasValue ? $this : $alternativeEitherFactory($this->noneValue);
+      return $this->hasValue ? $this : $alternativeEitherFactory($this->rightValue);
    }
 
    /**
@@ -179,7 +179,7 @@ class Either {
     *
     * $someThingSquared = $someThing->match(
     *    function($x) { return $x * $x; },               // runs iff $someThing == Either::some
-    *    function($noneValue) { return $noneValue; }     // runs iff $someThing == Either::none
+    *    function($rightValue) { return $rightValue; }     // runs iff $someThing == Either::none
     * );
     *
     *
@@ -193,16 +193,16 @@ class Either {
     *
     * _Notes:_
     *
-    *  - `$some` must follow this interface `callable(TSome):U`
-    *  - `$none` must follow this interface `callable(TNone):U`
+    *  - `$some` must follow this interface `callable(TLeft):U`
+    *  - `$none` must follow this interface `callable(TRight):U`
     *
     * @template U
-    * @param callable(TSome):U $some
-    * @param callable(TNone):U $none
+    * @param callable(TLeft):U $some
+    * @param callable(TRight):U $none
     * @return U
     **/
    public function match(callable $some, callable $none) {
-      return $this->hasValue ? $some($this->someValue) : $none($this->noneValue);
+      return $this->hasValue ? $some($this->leftValue) : $none($this->rightValue);
    }
 
    /**
@@ -218,16 +218,16 @@ class Either {
     *
     * _Notes:_
     *
-    *  - `$some` must follow this interface `callable(TSome):U`
+    *  - `$some` must follow this interface `callable(TLeft):U`
     *
-    * @param callable(TSome) $some
+    * @param callable(TLeft) $some
     **/
    public function matchSome(callable $some): void {
       if (!$this->hasValue) {
          return;
       }
 
-      $some($this->someValue);
+      $some($this->leftValue);
    }
 
    /**
@@ -243,23 +243,23 @@ class Either {
     *
     * _Notes:_
     *
-    *  - `$none` must follow this interface `callable(TNone):U`
+    *  - `$none` must follow this interface `callable(TRight):U`
     *
-    * @param callable(TNone) $none
+    * @param callable(TRight) $none
     **/
    public function matchNone(callable $none): void {
       if ($this->hasValue) {
          return;
       }
 
-      $none($this->noneValue);
+      $none($this->rightValue);
    }
 
    /**
     * Maps the `$value` of a `Either::some($value)`
     *
     * The map function runs iff the either's is a `Either::some`
-    * Otherwise the `Either:none($noneValue)` is propagated
+    * Otherwise the `Either:none($rightValue)` is propagated
     *
     * ```php
     * $none = Either::none("Some Error Message");
@@ -271,26 +271,26 @@ class Either {
     *
     * _Notes:_
     *
-    *  - `$mapFunc` must follow this interface `callable(TSome):Either<USome, TNone>`
-    *  - Returns `Either<TSome, TNone>`
+    *  - `$mapFunc` must follow this interface `callable(TLeft):Either<ULeft, TRight>`
+    *  - Returns `Either<TLeft, TRight>`
     *
-    * @template USome
-    * @param callable(TSome):Either<USome, TNone> $mapFunc
-    * @return Either<USome, TNone>
+    * @template ULeft
+    * @param callable(TLeft):Either<ULeft, TRight> $mapFunc
+    * @return Either<ULeft, TRight>
     **/
    public function map(callable $mapFunc): self {
-      /** @var callable(TSome):Either<USome, TNone> **/
+      /** @var callable(TLeft):Either<ULeft, TRight> **/
       $someFunc =
-      /** @param TSome $value */
+      /** @param TLeft $value */
       function($value) use ($mapFunc): Either {
          return self::some($mapFunc($value));
       };
 
-      /** @var callable(TNone):Either<USome, TNone> **/
+      /** @var callable(TRight):Either<ULeft, TRight> **/
       $noneFunc =
-      /** @param TNone $noneValue */
-      function($noneValue): Either {
-         return self::none($noneValue);
+      /** @param TRight $rightValue */
+      function($rightValue): Either {
+         return self::none($rightValue);
       };
 
       return $this->match($someFunc, $noneFunc);
@@ -303,7 +303,7 @@ class Either {
     * Maps the `$value` of a `Either::some($value)`
     *
     * The map function runs iff the either's is a `Either::some`
-    * Otherwise the `Either:none($noneValue)` is propagated
+    * Otherwise the `Either:none($rightValue)` is propagated
     *
     * ```php
     * $some = Either::some(['key' => 'value']);
@@ -312,12 +312,12 @@ class Either {
     *
     * _Notes:_
     *
-    *  - `$mapFunc` must follow this interface `callable(TSome):Either<USome, TNone>`
-    *  - Returns `Either<TSome, TNone>`
+    *  - `$mapFunc` must follow this interface `callable(TLeft):Either<ULeft, TRight>`
+    *  - Returns `Either<TLeft, TRight>`
     *
-    * @template USome
-    * @param callable(TSome):Either<USome, TNone> $mapFunc
-    * @return Either<USome, TNone>
+    * @template ULeft
+    * @param callable(TLeft):Either<ULeft, TRight> $mapFunc
+    * @return Either<ULeft, TRight>
     **/
    public function mapSafely(callable $mapFunc): self {
       try {
@@ -354,12 +354,12 @@ class Either {
     *
     * _Notes:_
     *
-    *  - `$mapFunc` must follow this interface `callable(TSome):Either<USome, TNone>`
-    *  - Returns `Either<TSome, TNone>`
+    *  - `$mapFunc` must follow this interface `callable(TLeft):Either<ULeft, TRight>`
+    *  - Returns `Either<TLeft, TRight>`
     *
-    * @template USome
-    * @param callable(TSome):Either<USome, TNone> $mapFunc
-    * @return Either<USome, TNone>
+    * @template ULeft
+    * @param callable(TLeft):Either<ULeft, TRight> $mapFunc
+    * @return Either<ULeft, TRight>
     **/
     public function andThen(callable $mapFunc): self {
       return $this->flatMap($mapFunc);
@@ -370,27 +370,27 @@ class Either {
     *
     * ```php
     * $none = Either::none(null);
-    * $noneNotNull = $none->flatMap(function($noneValue) { return Either::some($noneValue)->notNull(); });
+    * $noneNotNull = $none->flatMap(function($rightValue) { return Either::some($rightValue)->notNull(); });
     *
     * $some = Either::some(null);
-    * $someNotNull = $some->flatMap(function($someValue) { return Either::some($someValue)->notNull(); });
+    * $someNotNull = $some->flatMap(function($leftValue) { return Either::some($leftValue)->notNull(); });
     * ```
     *
     * _Notes:_
     *
-    *  - `$alternativeFactory` must follow this interface `callable(TSome):Either<USome, TNone>`
-    *  - Returns `Either<USome, TNone>`
+    *  - `$alternativeFactory` must follow this interface `callable(TLeft):Either<ULeft, TRight>`
+    *  - Returns `Either<ULeft, TRight>`
     *
-    * @template USome
-    * @param callable(TSome):Either<USome, TNone> $mapFunc
-    * @return Either<USome, TNone>
+    * @template ULeft
+    * @param callable(TLeft):Either<ULeft, TRight> $mapFunc
+    * @return Either<ULeft, TRight>
     **/
    public function flatMap(callable $mapFunc): self {
-      /** @var callable(TNone):Either<USome, TNone> **/
+      /** @var callable(TRight):Either<ULeft, TRight> **/
       $noneFunc =
-      /** @param TNone $noneValue */
-      function($noneValue): Either {
-         return self::none($noneValue);
+      /** @param TRight $rightValue */
+      function($rightValue): Either {
+         return self::none($rightValue);
       };
 
       return $this->match($mapFunc, $noneFunc);
@@ -398,11 +398,11 @@ class Either {
 
    /**
     * @param bool $condition
-    * @param TNone $noneValue
-    * @return Either<TSome, TNone>
+    * @param TRight $rightValue
+    * @return Either<TLeft, TRight>
     **/
-   public function filter(bool $condition, $noneValue): self {
-      return $this->hasValue && !$condition ? self::none($noneValue) : $this;
+   public function filter(bool $condition, $rightValue): self {
+      return $this->hasValue && !$condition ? self::none($rightValue) : $this;
    }
 
    /**
@@ -420,53 +420,53 @@ class Either {
     *
     * _Notes:_
     *
-    *  - `$filterFunc` must follow this interface `callable(TSome):bool`
-    *  - Returns `Either<TSome, TNone>`
+    *  - `$filterFunc` must follow this interface `callable(TLeft):bool`
+    *  - Returns `Either<TLeft, TRight>`
     *
-    * @param callable(TSome):bool $filterFunc
-    * @param TNone $noneValue
-    * @return Either<TSome, TNone>
+    * @param callable(TLeft):bool $filterFunc
+    * @param TRight $rightValue
+    * @return Either<TLeft, TRight>
     **/
-   public function filterIf(callable $filterFunc, $noneValue): self {
-      return $this->hasValue && !$filterFunc($this->someValue) ? self::none($noneValue) : $this;
+   public function filterIf(callable $filterFunc, $rightValue): self {
+      return $this->hasValue && !$filterFunc($this->leftValue) ? self::none($rightValue) : $this;
    }
 
    /**
-    * Turn an `Either::some(null)` into an `Either::none($noneValue)` iff `is_null($value)`
+    * Turn an `Either::some(null)` into an `Either::none($rightValue)` iff `is_null($value)`
     *
     * ```php
     * $someThing = Either::some($myVar); // Valid
-    * $noneThing = $someThing->notNull("The var was null"); // Turn null into an Either::none($noneValue)
+    * $noneThing = $someThing->notNull("The var was null"); // Turn null into an Either::none($rightValue)
     * ```
     *
     * _Notes:_
     *
-    *  - Returns `Either<TSome, TNone>`
+    *  - Returns `Either<TLeft, TRight>`
     *
-    * @param TNone $noneValue
-    * @return Either<TSome, TNone>
+    * @param TRight $rightValue
+    * @return Either<TLeft, TRight>
     **/
-   public function notNull($noneValue): self {
-      return $this->hasValue && is_null($this->someValue) ? self::none($noneValue) : $this;
+   public function notNull($rightValue): self {
+      return $this->hasValue && is_null($this->leftValue) ? self::none($rightValue) : $this;
    }
 
    /**
-    * Turn an `Either::some(null)` into an `Either::none($noneValue)` iff `!$value == true`
+    * Turn an `Either::some(null)` into an `Either::none($rightValue)` iff `!$value == true`
     *
     * ```php
     * $someThing = Either::some($myVar); // Valid
-    * $noneThing = $someThing->notNull("The var was null"); // Turn null into an Either::none($noneValue)
+    * $noneThing = $someThing->notNull("The var was null"); // Turn null into an Either::none($rightValue)
     * ```
     *
     * _Notes:_
     *
-    *  - Returns `Either<TSome, TNone>`
+    *  - Returns `Either<TLeft, TRight>`
     *
-    * @param TNone $noneValue
-    * @return Either<TSome, TNone>
+    * @param TRight $rightValue
+    * @return Either<TLeft, TRight>
     **/
-   public function notFalsy($noneValue): self {
-      return $this->hasValue && !$this->someValue ? self::none($noneValue) : $this;
+   public function notFalsy($rightValue): self {
+      return $this->hasValue && !$this->leftValue ? self::none($rightValue) : $this;
    }
 
    /**
@@ -487,7 +487,7 @@ class Either {
          return false;
       }
 
-      return $this->someValue == $value;
+      return $this->leftValue == $value;
    }
 
    /**
@@ -504,16 +504,16 @@ class Either {
     *
     * _Notes:_
     *
-    *  - `$filterFunc` must follow this interface `callable(TSome):bool`
+    *  - `$filterFunc` must follow this interface `callable(TLeft):bool`
     *
-    * @param callable(TSome):bool $existsFunc
+    * @param callable(TLeft):bool $existsFunc
     **/
    public function exists(callable $existsFunc): bool {
       if (!$this->hasValue()) {
          return false;
       }
 
-      return $existsFunc($this->someValue);
+      return $existsFunc($this->leftValue);
    }
 
    /**
@@ -533,17 +533,17 @@ class Either {
     **/
    public function ToOption(): Option {
 
-      /** @var callable(TSome):Option<U> **/
+      /** @var callable(TLeft):Option<U> **/
       $someFunc =
-      /** @param TSome $value **/
+      /** @param TLeft $value **/
       function($value): Option {
          return Option::some($value);
       };
 
-      /** @var callable(TNone):Option<U> **/
+      /** @var callable(TRight):Option<U> **/
       $noneFunc =
-      /** @param TSome $noneValue **/
-      function($noneValue): Option {
+      /** @param TLeft $rightValue **/
+      function($rightValue): Option {
          return Option::none();
       };
 
@@ -566,13 +566,13 @@ class Either {
     *
     * _Notes:_
     *
-    *  - Returns `Either<TSome, mixed>`
+    *  - Returns `Either<TLeft, mixed>`
     *
-    * @param TSome $someValue
-    * @return Either<TSome, mixed>
+    * @param TLeft $leftValue
+    * @return Either<TLeft, mixed>
     **/
-   public static function some($someValue): self {
-      return new self($someValue, null, true);
+   public static function some($leftValue): self {
+      return new self($leftValue, null, true);
    }
 
    /**
@@ -584,18 +584,18 @@ class Either {
     *
     * _Notes:_
     *
-    *  - Returns `Either<mixed, TNone>`
+    *  - Returns `Either<mixed, TRight>`
     *
-    * @param TNone $noneValue
-    * @return Either<mixed, TNone>
+    * @param TRight $rightValue
+    * @return Either<mixed, TRight>
     **/
-   public static function none($noneValue): self {
-      return new self(null, $noneValue, false);
+   public static function none($rightValue): self {
+      return new self(null, $rightValue, false);
    }
 
    /**
-    * Take a value, turn it a `Either::some($someValue)` iff the `$filterFunc` returns true
-    * otherwise an `Either::none($noneValue)`
+    * Take a value, turn it a `Either::some($leftValue)` iff the `$filterFunc` returns true
+    * otherwise an `Either::none($rightValue)`
     *
     * ```php
     * $positiveOne = Either::someWhen(1, -1, function($x) { return $x > 0; });
@@ -606,23 +606,23 @@ class Either {
     * _Notes:_
     *
     *  - `$filterFunc` must follow this interface `callable():T`
-    *  - Returns `Either<mixed, TNone>`
+    *  - Returns `Either<mixed, TRight>`
     *
-    * @param TSome $someValue
-    * @param TNone $noneValue
-    * @param callable(TSome): bool $filterFunc
-    * @return Either<TSome, TNone>
+    * @param TLeft $leftValue
+    * @param TRight $rightValue
+    * @param callable(TLeft): bool $filterFunc
+    * @return Either<TLeft, TRight>
     **/
-   public static function someWhen($someValue, $noneValue, callable $filterFunc): self {
-      if ($filterFunc($someValue)) {
-         return self::some($someValue);
+   public static function someWhen($leftValue, $rightValue, callable $filterFunc): self {
+      if ($filterFunc($leftValue)) {
+         return self::some($leftValue);
       }
-      return self::none($noneValue);
+      return self::none($rightValue);
    }
 
    /**
-    * Take a value, turn it a `Either::none($noneValue)` iff the `$filterFunc` returns true
-    * otherwise an `Either::some($someValue)`
+    * Take a value, turn it a `Either::none($rightValue)` iff the `$filterFunc` returns true
+    * otherwise an `Either::some($leftValue)`
     *
     * ```php
     * $positiveOne = Either::noneWhen(1, -1, function($x) { return $x < 0; });
@@ -632,22 +632,22 @@ class Either {
     * _Notes:_
     *
     *  - `$filterFunc` must follow this interface `callable():T`
-    *  - Returns `Either<mixed, TNone>`
+    *  - Returns `Either<mixed, TRight>`
     *
-    * @param TSome $someValue
-    * @param TNone $noneValue
-    * @param callable(TSome): bool $filterFunc
-    * @return Either<TSome, TNone>
+    * @param TLeft $leftValue
+    * @param TRight $rightValue
+    * @param callable(TLeft): bool $filterFunc
+    * @return Either<TLeft, TRight>
     **/
-   public static function noneWhen($someValue, $noneValue, callable $filterFunc): self {
-      if ($filterFunc($someValue)) {
-         return self::none($noneValue);
+   public static function noneWhen($leftValue, $rightValue, callable $filterFunc): self {
+      if ($filterFunc($leftValue)) {
+         return self::none($rightValue);
       }
-      return self::some($someValue);
+      return self::some($leftValue);
    }
 
    /**
-    * Take a value, turn it a `Either::some($someValue)` iff `!is_null($someValue)`, otherwise returns `Either::none($noneValue)`
+    * Take a value, turn it a `Either::some($leftValue)` iff `!is_null($leftValue)`, otherwise returns `Either::none($rightValue)`
     *
     * ```php
     * $some = Either::some(null); // Valid, returns Some(null)
@@ -655,14 +655,14 @@ class Either {
     * ```
     * _Notes:_
     *
-    * - Returns `Either<TSome, TNone>`
+    * - Returns `Either<TLeft, TRight>`
     *
-    * @param T $someValue
-    * @param TNone $noneValue
-    * @return Either<TSome, TNone>
+    * @param T $leftValue
+    * @param TRight $rightValue
+    * @return Either<TLeft, TRight>
     **/
-    public static function someNotNull($someValue, $noneValue): self {
-      return self::some($someValue)->notNull($noneValue);
+    public static function someNotNull($leftValue, $rightValue): self {
+      return self::some($leftValue)->notNull($rightValue);
    }
 
    /**
@@ -676,22 +676,22 @@ class Either {
     * ```
     * _Notes:_
     *
-    * - Returns `Either<TSome, TNone>`
+    * - Returns `Either<TLeft, TRight>`
     *
     * @param array $array
     * @param mixed $key The key of the array
-    * @param TNone $noneValue
-    *  @return Either<TSome, TNone>
+    * @param TRight $rightValue
+    *  @return Either<TLeft, TRight>
     **/
-    public static function fromArray(array $array, $key, $noneValue = null): self {
+    public static function fromArray(array $array, $key, $rightValue = null): self {
       if (isset($array[$key])) {
          return self::some($array[$key]);
       }
 
-      if (is_null($noneValue)) {
-         return self::none(new \Execption("Either got null for noneValue"));
+      if (is_null($rightValue)) {
+         return self::none(new \Execption("Either got null for rightValue"));
       }
 
-      return self::none($noneValue);
+      return self::none($rightValue);
    }
 }
