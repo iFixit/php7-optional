@@ -315,10 +315,9 @@ class OptionTest extends PHPUnit\Framework\TestCase {
 
       $person = Option::fromArray($somePerson, 'name');
 
-      $name = $person->mapSafely(function($person) {
+      $name = $person->mapSafely(function($person): string {
          $fullName = $person['first'] . $person['last'];
-         $thing = SomeComplexThing::doWork($fullName, "Forcing some exception");
-         return Option::some($thing);
+         return SomeComplexThing::doWork($fullName, "Forcing some exception");
       });
 
       $this->assertFalse($name->hasValue());
