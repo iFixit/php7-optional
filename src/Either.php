@@ -667,8 +667,10 @@ class Either {
     * Creates a either if the `$key` exists in `$array`
     *
     * ```php
-    * $some = Either::fromArray(['hello' => ' world'], 'hello', 'oh no');
-    * $none = Either::fromArray(['hello' => ' world'], 'nope', 'oh no');
+    * $some = Either::fromArray(['hello' => 'world'], 'hello', 'oh no'); // Some('world')
+    * $none = Either::fromArray(['hello' => 'world'], 'nope', 'oh no'); //  None('oh no')
+    * $none = Either::fromArray(['hello' => 'world'], 'nope'); //  None(Exception("Either got null for noneValue"))
+    * $none = Either::fromArray(['hello' => 'world'], 'nope', null); //  None(Exception("Either got null for noneValue"))
     * ```
     * _Notes:_
     *
@@ -679,9 +681,13 @@ class Either {
     * @param TNone $noneValue
     *  @return Either<TSome, TNone>
     **/
-    public static function fromArray(array $array, $key, $noneValue): self {
+    public static function fromArray(array $array, $key, $noneValue = null): self {
       if (isset($array[$key])) {
          return self::some($array[$key]);
+      }
+
+      if (is_null($noneValue)) {
+         return self::none(new \Execption("Either got null for noneValue"));
       }
 
       return self::none($noneValue);
