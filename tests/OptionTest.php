@@ -265,6 +265,27 @@ class OptionTest extends PHPUnit\Framework\TestCase {
       $this->assertFalse($noneEmpty->hasValue());
    }
 
+   public function testContains() {
+      $none = Option::none();
+      $someString = Option::some("a");
+      $someInt = Option::some(1);
+
+      $this->assertTrue($someString->contains("a"));
+      $this->assertFalse($someString->contains("A"));
+      $this->assertFalse($someString->contains(1));
+      $this->assertFalse($someString->contains(null));
+
+      $this->assertTrue($someInt->contains(1));
+      $this->assertFalse($someInt->contains(2));
+      $this->assertFalse($someInt->contains("A"));
+      $this->assertFalse($someInt->contains(null));
+
+      $this->assertFalse($none->contains(1));
+      $this->assertFalse($none->contains(2));
+      $this->assertFalse($none->contains("A"));
+      $this->assertFalse($none->contains(null));
+   }
+
    public function testFlatMap() {
       $somePerson = [
          'name' => [
