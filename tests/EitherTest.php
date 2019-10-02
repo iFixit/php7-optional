@@ -241,6 +241,17 @@ class EitherTest extends PHPUnit\Framework\TestCase {
       $none = Either::none($noneValue);
       $some = Either::some("a", $noneValue);
 
+      $someTrue = $some->filter(true, $noneValue);
+      $someFalse = $some->filter(false, $noneValue);
+      $noneTrue = $none->filter(true, $noneValue);
+      $noneFalse = $none->filter(false, $noneValue);
+
+      $this->assertTrue($someTrue->hasValue());
+      $this->assertFalse($someFalse->hasValue());
+
+      $this->assertFalse($noneTrue->hasValue());
+      $this->assertFalse($noneFalse->hasValue());
+
       $noneNotA = $none->filterIf(function($x) { return $x != "a"; }, $noneValue);
       $someNotA = $some->filterIf(function($x) { return $x != "a"; }, $noneValue);
       $noneA = $none->filterIf(function($x) { return $x == "a"; }, $noneValue);

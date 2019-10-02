@@ -233,6 +233,17 @@ class OptionTest extends PHPUnit\Framework\TestCase {
       $none = Option::none();
       $some = Option::some("a");
 
+      $someTrue = $some->filter(true);
+      $someFalse = $some->filter(false);
+      $noneTrue = $none->filter(true);
+      $noneFalse = $none->filter(false);
+
+      $this->assertTrue($someTrue->hasValue());
+      $this->assertFalse($someFalse->hasValue());
+
+      $this->assertFalse($noneTrue->hasValue());
+      $this->assertFalse($noneFalse->hasValue());
+
       $noneNotA = $none->filterIf(function($x) { return $x != "a"; });
       $someNotA = $some->filterIf(function($x) { return $x != "a"; });
       $noneA = $none->filterIf(function($x) { return $x == "a"; });
