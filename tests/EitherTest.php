@@ -4,6 +4,7 @@ declare(strict_types = 1);
 require_once dirname(__FILE__) . '/../src/Either.php';
 
 use Optional\Either;
+use Optional\Option;
 
 class EitherTest extends PHPUnit\Framework\TestCase {
 
@@ -394,5 +395,16 @@ class EitherTest extends PHPUnit\Framework\TestCase {
       );
 
       $this->assertSame($out, "Forcing some exception");
+   }
+
+   public function testToOption() {
+      $some = Either::some(10, "Some Error Message");
+      $none = Either::none("Some Error Message");
+
+      $someOption = $some->toOption();
+      $noneOption = $none->toOption();
+
+      $this->assertEquals($someOption, Option::some(10));
+      $this->assertEquals($noneOption, Option::none());
    }
 }
