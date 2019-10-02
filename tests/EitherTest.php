@@ -295,6 +295,20 @@ class EitherTest extends PHPUnit\Framework\TestCase {
       $this->assertFalse($none->contains(null));
    }
 
+   public function testExists() {
+      $noneValue = "goodbye";
+      $none = Either::none($noneValue);
+      $some = Either::some(10, $noneValue);
+
+      $noneFalse = $none->exists(function($x) { return $x == 10; });
+      $someTrue = $some->exists(function($x) { return $x >= 10; });
+      $someFalse = $some->exists(function($x) { return $x == "Thing"; });
+
+      $this->assertTrue($someTrue);
+      $this->assertFalse($noneFalse);
+      $this->assertFalse($someFalse);
+   }
+
    public function testFlatMap() {
       $somePerson = [
          'name' => [
