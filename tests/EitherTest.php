@@ -27,6 +27,11 @@ class EitherTest extends PHPUnit\Framework\TestCase {
       $name = Either::fromArray(['name' => 'value'], 'name', 'oh no');
       $this->assertTrue($name->hasValue());
 
+      $nonameOptional = Either::fromArray(['name' => 'value'], 'noname');
+      $nonameNull = Either::fromArray(['name' => 'value'], 'noname');
+      $this->assertFalse($nonameOptional->hasValue());
+      $this->assertFalse($nonameNull->hasValue());
+
       $none = Either::someNotNull(null, $noneValue);
       $some = Either::someNotNull('', $noneValue);
 

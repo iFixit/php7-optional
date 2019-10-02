@@ -689,7 +689,7 @@ class Either {
       }
 
       if (is_null($rightValue)) {
-         return self::none(new \Execption("Either got null for rightValue"));
+         return self::none(new \Exception("Either got null for rightValue"));
       }
 
       return self::none($rightValue);
