@@ -99,6 +99,14 @@ class OptionTest extends PHPUnit\Framework\TestCase {
 
       $this->assertSame($someThing->valueOr(-1), 1);
       $this->assertSame($someClass->valueOr("-1"), $someObject);
+
+      $lazySome = $noneOption->orCreate(function() { return 10; });
+      $this->assertTrue($lazySome->hasValue());
+      $this->assertSame($lazySome->valueOr(-1), 10);
+
+      $lazyPassThrough = $someThing->orCreate(function() { return 10; });
+      $this->assertTrue($lazyPassThrough->hasValue());
+      $this->assertSame($lazyPassThrough->valueOr(-1), 1);
    }
 
    public function testGettingAlternitiveOption() {
