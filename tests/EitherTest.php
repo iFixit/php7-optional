@@ -10,9 +10,9 @@ class EitherTest extends PHPUnit\Framework\TestCase {
 
    public function testCreateAndCheckExistence() {
       $noneValue = "goodbye";
-      $noneOption = Either::none($noneValue);
+      $noneEither = Either::none($noneValue);
 
-      $this->assertFalse($noneOption->hasValue());
+      $this->assertFalse($noneEither->hasValue());
 
       $someThing = Either::some(1, $noneValue);
       $someNullable = Either::some(null, $noneValue);
@@ -28,9 +28,9 @@ class EitherTest extends PHPUnit\Framework\TestCase {
       $name = Either::fromArray(['name' => 'value'], 'name', 'oh no');
       $this->assertTrue($name->hasValue());
 
-      $nonameOptional = Either::fromArray(['name' => 'value'], 'noname');
+      $nonameEither = Either::fromArray(['name' => 'value'], 'noname');
       $nonameNull = Either::fromArray(['name' => 'value'], 'noname');
-      $this->assertFalse($nonameOptional->hasValue());
+      $this->assertFalse($nonameEither->hasValue());
       $this->assertFalse($nonameNull->hasValue());
 
       $none = Either::someNotNull(null, $noneValue);
@@ -58,9 +58,9 @@ class EitherTest extends PHPUnit\Framework\TestCase {
 
    public function testGettingValue() {
       $noneValue = "goodbye";
-      $noneOption = Either::none($noneValue);
+      $noneEither = Either::none($noneValue);
 
-      $this->assertSame($noneOption->valueOr(-1), -1);
+      $this->assertSame($noneEither->valueOr(-1), -1);
 
       $someObject = new SomeObject();
 
@@ -73,9 +73,9 @@ class EitherTest extends PHPUnit\Framework\TestCase {
 
    public function testGettingValueLazily() {
       $noneValue = "goodbye";
-      $noneOption = Either::none($noneValue);
+      $noneEither = Either::none($noneValue);
 
-      $this->assertSame($noneOption->valueOrCreate(function($x) { return $x; }), $noneValue);
+      $this->assertSame($noneEither->valueOrCreate(function($x) { return $x; }), $noneValue);
 
       $someObject = new SomeObject();
 
@@ -99,12 +99,12 @@ class EitherTest extends PHPUnit\Framework\TestCase {
    public function testGettingAlternitiveValue() {
       $noneValue = "goodbye";
       $someObject = new SomeObject();
-      $noneOption = Either::none($noneValue);
+      $noneEither = Either::none($noneValue);
 
-      $this->assertFalse($noneOption->hasValue());
+      $this->assertFalse($noneEither->hasValue());
 
-      $someThing= $noneOption->or(1);
-      $someClass = $noneOption->or($someObject);
+      $someThing= $noneEither->or(1);
+      $someClass = $noneEither->or($someObject);
 
       $this->assertTrue($someThing->hasValue());
       $this->assertTrue($someClass->hasValue());
@@ -112,7 +112,7 @@ class EitherTest extends PHPUnit\Framework\TestCase {
       $this->assertSame($someThing->valueOr(-1), 1);
       $this->assertSame($someClass->valueOr("-1"), $someObject);
 
-      $lazySome = $noneOption->orCreate(function() { return 10; });
+      $lazySome = $noneEither->orCreate(function() { return 10; });
       $this->assertTrue($lazySome->hasValue());
       $this->assertSame($lazySome->valueOr(-1), 10);
 
@@ -121,18 +121,18 @@ class EitherTest extends PHPUnit\Framework\TestCase {
       $this->assertSame($lazyPassThrough->valueOr(-1), 1);
    }
 
-   public function testGettingAlternitiveOption() {
+   public function testGettingAlternitiveEither() {
       $noneValue = "goodbye";
       $someObject = new SomeObject();
-      $noneOption = Either::none($noneValue);
+      $noneEither = Either::none($noneValue);
 
-      $this->assertFalse($noneOption->hasValue());
+      $this->assertFalse($noneEither->hasValue());
 
-      $noneOption2 = $noneOption->else(Either::none($noneValue));
-      $this->assertFalse($noneOption2->hasValue());
+      $noneEither2 = $noneEither->else(Either::none($noneValue));
+      $this->assertFalse($noneEither2->hasValue());
 
-      $someThing = $noneOption->else(Either::some(1, $noneValue));
-      $someClass = $noneOption->else(Either::some($someObject, $noneValue));
+      $someThing = $noneEither->else(Either::some(1, $noneValue));
+      $someClass = $noneEither->else(Either::some($someObject, $noneValue));
 
       $this->assertTrue($someThing->hasValue());
       $this->assertTrue($someClass->hasValue());
@@ -141,23 +141,23 @@ class EitherTest extends PHPUnit\Framework\TestCase {
       $this->assertSame($someClass->valueOr("-1"), $someObject);
    }
 
-   public function testGettingAlternitiveOptionLazy() {
+   public function testGettingAlternitiveEitherLazy() {
       $noneValue = "goodbye";
       $someObject = new SomeObject();
-      $noneOption = Either::none($noneValue);
+      $noneEither = Either::none($noneValue);
 
-      $this->assertFalse($noneOption->hasValue());
+      $this->assertFalse($noneEither->hasValue());
 
-      $noneOption2 = $noneOption->elseCreate(function($x) {
+      $noneEither2 = $noneEither->elseCreate(function($x) {
          return Either::none($x);
       });
-      $this->assertFalse($noneOption2->hasValue());
+      $this->assertFalse($noneEither2->hasValue());
 
-      $someThing = $noneOption->elseCreate(function($x) {
+      $someThing = $noneEither->elseCreate(function($x) {
          return Either::some(1);
       });
 
-      $someClass = $noneOption->elseCreate(function($x) use ($someObject) {
+      $someClass = $noneEither->elseCreate(function($x) use ($someObject) {
          return Either::some($someObject);
       });
 
