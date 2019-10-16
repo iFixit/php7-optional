@@ -258,7 +258,7 @@ class Either {
    /**
     * Maps the `$value` of a `Either::some($value)`
     *
-    * The map function runs iff the either's is a `Either::some`
+    * The `map` function runs iff the either is a `Either::some`
     * Otherwise the `Either:none($rightValue)` is propagated
     *
     * ```php
@@ -271,11 +271,11 @@ class Either {
     *
     * _Notes:_
     *
-    *  - `$mapFunc` must follow this interface `callable(TLeft):Either<ULeft, TRight>`
+    *  - `$mapFunc` must follow this interface `callable(TLeft):ULeft`
     *  - Returns `Either<TLeft, TRight>`
     *
     * @template ULeft
-    * @param callable(TLeft):Either<ULeft, TRight> $mapFunc
+    * @param callable(TLeft):ULeft $mapFunc
     * @return Either<ULeft, TRight>
     **/
    public function map(callable $mapFunc): self {
