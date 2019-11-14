@@ -313,6 +313,39 @@ class Either {
       return $this->match($leftFunc, $rightFunc);
    }
 
+   /**
+    * Maps the `$value` of a `Either::right($value)`
+    *
+    * The `map` function runs iff the either is a `Either::right`
+    * Otherwise the `Either:left($leftValue)` is propagated
+    *
+    * _Notes:_
+    *
+    *  - `$mapFunc` must follow this interface `callable(TRight):URight`
+    *  - Returns `Either<TLeft, URight>`
+    *
+    * @template URight
+    * @param callable(TRight):URight $mapFunc
+    * @return Either<TLeft, URight>
+    **/
+    public function mapRight(callable $mapFunc): self {
+      /** @var callable(TLeft):Either<TLeft, URight> **/
+      $leftFunc =
+      /** @param TLeft $value */
+      function($value) use ($mapFunc): Either {
+         return self::left($value);
+      };
+
+      /** @var callable(TRight):Either<TLeft, URight> **/
+      $rightFunc =
+      /** @param TRight $rightValue */
+      function($rightValue) use ($mapFunc): Either {
+         return self::right($mapFunc($rightValue));
+      };
+
+      return $this->match($leftFunc, $rightFunc);
+   }
+
 
    /**
     * `map`, but if an exception occurs, return `Either::right(exception)`
