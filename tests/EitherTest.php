@@ -60,6 +60,18 @@ class EitherTest extends PHPUnit\Framework\TestCase {
 
       $this->assertSame($leftThing3->leftOr(-5), -5);
       $this->assertSame($leftThing4->leftOr(-5), -1);
+
+      $rightThing = Either::rightWhen(1, 100, function($x) { return $x > 0; });
+      $rightThing2 = Either::rightWhen(-1, 100, function($x) { return $x > 0; });
+
+      $this->assertSame($rightThing->rightOr(-5), 100);
+      $this->assertSame($rightThing2->rightOr(-5), -5);
+
+      $rightThing3 = Either::leftWhen(1, 100, function($x) { return $x > 0; });
+      $rightThing4 = Either::leftWhen(-1, 100, function($x) { return $x > 0; });
+
+      $this->assertSame($rightThing3->rightOr(-5), -5);
+      $this->assertSame($rightThing4->rightOr(-5), 100);
    }
 
    public function testGettingValue() {

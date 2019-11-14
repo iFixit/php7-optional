@@ -65,6 +65,16 @@ class Either {
    }
 
    /**
+    * Returns the either value or returns `$alternative`
+    *
+    * @param TRight $alternative
+    * @return TRight
+    **/
+    public function rightOr($alternative) {
+      return !$this->isLeft ? $this->rightValue : $alternative;
+   }
+
+   /**
     * Returns the either's value or calls `$valueFactoryFunc` and returns the value of that function
     *
     * ```php
