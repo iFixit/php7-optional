@@ -236,7 +236,7 @@ class Either {
     * ```php
     * $configEither = Either::left($config)->notNull("Config was missing!");
     *
-    * $configEither->matchNone(
+    * $configEither->matchRight(
     *    function($errorMessage) { var_dump($errorMessage); }
     * );
     * ```
@@ -247,7 +247,7 @@ class Either {
     *
     * @param callable(TRight) $right
     **/
-   public function matchNone(callable $right): void {
+   public function matchRight(callable $right): void {
       if ($this->isLeft) {
          return;
       }
@@ -263,7 +263,7 @@ class Either {
     *
     * ```php
     * $right = Either::right("Some Error Message");
-    * $stillNone = $right->map(function($x) { return $x * $x; });
+    * $stillRight = $right->map(function($x) { return $x * $x; });
     *
     * $left = Either::left(5);
     * $leftSquared = $left->map(function($x) { return $x * $x; });
@@ -411,7 +411,7 @@ class Either {
     *
     * ```php
     * $right = Either::right("Some Error Message");
-    * $stillNone = $right->filterIf(function($x) { return $x > 10; }, "New right value");
+    * $stillRight = $right->filterIf(function($x) { return $x > 10; }, "New right value");
     *
     * $left = Either::left(10);
     * $stillleft = $left->filterIf(function($x) { return $x == 10; }, "New right value");
@@ -651,7 +651,7 @@ class Either {
     *
     * ```php
     * $left = Either::left(null); // Valid, returns left(null)
-    * $right = Either::leftNotNull(null); // Valid, returns None()
+    * $right = Either::leftNotNull(null); // Valid, returns Right()
     * ```
     * _Notes:_
     *
@@ -670,9 +670,9 @@ class Either {
     *
     * ```php
     * $left = Either::fromArray(['hello' => 'world'], 'hello', 'oh no'); // left('world')
-    * $right = Either::fromArray(['hello' => 'world'], 'nope', 'oh no'); //  None('oh no')
-    * $right = Either::fromArray(['hello' => 'world'], 'nope'); //  None(Exception("Either got null for rightValue"))
-    * $right = Either::fromArray(['hello' => 'world'], 'nope', null); //  None(Exception("Either got null for rightValue"))
+    * $right = Either::fromArray(['hello' => 'world'], 'nope', 'oh no'); //  Right('oh no')
+    * $right = Either::fromArray(['hello' => 'world'], 'nope'); //  Right(Exception("Either got null for rightValue"))
+    * $right = Either::fromArray(['hello' => 'world'], 'nope', null); //  Right(Exception("Either got null for rightValue"))
     * ```
     * _Notes:_
     *

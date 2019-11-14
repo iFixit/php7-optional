@@ -215,10 +215,10 @@ class EitherTest extends PHPUnit\Framework\TestCase {
       $left->matchleft(function($x) use (&$hasMatched) { return $hasMatched = $x == 1; });
       $this->assertTrue($hasMatched);
 
-      $left->matchNone(function() { $this->fail('Callback should not have been run!'); });
+      $left->matchRight(function() { $this->fail('Callback should not have been run!'); });
       $hasMatched = false;
 
-      $right->matchNone(function() use (&$hasMatched) { $hasMatched = true; });
+      $right->matchRight(function() use (&$hasMatched) { $hasMatched = true; });
       $this->assertTrue($hasMatched);
    }
 
