@@ -534,6 +534,20 @@ class Either {
    }
 
    /**
+    * Turn an `Either::right(null)` into an `Either::left($leftValue)` iff `!$value == true`
+    *
+    * _Notes:_
+    *
+    *  - Returns `Either<TLeft, TRight>`
+    *
+    * @param TLeft $leftValue
+    * @return Either<TLeft, TRight>
+    **/
+   public function rightNotFalsy($leftValue): self {
+      return !$this->isLeft && !$this->rightValue ? self::left($leftValue) : $this;
+   }
+
+   /**
     * Returns true if the either's value == `$value`, otherwise false.
     *
     * ```php
