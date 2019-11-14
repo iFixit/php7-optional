@@ -211,7 +211,7 @@ class Either {
     * ```php
     * $configEither = Either::left($config)->notNull("Config was missing!");
     *
-    * $configEither->matchSome(
+    * $configEither->matchLeft(
     *    function($x) { var_dump("Your config: {$x}"); }
     * );
     * ```
@@ -222,7 +222,7 @@ class Either {
     *
     * @param callable(TLeft) $left
     **/
-   public function matchSome(callable $left): void {
+   public function matchLeft(callable $left): void {
       if (!$this->isLeft) {
          return;
       }
@@ -414,7 +414,7 @@ class Either {
     * $stillNone = $right->filterIf(function($x) { return $x > 10; }, "New right value");
     *
     * $left = Either::left(10);
-    * $stillSome = $left->filterIf(function($x) { return $x == 10; }, "New right value");
+    * $stillleft = $left->filterIf(function($x) { return $x == 10; }, "New right value");
     * $right = $left->filterIf(function($x) { return $x != 10; }, "New right value");
     * ```
     *
@@ -650,7 +650,7 @@ class Either {
     * Take a value, turn it a `Either::left($leftValue)` iff `!is_null($leftValue)`, otherwise returns `Either::right($rightValue)`
     *
     * ```php
-    * $left = Either::left(null); // Valid, returns Some(null)
+    * $left = Either::left(null); // Valid, returns left(null)
     * $right = Either::leftNotNull(null); // Valid, returns None()
     * ```
     * _Notes:_
@@ -669,7 +669,7 @@ class Either {
     * Creates a either if the `$key` exists in `$array`
     *
     * ```php
-    * $left = Either::fromArray(['hello' => 'world'], 'hello', 'oh no'); // Some('world')
+    * $left = Either::fromArray(['hello' => 'world'], 'hello', 'oh no'); // left('world')
     * $right = Either::fromArray(['hello' => 'world'], 'nope', 'oh no'); //  None('oh no')
     * $right = Either::fromArray(['hello' => 'world'], 'nope'); //  None(Exception("Either got null for rightValue"))
     * $right = Either::fromArray(['hello' => 'world'], 'nope', null); //  None(Exception("Either got null for rightValue"))
