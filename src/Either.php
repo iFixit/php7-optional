@@ -501,6 +501,20 @@ class Either {
    }
 
    /**
+    * Turn an `Either::right(null)` into an `Either::left($leftValue)` iff `is_null($value)`
+    *
+    * _Notes:_
+    *
+    *  - Returns `Either<TLeft, TRight>`
+    *
+    * @param TLeft $leftValue
+    * @return Either<TLeft, TRight>
+    **/
+    public function rightNotNull($leftValue): self {
+      return !$this->isLeft && is_null($this->rightValue) ? self::left($leftValue) : $this;
+   }
+
+   /**
     * Turn an `Either::left(null)` into an `Either::right($rightValue)` iff `!$value == true`
     *
     * ```php
