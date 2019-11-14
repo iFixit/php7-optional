@@ -228,8 +228,8 @@ class EitherTest extends PHPUnit\Framework\TestCase {
       $left = Either::left("a", $rightValue);
       $leftNull = Either::left(null);
 
-      $rightUpper = $right->map(function($x) { return strtoupper($x); });
-      $leftUpper = $left->map(function($x) { return strtoupper($x); });
+      $rightUpper = $right->mapLeft(function($x) { return strtoupper($x); });
+      $leftUpper = $left->mapLeft(function($x) { return strtoupper($x); });
 
       $this->assertFalse($rightUpper->hasValue());
       $this->assertTrue($leftUpper->hasValue());
@@ -379,7 +379,7 @@ class EitherTest extends PHPUnit\Framework\TestCase {
 
       $person = Either::fromArray($leftPerson, 'name', 'name was missing');
 
-      $name = $person->mapSafely(function($person): string {
+      $name = $person->mapLeftSafely(function($person): string {
          $fullName = $person['first'] . $person['last'];
          return SomeComplexThing::doWork($fullName, "Forcing left exception");
       });
