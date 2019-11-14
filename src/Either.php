@@ -27,7 +27,7 @@ class Either {
    }
 
    /**
-    * Returns true iff the either is `Either::some`
+    * Returns true iff the either is `Either::left`
     **/
    public function hasValue(): bool {
       return $this->isLeft;
@@ -37,17 +37,17 @@ class Either {
     * Returns the either value or returns `$alternative`
     *
     * ```php
-    * $someThing = Either::some(1);
-    * $someClass = Either::some(new SomeObject());
+    * $leftThing = Either::left(1);
+    * $leftClass = Either::left(new SomeObject());
     *
     * $none = Either::none("Error Code 123");
     *
-    * $myVar = $someThing->valueOr("Some other value!"); // 1
-    * $myVar = $someClass->valueOr("Some other value!"); // instance of SomeObject
+    * $myVar = $leftThing->valueOr("Some other value!"); // 1
+    * $myVar = $leftClass->valueOr("Some other value!"); // instance of SomeObject
     *
     * $myVar = $none->valueOr("Some other value!"); // "Some other value!"
     *
-    * $none = Either::some(null)->valueOr("Some other value!"); // null, See either->notNull()
+    * $none = Either::left(null)->valueOr("Some other value!"); // null, See either->notNull()
     * ```
     *
     * @param TLeft $alternative
@@ -61,13 +61,13 @@ class Either {
     * Returns the either's value or calls `$valueFactoryFunc` and returns the value of that function
     *
     * ```php
-    * $someThing = Either::some(1);
-    * $someClass = Either::some(new SomeObject());
+    * $leftThing = Either::left(1);
+    * $leftClass = Either::left(new SomeObject());
     *
     * $none = Either::none("Error Code 123");
     *
-    * $myVar = $someThing->valueOrCreate(function($rightValue) { return new NewObject(); }); // 1
-    * $myVar = $someClass->valueOrCreate(function($rightValue) { return new NewObject(); }); // instance of SomeObject
+    * $myVar = $leftThing->valueOrCreate(function($rightValue) { return new NewObject(); }); // 1
+    * $myVar = $leftClass->valueOrCreate(function($rightValue) { return new NewObject(); }); // instance of SomeObject
     *
     * $myVar = $none->valueOrCreate(function($rightValue) { return new NewObject(); }); // instance of NewObject
     * ```
@@ -84,11 +84,11 @@ class Either {
    }
 
    /**
-    * Returns a `Either::some($value)` iff the either orginally was `Either::none($rightValue)`
+    * Returns a `Either::left($value)` iff the either orginally was `Either::none($rightValue)`
     *
     * ```php
     * $none = Either::none();
-    * $myVar = $none->or(10); // A some instance, with value 10
+    * $myVar = $none->or(10); // A left instance, with value 10
     * ```
     *
     * _Notes:_
@@ -99,17 +99,17 @@ class Either {
     * @return Either<TLeft, TRight>
     **/
    public function or($alternative): self {
-      return $this->isLeft ? $this : self::some($alternative);
+      return $this->isLeft ? $this : self::left($alternative);
    }
 
    /**
-    * Returns a `Either::some($value)` iff the the either orginally was `Either::none($rightValue)`
+    * Returns a `Either::left($value)` iff the the either orginally was `Either::none($rightValue)`
     *
     * The `$valueFactoryFunc` is called lazily - iff the either orginally was `Either::none($rightValue)`
     *
     * ```php
     * $none = Either::none();
-    * $myVar = $none->orCreate(function($rightValue) { return 10; }); // A some instance, with value 10, but lazy
+    * $myVar = $none->orCreate(function($rightValue) { return 10; }); // A left instance, with value 10, but lazy
     * ```
     *
     * _Notes:_
@@ -121,7 +121,7 @@ class Either {
     * @return Either<TLeft, TRight>
     **/
    public function orCreate(callable $alternativeFactory): self {
-      return $this->isLeft ? $this : self::some($alternativeFactory($this->rightValue));
+      return $this->isLeft ? $this : self::left($alternativeFactory($this->rightValue));
    }
 
    /**
@@ -129,7 +129,7 @@ class Either {
     *
     * ```php
     * $none = Either::none("Some Error Message");
-    * $myVar = $none->else(Either::some(10)); // A some instance, with value 10
+    * $myVar = $none->else(Either::left(10)); // A left instance, with value 10
     * $myVar = $none->else(Either::none("Different Error Message")); // A new none instance
     * ```
     *
@@ -153,7 +153,7 @@ class Either {
     * ```php
     * $none = Either::none();
     *
-    * $myVar = $none->elseCreate(function($rightValue) { return Either::some(10); }); // A some instance, with value 10, but lazy
+    * $myVar = $none->elseCreate(function($rightValue) { return Either::left(10); }); // A left instance, with value 10, but lazy
     * ```
     *
     * _Notes:_
@@ -171,19 +171,19 @@ class Either {
    /**
     * Runs only 1 function:
     *
-    *  - `$some` iff the either is `Either::some`
+    *  - `$left` iff the either is `Either::left`
     *  - `$none` iff the either is `Either::none`
     *
     * ```php
-    * $someThing = Either::some(1);
+    * $leftThing = Either::left(1);
     *
-    * $someThingSquared = $someThing->match(
-    *    function($x) { return $x * $x; },               // runs iff $someThing == Either::some
-    *    function($rightValue) { return $rightValue; }     // runs iff $someThing == Either::none
+    * $leftThingSquared = $leftThing->match(
+    *    function($x) { return $x * $x; },               // runs iff $leftThing == Either::left
+    *    function($rightValue) { return $rightValue; }     // runs iff $leftThing == Either::none
     * );
     *
     *
-    * $configEither = Either::some($config)->notNull("Config was missing!");
+    * $configEither = Either::left($config)->notNull("Config was missing!");
     *
     * $configEither->match(
     *    function($x) { var_dump("Your config: {$x}"); },
@@ -193,23 +193,23 @@ class Either {
     *
     * _Notes:_
     *
-    *  - `$some` must follow this interface `callable(TLeft):U`
+    *  - `$left` must follow this interface `callable(TLeft):U`
     *  - `$none` must follow this interface `callable(TRight):U`
     *
     * @template U
-    * @param callable(TLeft):U $some
+    * @param callable(TLeft):U $left
     * @param callable(TRight):U $none
     * @return U
     **/
-   public function match(callable $some, callable $none) {
-      return $this->isLeft ? $some($this->leftValue) : $none($this->rightValue);
+   public function match(callable $left, callable $none) {
+      return $this->isLeft ? $left($this->leftValue) : $none($this->rightValue);
    }
 
    /**
-    * Side effect function: Runs the function iff the either is `Either::some`
+    * Side effect function: Runs the function iff the either is `Either::left`
     *
     * ```php
-    * $configEither = Either::some($config)->notNull("Config was missing!");
+    * $configEither = Either::left($config)->notNull("Config was missing!");
     *
     * $configEither->matchSome(
     *    function($x) { var_dump("Your config: {$x}"); }
@@ -218,23 +218,23 @@ class Either {
     *
     * _Notes:_
     *
-    *  - `$some` must follow this interface `callable(TLeft):U`
+    *  - `$left` must follow this interface `callable(TLeft):U`
     *
-    * @param callable(TLeft) $some
+    * @param callable(TLeft) $left
     **/
-   public function matchSome(callable $some): void {
+   public function matchSome(callable $left): void {
       if (!$this->isLeft) {
          return;
       }
 
-      $some($this->leftValue);
+      $left($this->leftValue);
    }
 
    /**
     * Side effect function: Runs the function iff the either is `Either::none`
     *
     * ```php
-    * $configEither = Either::some($config)->notNull("Config was missing!");
+    * $configEither = Either::left($config)->notNull("Config was missing!");
     *
     * $configEither->matchNone(
     *    function($errorMessage) { var_dump($errorMessage); }
@@ -256,17 +256,17 @@ class Either {
    }
 
    /**
-    * Maps the `$value` of a `Either::some($value)`
+    * Maps the `$value` of a `Either::left($value)`
     *
-    * The `map` function runs iff the either is a `Either::some`
+    * The `map` function runs iff the either is a `Either::left`
     * Otherwise the `Either:none($rightValue)` is propagated
     *
     * ```php
     * $none = Either::none("Some Error Message");
     * $stillNone = $none->map(function($x) { return $x * $x; });
     *
-    * $some = Either::some(5);
-    * $someSquared = $some->map(function($x) { return $x * $x; });
+    * $left = Either::left(5);
+    * $leftSquared = $left->map(function($x) { return $x * $x; });
     * ```
     *
     * _Notes:_
@@ -280,10 +280,10 @@ class Either {
     **/
    public function map(callable $mapFunc): self {
       /** @var callable(TLeft):Either<ULeft, TRight> **/
-      $someFunc =
+      $leftFunc =
       /** @param TLeft $value */
       function($value) use ($mapFunc): Either {
-         return self::some($mapFunc($value));
+         return self::left($mapFunc($value));
       };
 
       /** @var callable(TRight):Either<ULeft, TRight> **/
@@ -293,21 +293,21 @@ class Either {
          return self::none($rightValue);
       };
 
-      return $this->match($someFunc, $noneFunc);
+      return $this->match($leftFunc, $noneFunc);
    }
 
 
    /**
     * `map`, but if an exception occurs, return `Either::none(exception)`
     *
-    * Maps the `$value` of a `Either::some($value)`
+    * Maps the `$value` of a `Either::left($value)`
     *
-    * The map function runs iff the either's is a `Either::some`
+    * The map function runs iff the either's is a `Either::left`
     * Otherwise the `Either:none($rightValue)` is propagated
     *
     * ```php
-    * $some = Either::some(['key' => 'value']);
-    * $none = $some->safeMap(function($array) { $thing = $array['Missing Key will cause error']; return 5; });
+    * $left = Either::left(['key' => 'value']);
+    * $none = $left->safeMap(function($array) { $thing = $array['Missing Key will cause error']; return 5; });
     * ```
     *
     * _Notes:_
@@ -332,14 +332,14 @@ class Either {
     * A nicer name through
     *
     * ```php
-    * $somePerson = [
+    * $leftPerson = [
     *     'name' => [
     *        'first' => 'First',
     *        'last' => 'Last'
     *     ]
     *  ];
     *
-    * $person = Either::fromArray($somePerson, 'name', 'name was missing');
+    * $person = Either::fromArray($leftPerson, 'name', 'name was missing');
     *
     *   $name = $person->andThen(function($person) {
     *      $fullName = $person['first'] . $person['last'];
@@ -348,7 +348,7 @@ class Either {
     *      } catch (\Exception $e) {
     *         return Either::none('SomeComplexThing had an error!');
     *      }
-    *      return Either::some($thing);
+    *      return Either::left($thing);
     *  });
     * ```
     *
@@ -370,10 +370,10 @@ class Either {
     *
     * ```php
     * $none = Either::none(null);
-    * $noneNotNull = $none->flatMap(function($rightValue) { return Either::some($rightValue)->notNull(); });
+    * $noneNotNull = $none->flatMap(function($rightValue) { return Either::left($rightValue)->notNull(); });
     *
-    * $some = Either::some(null);
-    * $someNotNull = $some->flatMap(function($leftValue) { return Either::some($leftValue)->notNull(); });
+    * $left = Either::left(null);
+    * $leftNotNull = $left->flatMap(function($leftValue) { return Either::left($leftValue)->notNull(); });
     * ```
     *
     * _Notes:_
@@ -406,16 +406,16 @@ class Either {
    }
 
    /**
-    * Change the `Either::some($value)` into `Either::none()` iff `$filterFunc` returns false,
+    * Change the `Either::left($value)` into `Either::none()` iff `$filterFunc` returns false,
     * otherwise propigate the `Either::none()`
     *
     * ```php
     * $none = Either::none("Some Error Message");
     * $stillNone = $none->filterIf(function($x) { return $x > 10; }, "New none value");
     *
-    * $some = Either::some(10);
-    * $stillSome = $some->filterIf(function($x) { return $x == 10; }, "New none value");
-    * $none = $some->filterIf(function($x) { return $x != 10; }, "New none value");
+    * $left = Either::left(10);
+    * $stillSome = $left->filterIf(function($x) { return $x == 10; }, "New none value");
+    * $none = $left->filterIf(function($x) { return $x != 10; }, "New none value");
     * ```
     *
     * _Notes:_
@@ -432,11 +432,11 @@ class Either {
    }
 
    /**
-    * Turn an `Either::some(null)` into an `Either::none($rightValue)` iff `is_null($value)`
+    * Turn an `Either::left(null)` into an `Either::none($rightValue)` iff `is_null($value)`
     *
     * ```php
-    * $someThing = Either::some($myVar); // Valid
-    * $noneThing = $someThing->notNull("The var was null"); // Turn null into an Either::none($rightValue)
+    * $leftThing = Either::left($myVar); // Valid
+    * $noneThing = $leftThing->notNull("The var was null"); // Turn null into an Either::none($rightValue)
     * ```
     *
     * _Notes:_
@@ -451,11 +451,11 @@ class Either {
    }
 
    /**
-    * Turn an `Either::some(null)` into an `Either::none($rightValue)` iff `!$value == true`
+    * Turn an `Either::left(null)` into an `Either::none($rightValue)` iff `!$value == true`
     *
     * ```php
-    * $someThing = Either::some($myVar); // Valid
-    * $noneThing = $someThing->notNull("The var was null"); // Turn null into an Either::none($rightValue)
+    * $leftThing = Either::left($myVar); // Valid
+    * $noneThing = $leftThing->notNull("The var was null"); // Turn null into an Either::none($rightValue)
     * ```
     *
     * _Notes:_
@@ -476,9 +476,9 @@ class Either {
     * $none = Either::none("Some Error Message");
     * $false = $none->contains(1);
     *
-    * $some = Either::some(10);
-    * $true = $some->contains(10);
-    * $false = $some->contains("Thing");
+    * $left = Either::left(10);
+    * $true = $left->contains(10);
+    * $false = $left->contains("Thing");
     * ```
     * @param mixed $value
     **/
@@ -497,9 +497,9 @@ class Either {
     * $none = Either::none("Some Error Message");
     * $false = $none->exists(function($x) { return $x == 10; });
     *
-    * $some = Either::some(10);
-    * $true = $some->exists(function($x) { return $x >= 10; });
-    * $false = $some->exists(function($x) { return $x == "Thing"; });
+    * $left = Either::left(10);
+    * $true = $left->exists(function($x) { return $x >= 10; });
+    * $false = $left->exists(function($x) { return $x == "Thing"; });
     * ```
     *
     * _Notes:_
@@ -534,7 +534,7 @@ class Either {
    public function ToOption(): Option {
 
       /** @var callable(TLeft):Option<U> **/
-      $someFunc =
+      $leftFunc =
       /** @param TLeft $value **/
       function($value): Option {
          return Option::some($value);
@@ -547,7 +547,7 @@ class Either {
          return Option::none();
       };
 
-      return $this->match($someFunc, $noneFunc);
+      return $this->match($leftFunc, $noneFunc);
    }
 
    //////////////////////////////
@@ -558,10 +558,10 @@ class Either {
     * Creates an either with a boxed value
     *
     * ```php
-    * $someThing = Either::some(1);
-    * $someClass = Either::some(new SomeObject());
+    * $leftThing = Either::left(1);
+    * $leftClass = Either::left(new SomeObject());
     *
-    * $someNullThing = Either::some(null); // Valid
+    * $leftNullThing = Either::left(null); // Valid
     * ```
     *
     * _Notes:_
@@ -571,7 +571,7 @@ class Either {
     * @param TLeft $leftValue
     * @return Either<TLeft, mixed>
     **/
-   public static function some($leftValue): self {
+   public static function left($leftValue): self {
       return new self($leftValue, null, true);
    }
 
@@ -579,7 +579,7 @@ class Either {
     * Creates an either which represents an empty box
     *
     * ```php
-    * $none = Either::none("This is some string to show on no value");
+    * $none = Either::none("This is left string to show on no value");
     * ```
     *
     * _Notes:_
@@ -594,12 +594,12 @@ class Either {
    }
 
    /**
-    * Take a value, turn it a `Either::some($leftValue)` iff the `$filterFunc` returns true
+    * Take a value, turn it a `Either::left($leftValue)` iff the `$filterFunc` returns true
     * otherwise an `Either::none($rightValue)`
     *
     * ```php
-    * $positiveOne = Either::someWhen(1, -1, function($x) { return $x > 0; });
-    * $negativeOne = Either::someWhen(1, -1, function($x) { return $x < 0; });
+    * $positiveOne = Either::leftWhen(1, -1, function($x) { return $x > 0; });
+    * $negativeOne = Either::leftWhen(1, -1, function($x) { return $x < 0; });
     * ```
     * Note: `$filterFunc` must follow this interface `function filterFunc(mixed $value): bool`
     *
@@ -613,16 +613,16 @@ class Either {
     * @param callable(TLeft): bool $filterFunc
     * @return Either<TLeft, TRight>
     **/
-   public static function someWhen($leftValue, $rightValue, callable $filterFunc): self {
+   public static function leftWhen($leftValue, $rightValue, callable $filterFunc): self {
       if ($filterFunc($leftValue)) {
-         return self::some($leftValue);
+         return self::left($leftValue);
       }
       return self::none($rightValue);
    }
 
    /**
     * Take a value, turn it a `Either::none($rightValue)` iff the `$filterFunc` returns true
-    * otherwise an `Either::some($leftValue)`
+    * otherwise an `Either::left($leftValue)`
     *
     * ```php
     * $positiveOne = Either::noneWhen(1, -1, function($x) { return $x < 0; });
@@ -643,15 +643,15 @@ class Either {
       if ($filterFunc($leftValue)) {
          return self::none($rightValue);
       }
-      return self::some($leftValue);
+      return self::left($leftValue);
    }
 
    /**
-    * Take a value, turn it a `Either::some($leftValue)` iff `!is_null($leftValue)`, otherwise returns `Either::none($rightValue)`
+    * Take a value, turn it a `Either::left($leftValue)` iff `!is_null($leftValue)`, otherwise returns `Either::none($rightValue)`
     *
     * ```php
-    * $some = Either::some(null); // Valid, returns Some(null)
-    * $none = Either::someNotNull(null); // Valid, returns None()
+    * $left = Either::left(null); // Valid, returns Some(null)
+    * $none = Either::leftNotNull(null); // Valid, returns None()
     * ```
     * _Notes:_
     *
@@ -661,15 +661,15 @@ class Either {
     * @param TRight $rightValue
     * @return Either<TLeft, TRight>
     **/
-    public static function someNotNull($leftValue, $rightValue): self {
-      return self::some($leftValue)->notNull($rightValue);
+    public static function leftNotNull($leftValue, $rightValue): self {
+      return self::left($leftValue)->notNull($rightValue);
    }
 
    /**
     * Creates a either if the `$key` exists in `$array`
     *
     * ```php
-    * $some = Either::fromArray(['hello' => 'world'], 'hello', 'oh no'); // Some('world')
+    * $left = Either::fromArray(['hello' => 'world'], 'hello', 'oh no'); // Some('world')
     * $none = Either::fromArray(['hello' => 'world'], 'nope', 'oh no'); //  None('oh no')
     * $none = Either::fromArray(['hello' => 'world'], 'nope'); //  None(Exception("Either got null for noneValue"))
     * $none = Either::fromArray(['hello' => 'world'], 'nope', null); //  None(Exception("Either got null for noneValue"))
@@ -685,7 +685,7 @@ class Either {
     **/
     public static function fromArray(array $array, $key, $rightValue = null): self {
       if (isset($array[$key])) {
-         return self::some($array[$key]);
+         return self::left($array[$key]);
       }
 
       if (is_null($rightValue)) {
