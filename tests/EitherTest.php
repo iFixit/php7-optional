@@ -62,13 +62,13 @@ class EitherTest extends PHPUnit\Framework\TestCase {
 
       $this->assertSame($rightEither->valueOr(-1), -1);
 
-      $leftObject = new SomeObject();
+      $someObject = new SomeObject();
 
       $leftThing = Either::left(1, $rightValue);
-      $leftClass = Either::left($leftObject, $rightValue);
+      $leftClass = Either::left($someObject, $rightValue);
 
       $this->assertSame($leftThing->valueOr(-1), 1);
-      $this->assertSame($leftClass->valueOr(-1), $leftObject);
+      $this->assertSame($leftClass->valueOr(-1), $someObject);
    }
 
    public function testGettingValueLazily() {
@@ -77,13 +77,13 @@ class EitherTest extends PHPUnit\Framework\TestCase {
 
       $this->assertSame($rightEither->valueOrCreate(function($x) { return $x; }), $rightValue);
 
-      $leftObject = new SomeObject();
+      $someObject = new SomeObject();
 
       $leftThing = Either::left(1, $rightValue);
-      $leftClass = Either::left($leftObject, $rightValue);
+      $leftClass = Either::left($someObject, $rightValue);
 
       $this->assertSame($leftThing->valueOrCreate(function($x) { return $x; }), 1);
-      $this->assertSame($leftClass->valueOrCreate(function($x) { return $x; }), $leftObject);
+      $this->assertSame($leftClass->valueOrCreate(function($x) { return $x; }), $someObject);
 
       $this->assertSame($leftThing->valueOrCreate(function($x) {
          $this->fail('Callback should not have been run!');
@@ -93,28 +93,28 @@ class EitherTest extends PHPUnit\Framework\TestCase {
       $this->assertSame($leftClass->valueOrCreate(function($x) {
          $this->fail('Callback should not have been run!');
          return $x;
-      }), $leftObject);
+      }), $someObject);
    }
 
    public function testGettingAlternitiveValue() {
       $rightValue = "goodbye";
-      $leftObject = new SomeObject();
+      $someObject = new SomeObject();
       $rightEither = Either::right($rightValue);
 
       $this->assertFalse($rightEither->hasValue());
 
       $leftThing= $rightEither->or(1);
-      $leftClass = $rightEither->or($leftObject);
+      $leftClass = $rightEither->or($someObject);
 
       $this->assertTrue($leftThing->hasValue());
       $this->assertTrue($leftClass->hasValue());
 
       $this->assertSame($leftThing->valueOr(-1), 1);
-      $this->assertSame($leftClass->valueOr("-1"), $leftObject);
+      $this->assertSame($leftClass->valueOr("-1"), $someObject);
 
-      $lazySome = $rightEither->orCreate(function() { return 10; });
-      $this->assertTrue($lazySome->hasValue());
-      $this->assertSame($lazySome->valueOr(-1), 10);
+      $lazyleft = $rightEither->orCreate(function() { return 10; });
+      $this->assertTrue($lazyleft->hasValue());
+      $this->assertSame($lazyleft->valueOr(-1), 10);
 
       $lazyPassThrough = $leftThing->orCreate(function() { return 10; });
       $this->assertTrue($lazyPassThrough->hasValue());
@@ -123,7 +123,7 @@ class EitherTest extends PHPUnit\Framework\TestCase {
 
    public function testGettingAlternitiveEither() {
       $rightValue = "goodbye";
-      $leftObject = new SomeObject();
+      $someObject = new SomeObject();
       $rightEither = Either::right($rightValue);
 
       $this->assertFalse($rightEither->hasValue());
@@ -132,18 +132,18 @@ class EitherTest extends PHPUnit\Framework\TestCase {
       $this->assertFalse($rightEither2->hasValue());
 
       $leftThing = $rightEither->else(Either::left(1, $rightValue));
-      $leftClass = $rightEither->else(Either::left($leftObject, $rightValue));
+      $leftClass = $rightEither->else(Either::left($someObject, $rightValue));
 
       $this->assertTrue($leftThing->hasValue());
       $this->assertTrue($leftClass->hasValue());
 
       $this->assertSame($leftThing->valueOr(-1), 1);
-      $this->assertSame($leftClass->valueOr("-1"), $leftObject);
+      $this->assertSame($leftClass->valueOr("-1"), $someObject);
    }
 
    public function testGettingAlternitiveEitherLazy() {
       $rightValue = "goodbye";
-      $leftObject = new SomeObject();
+      $someObject = new SomeObject();
       $rightEither = Either::right($rightValue);
 
       $this->assertFalse($rightEither->hasValue());
@@ -157,15 +157,15 @@ class EitherTest extends PHPUnit\Framework\TestCase {
          return Either::left(1);
       });
 
-      $leftClass = $rightEither->elseCreate(function($x) use ($leftObject) {
-         return Either::left($leftObject);
+      $leftClass = $rightEither->elseCreate(function($x) use ($someObject) {
+         return Either::left($someObject);
       });
 
       $this->assertTrue($leftThing->hasValue());
       $this->assertTrue($leftClass->hasValue());
 
       $this->assertSame($leftThing->valueOr(-1), 1);
-      $this->assertSame($leftClass->valueOr("-1"), $leftObject);
+      $this->assertSame($leftClass->valueOr("-1"), $someObject);
 
       $leftThing->elseCreate(function($x) {
          $this->fail('Callback should not have been run!');
@@ -209,10 +209,10 @@ class EitherTest extends PHPUnit\Framework\TestCase {
       );
       $this->assertTrue($hasMatched);
 
-      $right->matchSome(function($x) { $this->fail('Callback should not have been run!'); });
+      $right->matchleft(function($x) { $this->fail('Callback should not have been run!'); });
 
       $hasMatched = false;
-      $left->matchSome(function($x) use (&$hasMatched) { return $hasMatched = $x == 1; });
+      $left->matchleft(function($x) use (&$hasMatched) { return $hasMatched = $x == 1; });
       $this->assertTrue($hasMatched);
 
       $left->matchNone(function() { $this->fail('Callback should not have been run!'); });
