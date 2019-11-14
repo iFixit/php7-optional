@@ -22,11 +22,17 @@ class EitherTest extends PHPUnit\Framework\TestCase {
       $this->assertTrue($leftNullable->isLeft());
       $this->assertTrue($leftClass->isLeft());
 
+      $this->assertFalse($leftThing->isRight());
+      $this->assertFalse($leftNullable->isRight());
+      $this->assertFalse($leftClass->isRight());
+
       $noname = Either::fromArray(['name' => 'value'], 'noname', 'oh no');
+      $this->assertTrue($noname->isRight());
       $this->assertFalse($noname->isLeft());
 
       $name = Either::fromArray(['name' => 'value'], 'name', 'oh no');
       $this->assertTrue($name->isLeft());
+      $this->assertFalse($name->isRight());
 
       $nonameEither = Either::fromArray(['name' => 'value'], 'noname');
       $nonameNull = Either::fromArray(['name' => 'value'], 'noname');

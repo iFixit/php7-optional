@@ -34,6 +34,13 @@ class Either {
    }
 
    /**
+    * Returns true iff the either is `Either::right`
+    **/
+    public function isRight(): bool {
+      return !$this->isLeft;
+   }
+
+   /**
     * Returns the either value or returns `$alternative`
     *
     * ```php
