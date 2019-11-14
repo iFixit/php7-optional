@@ -254,6 +254,18 @@ class EitherTest extends PHPUnit\Framework\TestCase {
       $this->assertSame($rightUpper->leftOr("b"), "b");
       $this->assertSame($leftUpper->leftOr("b"), "A");
 
+      $right = Either::right("a");
+      $left = Either::left("a", $rightValue);
+      $leftNull = Either::left(null);
+
+      $rightUpper = $right->mapRight(function($x) { return strtoupper($x); });
+      $leftUpper = $left->mapRight(function($x) { return strtoupper($x); });
+
+      $this->assertFalse($rightUpper->isLeft());
+      $this->assertTrue($leftUpper->isLeft());
+      $this->assertSame($rightUpper->rightOr("b"), "A");
+      $this->assertSame($leftUpper->rightOr("b"), "b");
+
       $rightNotNull = $right->flatMap(function($x) use ($rightValue) { return Either::left($x)->leftNotNull($rightValue); });
       $leftNotNull = $left->flatMap(function($x) use ($rightValue) { return Either::left($x)->leftNotNull($rightValue); });
       $leftNullNotNull = $leftNull->flatMap(function($x) use ($rightValue) { return Either::left($x)->leftNotNull($rightValue); });
