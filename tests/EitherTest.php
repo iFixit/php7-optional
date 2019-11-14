@@ -14,9 +14,9 @@ class EitherTest extends PHPUnit\Framework\TestCase {
 
       $this->assertFalse($rightEither->isLeft());
 
-      $leftThing = Either::left(1, $rightValue);
-      $leftNullable = Either::left(null, $rightValue);
-      $leftClass = Either::left(new SomeObject(), $rightValue);
+      $leftThing = Either::left(1);
+      $leftNullable = Either::left(null);
+      $leftClass = Either::left(new SomeObject());
 
       $this->assertTrue($leftThing->isLeft());
       $this->assertTrue($leftNullable->isLeft());
@@ -82,8 +82,8 @@ class EitherTest extends PHPUnit\Framework\TestCase {
 
       $someObject = new SomeObject();
 
-      $leftThing = Either::left(1, $rightValue);
-      $leftClass = Either::left($someObject, $rightValue);
+      $leftThing = Either::left(1);
+      $leftClass = Either::left($someObject);
 
       $this->assertSame($leftThing->leftOr(-1), 1);
       $this->assertSame($leftClass->leftOr(-1), $someObject);
@@ -97,8 +97,8 @@ class EitherTest extends PHPUnit\Framework\TestCase {
 
       $someObject = new SomeObject();
 
-      $leftThing = Either::left(1, $rightValue);
-      $leftClass = Either::left($someObject, $rightValue);
+      $leftThing = Either::left(1);
+      $leftClass = Either::left($someObject);
 
       $this->assertSame($leftThing->leftOrCreate(function($x) { return $x; }), 1);
       $this->assertSame($leftClass->leftOrCreate(function($x) { return $x; }), $someObject);
@@ -149,8 +149,8 @@ class EitherTest extends PHPUnit\Framework\TestCase {
       $rightEither2 = $rightEither->elseLeft(Either::right($rightValue));
       $this->assertFalse($rightEither2->isLeft());
 
-      $leftThing = $rightEither->elseLeft(Either::left(1, $rightValue));
-      $leftClass = $rightEither->elseLeft(Either::left($someObject, $rightValue));
+      $leftThing = $rightEither->elseLeft(Either::left(1));
+      $leftClass = $rightEither->elseLeft(Either::left($someObject));
 
       $this->assertTrue($leftThing->isLeft());
       $this->assertTrue($leftClass->isLeft());
@@ -198,7 +198,7 @@ class EitherTest extends PHPUnit\Framework\TestCase {
    public function testMatching() {
       $rightValue = "goodbye";
       $right = Either::right($rightValue);
-      $left = Either::left(1, $rightValue);
+      $left = Either::left(1);
 
       $failure = $right->match(
           function($x) { return 2; },
@@ -243,7 +243,7 @@ class EitherTest extends PHPUnit\Framework\TestCase {
    public function testMapping() {
       $rightValue = "goodbye";
       $right = Either::right($rightValue);
-      $left = Either::left("a", $rightValue);
+      $left = Either::left("a");
       $leftNull = Either::left(null);
 
       $rightUpper = $right->mapLeft(function($x) { return strtoupper($x); });
@@ -255,7 +255,7 @@ class EitherTest extends PHPUnit\Framework\TestCase {
       $this->assertSame($leftUpper->leftOr("b"), "A");
 
       $right = Either::right("a");
-      $left = Either::left("a", $rightValue);
+      $left = Either::left("a");
       $leftNull = Either::left(null);
 
       $rightUpper = $right->mapRight(function($x) { return strtoupper($x); });
@@ -278,7 +278,7 @@ class EitherTest extends PHPUnit\Framework\TestCase {
    public function testFiltering() {
       $rightValue = "goodbye";
       $right = Either::right($rightValue);
-      $left = Either::left("a", $rightValue);
+      $left = Either::left("a");
 
       $leftTrue = $left->filterLeft(true, $rightValue);
       $leftFalse = $left->filterLeft(false, $rightValue);
@@ -315,8 +315,8 @@ class EitherTest extends PHPUnit\Framework\TestCase {
    public function testContains() {
       $rightValue = "goodbye";
       $right = Either::right($rightValue);
-      $leftString = Either::left("a", $rightValue);
-      $leftInt = Either::left(1, $rightValue);
+      $leftString = Either::left("a");
+      $leftInt = Either::left(1);
 
       $this->assertTrue($leftString->leftContains("a"));
       $this->assertFalse($leftString->leftContains("A"));
@@ -337,7 +337,7 @@ class EitherTest extends PHPUnit\Framework\TestCase {
    public function testExists() {
       $rightValue = "goodbye";
       $right = Either::right($rightValue);
-      $left = Either::left(10, $rightValue);
+      $left = Either::left(10);
 
       $rightFalse = $right->existsLeft(function($x) { return $x == 10; });
       $leftTrue = $left->existsLeft(function($x) { return $x >= 10; });
@@ -428,7 +428,7 @@ class EitherTest extends PHPUnit\Framework\TestCase {
    }
 
    public function testToOption() {
-      $left = Either::left(10, "Some Error Message");
+      $left = Either::left(10);
       $right = Either::right("Some Error Message");
 
       $leftOption = $left->toOptionFromLeft();
