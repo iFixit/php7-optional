@@ -263,10 +263,10 @@ class Either {
     *
     * ```php
     * $right = Either::right("Some Error Message");
-    * $stillRight = $right->map(function($x) { return $x * $x; });
+    * $stillRight = $right->mapLeft(function($x) { return $x * $x; });
     *
     * $left = Either::left(5);
-    * $leftSquared = $left->map(function($x) { return $x * $x; });
+    * $leftSquared = $left->mapLeft(function($x) { return $x * $x; });
     * ```
     *
     * _Notes:_
@@ -278,7 +278,7 @@ class Either {
     * @param callable(TLeft):ULeft $mapFunc
     * @return Either<ULeft, TRight>
     **/
-   public function map(callable $mapFunc): self {
+   public function mapLeft(callable $mapFunc): self {
       /** @var callable(TLeft):Either<ULeft, TRight> **/
       $leftFunc =
       /** @param TLeft $value */
@@ -321,7 +321,7 @@ class Either {
     **/
    public function mapSafely(callable $mapFunc): self {
       try {
-         return $this->map($mapFunc);
+         return $this->mapLeft($mapFunc);
       } catch (\Exception $e) {
          return Either::right($e);
       }
