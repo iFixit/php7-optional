@@ -9,14 +9,14 @@ use Optional\Option;
 class EitherTest extends PHPUnit\Framework\TestCase {
 
    public function testCreateAndCheckExistence() {
-      $noneValue = "goodbye";
-      $noneEither = Either::none($noneValue);
+      $rightValue = "goodbye";
+      $rightEither = Either::right($rightValue);
 
-      $this->assertFalse($noneEither->hasValue());
+      $this->assertFalse($rightEither->hasValue());
 
-      $leftThing = Either::left(1, $noneValue);
-      $leftNullable = Either::left(null, $noneValue);
-      $leftClass = Either::left(new SomeObject(), $noneValue);
+      $leftThing = Either::left(1, $rightValue);
+      $leftNullable = Either::left(null, $rightValue);
+      $leftClass = Either::left(new SomeObject(), $rightValue);
 
       $this->assertTrue($leftThing->hasValue());
       $this->assertTrue($leftNullable->hasValue());
@@ -33,54 +33,54 @@ class EitherTest extends PHPUnit\Framework\TestCase {
       $this->assertFalse($nonameEither->hasValue());
       $this->assertFalse($nonameNull->hasValue());
 
-      $none = Either::leftNotNull(null, $noneValue);
-      $left = Either::leftNotNull('', $noneValue);
+      $right = Either::leftNotNull(null, $rightValue);
+      $left = Either::leftNotNull('', $rightValue);
 
-      $this->assertFalse($none->hasValue());
+      $this->assertFalse($right->hasValue());
       $this->assertTrue($left->hasValue());
    }
 
    public function testCreateAndCheckExistenceWhen() {
-      $noneValue = "goodbye";
+      $rightValue = "goodbye";
 
-      $leftThing = Either::leftWhen(1, $noneValue, function($x) { return $x > 0; });
-      $leftThing2 = Either::leftWhen(-1, $noneValue, function($x) { return $x > 0; });
+      $leftThing = Either::leftWhen(1, $rightValue, function($x) { return $x > 0; });
+      $leftThing2 = Either::leftWhen(-1, $rightValue, function($x) { return $x > 0; });
 
       $this->assertSame($leftThing->valueOr(-5), 1);
       $this->assertSame($leftThing2->valueOr(-5), -5);
 
-      $leftThing3 = Either::noneWhen(1, $noneValue, function($x) { return $x > 0; });
-      $leftThing4 = Either::noneWhen(-1, $noneValue, function($x) { return $x > 0; });
+      $leftThing3 = Either::rightWhen(1, $rightValue, function($x) { return $x > 0; });
+      $leftThing4 = Either::rightWhen(-1, $rightValue, function($x) { return $x > 0; });
 
       $this->assertSame($leftThing3->valueOr(-5), -5);
       $this->assertSame($leftThing4->valueOr(-5), -1);
    }
 
    public function testGettingValue() {
-      $noneValue = "goodbye";
-      $noneEither = Either::none($noneValue);
+      $rightValue = "goodbye";
+      $rightEither = Either::right($rightValue);
 
-      $this->assertSame($noneEither->valueOr(-1), -1);
+      $this->assertSame($rightEither->valueOr(-1), -1);
 
       $leftObject = new SomeObject();
 
-      $leftThing = Either::left(1, $noneValue);
-      $leftClass = Either::left($leftObject, $noneValue);
+      $leftThing = Either::left(1, $rightValue);
+      $leftClass = Either::left($leftObject, $rightValue);
 
       $this->assertSame($leftThing->valueOr(-1), 1);
       $this->assertSame($leftClass->valueOr(-1), $leftObject);
    }
 
    public function testGettingValueLazily() {
-      $noneValue = "goodbye";
-      $noneEither = Either::none($noneValue);
+      $rightValue = "goodbye";
+      $rightEither = Either::right($rightValue);
 
-      $this->assertSame($noneEither->valueOrCreate(function($x) { return $x; }), $noneValue);
+      $this->assertSame($rightEither->valueOrCreate(function($x) { return $x; }), $rightValue);
 
       $leftObject = new SomeObject();
 
-      $leftThing = Either::left(1, $noneValue);
-      $leftClass = Either::left($leftObject, $noneValue);
+      $leftThing = Either::left(1, $rightValue);
+      $leftClass = Either::left($leftObject, $rightValue);
 
       $this->assertSame($leftThing->valueOrCreate(function($x) { return $x; }), 1);
       $this->assertSame($leftClass->valueOrCreate(function($x) { return $x; }), $leftObject);
@@ -97,14 +97,14 @@ class EitherTest extends PHPUnit\Framework\TestCase {
    }
 
    public function testGettingAlternitiveValue() {
-      $noneValue = "goodbye";
+      $rightValue = "goodbye";
       $leftObject = new SomeObject();
-      $noneEither = Either::none($noneValue);
+      $rightEither = Either::right($rightValue);
 
-      $this->assertFalse($noneEither->hasValue());
+      $this->assertFalse($rightEither->hasValue());
 
-      $leftThing= $noneEither->or(1);
-      $leftClass = $noneEither->or($leftObject);
+      $leftThing= $rightEither->or(1);
+      $leftClass = $rightEither->or($leftObject);
 
       $this->assertTrue($leftThing->hasValue());
       $this->assertTrue($leftClass->hasValue());
@@ -112,7 +112,7 @@ class EitherTest extends PHPUnit\Framework\TestCase {
       $this->assertSame($leftThing->valueOr(-1), 1);
       $this->assertSame($leftClass->valueOr("-1"), $leftObject);
 
-      $lazySome = $noneEither->orCreate(function() { return 10; });
+      $lazySome = $rightEither->orCreate(function() { return 10; });
       $this->assertTrue($lazySome->hasValue());
       $this->assertSame($lazySome->valueOr(-1), 10);
 
@@ -122,17 +122,17 @@ class EitherTest extends PHPUnit\Framework\TestCase {
    }
 
    public function testGettingAlternitiveEither() {
-      $noneValue = "goodbye";
+      $rightValue = "goodbye";
       $leftObject = new SomeObject();
-      $noneEither = Either::none($noneValue);
+      $rightEither = Either::right($rightValue);
 
-      $this->assertFalse($noneEither->hasValue());
+      $this->assertFalse($rightEither->hasValue());
 
-      $noneEither2 = $noneEither->else(Either::none($noneValue));
-      $this->assertFalse($noneEither2->hasValue());
+      $rightEither2 = $rightEither->else(Either::right($rightValue));
+      $this->assertFalse($rightEither2->hasValue());
 
-      $leftThing = $noneEither->else(Either::left(1, $noneValue));
-      $leftClass = $noneEither->else(Either::left($leftObject, $noneValue));
+      $leftThing = $rightEither->else(Either::left(1, $rightValue));
+      $leftClass = $rightEither->else(Either::left($leftObject, $rightValue));
 
       $this->assertTrue($leftThing->hasValue());
       $this->assertTrue($leftClass->hasValue());
@@ -142,22 +142,22 @@ class EitherTest extends PHPUnit\Framework\TestCase {
    }
 
    public function testGettingAlternitiveEitherLazy() {
-      $noneValue = "goodbye";
+      $rightValue = "goodbye";
       $leftObject = new SomeObject();
-      $noneEither = Either::none($noneValue);
+      $rightEither = Either::right($rightValue);
 
-      $this->assertFalse($noneEither->hasValue());
+      $this->assertFalse($rightEither->hasValue());
 
-      $noneEither2 = $noneEither->elseCreate(function($x) {
-         return Either::none($x);
+      $rightEither2 = $rightEither->elseCreate(function($x) {
+         return Either::right($x);
       });
-      $this->assertFalse($noneEither2->hasValue());
+      $this->assertFalse($rightEither2->hasValue());
 
-      $leftThing = $noneEither->elseCreate(function($x) {
+      $leftThing = $rightEither->elseCreate(function($x) {
          return Either::left(1);
       });
 
-      $leftClass = $noneEither->elseCreate(function($x) use ($leftObject) {
+      $leftClass = $rightEither->elseCreate(function($x) use ($leftObject) {
          return Either::left($leftObject);
       });
 
@@ -169,20 +169,20 @@ class EitherTest extends PHPUnit\Framework\TestCase {
 
       $leftThing->elseCreate(function($x) {
          $this->fail('Callback should not have been run!');
-         return Either::none($x);
+         return Either::right($x);
       });
       $leftClass->elseCreate(function($x) {
          $this->fail('Callback should not have been run!');
-         return Either::none($x);
+         return Either::right($x);
       });
    }
 
    public function testMatching() {
-      $noneValue = "goodbye";
-      $none = Either::none($noneValue);
-      $left = Either::left(1, $noneValue);
+      $rightValue = "goodbye";
+      $right = Either::right($rightValue);
+      $left = Either::left(1, $rightValue);
 
-      $failure = $none->match(
+      $failure = $right->match(
           function($x) { return 2; },
           function($x) { return $x; }
       );
@@ -192,11 +192,11 @@ class EitherTest extends PHPUnit\Framework\TestCase {
           function($x) { return $x; }
       );
 
-      $this->assertSame($failure, $noneValue);
+      $this->assertSame($failure, $rightValue);
       $this->assertSame($success, 2);
 
       $hasMatched = false;
-      $none->match(
+      $right->match(
           function($x) { $this->fail('Callback should not have been run!'); },
           function($x) use (&$hasMatched) { $hasMatched = true; }
       );
@@ -209,7 +209,7 @@ class EitherTest extends PHPUnit\Framework\TestCase {
       );
       $this->assertTrue($hasMatched);
 
-      $none->matchSome(function($x) { $this->fail('Callback should not have been run!'); });
+      $right->matchSome(function($x) { $this->fail('Callback should not have been run!'); });
 
       $hasMatched = false;
       $left->matchSome(function($x) use (&$hasMatched) { return $hasMatched = $x == 1; });
@@ -218,75 +218,75 @@ class EitherTest extends PHPUnit\Framework\TestCase {
       $left->matchNone(function() { $this->fail('Callback should not have been run!'); });
       $hasMatched = false;
 
-      $none->matchNone(function() use (&$hasMatched) { $hasMatched = true; });
+      $right->matchNone(function() use (&$hasMatched) { $hasMatched = true; });
       $this->assertTrue($hasMatched);
    }
 
    public function testMapping() {
-      $noneValue = "goodbye";
-      $none = Either::none($noneValue);
-      $left = Either::left("a", $noneValue);
+      $rightValue = "goodbye";
+      $right = Either::right($rightValue);
+      $left = Either::left("a", $rightValue);
       $leftNull = Either::left(null);
 
-      $noneUpper = $none->map(function($x) { return strtoupper($x); });
+      $rightUpper = $right->map(function($x) { return strtoupper($x); });
       $leftUpper = $left->map(function($x) { return strtoupper($x); });
 
-      $this->assertFalse($noneUpper->hasValue());
+      $this->assertFalse($rightUpper->hasValue());
       $this->assertTrue($leftUpper->hasValue());
-      $this->assertSame($noneUpper->valueOr("b"), "b");
+      $this->assertSame($rightUpper->valueOr("b"), "b");
       $this->assertSame($leftUpper->valueOr("b"), "A");
 
-      $noneNotNull = $none->flatMap(function($x) use ($noneValue) { return Either::left($x)->notNull($noneValue); });
-      $leftNotNull = $left->flatMap(function($x) use ($noneValue) { return Either::left($x)->notNull($noneValue); });
-      $leftNullNotNull = $leftNull->flatMap(function($x) use ($noneValue) { return Either::left($x)->notNull($noneValue); });
+      $rightNotNull = $right->flatMap(function($x) use ($rightValue) { return Either::left($x)->notNull($rightValue); });
+      $leftNotNull = $left->flatMap(function($x) use ($rightValue) { return Either::left($x)->notNull($rightValue); });
+      $leftNullNotNull = $leftNull->flatMap(function($x) use ($rightValue) { return Either::left($x)->notNull($rightValue); });
 
-      $this->assertFalse($noneNotNull->hasValue());
+      $this->assertFalse($rightNotNull->hasValue());
       $this->assertTrue($leftNotNull->hasValue());
       $this->assertFalse($leftNullNotNull->hasValue());
    }
 
    public function testFiltering() {
-      $noneValue = "goodbye";
-      $none = Either::none($noneValue);
-      $left = Either::left("a", $noneValue);
+      $rightValue = "goodbye";
+      $right = Either::right($rightValue);
+      $left = Either::left("a", $rightValue);
 
-      $leftTrue = $left->filter(true, $noneValue);
-      $leftFalse = $left->filter(false, $noneValue);
-      $noneTrue = $none->filter(true, $noneValue);
-      $noneFalse = $none->filter(false, $noneValue);
+      $leftTrue = $left->filter(true, $rightValue);
+      $leftFalse = $left->filter(false, $rightValue);
+      $rightTrue = $right->filter(true, $rightValue);
+      $rightFalse = $right->filter(false, $rightValue);
 
       $this->assertTrue($leftTrue->hasValue());
       $this->assertFalse($leftFalse->hasValue());
 
-      $this->assertFalse($noneTrue->hasValue());
-      $this->assertFalse($noneFalse->hasValue());
+      $this->assertFalse($rightTrue->hasValue());
+      $this->assertFalse($rightFalse->hasValue());
 
-      $noneNotA = $none->filterIf(function($x) { return $x != "a"; }, $noneValue);
-      $leftNotA = $left->filterIf(function($x) { return $x != "a"; }, $noneValue);
-      $noneA = $none->filterIf(function($x) { return $x == "a"; }, $noneValue);
-      $leftA = $left->filterIf(function($x) { return $x == "a"; }, $noneValue);
+      $rightNotA = $right->filterIf(function($x) { return $x != "a"; }, $rightValue);
+      $leftNotA = $left->filterIf(function($x) { return $x != "a"; }, $rightValue);
+      $rightA = $right->filterIf(function($x) { return $x == "a"; }, $rightValue);
+      $leftA = $left->filterIf(function($x) { return $x == "a"; }, $rightValue);
 
-      $this->assertFalse($noneNotA->hasValue());
+      $this->assertFalse($rightNotA->hasValue());
       $this->assertFalse($leftNotA->hasValue());
-      $this->assertFalse($noneA->hasValue());
+      $this->assertFalse($rightA->hasValue());
       $this->assertTrue($leftA->hasValue());
 
       $leftNull = Either::left(null);
       $this->assertTrue($leftNull->hasValue());
-      $noneNull = $leftNull->notNull($noneValue);
-      $this->assertFalse($noneNull->hasValue());
+      $rightNull = $leftNull->notNull($rightValue);
+      $this->assertFalse($rightNull->hasValue());
 
       $leftEmpty = Either::left("");
       $this->assertTrue($leftEmpty->hasValue());
-      $noneEmpty = $leftEmpty->notFalsy($noneValue);
-      $this->assertFalse($noneEmpty->hasValue());
+      $rightEmpty = $leftEmpty->notFalsy($rightValue);
+      $this->assertFalse($rightEmpty->hasValue());
    }
 
    public function testContains() {
-      $noneValue = "goodbye";
-      $none = Either::none($noneValue);
-      $leftString = Either::left("a", $noneValue);
-      $leftInt = Either::left(1, $noneValue);
+      $rightValue = "goodbye";
+      $right = Either::right($rightValue);
+      $leftString = Either::left("a", $rightValue);
+      $leftInt = Either::left(1, $rightValue);
 
       $this->assertTrue($leftString->contains("a"));
       $this->assertFalse($leftString->contains("A"));
@@ -298,23 +298,23 @@ class EitherTest extends PHPUnit\Framework\TestCase {
       $this->assertFalse($leftInt->contains("A"));
       $this->assertFalse($leftInt->contains(null));
 
-      $this->assertFalse($none->contains(1));
-      $this->assertFalse($none->contains(2));
-      $this->assertFalse($none->contains("A"));
-      $this->assertFalse($none->contains(null));
+      $this->assertFalse($right->contains(1));
+      $this->assertFalse($right->contains(2));
+      $this->assertFalse($right->contains("A"));
+      $this->assertFalse($right->contains(null));
    }
 
    public function testExists() {
-      $noneValue = "goodbye";
-      $none = Either::none($noneValue);
-      $left = Either::left(10, $noneValue);
+      $rightValue = "goodbye";
+      $right = Either::right($rightValue);
+      $left = Either::left(10, $rightValue);
 
-      $noneFalse = $none->exists(function($x) { return $x == 10; });
+      $rightFalse = $right->exists(function($x) { return $x == 10; });
       $leftTrue = $left->exists(function($x) { return $x >= 10; });
       $leftFalse = $left->exists(function($x) { return $x == "Thing"; });
 
       $this->assertTrue($leftTrue);
-      $this->assertFalse($noneFalse);
+      $this->assertFalse($rightFalse);
       $this->assertFalse($leftFalse);
    }
 
@@ -334,7 +334,7 @@ class EitherTest extends PHPUnit\Framework\TestCase {
          try {
             $thing = SomeComplexThing::doWork($fullName);
          } catch (ErrorException $e) {
-            return Either::none('SomeComplexThing had an error!');
+            return Either::right('SomeComplexThing had an error!');
          }
 
          return Either::left($thing);
@@ -359,7 +359,7 @@ class EitherTest extends PHPUnit\Framework\TestCase {
          try {
             $thing = SomeComplexThing::doWork($fullName, "Forcing left exception");
          } catch (\Exception $e) {
-            return Either::none('SomeComplexThing had an error!');
+            return Either::right('SomeComplexThing had an error!');
          }
 
          return Either::left($thing);
@@ -399,12 +399,12 @@ class EitherTest extends PHPUnit\Framework\TestCase {
 
    public function testToOption() {
       $left = Either::left(10, "Some Error Message");
-      $none = Either::none("Some Error Message");
+      $right = Either::right("Some Error Message");
 
       $leftOption = $left->toOption();
-      $noneOption = $none->toOption();
+      $rightOption = $right->toOption();
 
       $this->assertEquals($leftOption, Option::left(10));
-      $this->assertEquals($noneOption, Option::none());
+      $this->assertEquals($rightOption, Option::right());
    }
 }
