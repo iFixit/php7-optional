@@ -544,7 +544,7 @@ class Either {
       $rightFunc =
       /** @param TLeft $rightValue **/
       function($rightValue): Option {
-         return Option::right();
+         return Option::none();
       };
 
       return $this->match($leftFunc, $rightFunc);
