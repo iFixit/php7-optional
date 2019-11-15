@@ -514,7 +514,7 @@ class Either {
       /** @var callable(TRight):Either<ULeft, TRight> **/
       $rightFunc =
       /** @param TRight $rightValue */
-      function($rightValue): Either {
+      function($rightValue): self {
          return self::right($rightValue);
       };
 
