@@ -134,6 +134,20 @@ class Either {
    }
 
    /**
+    * Returns a `Either::right($value)` iff the either orginally was `Either::left($leftValue)`
+    *
+    * _Notes:_
+    *
+    *  - Returns `Either<TLeft, TRight>`
+    *
+    * @param TRight $alternative
+    * @return Either<TLeft, TRight>
+    **/
+   public function orRight($alternative): self {
+      return !$this->isLeft ? $this : self::right($alternative);
+   }
+
+   /**
     * Returns a `Either::left($value)` iff the the either orginally was `Either::right($rightValue)`
     *
     * The `$valueFactoryFunc` is called lazily - iff the either orginally was `Either::right($rightValue)`

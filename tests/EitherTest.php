@@ -160,6 +160,15 @@ class EitherTest extends PHPUnit\Framework\TestCase {
       $lazyPassThrough = $leftThing->orCreateLeft(function() { return 10; });
       $this->assertTrue($lazyPassThrough->isLeft());
       $this->assertSame($lazyPassThrough->leftOr(-1), 1);
+
+
+      $leftEither = Either::left("Hello");
+
+      $rightThing= $leftEither->orRight(1);
+      $rightClass = $leftEither->orRight($someObject);
+
+      $this->assertTrue($rightThing->isRight());
+      $this->assertTrue($rightClass->isRight());
    }
 
    public function testGettingAlternitiveEither() {
