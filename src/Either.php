@@ -170,6 +170,23 @@ class Either {
    }
 
    /**
+    * Returns a `Either::right($value)` iff the the either orginally was `Either::left($leftValue)`
+    *
+    * The `$alternativeFactory` is called lazily - iff the either orginally was `Either::left($leftValue)`
+    *
+    * _Notes:_
+    *
+    *  - `$alternativeFactory` must follow this interface `callable(TRight):TLeft`
+    *  - Returns `Either<TLeft, TRight>`
+    *
+    * @param callable(TLeft):TRight $alternativeFactory
+    * @return Either<TLeft, TRight>
+    **/
+   public function orCreateRight(callable $alternativeFactory): self {
+      return !$this->isLeft ? $this : self::right($alternativeFactory($this->leftValue));
+   }
+
+   /**
     * iff `Either::right($rightValue)` return `$otherEither`, otherwise return the orginal `$either`
     *
     * ```php
