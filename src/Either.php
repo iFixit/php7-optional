@@ -532,7 +532,7 @@ class Either {
 
    /**
     * @param bool $condition
-    * @param TLeft $rightValue
+    * @param TLeft $leftValue
     * @return Either<TLeft, TRight>
     **/
    public function filterRight(bool $condition, $leftValue): self {
