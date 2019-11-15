@@ -369,6 +369,19 @@ class EitherTest extends PHPUnit\Framework\TestCase {
       $this->assertTrue($leftTrue);
       $this->assertFalse($rightFalse);
       $this->assertFalse($leftFalse);
+
+
+      $right = Either::right(10);
+      $left = Either::left(10);
+
+      $exists = $right->existsRight(function($x) { return $x == 10; });
+      $this->assertTrue($exists);
+
+      $exists = $left->existsRight(function($x) { return $x >= 10; });
+      $this->assertFalse($exists);
+
+      $exists = $right->existsRight(function($x) { return $x == "Thing"; });
+      $this->assertFalse($exists);
    }
 
    public function testFlatMap() {
