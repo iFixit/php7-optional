@@ -60,6 +60,7 @@ class Result {
     * @return TOkay
     **/
    public function dataOr($alternative) {
+      /** @var TOkay **/
       return $this->either->leftOr($alternative);
    }
 
@@ -70,6 +71,7 @@ class Result {
     * @return TError
     **/
    public function errorOr($alternative) {
+      /** @var TError **/
       return $this->either->rightOr($alternative);
    }
 
@@ -99,6 +101,7 @@ class Result {
     * @return TOkay
     **/
    public function orCreateData(callable $alternativeFactory) {
+      /** @var TOkay **/
       return $this->either->leftOrCreate($alternativeFactory);
    }
 
@@ -144,13 +147,13 @@ class Result {
     * _Notes:_
     *
     *  - `$alternativeResultFactory` must be of type `callable(TError):Result<TOkay, TError> `
-    *  - Returns `Result<TOkay, TRight>`
+    *  - Returns `Result<TOkay, TError>`
     *
-    * @param callable(TError):Result<TOkay, TRight> $alternativeResultFactory
+    * @param callable(TError):Result<TOkay, TError> $alternativeResultFactory
     * @return Result<TOkay, TError>
     **/
    public function elseCreateData(callable $alternativeResultFactory): self {
-      /** @var callable(TOkay):Either<UOkay, TError> **/
+      /** @var callable(TOkay):Either<TOkay, TError> **/
       $realFactory =
       /** @param TError $errorValue */
       function ($errorValue) use ($alternativeResultFactory): Either {
@@ -310,11 +313,6 @@ class Result {
       return new self($either);
    }
 
-   public function flatMapError(callable $mapFunc): self {
-      $either = $this->either->flatMapRight($mapFunc);
-      return new self($either);
-   }
-
    /**
     * @param bool $condition
     * @param TError $errorValue
@@ -367,7 +365,7 @@ class Result {
     * @return Result<TOkay, TError>
     **/
    public function filterErrorIf(callable $filterFunc, $data): self {
-      $either = $this->either->filterRightIf($condition, $data);
+      $either = $this->either->filterRightIf($filterFunc, $data);
       return new self($either);
    }
 
@@ -493,8 +491,8 @@ class Result {
     *
     * - Returns `Result<TOkay, TError>`
     *
-    * @param array $array
-    * @param mixed $key The key of the array
+    * @param array<array-key, mixed> $array
+    * @param array-key $key The key of the array
     * @param TError $rightValue
     *  @return Result<TOkay, TError>
     **/
