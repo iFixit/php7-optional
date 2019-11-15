@@ -393,6 +393,16 @@ class EitherTest extends PHPUnit\Framework\TestCase {
       $this->assertFalse($leftTrue->isRight());
       $this->assertTrue($rightTrue->isRight());
       $this->assertFalse($rightFalse->isRight());
+
+      $rightNotA = $right->filterRightIf(function($x) { return $x != "a"; }, $rightValue);
+      $leftNotA = $left->filterRightIf(function($x) { return $x != "a"; }, $rightValue);
+      $rightA = $right->filterRightIf(function($x) { return $x == "a"; }, $rightValue);
+      $leftA = $left->filterRightIf(function($x) { return $x == "a"; }, $rightValue);
+
+      $this->assertTrue($rightNotA->isRight());
+      $this->assertFalse($leftNotA->isRight());
+      $this->assertFalse($rightA->isRight());
+      $this->assertFalse($leftA->isRight());
    }
 
    public function testContains() {

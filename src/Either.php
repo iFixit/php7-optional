@@ -566,6 +566,23 @@ class Either {
    }
 
    /**
+    * Change the `Either::right($value)` into `Either::left()` iff `$filterFunc` returns false,
+    * otherwise propigate the `Either::left()`
+    *
+    * _Notes:_
+    *
+    *  - `$filterFunc` must follow this interface `callable(TRight):bool`
+    *  - Returns `Either<TLeft, TRight>`
+    *
+    * @param callable(TRight):bool $filterFunc
+    * @param TLeft $leftValue
+    * @return Either<TLeft, TRight>
+    **/
+    public function filterRightIf(callable $filterFunc, $leftValue): self {
+      return !$this->isLeft && !$filterFunc($this->rightValue) ? self::left($leftValue) : $this;
+   }
+
+   /**
     * Turn an `Either::left(null)` into an `Either::right($rightValue)` iff `is_null($value)`
     *
     * ```php
