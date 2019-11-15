@@ -245,6 +245,19 @@ class EitherTest extends PHPUnit\Framework\TestCase {
          $this->fail('Callback should not have been run!');
          return Either::right($x);
       });
+
+
+      $rightThing = $rightEither->elseCreateRight(function($x) {
+         return Either::right(1);
+      });
+
+      $this->assertTrue($rightThing->isRight());
+      $this->assertSame($rightThing->rightOr(-1), $rightValue);
+
+      $rightThing->elseCreateRight(function($x) {
+         $this->fail('Callback should not have been run!');
+         return Either::right($x);
+      });
    }
 
    public function testMatching() {

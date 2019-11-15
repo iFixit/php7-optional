@@ -246,6 +246,21 @@ class Either {
    }
 
    /**
+    * iff `Either::left` return the `Either` returned by `$otherEitherFactoryFunc`, otherwise return the orginal `$either`
+    *
+    * _Notes:_
+    *
+    *  - `$alternativeEither` must be of type `callable(TLeft):Either<TLeft, TRight> `
+    *  - Returns `Either<TLeft, TRight>`
+    *
+    * @param callable(TLeft):Either<TLeft, TRight> $alternativeEitherFactory
+    * @return Either<TLeft, TRight>
+    **/
+   public function elseCreateRight(callable $alternativeEitherFactory): self {
+      return !$this->isLeft ? $this : $alternativeEitherFactory($this->leftValue);
+   }
+
+   /**
     * Runs only 1 function:
     *
     *  - `$left` iff the either is `Either::left`
