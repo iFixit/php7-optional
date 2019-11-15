@@ -569,6 +569,19 @@ class Either {
    }
 
    /**
+    * Returns true if the either's value == `$value`, otherwise false.
+    *
+    * @param mixed $value
+    **/
+   public function rightContains($value): bool {
+      if (!$this->isRight()) {
+         return false;
+      }
+
+      return $this->rightValue == $value;
+   }
+
+   /**
     * Returns true if the `$existsFunc` returns true, otherwise false.
     *
     * ```php
