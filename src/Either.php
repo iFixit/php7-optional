@@ -487,7 +487,7 @@ class Either {
     * @return Either<ULeft, TRight>
     **/
     public function andThen(callable $mapFunc): self {
-      return $this->flatMap($mapFunc);
+      return $this->flatMapLeft($mapFunc);
     }
 
    /**
@@ -495,10 +495,10 @@ class Either {
     *
     * ```php
     * $right = Either::right(null);
-    * $rightNotNull = $right->flatMap(function($rightValue) { return Either::left($rightValue)->leftNotNull(); });
+    * $rightNotNull = $right->flatMapLeft(function($rightValue) { return Either::left($rightValue)->leftNotNull(); });
     *
     * $left = Either::left(null);
-    * $leftNotNull = $left->flatMap(function($leftValue) { return Either::left($leftValue)->leftNotNull(); });
+    * $leftNotNull = $left->flatMapLeft(function($leftValue) { return Either::left($leftValue)->leftNotNull(); });
     * ```
     *
     * _Notes:_
@@ -510,7 +510,7 @@ class Either {
     * @param callable(TLeft):Either<ULeft, TRight> $mapFunc
     * @return Either<ULeft, TRight>
     **/
-   public function flatMap(callable $mapFunc): self {
+   public function flatMapLeft(callable $mapFunc): self {
       /** @var callable(TRight):Either<ULeft, TRight> **/
       $rightFunc =
       /** @param TRight $rightValue */
