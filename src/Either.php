@@ -608,6 +608,23 @@ class Either {
    }
 
    /**
+    * Returns true if the `$existsFunc` returns true, otherwise false.
+    *
+    * _Notes:_
+    *
+    *  - `$filterFunc` must follow this interface `callable(TRight):bool`
+    *
+    * @param callable(TRight):bool $existsFunc
+    **/
+   public function existsRight(callable $existsFunc): bool {
+      if (!$this->isRight()) {
+         return false;
+      }
+
+      return $existsFunc($this->rightValue);
+   }
+
+   /**
     * Returns an `Option` which drops the right value.
     *
     * ```php
