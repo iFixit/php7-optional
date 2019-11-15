@@ -10,10 +10,10 @@ namespace Optional;
 class Option {
    /** @var bool */
    private $hasValue;
-   /** @var T */
+   /** @var T|null */
    private $value;
 
-   /** @param T $value */
+   /** @param T|null $value */
    private function __construct($value, bool $hasValue) {
       $this->hasValue = $hasValue;
       $this->value = $value;
@@ -43,8 +43,8 @@ class Option {
     * $none = Option::some(null)->valueOr("Some other value!"); // null, See option->notNull()
     * ```
     *
-    * @param T $alternative
-    * @return T
+    * @param T|null $alternative
+    * @return T|null
     **/
    public function valueOr($alternative) {
       return $this->hasValue ? $this->value : $alternative;
@@ -69,7 +69,7 @@ class Option {
     *  - `$alternativeFactory` must follow this interface `callable():T`
     *
     * @param callable():T $alternativeFactory
-    * @return T
+    * @return T|null
     **/
    public function valueOrCreate(callable $alternativeFactory) {
       return $this->hasValue ? $this->value : $alternativeFactory();
@@ -187,7 +187,7 @@ class Option {
     *  - `$none` must follow this interface `callable():U`
     *
     * @template U
-    * @param callable(T):U $some
+    * @param callable(T|null):U $some
     * @param callable():U $none
     * @return U
     **/
@@ -407,7 +407,7 @@ class Option {
     *  - `$filterFunc` must follow this interface `callable(T):bool`
     *  - Returns `Option<T>`
     *
-    * @param callable(T):bool $filterFunc
+    * @param callable(T|null):bool $filterFunc
     * @return Option<T>
     **/
    public function filterIf(callable $filterFunc): self {
@@ -481,7 +481,7 @@ class Option {
     *  - `$existsFunc` must follow this interface `callable(T):bool`
     *  - Returns `Option<T>`
     *
-    * @param callable(T):bool $existsFunc
+    * @param callable(T|null):bool $existsFunc
     **/
    public function exists(callable $existsFunc): bool {
       if (!$this->hasValue()) {
@@ -526,8 +526,10 @@ class Option {
     *
     * - Returns `Option<T>`
     *
+    * @return Option<T>
     **/
    public static function none(): self {
+      /** @var Option<T> */
       return new self(null, false);
    }
 
@@ -608,8 +610,8 @@ class Option {
     *
     * - Returns `Option<T>`
     *
-    * @param array $array
-    * @param mixed $key The key of the array
+    * @param array<array-key, mixed> $array
+    * @param array-key $key The key of the array
     * @return Option<T>
     **/
    public static function fromArray(array $array, $key): self {

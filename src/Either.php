@@ -11,14 +11,14 @@ namespace Optional;
 class Either {
    /** @var bool */
    private $isLeft;
-   /** @var TLeft */
+   /** @var TLeft|null */
    private $leftValue;
-   /** @var TRight */
+   /** @var TRight|null */
    private $rightValue;
 
    /**
-    * @param TLeft $leftValue
-    * @param TRight $rightValue
+    * @param TLeft|null $leftValue
+    * @param TRight|null $rightValue
     **/
    private function __construct($leftValue, $rightValue, bool $isLeft) {
       $this->isLeft = $isLeft;
@@ -57,8 +57,8 @@ class Either {
     * $right = Either::left(null)->leftOr("Some other value!"); // null, See either->leftNotNull()
     * ```
     *
-    * @param TLeft $alternative
-    * @return TLeft
+    * @param TLeft|null $alternative
+    * @return TLeft|null
     **/
    public function leftOr($alternative) {
       return $this->isLeft ? $this->leftValue : $alternative;
@@ -67,8 +67,8 @@ class Either {
    /**
     * Returns the either value or returns `$alternative`
     *
-    * @param TRight $alternative
-    * @return TRight
+    * @param TRight|null $alternative
+    * @return TRight|null
     **/
     public function rightOr($alternative) {
       return !$this->isLeft ? $this->rightValue : $alternative;
@@ -93,8 +93,8 @@ class Either {
     *
     *  - `$valueFactoryFunc` must follow this interface `callable(TRight):TLeft`
     *
-    * @param callable(TRight):TLeft $alternativeFactory
-    * @return TLeft
+    * @param callable(TRight|null):TLeft $alternativeFactory
+    * @return TLeft|null
     **/
    public function leftOrCreate(callable $alternativeFactory) {
       return $this->isLeft ? $this->leftValue : $alternativeFactory($this->rightValue);
@@ -107,8 +107,8 @@ class Either {
     *
     *  - `$valueFactoryFunc` must follow this interface `callable(TRight):TLeft`
     *
-    * @param callable(TLeft):TRight $alternativeFactory
-    * @return TRight
+    * @param callable(TLeft|null):TRight $alternativeFactory
+    * @return TRight|null
     **/
    public function rightOrCreate(callable $alternativeFactory) {
       return !$this->isLeft ? $this->rightValue : $alternativeFactory($this->leftValue);
@@ -162,7 +162,7 @@ class Either {
     *  - `$valueFactoryFunc` must follow this interface `callable(TRight):TLeft`
     *  - Returns `Either<TLeft, TRight>`
     *
-    * @param callable(TRight):TLeft $alternativeFactory
+    * @param callable(TRight|null):TLeft $alternativeFactory
     * @return Either<TLeft, TRight>
     **/
    public function orCreateLeft(callable $alternativeFactory): self {
@@ -179,7 +179,7 @@ class Either {
     *  - `$alternativeFactory` must follow this interface `callable(TRight):TLeft`
     *  - Returns `Either<TLeft, TRight>`
     *
-    * @param callable(TLeft):TRight $alternativeFactory
+    * @param callable(TLeft|null):TRight $alternativeFactory
     * @return Either<TLeft, TRight>
     **/
    public function orCreateRight(callable $alternativeFactory): self {
@@ -238,7 +238,7 @@ class Either {
     *  - `$alternativeEither` must be of type `callable(TRight):Either<TLeft, TRight> `
     *  - Returns `Either<TLeft, TRight>`
     *
-    * @param callable(TRight):Either<TLeft, TRight> $alternativeEitherFactory
+    * @param callable(TRight|null):Either<TLeft, TRight> $alternativeEitherFactory
     * @return Either<TLeft, TRight>
     **/
    public function elseCreateLeft(callable $alternativeEitherFactory): self {
@@ -253,7 +253,7 @@ class Either {
     *  - `$alternativeEither` must be of type `callable(TLeft):Either<TLeft, TRight> `
     *  - Returns `Either<TLeft, TRight>`
     *
-    * @param callable(TLeft):Either<TLeft, TRight> $alternativeEitherFactory
+    * @param callable(TLeft|null):Either<TLeft, TRight> $alternativeEitherFactory
     * @return Either<TLeft, TRight>
     **/
    public function elseCreateRight(callable $alternativeEitherFactory): self {
@@ -289,8 +289,8 @@ class Either {
     *  - `$right` must follow this interface `callable(TRight):U`
     *
     * @template U
-    * @param callable(TLeft):U $left
-    * @param callable(TRight):U $right
+    * @param callable(TLeft|null):U $left
+    * @param callable(TRight|null):U $right
     * @return U
     **/
    public function match(callable $left, callable $right) {
@@ -312,7 +312,7 @@ class Either {
     *
     *  - `$left` must follow this interface `callable(TLeft):U`
     *
-    * @param callable(TLeft) $left
+    * @param callable(TLeft|null) $left
     **/
    public function matchLeft(callable $left): void {
       if (!$this->isLeft) {
@@ -337,7 +337,7 @@ class Either {
     *
     *  - `$right` must follow this interface `callable(TRight):U`
     *
-    * @param callable(TRight) $right
+    * @param callable(TRight|null) $right
     **/
    public function matchRight(callable $right): void {
       if ($this->isLeft) {
@@ -441,7 +441,7 @@ class Either {
     *  - Returns `Either<TLeft, TRight>`
     *
     * @template ULeft
-    * @param callable(TLeft):Either<ULeft, TRight> $mapFunc
+    * @param callable(TLeft):ULeft $mapFunc
     * @return Either<ULeft, TRight>
     **/
    public function mapLeftSafely(callable $mapFunc): self {
@@ -557,7 +557,7 @@ class Either {
     *  - `$filterFunc` must follow this interface `callable(TLeft):bool`
     *  - Returns `Either<TLeft, TRight>`
     *
-    * @param callable(TLeft):bool $filterFunc
+    * @param callable(TLeft|null):bool $filterFunc
     * @param TRight $rightValue
     * @return Either<TLeft, TRight>
     **/
@@ -574,7 +574,7 @@ class Either {
     *  - `$filterFunc` must follow this interface `callable(TRight):bool`
     *  - Returns `Either<TLeft, TRight>`
     *
-    * @param callable(TRight):bool $filterFunc
+    * @param callable(TRight|null):bool $filterFunc
     * @param TLeft $leftValue
     * @return Either<TLeft, TRight>
     **/
@@ -698,7 +698,7 @@ class Either {
     *
     *  - `$filterFunc` must follow this interface `callable(TLeft):bool`
     *
-    * @param callable(TLeft):bool $existsFunc
+    * @param callable(TLeft|null):bool $existsFunc
     **/
    public function existsLeft(callable $existsFunc): bool {
       if (!$this->isLeft()) {
@@ -715,7 +715,7 @@ class Either {
     *
     *  - `$filterFunc` must follow this interface `callable(TRight):bool`
     *
-    * @param callable(TRight):bool $existsFunc
+    * @param callable(TRight|null):bool $existsFunc
     **/
    public function existsRight(callable $existsFunc): bool {
       if (!$this->isRight()) {
@@ -796,9 +796,10 @@ class Either {
     *  - Returns `Either<mixed, TRight>`
     *
     * @param TRight $rightValue
-    * @return Either<mixed, TRight>
+    * @return Either<TLeft, TRight>
     **/
    public static function right($rightValue): self {
+      /** @var Either<TLeft, TRight> */
       return new self(null, $rightValue, false);
    }
 
@@ -866,7 +867,7 @@ class Either {
     *
     * - Returns `Either<TLeft, TRight>`
     *
-    * @param T $leftValue
+    * @param TLeft $leftValue
     * @param TRight $rightValue
     * @return Either<TLeft, TRight>
     **/
@@ -887,8 +888,8 @@ class Either {
     *
     * - Returns `Either<TLeft, TRight>`
     *
-    * @param array $array
-    * @param mixed $key The key of the array
+    * @param array<array-key, mixed> $array
+    * @param array-key $key The key of the array
     * @param TRight $rightValue
     *  @return Either<TLeft, TRight>
     **/
