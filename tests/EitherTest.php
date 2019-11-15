@@ -197,6 +197,18 @@ class EitherTest extends PHPUnit\Framework\TestCase {
 
       $this->assertSame($leftThing->leftOr(-1), 1);
       $this->assertSame($leftClass->leftOr("-1"), $someObject);
+
+
+      $leftEither = Either::left("Hello");
+
+      $rightThing = $leftEither->elseRight(Either::right(1));
+      $rightClass = $leftEither->elseRight(Either::right($someObject));
+
+      $this->assertTrue($rightThing->isRight());
+      $this->assertTrue($rightClass->isRight());
+
+      $this->assertSame($rightThing->rightOr(-1), 1);
+      $this->assertSame($rightClass->rightOr("-1"), $someObject);
    }
 
    public function testGettingAlternitiveEitherLazy() {
