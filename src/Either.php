@@ -531,6 +531,15 @@ class Either {
    }
 
    /**
+    * @param bool $condition
+    * @param TLeft $rightValue
+    * @return Either<TLeft, TRight>
+    **/
+   public function filterRight(bool $condition, $leftValue): self {
+      return !$this->isLeft && !$condition ? self::left($leftValue) : $this;
+   }
+
+   /**
     * Change the `Either::left($value)` into `Either::right()` iff `$filterFunc` returns false,
     * otherwise propigate the `Either::right()`
     *

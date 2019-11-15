@@ -385,6 +385,14 @@ class EitherTest extends PHPUnit\Framework\TestCase {
       $this->assertTrue($rightEmpty->isRight());
       $leftEmpty = $rightEmpty->rightNotFalsy("Hello");
       $this->assertFalse($leftEmpty->isRight());
+
+      $rightTrue = $right->filterRight(true, "Hello");
+      $rightFalse = $right->filterRight(false, "Hello");
+      $leftTrue = $left->filterRight(true, "Hello");
+
+      $this->assertFalse($leftTrue->isRight());
+      $this->assertTrue($rightTrue->isRight());
+      $this->assertFalse($rightFalse->isRight());
    }
 
    public function testContains() {
