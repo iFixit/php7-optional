@@ -101,6 +101,20 @@ class Either {
    }
 
    /**
+    * Returns the either's value or calls `$valueFactoryFunc` and returns the value of that function
+    *
+    * _Notes:_
+    *
+    *  - `$valueFactoryFunc` must follow this interface `callable(TRight):TLeft`
+    *
+    * @param callable(TLeft):TRight $alternativeFactory
+    * @return TRight
+    **/
+   public function rightOrCreate(callable $alternativeFactory) {
+      return !$this->isLeft ? $this->rightValue : $alternativeFactory($this->leftValue);
+   }
+
+   /**
     * Returns a `Either::left($value)` iff the either orginally was `Either::right($rightValue)`
     *
     * ```php

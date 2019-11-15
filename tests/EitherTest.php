@@ -112,6 +112,29 @@ class EitherTest extends PHPUnit\Framework\TestCase {
          $this->fail('Callback should not have been run!');
          return $x;
       }), $someObject);
+
+
+      $leftEither = Either::left("Hello");
+
+      $this->assertSame($leftEither->rightOrCreate(function($x) { return $x; }), "Hello");
+
+      $someObject = new SomeObject();
+
+      $rightThing = Either::right(1);
+      $rightClass = Either::right($someObject);
+
+      $this->assertSame($rightThing->rightOrCreate(function($x) { return $x; }), 1);
+      $this->assertSame($rightClass->rightOrCreate(function($x) { return $x; }), $someObject);
+
+      $this->assertSame($rightThing->rightOrCreate(function($x) {
+         $this->fail('Callback should not have been run!');
+         return $x;
+      }), 1);
+
+      $this->assertSame($rightClass->rightOrCreate(function($x) {
+         $this->fail('Callback should not have been run!');
+         return $x;
+      }), $someObject);
    }
 
    public function testGettingAlternitiveValue() {
