@@ -12,10 +12,14 @@ composer require ifixit/php7-optional
 
 ## Usage
 
-There are 2 main classes:
+There are 3 main classes:
 
 * [Optional\Option](https://php7-optional.surge.sh/Optional/Option.html)
+   * Conceptually: Some or None. This is a box that optionally holds a value. Use this to replace null.
 * [Optional\Either](https://php7-optional.surge.sh/Optional/Either.html)
+   * Conceptually: Left or Right. This is a box that is bi-state. Can be Left, or Right. Not Both, not none. You can apply the same transformations to the left side as you can to the right.
+* [Optional\Result](https://php7-optional.surge.sh/Optional/Result.html)
+   * Conceptually: Okay or Error. This is a box that is bi-state, but leans towards okay state. The error state is limited as we want to make this object easy to deal with mapping or dump error.
 
 ## [Read the full docs](https://php7-optional.surge.sh/)
 
@@ -29,76 +33,78 @@ use Optional\Option;
 
 ## Creating optional values
 
-Here is a complex example with null
+There are examples under `examples`.
+
+Here is one of them which will show how fluently you can describe the chnage you want to apply.
 
 ```php
-$somePerson = [
-   'name' => [
-      'first' => 'First',
-      'last' => 'Last'
-   ]
-];
-
-$person = is_set($somePerson['name']) ? $somePerson['name'] : null;
-
-if ($person) {
-   return;
-}
-
-$fullName = $person['first'] . $person['last'];
-
-try {
-   $name = SomeComplexThing::doWork($fullName);
-} catch (\Exception $e) {
-   $name = null;
-}
-
-$user = new User($name);
-
-if ($user) {
-   var_dump("The user is {$user->name}");
-} else {
-   var_dump("Oh no! The user is missing!");
-}
-
-$user = $user ?: new GolbalRobotUser();
-```
-
-
-Here is the same complex example with optional
-
-```php
-$somePerson = [
-   'name' => [
-      'first' => 'First',
-      'last' => 'Last'
-   ]
-];
-
-$person = Option::fromArray($somePerson, 'name');
-
-$nameOption = $person->andThen(function($person) {
-   $fullName = $person['first'] . $person['last'];
-
-   try {
-      $thing = SomeComplexThing::doWork($fullName);
-   } catch (\Exception $e) {
-      return Option::none();
+class Curl {
+   public static function request(string $url): array {
+      return [
+         'code' => 200,
+         'url' => $url,
+         'data' =>
+            '{
+               "environment_config": {
+                 "app": {
+                   "name": "Sample App",
+                   "url": "http://10.0.0.120:8080/app/"
+                 },
+                 "database": {
+                   "name": "mysql database",
+                   "host": "10.0.0.120",
+                   "port": 3128,
+                   "username": "root",
+                   "password": "toor"
+                 },
+                 "rest_api": "http://10.0.0.120:8080/v2/api/"
+               }
+             }'
+      ];
    }
+}
 
-   return Option::some($thing);
-});
+$responseToResult = function (array $response): Result {
+   $wasGood = $response['code'] == 200;
 
-$userOption = $nameOption->map(function($name) {
-   return new User($name);
-});
+   if ($wasGood) {
+      return Result::okay($response);
+   } else {
+      $url = $response['url'];
+      $code = $response['code'];
+      return Result::error("The request to $url failed with code $code!");
+   }
+};
 
-$userOption->match(
-   function ($user) { var_dump("The user is {$user->name}"); }
-   function () { var_dump("Oh no! The user is missing!"); }
-);
+$response = Curl::request('http:://www.github.com');
 
-$user = $user->valueOr(new GolbalRobotUser());
+$result = $responseToResult($response);
+
+$dbConnectionStr = $result
+   ->mapData(function ($result) {
+      try {
+         return json_decode($result['data'], true);
+      } catch(JsonDecodeException $ex) {
+         return false;
+      }
+   })
+   ->notFalsy("Json failed to decode!")
+   ->mapData(function(array $json) {
+      return $json['environment_config'];
+   })
+   ->mapData(function(array $environment_config) {
+      return $environment_config['database'];
+   })
+   ->mapData(function(array $dbData) {
+      $host = $dbData['host'];
+      $port = $dbData['port'];
+      $username = $dbData['username'];
+      $password = $dbData['password'];
+      return "Server=$host;Port=$port;Uid=$username;Pwd=$password;";
+   })
+   ->dataOr('Server=myServerAddress;Port=1234;Database=myDataBase;Uid=myUsername;Pwd=myPassword;');
+
+echo "Connection str: $dbConnectionStr \n";
 ```
 
 ## Using Either
@@ -109,7 +115,13 @@ To use Either, simply import the following namespace:
 use Optional\Either;
 ```
 
-## Creating either values
+## Using Result
+
+To use Result, simply import the following namespace:
+
+```php
+use Optional\Result;
+```
 
 # Licence
  MIT
