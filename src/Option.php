@@ -621,4 +621,20 @@ class Option {
 
       return self::none();
    }
+
+   /**
+    * @psalm-suppress InvalidCast
+    *
+    * This is due to this class being a box.
+    * I can't ensure the boxed value is stringable.
+    */
+   public function __toString() {
+      if ($this->hasValue) {
+         if ($this->value == null) {
+            return "Some(null)";
+         }
+          return "Some({$this->value})";
+      }
+      return "None";
+   }
 }
