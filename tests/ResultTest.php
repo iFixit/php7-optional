@@ -155,16 +155,16 @@ class ResultTest extends PHPUnit\Framework\TestCase {
 
       $this->assertFalse($errorResult->isOkay());
 
-      $errorResult2 = $errorResult->elseCreateData(function($x) {
+      $errorResult2 = $errorResult->elseCreate(function($x) {
          return Result::error($x);
       });
       $this->assertFalse($errorResult2->isOkay());
 
-      $okayThing = $errorResult->elseCreateData(function($x) {
+      $okayThing = $errorResult->elseCreate(function($x) {
          return Result::okay(1);
       });
 
-      $okayClass = $errorResult->elseCreateData(function($x) use ($someObject) {
+      $okayClass = $errorResult->elseCreate(function($x) use ($someObject) {
          return Result::okay($someObject);
       });
 
@@ -174,11 +174,11 @@ class ResultTest extends PHPUnit\Framework\TestCase {
       $this->assertSame($okayThing->dataOr(-1), 1);
       $this->assertSame($okayClass->dataOr("-1"), $someObject);
 
-      $okayThing->elseCreateData(function($x) {
+      $okayThing->elseCreate(function($x) {
          $this->fail('Callback should not have been run!');
          return Result::error($x);
       });
-      $okayClass->elseCreateData(function($x) {
+      $okayClass->elseCreate(function($x) {
          $this->fail('Callback should not have been run!');
          return Result::error($x);
       });
@@ -216,10 +216,10 @@ class ResultTest extends PHPUnit\Framework\TestCase {
       );
       $this->assertTrue($hasMatched);
 
-      $error->matchData(function($x) { $this->fail('Callback should not have been run!'); });
+      $error->matchOkay(function($x) { $this->fail('Callback should not have been run!'); });
 
       $hasMatched = false;
-      $okay->matchData(function($x) use (&$hasMatched) { return $hasMatched = $x == 1; });
+      $okay->matchOkay(function($x) use (&$hasMatched) { return $hasMatched = $x == 1; });
       $this->assertTrue($hasMatched);
 
       $okay->matchError(function() { $this->fail('Callback should not have been run!'); });
@@ -235,8 +235,8 @@ class ResultTest extends PHPUnit\Framework\TestCase {
       $okay = Result::okay("a");
       $okayNull = Result::okay(null);
 
-      $errorUpper = $error->mapData(function($x) { return strtoupper($x); });
-      $okayUpper = $okay->mapData(function($x) { return strtoupper($x); });
+      $errorUpper = $error->map(function($x) { return strtoupper($x); });
+      $okayUpper = $okay->map(function($x) { return strtoupper($x); });
 
       $this->assertFalse($errorUpper->isOkay());
       $this->assertTrue($okayUpper->isOkay());
@@ -247,9 +247,9 @@ class ResultTest extends PHPUnit\Framework\TestCase {
       $okay = Result::okay("a");
       $okayNull = Result::okay(null);
 
-      $errorNotNull = $error->flatMapData(function($x) use ($errorValue) { return Result::okay($x)->notNull($errorValue); });
-      $notNull = $okay->flatMapData(function($x) use ($errorValue) { return Result::okay($x)->notNull($errorValue); });
-      $okayNullNotNull = $okayNull->flatMapData(function($x) use ($errorValue) { return Result::okay($x)->notNull($errorValue); });
+      $errorNotNull = $error->flatmap(function($x) use ($errorValue) { return Result::okay($x)->notNull($errorValue); });
+      $notNull = $okay->flatmap(function($x) use ($errorValue) { return Result::okay($x)->notNull($errorValue); });
+      $okayNullNotNull = $okayNull->flatmap(function($x) use ($errorValue) { return Result::okay($x)->notNull($errorValue); });
 
       $this->assertFalse($errorNotNull->isOkay());
       $this->assertTrue($notNull->isOkay());
@@ -269,10 +269,10 @@ class ResultTest extends PHPUnit\Framework\TestCase {
       $error = Result::error($errorValue);
       $okay = Result::okay("a");
 
-      $okayTrue = $okay->filterData(true, $errorValue);
-      $okayFalse = $okay->filterData(false, $errorValue);
-      $errorTrue = $error->filterData(true, $errorValue);
-      $errorFalse = $error->filterData(false, $errorValue);
+      $okayTrue = $okay->filter(true, $errorValue);
+      $okayFalse = $okay->filter(false, $errorValue);
+      $errorTrue = $error->filter(true, $errorValue);
+      $errorFalse = $error->filter(false, $errorValue);
 
       $this->assertTrue($okayTrue->isOkay());
       $this->assertFalse($okayFalse->isOkay());
@@ -280,10 +280,10 @@ class ResultTest extends PHPUnit\Framework\TestCase {
       $this->assertFalse($errorTrue->isOkay());
       $this->assertFalse($errorFalse->isOkay());
 
-      $errorNotA = $error->filterDataIf(function($x) { return $x != "a"; }, $errorValue);
-      $okayNotA = $okay->filterDataIf(function($x) { return $x != "a"; }, $errorValue);
-      $errorA = $error->filterDataIf(function($x) { return $x == "a"; }, $errorValue);
-      $okayA = $okay->filterDataIf(function($x) { return $x == "a"; }, $errorValue);
+      $errorNotA = $error->filterIf(function($x) { return $x != "a"; }, $errorValue);
+      $okayNotA = $okay->filterIf(function($x) { return $x != "a"; }, $errorValue);
+      $errorA = $error->filterIf(function($x) { return $x == "a"; }, $errorValue);
+      $okayA = $okay->filterIf(function($x) { return $x == "a"; }, $errorValue);
 
       $this->assertFalse($errorNotA->isOkay());
       $this->assertFalse($okayNotA->isOkay());
@@ -411,7 +411,7 @@ class ResultTest extends PHPUnit\Framework\TestCase {
 
       $person = Result::fromArray($okayPerson, 'name', 'name was missing');
 
-      $name = $person->mapDataSafely(function($person): string {
+      $name = $person->mapSafely(function($person): string {
          $fullName = $person['first'] . $person['last'];
          return SomeComplexThing::doWork($fullName, "Forcing exception");
       });

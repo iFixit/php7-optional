@@ -48,7 +48,7 @@ $response = Curl::request('http:://www.github.com');
 $result = $responseToResult($response);
 
 $dbConnectionStr = $result
-   ->mapData(function ($result) {
+   ->map(function ($result) {
       try {
          return json_decode($result['data'], true);
       } catch(JsonDecodeException $ex) {
@@ -56,13 +56,13 @@ $dbConnectionStr = $result
       }
    })
    ->notFalsy("Json failed to decode!")
-   ->mapData(function(array $json) {
+   ->map(function(array $json) {
       return $json['environment_config'];
    })
-   ->mapData(function(array $environment_config) {
+   ->map(function(array $environment_config) {
       return $environment_config['database'];
    })
-   ->mapData(function(array $dbData) {
+   ->map(function(array $dbData) {
       $host = $dbData['host'];
       $port = $dbData['port'];
       $username = $dbData['username'];

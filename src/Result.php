@@ -152,7 +152,7 @@ class Result {
     * @param callable(TError):Result<TOkay, TError> $alternativeResultFactory
     * @return Result<TOkay, TError>
     **/
-   public function elseCreateData(callable $alternativeResultFactory): self {
+   public function elseCreate(callable $alternativeResultFactory): self {
       /** @var callable(TOkay):Either<TOkay, TError> **/
       $realFactory =
       /** @param TError $errorValue */
@@ -194,7 +194,7 @@ class Result {
     *
     * @param callable(TOkay) $dataFunc
     **/
-   public function matchData(callable $dataFunc): void {
+   public function matchOkay(callable $dataFunc): void {
       $this->either->matchLeft($dataFunc);
    }
 
@@ -226,7 +226,7 @@ class Result {
     * @param callable(TOkay):UOkay $mapFunc
     * @return Result<UOkay, TError>
     **/
-   public function mapData(callable $mapFunc): self {
+   public function map(callable $mapFunc): self {
       $either = $this->either->mapLeft($mapFunc);
       return new self($either);
    }
@@ -246,7 +246,7 @@ class Result {
     * @param callable(TOkay):UOkay $mapFunc
     * @return Result<UOkay, TError>
     **/
-   public function mapDataSafely(callable $mapFunc): self {
+   public function mapSafely(callable $mapFunc): self {
       $either = $this->either->mapLeftSafely($mapFunc);
       return new self($either);
    }
@@ -285,7 +285,7 @@ class Result {
     * @return Result<UOkay, TError>
     **/
    public function andThen(callable $mapFunc): self {
-      return $this->flatMapData($mapFunc);
+      return $this->flatMap($mapFunc);
    }
 
    /**
@@ -300,7 +300,7 @@ class Result {
     * @param callable(TOkay):Result<UOkay, TError> $mapFunc
     * @return Result<UOkay, TError>
     **/
-   public function flatMapData(callable $mapFunc): self {
+   public function flatMap(callable $mapFunc): self {
       /** @var callable(TOkay):Either<UOkay, TError> **/
       $realMap =
       /** @param TOkay $data */
@@ -318,7 +318,7 @@ class Result {
     * @param TError $errorValue
     * @return Result<TOkay, TError>
     **/
-   public function filterData(bool $condition, $errorValue): self {
+   public function filter(bool $condition, $errorValue): self {
       $either = $this->either->filterLeft($condition, $errorValue);
       return new self($either);
    }
@@ -346,7 +346,7 @@ class Result {
     * @param TError $errorValue
     * @return Result<TOkay, TError>
     **/
-   public function filterDataIf(callable $filterFunc, $errorValue): self {
+   public function filterIf(callable $filterFunc, $errorValue): self {
       $either = $this->either->filterLeftIf($filterFunc, $errorValue);
       return new self($either);
    }
