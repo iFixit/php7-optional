@@ -82,22 +82,22 @@ class ResultTest extends PHPUnit\Framework\TestCase {
       $errorValue = "goodbye";
       $errorResult = Result::error($errorValue);
 
-      $this->assertSame($errorResult->orCreateData(function($x) { return $x; }), $errorValue);
+      $this->assertSame($errorResult->dataOrReturn(function($x) { return $x; }), $errorValue);
 
       $someObject = new SomeObject();
 
       $okayThing = Result::okay(1);
       $okayClass = Result::okay($someObject);
 
-      $this->assertSame($okayThing->orCreateData(function($x) { return $x; }), 1);
-      $this->assertSame($okayClass->orCreateData(function($x) { return $x; }), $someObject);
+      $this->assertSame($okayThing->dataOrReturn(function($x) { return $x; }), 1);
+      $this->assertSame($okayClass->dataOrReturn(function($x) { return $x; }), $someObject);
 
-      $this->assertSame($okayThing->orCreateData(function($x) {
+      $this->assertSame($okayThing->dataOrReturn(function($x) {
          $this->fail('Callback should not have been run!');
          return $x;
       }), 1);
 
-      $this->assertSame($okayClass->orCreateData(function($x) {
+      $this->assertSame($okayClass->dataOrReturn(function($x) {
          $this->fail('Callback should not have been run!');
          return $x;
       }), $someObject);
@@ -119,11 +119,11 @@ class ResultTest extends PHPUnit\Framework\TestCase {
       $this->assertSame($okayThing->dataOr(-1), 1);
       $this->assertSame($okayClass->dataOr("-1"), $someObject);
 
-      $lazyokay = $errorResult->orCreateOkay(function() { return 10; });
+      $lazyokay = $errorResult->orCreateResultWithData(function() { return 10; });
       $this->assertTrue($lazyokay->isOkay());
       $this->assertSame($lazyokay->dataOr(-1), 10);
 
-      $lazyPassThrough = $okayThing->orCreateOkay(function() { return 10; });
+      $lazyPassThrough = $okayThing->orCreateResultWithData(function() { return 10; });
       $this->assertTrue($lazyPassThrough->isOkay());
       $this->assertSame($lazyPassThrough->dataOr(-1), 1);
    }
@@ -135,11 +135,11 @@ class ResultTest extends PHPUnit\Framework\TestCase {
 
       $this->assertFalse($errorResult->isOkay());
 
-      $errorResult2 = $errorResult->elseIfError(Result::error($errorValue));
+      $errorResult2 = $errorResult->okayOr(Result::error($errorValue));
       $this->assertFalse($errorResult2->isOkay());
 
-      $okayThing = $errorResult->elseIfError(Result::okay(1));
-      $okayClass = $errorResult->elseIfError(Result::okay($someObject));
+      $okayThing = $errorResult->okayOr(Result::okay(1));
+      $okayClass = $errorResult->okayOr(Result::okay($someObject));
 
       $this->assertTrue($okayThing->isOkay());
       $this->assertTrue($okayClass->isOkay());
@@ -155,16 +155,16 @@ class ResultTest extends PHPUnit\Framework\TestCase {
 
       $this->assertFalse($errorResult->isOkay());
 
-      $errorResult2 = $errorResult->elseCreate(function($x) {
+      $errorResult2 = $errorResult->createIfError(function($x) {
          return Result::error($x);
       });
       $this->assertFalse($errorResult2->isOkay());
 
-      $okayThing = $errorResult->elseCreate(function($x) {
+      $okayThing = $errorResult->createIfError(function($x) {
          return Result::okay(1);
       });
 
-      $okayClass = $errorResult->elseCreate(function($x) use ($someObject) {
+      $okayClass = $errorResult->createIfError(function($x) use ($someObject) {
          return Result::okay($someObject);
       });
 
@@ -174,11 +174,11 @@ class ResultTest extends PHPUnit\Framework\TestCase {
       $this->assertSame($okayThing->dataOr(-1), 1);
       $this->assertSame($okayClass->dataOr("-1"), $someObject);
 
-      $okayThing->elseCreate(function($x) {
+      $okayThing->createIfError(function($x) {
          $this->fail('Callback should not have been run!');
          return Result::error($x);
       });
-      $okayClass->elseCreate(function($x) {
+      $okayClass->createIfError(function($x) {
          $this->fail('Callback should not have been run!');
          return Result::error($x);
       });
@@ -189,12 +189,12 @@ class ResultTest extends PHPUnit\Framework\TestCase {
       $error = Result::error($errorValue);
       $okay = Result::okay(1);
 
-      $failure = $error->match(
+      $failure = $error->run(
             function($x) { return 2; },
             function($x) { return $x; }
       );
 
-      $success = $okay->match(
+      $success = $okay->run(
             function($x) { return 2; },
             function($x) { return $x; }
       );
@@ -203,29 +203,29 @@ class ResultTest extends PHPUnit\Framework\TestCase {
       $this->assertSame($success, 2);
 
       $hasMatched = false;
-      $error->match(
+      $error->run(
             function($x) { $this->fail('Callback should not have been run!'); },
             function($x) use (&$hasMatched) { $hasMatched = true; }
       );
       $this->assertTrue($hasMatched);
 
       $hasMatched = false;
-      $okay->match(
+      $okay->run(
             function($x) use (&$hasMatched) { return $hasMatched = $x == 1; },
             function($x) use (&$hasMatched) { $this->fail('Callback should not have been run!'); }
       );
       $this->assertTrue($hasMatched);
 
-      $error->matchOkay(function($x) { $this->fail('Callback should not have been run!'); });
+      $error->runOnOkay(function($x) { $this->fail('Callback should not have been run!'); });
 
       $hasMatched = false;
-      $okay->matchOkay(function($x) use (&$hasMatched) { return $hasMatched = $x == 1; });
+      $okay->runOnOkay(function($x) use (&$hasMatched) { return $hasMatched = $x == 1; });
       $this->assertTrue($hasMatched);
 
-      $okay->matchError(function() { $this->fail('Callback should not have been run!'); });
+      $okay->runOnError(function() { $this->fail('Callback should not have been run!'); });
       $hasMatched = false;
 
-      $error->matchError(function() use (&$hasMatched) { $hasMatched = true; });
+      $error->runOnError(function() use (&$hasMatched) { $hasMatched = true; });
       $this->assertTrue($hasMatched);
    }
 
@@ -269,21 +269,20 @@ class ResultTest extends PHPUnit\Framework\TestCase {
       $error = Result::error($errorValue);
       $okay = Result::okay("a");
 
-      $okayTrue = $okay->filter(true, $errorValue);
-      $okayFalse = $okay->filter(false, $errorValue);
-      $errorTrue = $error->filter(true, $errorValue);
-      $errorFalse = $error->filter(false, $errorValue);
+      $okayTrue = $okay->toError($errorValue);
+      $okayFalse = $okay->toError($errorValue);
+      $errorTrue = $error->toError($errorValue);
+      $errorFalse = $error->toError($errorValue);
 
-      $this->assertTrue($okayTrue->isOkay());
       $this->assertFalse($okayFalse->isOkay());
 
       $this->assertFalse($errorTrue->isOkay());
       $this->assertFalse($errorFalse->isOkay());
 
-      $errorNotA = $error->filterIf(function($x) { return $x != "a"; }, $errorValue);
-      $okayNotA = $okay->filterIf(function($x) { return $x != "a"; }, $errorValue);
-      $errorA = $error->filterIf(function($x) { return $x == "a"; }, $errorValue);
-      $okayA = $okay->filterIf(function($x) { return $x == "a"; }, $errorValue);
+      $errorNotA = $error->toErrorIf(function($x) { return $x != "a"; }, $errorValue);
+      $okayNotA = $okay->toErrorIf(function($x) { return $x != "a"; }, $errorValue);
+      $errorA = $error->toErrorIf(function($x) { return $x == "a"; }, $errorValue);
+      $okayA = $okay->toErrorIf(function($x) { return $x == "a"; }, $errorValue);
 
       $this->assertFalse($errorNotA->isOkay());
       $this->assertFalse($okayNotA->isOkay());
@@ -421,7 +420,7 @@ class ResultTest extends PHPUnit\Framework\TestCase {
 
       $out = 'This should change';
 
-      $name->match(
+      $name->run(
          function ($okayValue) { $this->fail('Callback should not have been run!'); },
          function ($exception) use(&$out) { $out = $exception->getMessage(); }
       );
