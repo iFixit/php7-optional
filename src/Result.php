@@ -100,7 +100,7 @@ class Result {
     * @param callable(TError):TOkay $alternativeFactory
     * @return TOkay
     **/
-   public function orCreateData(callable $alternativeFactory) {
+   public function dataOrReturn(callable $alternativeFactory) {
       /** @var TOkay **/
       return $this->either->leftOrCreate($alternativeFactory);
    }
@@ -118,7 +118,7 @@ class Result {
     * @param callable(TError):TOkay $alternativeFactory
     * @return Result<TOkay, TError>
     **/
-   public function orCreateOkay(callable $alternativeFactory): self {
+   public function orCreateResultWithData(callable $alternativeFactory): self {
       $either = $this->either->orCreateLeft($alternativeFactory);
       return new self($either);
    }
@@ -134,7 +134,7 @@ class Result {
     * @param Result<TOkay, TError> $alternativeResult
     * @return Result<TOkay, TError>
     **/
-   public function  elseIfError(self $alternativeResult): self {
+   public function  okayOr(self $alternativeResult): self {
       $either = $this->either->elseLeft($alternativeResult->either);
       return new self($either);
    }
@@ -152,7 +152,7 @@ class Result {
     * @param callable(TError):Result<TOkay, TError> $alternativeResultFactory
     * @return Result<TOkay, TError>
     **/
-   public function elseCreate(callable $alternativeResultFactory): self {
+   public function createIfError(callable $alternativeResultFactory): self {
       /** @var callable(TOkay):Either<TOkay, TError> **/
       $realFactory =
       /** @param TError $errorValue */
@@ -181,7 +181,7 @@ class Result {
     * @param callable(TError):U $errorFunc
     * @return U
     **/
-   public function match(callable $dataFunc, callable $errorFunc) {
+   public function run(callable $dataFunc, callable $errorFunc) {
       return $this->either->match($dataFunc, $errorFunc);
    }
 
@@ -194,7 +194,7 @@ class Result {
     *
     * @param callable(TOkay) $dataFunc
     **/
-   public function matchOkay(callable $dataFunc): void {
+   public function runOnOkay(callable $dataFunc): void {
       $this->either->matchLeft($dataFunc);
    }
 
@@ -207,7 +207,7 @@ class Result {
     *
     * @param callable(TError) $errorFunc
     **/
-   public function matchError(callable $errorFunc): void {
+   public function runOnError(callable $errorFunc): void {
       $this->either->matchRight($errorFunc);
    }
 
@@ -314,22 +314,20 @@ class Result {
    }
 
    /**
-    * @param bool $condition
     * @param TError $errorValue
     * @return Result<TOkay, TError>
     **/
-   public function filter(bool $condition, $errorValue): self {
-      $either = $this->either->filterLeft($condition, $errorValue);
+   public function toError($errorValue): self {
+      $either = $this->either->filterLeft(false, $errorValue);
       return new self($either);
    }
 
    /**
-    * @param bool $condition
     * @param TOkay $dataValue
     * @return Result<TOkay, TError>
     **/
-   public function filterError(bool $condition, $dataValue): self {
-      $either = $this->either->filterRight($condition, $dataValue);
+   public function toOkay($dataValue): self {
+      $either = $this->either->filterRight(false, $dataValue);
       return new self($either);
    }
 
@@ -346,7 +344,7 @@ class Result {
     * @param TError $errorValue
     * @return Result<TOkay, TError>
     **/
-   public function filterIf(callable $filterFunc, $errorValue): self {
+   public function toErrorIf(callable $filterFunc, $errorValue): self {
       $either = $this->either->filterLeftIf($filterFunc, $errorValue);
       return new self($either);
    }
@@ -364,7 +362,7 @@ class Result {
     * @param TOkay $data
     * @return Result<TOkay, TError>
     **/
-   public function filterErrorIf(callable $filterFunc, $data): self {
+   public function toOkayIf(callable $filterFunc, $data): self {
       $either = $this->either->filterRightIf($filterFunc, $data);
       return new self($either);
    }
