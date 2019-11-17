@@ -247,9 +247,9 @@ class ResultTest extends PHPUnit\Framework\TestCase {
       $okay = Result::okay("a");
       $okayNull = Result::okay(null);
 
-      $errorNotNull = $error->flatmap(function($x) use ($errorValue) { return Result::okay($x)->notNull($errorValue); });
-      $notNull = $okay->flatmap(function($x) use ($errorValue) { return Result::okay($x)->notNull($errorValue); });
-      $okayNullNotNull = $okayNull->flatmap(function($x) use ($errorValue) { return Result::okay($x)->notNull($errorValue); });
+      $errorNotNull = $error->flatMap(function($x) use ($errorValue) { return Result::okay($x)->notNull($errorValue); });
+      $notNull = $okay->flatMap(function($x) use ($errorValue) { return Result::okay($x)->notNull($errorValue); });
+      $okayNullNotNull = $okayNull->flatMap(function($x) use ($errorValue) { return Result::okay($x)->notNull($errorValue); });
 
       $this->assertFalse($errorNotNull->isOkay());
       $this->assertTrue($notNull->isOkay());
