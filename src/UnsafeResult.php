@@ -2,7 +2,7 @@
 
 declare(strict_types = 1);
 
-namespace Optional\Unsafe;
+namespace Optional;
 
 use Optional\Either;
 
@@ -118,7 +118,7 @@ class UnsafeResult {
     * @param callable(TError):TOkay $alternativeFactory
     * @return UnsafeResult<TOkay, TError>
     **/
-   public function orCreateUnsafeResultWithData(callable $alternativeFactory): self {
+   public function orCreateResultWithData(callable $alternativeFactory): self {
       $either = $this->either->orCreateLeft($alternativeFactory);
       return new self($either);
    }
