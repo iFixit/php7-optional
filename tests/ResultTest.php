@@ -410,7 +410,7 @@ class ResultTest extends PHPUnit\Framework\TestCase {
 
       $person = Result::fromArray($okayPerson, 'name', 'name was missing');
 
-      $name = $person->mapSafely(function($person): string {
+      $name = $person->map(function($person): string {
          $fullName = $person['first'] . $person['last'];
          return SomeComplexThing::doWork($fullName, "Forcing exception");
       });
@@ -426,5 +426,66 @@ class ResultTest extends PHPUnit\Framework\TestCase {
       );
 
       $this->assertSame($out, "Forcing exception");
+   }
+
+   public function testExceptionToErrorState() {
+      $lazyThrow = function() { throw new \Exception("Forced Exception!"); };
+      $okay = Result::okay("It's Okay!");
+      $error = Result::error("Error!");
+
+      $after = $error->orCreateResultWithData($lazyThrow);
+      $this->assertTrue($after->isError());
+
+      $after = $error->createIfError($lazyThrow);
+      $this->assertTrue($after->isError());
+
+      $after = $okay->map($lazyThrow);
+      $this->assertTrue($after->isError());
+
+      $after = $error->mapError($lazyThrow);
+      $this->assertTrue($after->isError());
+
+      $after = $okay->andThen($lazyThrow);
+      $this->assertTrue($after->isError());
+
+      $after = $okay->flatMap($lazyThrow);
+      $this->assertTrue($after->isError());
+
+      $after = $okay->toErrorIf($lazyThrow, new \Exception("Another Exception"));
+      $this->assertTrue($after->isError());
+
+      $after = $error->toOkayIf($lazyThrow, new \Exception("Another Exception"));
+      $this->assertTrue($after->isError());
+
+      $after = Result::okayWhen("Okay", "Error", $lazyThrow);
+      $this->assertTrue($after->isError());
+
+      $after = Result::errorWhen("Okay", "Error", $lazyThrow);
+      $this->assertTrue($after->isError());
+
+      try {
+         $after = $okay->run($lazyThrow, $lazyThrow);
+         $this->fail("Run will throw an exception");
+      } catch (\Exception $e) {}
+
+      try {
+         $after = $error->dataOrReturn($lazyThrow);
+         $this->fail("DataOrReturn will throw an exception");
+      } catch (\Exception $e) {}
+
+      try {
+         $after = $okay->exists($lazyThrow);
+         $this->fail("Exists will throw an exception");
+      } catch (\Exception $e) {}
+
+      try {
+         $after = $okay->runOnOkay($lazyThrow);
+         $this->fail("RunOnOkay will throw an exception");
+      } catch (\Exception $e) {}
+
+      try {
+         $after = $okay->runOnError($lazyThrow);
+         $this->fail("RunOnError will throw an exception");
+      } catch (\Exception $e) {}
    }
 }

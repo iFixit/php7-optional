@@ -121,8 +121,13 @@ class Result {
     * @return Result<TOkay, Exception|string>
     **/
    public function orCreateResultWithData(callable $alternativeFactory): self {
-      $either = $this->either->orCreateLeft($alternativeFactory);
-      return new self($either);
+      try {
+         $either = $this->either->orCreateLeft($alternativeFactory);
+         return new self($either);
+      } catch (\Exception $e) {
+         $either = Either::right($e);
+         return new self($either);
+      }
    }
 
    /**
@@ -163,8 +168,13 @@ class Result {
          return $result->either;
       };
 
-      $either = $this->either->elseCreateLeft($realFactory);
-      return new self($either);
+      try {
+         $either = $this->either->elseCreateLeft($realFactory);
+         return new self($either);
+      } catch (\Exception $e) {
+         $either = Either::right($e);
+         return new self($either);
+      }
    }
 
    /**
@@ -214,26 +224,6 @@ class Result {
    }
 
    /**
-    * Maps the `$value` of a `Result::okay($value)`
-    *
-    * The `map` function runs iff the Result is a `Result::okay`
-    * Otherwise the `Result:error($errorValue)` is propagated
-    *
-    * _Notes:_
-    *
-    *  - `$mapFunc` must follow this interface `callable(TOkay):UOkay`
-    *  - Returns `Result<UOkay, Exception|string>`
-    *
-    * @template UOkay
-    * @param callable(TOkay):UOkay $mapFunc
-    * @return Result<UOkay, Exception|string>
-    **/
-   public function map(callable $mapFunc): self {
-      $either = $this->either->mapLeft($mapFunc);
-      return new self($either);
-   }
-
-   /**
     * `map`, but if an exception occurs, return `Result::error(exception)`
     *
     * The `map` function runs iff the Result is a `Result::okay`
@@ -248,7 +238,7 @@ class Result {
     * @param callable(TOkay):UOkay $mapFunc
     * @return Result<UOkay, Exception|string>
     **/
-   public function mapSafely(callable $mapFunc): self {
+   public function map(callable $mapFunc): self {
       $either = $this->either->mapLeftSafely($mapFunc);
       return new self($either);
    }
@@ -268,8 +258,13 @@ class Result {
     * @return Result<TOkay, Exception|string>
     **/
    public function mapError(callable $mapFunc): self {
-      $either = $this->either->mapRight($mapFunc);
-      return new self($either);
+      try {
+         $either = $this->either->mapRight($mapFunc);
+         return new self($either);
+      } catch (\Exception $e) {
+         $either = Either::right($e);
+         return new self($either);
+      }
    }
 
    /**
@@ -310,8 +305,13 @@ class Result {
          return $result->either;
       };
 
-      $either = $this->either->flatMapLeft($realMap);
-      return new self($either);
+      try {
+         $either = $this->either->flatMapLeft($realMap);
+         return new self($either);
+      } catch (\Exception $e) {
+         $either = Either::right($e);
+         return new self($either);
+      }
    }
 
    /**
@@ -346,8 +346,13 @@ class Result {
     * @return Result<TOkay, Exception|string>
     **/
    public function toErrorIf(callable $filterFunc, $errorValue): self {
-      $either = $this->either->filterLeftIf($filterFunc, $errorValue);
-      return new self($either);
+      try {
+         $either = $this->either->filterLeftIf($filterFunc, $errorValue);
+         return new self($either);
+      } catch (\Exception $e) {
+         $either = Either::right($e);
+         return new self($either);
+      }
    }
 
    /**
@@ -364,8 +369,13 @@ class Result {
     * @return Result<TOkay, Exception|string>
     **/
    public function toOkayIf(callable $filterFunc, $data): self {
-      $either = $this->either->filterRightIf($filterFunc, $data);
-      return new self($either);
+      try {
+         $either = $this->either->filterRightIf($filterFunc, $data);
+         return new self($either);
+      } catch (\Exception $e) {
+         $either = Either::right($e);
+         return new self($either);
+      }
    }
 
    /**
@@ -444,8 +454,13 @@ class Result {
     * @return Result<TOkay, Exception|string>
     **/
    public static function okayWhen($data, $errorValue, callable $filterFunc): self {
-      $either = Either::leftWhen($data, $errorValue, $filterFunc);
-      return new self($either);
+      try {
+         $either = Either::leftWhen($data, $errorValue, $filterFunc);
+         return new self($either);
+      } catch (\Exception $e) {
+         $either = Either::right($e);
+         return new self($either);
+      }
    }
 
    /**
@@ -463,8 +478,13 @@ class Result {
     * @return Result<TOkay, Exception|string>
     **/
    public static function errorWhen($data, $errorValue, callable $filterFunc): self {
-      $either = Either::rightWhen($data, $errorValue, $filterFunc);
-      return new self($either);
+      try {
+         $either = Either::rightWhen($data, $errorValue, $filterFunc);
+         return new self($either);
+      } catch (\Exception $e) {
+         $either = Either::right($e);
+         return new self($either);
+      }
    }
 
    /**
