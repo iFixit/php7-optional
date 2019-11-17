@@ -2,7 +2,7 @@
 
 declare(strict_types = 1);
 
-namespace Optional;
+namespace Optional\Unsafe;
 
 use Optional\Either;
 
@@ -10,7 +10,7 @@ use Optional\Either;
  * @template TOkay
  * @template TError
  */
-class Result {
+class UnsafeResult {
    /** @var Either */
    private $either;
 
@@ -23,7 +23,7 @@ class Result {
 
    /**
     * @param TOkay $data
-    * @return Result<TOkay, TError>
+    * @return UnsafeResult<TOkay, TError>
     **/
    public static function okay($data): self {
       $either = Either::left($data);
@@ -32,7 +32,7 @@ class Result {
 
    /**
     * @param TError $errorData
-    * @return Result<TOkay, TError>
+    * @return UnsafeResult<TOkay, TError>
     **/
    public static function error($errorData): self {
       $either = Either::right($errorData);
@@ -40,21 +40,21 @@ class Result {
    }
 
    /**
-    * Returns true iff the Result is `Result::okay`
+    * Returns true iff the UnsafeResult is `UnsafeResult::okay`
     **/
    public function isOkay(): bool {
       return $this->either->isLeft();
    }
 
    /**
-    * Returns true iff the Result is `Result::error`
+    * Returns true iff the UnsafeResult is `UnsafeResult::error`
     **/
    public function isError(): bool {
       return $this->either->isRight();
    }
 
    /**
-    * Returns the Result value or returns `$alternative`
+    * Returns the UnsafeResult value or returns `$alternative`
     *
     * @param TOkay $alternative
     * @return TOkay
@@ -65,7 +65,7 @@ class Result {
    }
 
    /**
-    * Returns the Result erro value or returns `$alternative`
+    * Returns the UnsafeResult erro value or returns `$alternative`
     *
     * @param TError $alternative
     * @return TError
@@ -76,14 +76,14 @@ class Result {
    }
 
    /**
-    * Returns a `Result::okay($data)` iff the Result orginally was `Result::error($errorValue)`
+    * Returns a `UnsafeResult::okay($data)` iff the UnsafeResult orginally was `UnsafeResult::error($errorValue)`
     *
     * _Notes:_
     *
-    *  - Returns `Result<TOkay, TError>`
+    *  - Returns `UnsafeResult<TOkay, TError>`
     *
     * @param TOkay $data
-    * @return Result<TOkay, TError>
+    * @return UnsafeResult<TOkay, TError>
     **/
    public function orSetDataTo($data): self {
       $either = $this->either->orLeft($data);
@@ -91,7 +91,7 @@ class Result {
    }
 
    /**
-    * Returns the Result's value or calls `$alternativeFactory` and returns the value of that function
+    * Returns the UnsafeResult's value or calls `$alternativeFactory` and returns the value of that function
     *
     * _Notes:_
     *
@@ -106,59 +106,59 @@ class Result {
    }
 
    /**
-    * Returns a `Result::okay($value)` iff the the Result orginally was `Result::error($errorValue)`
+    * Returns a `UnsafeResult::okay($value)` iff the the UnsafeResult orginally was `UnsafeResult::error($errorValue)`
     *
-    * The `$alternativeFactory` is called lazily - iff the Result orginally was `Result::error($errorValue)`
+    * The `$alternativeFactory` is called lazily - iff the UnsafeResult orginally was `UnsafeResult::error($errorValue)`
     *
     * _Notes:_
     *
     *  - `$alternativeFactory` must follow this interface `callable(TError):TOkay`
-    *  - Returns `Result<TOkay, TError>`
+    *  - Returns `UnsafeResult<TOkay, TError>`
     *
     * @param callable(TError):TOkay $alternativeFactory
-    * @return Result<TOkay, TError>
+    * @return UnsafeResult<TOkay, TError>
     **/
-   public function orCreateResultWithData(callable $alternativeFactory): self {
+   public function orCreateUnsafeResultWithData(callable $alternativeFactory): self {
       $either = $this->either->orCreateLeft($alternativeFactory);
       return new self($either);
    }
 
    /**
-    * iff `Result::error($errorValue)` return `$alternativeResult`, otherwise return the original `$result`
+    * iff `UnsafeResult::error($errorValue)` return `$alternativeUnsafeResult`, otherwise return the original `$uResult`
     *
     * _Notes:_
     *
-    *  - `$alternativeResult` must be of type `Result<TOkay, TError>`
-    *  - Returns `Result<TOkay, TError>`
+    *  - `$alternativeUnsafeResult` must be of type `UnsafeResult<TOkay, TError>`
+    *  - Returns `UnsafeResult<TOkay, TError>`
     *
-    * @param Result<TOkay, TError> $alternativeResult
-    * @return Result<TOkay, TError>
+    * @param UnsafeResult<TOkay, TError> $alternativeUnsafeResult
+    * @return UnsafeResult<TOkay, TError>
     **/
-   public function  okayOr(self $alternativeResult): self {
-      $either = $this->either->elseLeft($alternativeResult->either);
+   public function  okayOr(self $alternativeUnsafeResult): self {
+      $either = $this->either->elseLeft($alternativeUnsafeResult->either);
       return new self($either);
    }
 
    /**
-    * iff `Result::error` return the `Result` returned by `$alternativeResultFactory`, otherwise return the orginal `$result`
+    * iff `UnsafeResult::error` return the `UnsafeResult` returned by `$alternativeUnsafeResultFactory`, otherwise return the orginal `$uResult`
     *
-    * `$alternativeResultFactory` is run lazily
+    * `$alternativeUnsafeResultFactory` is run lazily
     *
     * _Notes:_
     *
-    *  - `$alternativeResultFactory` must be of type `callable(TError):Result<TOkay, TError> `
-    *  - Returns `Result<TOkay, TError>`
+    *  - `$alternativeUnsafeResultFactory` must be of type `callable(TError):UnsafeResult<TOkay, TError> `
+    *  - Returns `UnsafeResult<TOkay, TError>`
     *
-    * @param callable(TError):Result<TOkay, TError> $alternativeResultFactory
-    * @return Result<TOkay, TError>
+    * @param callable(TError):UnsafeResult<TOkay, TError> $alternativeUnsafeResultFactory
+    * @return UnsafeResult<TOkay, TError>
     **/
-   public function createIfError(callable $alternativeResultFactory): self {
+   public function createIfError(callable $alternativeUnsafeResultFactory): self {
       /** @var callable(TOkay):Either<TOkay, TError> **/
       $realFactory =
       /** @param TError $errorValue */
-      function ($errorValue) use ($alternativeResultFactory): Either {
-         $result = $alternativeResultFactory($errorValue);
-         return $result->either;
+      function ($errorValue) use ($alternativeUnsafeResultFactory): Either {
+         $uResult = $alternativeUnsafeResultFactory($errorValue);
+         return $uResult->either;
       };
 
       $either = $this->either->elseCreateLeft($realFactory);
@@ -168,8 +168,8 @@ class Result {
    /**
     * Runs only 1 function:
     *
-    *  - `$dataFunc` iff the Result is `Result::okay`
-    *  - `$errorFunc` iff the Result is `Result::error`
+    *  - `$dataFunc` iff the UnsafeResult is `UnsafeResult::okay`
+    *  - `$errorFunc` iff the UnsafeResult is `UnsafeResult::error`
     *
     * _Notes:_
     *
@@ -186,7 +186,7 @@ class Result {
    }
 
    /**
-    * Side effect function: Runs the function iff the Result is `Result::okay`
+    * Side effect function: Runs the function iff the UnsafeResult is `UnsafeResult::okay`
     *
     * _Notes:_
     *
@@ -199,7 +199,7 @@ class Result {
    }
 
    /**
-    * Side effect function: Runs the function iff the Result is `Result::error`
+    * Side effect function: Runs the function iff the UnsafeResult is `UnsafeResult::error`
     *
     * _Notes:_
     *
@@ -212,19 +212,19 @@ class Result {
    }
 
    /**
-    * Maps the `$value` of a `Result::okay($value)`
+    * Maps the `$value` of a `UnsafeResult::okay($value)`
     *
-    * The `map` function runs iff the Result is a `Result::okay`
-    * Otherwise the `Result:error($errorValue)` is propagated
+    * The `map` function runs iff the UnsafeResult is a `UnsafeResult::okay`
+    * Otherwise the `UnsafeResult:error($errorValue)` is propagated
     *
     * _Notes:_
     *
     *  - `$mapFunc` must follow this interface `callable(TOkay):UOkay`
-    *  - Returns `Result<UOkay, TError>`
+    *  - Returns `UnsafeResult<UOkay, TError>`
     *
     * @template UOkay
     * @param callable(TOkay):UOkay $mapFunc
-    * @return Result<UOkay, TError>
+    * @return UnsafeResult<UOkay, TError>
     **/
    public function map(callable $mapFunc): self {
       $either = $this->either->mapLeft($mapFunc);
@@ -232,19 +232,19 @@ class Result {
    }
 
    /**
-    * `map`, but if an exception occurs, return `Result::error(exception)`
+    * `map`, but if an exception occurs, return `UnsafeResult::error(exception)`
     *
-    * The `map` function runs iff the Result is a `Result::okay`
-    * Otherwise the `Result:error($errorValue)` is propagated
+    * The `map` function runs iff the UnsafeResult is a `UnsafeResult::okay`
+    * Otherwise the `UnsafeResult:error($errorValue)` is propagated
     *
     * _Notes:_
     *
     *  - `$mapFunc` must follow this interface `callable(TOkay):UOkay`
-    *  - Returns `Result<UOkay, TError>`
+    *  - Returns `UnsafeResult<UOkay, TError>`
     *
     * @template UOkay
     * @param callable(TOkay):UOkay $mapFunc
-    * @return Result<UOkay, TError>
+    * @return UnsafeResult<UOkay, TError>
     **/
    public function mapSafely(callable $mapFunc): self {
       $either = $this->either->mapLeftSafely($mapFunc);
@@ -252,19 +252,19 @@ class Result {
    }
 
    /**
-    * Maps the `$value` of a `Result::error($errorValue)`
+    * Maps the `$value` of a `UnsafeResult::error($errorValue)`
     *
-    * The `map` function runs iff the Result is a `Result::error`
-    * Otherwise the `Result:okay($data)` is propagated
+    * The `map` function runs iff the UnsafeResult is a `UnsafeResult::error`
+    * Otherwise the `UnsafeResult:okay($data)` is propagated
     *
     * _Notes:_
     *
     *  - `$mapFunc` must follow this interface `callable(TError):UError`
-    *  - Returns `Result<TOkay, UError>`
+    *  - Returns `UnsafeResult<TOkay, UError>`
     *
     * @template UError
     * @param callable(TError):UError $mapFunc
-    * @return Result<TOkay, UError>
+    * @return UnsafeResult<TOkay, UError>
     **/
    public function mapError(callable $mapFunc): self {
       $either = $this->either->mapRight($mapFunc);
@@ -273,40 +273,40 @@ class Result {
 
    /**
     * A copy of flatMapData
-    * Allows a function to map over the internal value, the function returns an Result
+    * Allows a function to map over the internal value, the function returns an UnsafeResult
     *
     * _Notes:_
     *
-    *  - `$alternativeFactory` must follow this interface `callable(TOkay):Result<UOkay, TError>`
-    *  - Returns `Result<UOkay, TError>`
+    *  - `$alternativeFactory` must follow this interface `callable(TOkay):UnsafeResult<UOkay, TError>`
+    *  - Returns `UnsafeResult<UOkay, TError>`
     *
     * @template UOkay
-    * @param callable(TOkay):Result<UOkay, TError> $mapFunc
-    * @return Result<UOkay, TError>
+    * @param callable(TOkay):UnsafeResult<UOkay, TError> $mapFunc
+    * @return UnsafeResult<UOkay, TError>
     **/
    public function andThen(callable $mapFunc): self {
       return $this->flatMap($mapFunc);
    }
 
    /**
-    * Allows a function to map over the internal value, the function returns an Result
+    * Allows a function to map over the internal value, the function returns an UnsafeResult
     *
     * _Notes:_
     *
-    *  - `$alternativeFactory` must follow this interface `callable(TOkay):Result<UOkay, TError>`
-    *  - Returns `Result<UOkay, TError>`
+    *  - `$alternativeFactory` must follow this interface `callable(TOkay):UnsafeResult<UOkay, TError>`
+    *  - Returns `UnsafeResult<UOkay, TError>`
     *
     * @template UOkay
-    * @param callable(TOkay):Result<UOkay, TError> $mapFunc
-    * @return Result<UOkay, TError>
+    * @param callable(TOkay):UnsafeResult<UOkay, TError> $mapFunc
+    * @return UnsafeResult<UOkay, TError>
     **/
    public function flatMap(callable $mapFunc): self {
       /** @var callable(TOkay):Either<UOkay, TError> **/
       $realMap =
       /** @param TOkay $data */
       function ($data) use ($mapFunc): Either {
-         $result = $mapFunc($data);
-         return $result->either;
+         $uResult = $mapFunc($data);
+         return $uResult->either;
       };
 
       $either = $this->either->flatMapLeft($realMap);
@@ -315,7 +315,7 @@ class Result {
 
    /**
     * @param TError $errorValue
-    * @return Result<TOkay, TError>
+    * @return UnsafeResult<TOkay, TError>
     **/
    public function toError($errorValue): self {
       $either = $this->either->filterLeft(false, $errorValue);
@@ -324,7 +324,7 @@ class Result {
 
    /**
     * @param TOkay $dataValue
-    * @return Result<TOkay, TError>
+    * @return UnsafeResult<TOkay, TError>
     **/
    public function toOkay($dataValue): self {
       $either = $this->either->filterRight(false, $dataValue);
@@ -332,17 +332,17 @@ class Result {
    }
 
    /**
-    * Change the `Result::okay($value)` into `Result::error($errorValue)` iff `$filterFunc` returns false,
-    * otherwise propigate the `Result::error()`
+    * Change the `UnsafeResult::okay($value)` into `UnsafeResult::error($errorValue)` iff `$filterFunc` returns false,
+    * otherwise propigate the `UnsafeResult::error()`
     *
     * _Notes:_
     *
     *  - `$filterFunc` must follow this interface `callable(TOkay):bool`
-    *  - Returns `Result<TOkay, TError>`
+    *  - Returns `UnsafeResult<TOkay, TError>`
     *
     * @param callable(TOkay):bool $filterFunc
     * @param TError $errorValue
-    * @return Result<TOkay, TError>
+    * @return UnsafeResult<TOkay, TError>
     **/
    public function toErrorIf(callable $filterFunc, $errorValue): self {
       $either = $this->either->filterLeftIf($filterFunc, $errorValue);
@@ -350,17 +350,17 @@ class Result {
    }
 
    /**
-    * Change the `Result::error($errorValue)` into `Result::okay($data)` iff `$filterFunc` returns false,
-    * otherwise propigate the `Result::okay()`
+    * Change the `UnsafeResult::error($errorValue)` into `UnsafeResult::okay($data)` iff `$filterFunc` returns false,
+    * otherwise propigate the `UnsafeResult::okay()`
     *
     * _Notes:_
     *
     *  - `$filterFunc` must follow this interface `callable(TError):bool`
-    *  - Returns `Result<TOkay, TError>`
+    *  - Returns `UnsafeResult<TOkay, TError>`
     *
     * @param callable(TError):bool $filterFunc
     * @param TOkay $data
-    * @return Result<TOkay, TError>
+    * @return UnsafeResult<TOkay, TError>
     **/
    public function toOkayIf(callable $filterFunc, $data): self {
       $either = $this->either->filterRightIf($filterFunc, $data);
@@ -368,14 +368,14 @@ class Result {
    }
 
    /**
-    * Turn an `Result::okay(null)` into an `Result::error($errorValue)` iff `is_null($value)`
+    * Turn an `UnsafeResult::okay(null)` into an `UnsafeResult::error($errorValue)` iff `is_null($value)`
     *
     * _Notes:_
     *
-    *  - Returns `Result<TOkay, TError>`
+    *  - Returns `UnsafeResult<TOkay, TError>`
     *
     * @param TError $errorValue
-    * @return Result<TOkay, TError>
+    * @return UnsafeResult<TOkay, TError>
     **/
    public function notNull($errorValue): self {
       $either = $this->either->leftNotNull($errorValue);
@@ -383,14 +383,14 @@ class Result {
    }
 
    /**
-    * Turn an `Result::okay($value)` into an `Result::error($errorValue)` iff `!$value == true`
+    * Turn an `UnsafeResult::okay($value)` into an `UnsafeResult::error($errorValue)` iff `!$value == true`
     *
     * _Notes:_
     *
-    *  - Returns `Result<TOkay, TError>`
+    *  - Returns `UnsafeResult<TOkay, TError>`
     *
     * @param TError $errorValue
-    * @return Result<TOkay, TError>
+    * @return UnsafeResult<TOkay, TError>
     **/
    public function notFalsy($errorValue): self {
       $either = $this->either->leftNotFalsy($errorValue);
@@ -398,7 +398,7 @@ class Result {
    }
 
    /**
-    * Returns true if the Result's data == `$value`, otherwise false.
+    * Returns true if the UnsafeResult's data == `$value`, otherwise false.
     *
     * @param mixed $value
     **/
@@ -407,7 +407,7 @@ class Result {
    }
 
    /**
-    * Returns true if the Result's error == `$value`, otherwise false.
+    * Returns true if the UnsafeResult's error == `$value`, otherwise false.
     *
     * @param mixed $value
     **/
@@ -429,18 +429,18 @@ class Result {
    }
 
    /**
-    * Take a value, turn it a `Result::okay($data)` iff the `$filterFunc` returns true
-    * otherwise an `Result::error($errorValue)`
+    * Take a value, turn it a `UnsafeResult::okay($data)` iff the `$filterFunc` returns true
+    * otherwise an `UnsafeResult::error($errorValue)`
     *
     * _Notes:_
     *
     *  - `$filterFunc` must follow this interface `callable(TOkay): bool`
-    *  - Returns `Result<TOkay, TError>`
+    *  - Returns `UnsafeResult<TOkay, TError>`
     *
     * @param TOkay $data
     * @param TError $errorValue
     * @param callable(TOkay): bool $filterFunc
-    * @return Result<TOkay, TError>
+    * @return UnsafeResult<TOkay, TError>
     **/
    public static function okayWhen($data, $errorValue, callable $filterFunc): self {
       $either = Either::leftWhen($data, $errorValue, $filterFunc);
@@ -448,18 +448,18 @@ class Result {
    }
 
    /**
-    * Take a value, turn it a `Result::error($errorValue)` iff the `$filterFunc` returns true
-    * otherwise an `Result::okay($data)`
+    * Take a value, turn it a `UnsafeResult::error($errorValue)` iff the `$filterFunc` returns true
+    * otherwise an `UnsafeResult::okay($data)`
     *
     * _Notes:_
     *
     *  - `$filterFunc` must follow this interface `callable(TOkay): bool`
-    *  - Returns `Result<TOkay, TError>`
+    *  - Returns `UnsafeResult<TOkay, TError>`
     *
     * @param TOkay $data
     * @param TError $errorValue
     * @param callable(TOkay): bool $filterFunc
-    * @return Result<TOkay, TError>
+    * @return UnsafeResult<TOkay, TError>
     **/
    public static function errorWhen($data, $errorValue, callable $filterFunc): self {
       $either = Either::rightWhen($data, $errorValue, $filterFunc);
@@ -467,15 +467,15 @@ class Result {
    }
 
    /**
-    * Take a value, turn it a `Result::okay($data)` iff `!is_null($data)`, otherwise returns `Result::error($errorValue)`
+    * Take a value, turn it a `UnsafeResult::okay($data)` iff `!is_null($data)`, otherwise returns `UnsafeResult::error($errorValue)`
     *
     * _Notes:_
     *
-    * - Returns `Result<TOkay, TError>`
+    * - Returns `UnsafeResult<TOkay, TError>`
     *
     * @param TOkay $data
     * @param TError $errorValue
-    * @return Result<TOkay, TError>
+    * @return UnsafeResult<TOkay, TError>
     **/
    public static function okayNotNull($data, $errorValue): self {
       $either = Either::notNullLeft($data, $errorValue);
@@ -483,16 +483,16 @@ class Result {
    }
 
    /**
-    * Creates a Result if the `$key` exists in `$array`
+    * Creates a UnsafeResult if the `$key` exists in `$array`
     *
     * _Notes:_
     *
-    * - Returns `Result<TOkay, TError>`
+    * - Returns `UnsafeResult<TOkay, TError>`
     *
     * @param array<array-key, mixed> $array
     * @param array-key $key The key of the array
     * @param TError $rightValue
-    *  @return Result<TOkay, TError>
+    *  @return UnsafeResult<TOkay, TError>
     **/
    public static function fromArray(array $array, $key, $rightValue = null): self {
       $either = Either::fromArray($array, $key, $rightValue);
