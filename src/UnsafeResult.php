@@ -498,4 +498,33 @@ class UnsafeResult {
       $either = Either::fromArray($array, $key, $rightValue);
       return new self($either);
    }
+
+   /**
+    * @psalm-suppress InvalidCast
+    *
+    * This is due to this class being a box.
+    * I can't ensure the boxed value is stringable.
+    * https://github.com/vimeo/psalm/issues/1982
+    */
+    public function __toString() {
+      $either = $this->either;
+
+      /** @var TOkay|null **/
+      $lv = $either->leftOr(null);
+
+      /** @var TError|null **/
+      $rv = $either->rightOr(null);
+
+      if ($either->isLeft()) {
+         if ($lv === null) {
+            return "Okay(null)";
+         }
+         return "Okay({$lv})";
+      } else {
+         if ($rv === null) {
+            return "Error(null)";
+         }
+         return "Error({$rv})";
+      }
+   }
 }
