@@ -338,20 +338,14 @@ class ResultTest extends PHPUnit\Framework\TestCase {
 
       $name = $person->andThen(function($person) {
          $fullName = $person['first'] . $person['last'];
-
-         try {
-            $thing = SomeComplexThing::doWork($fullName);
-         } catch (ErrorException $e) {
-            return Result::error('SomeComplexThing had an error!');
-         }
-
+         $thing = SomeComplexThing::doWork($fullName);
          return Result::okay($thing);
       });
 
       $this->assertSame($name->dataOrThrow(), 'FirstLast');
    }
 
-   public function testFlatMapWithException() {
+   public function testFlatMapWithThrowable() {
       $okayPerson = [
          'name' => [
             'first' => 'First',
@@ -363,13 +357,7 @@ class ResultTest extends PHPUnit\Framework\TestCase {
 
       $name = $person->andThen(function($person) {
          $fullName = $person['first'] . $person['last'];
-
-         try {
-            $thing = SomeComplexThing::doWork($fullName, "Forcing exception");
-         } catch (\Exception $e) {
-            return Result::error(new \Exception('SomeComplexThing had an error!'));
-         }
-
+         $thing = SomeComplexThing::doWork($fullName, "Forcing Throwable");
          return Result::okay($thing);
       });
 
@@ -377,11 +365,11 @@ class ResultTest extends PHPUnit\Framework\TestCase {
 
       try {
          $data = $name->dataOrThrow();
-         $this->fail("Expected to throw exception");
-      } catch (\Exception $e) {}
+         $this->fail("Expected to throw Exception");
+      } catch (\Throwable $e) {}
    }
 
-   public function testSafelyMapWithException() {
+   public function testSafelyMapWithThrowable() {
       $okayPerson = [
          'name' => [
             'first' => 'First',
@@ -393,28 +381,28 @@ class ResultTest extends PHPUnit\Framework\TestCase {
 
       $name = $person->map(function($person): string {
          $fullName = $person['first'] . $person['last'];
-         return SomeComplexThing::doWork($fullName, "Forcing exception");
+         return SomeComplexThing::doWork($fullName, "Forcing Throwable");
       });
 
       $this->assertFalse($name->isOkay());
 
       try {
          $data = $name->dataOrThrow();
-         $this->fail("Expected to throw exception");
-      } catch (\Exception $e) {}
+         $this->fail("Expected to throw Exception");
+      } catch (\Throwable $e) {}
 
       $out = 'This should change';
 
       $name->run(
          function ($okayValue) { $this->fail('Callback should not have been run!'); },
-         function ($exception) use(&$out) { $out = $exception->getMessage(); }
+         function ($Throwable) use(&$out) { $out = $Throwable->getMessage(); }
       );
 
-      $this->assertSame($out, "Forcing exception");
+      $this->assertSame($out, "Forcing Throwable");
    }
 
-   public function testExceptionToErrorState() {
-      $lazyThrow = function() { throw new \Exception("Forced Exception!"); };
+   public function testThrowableToErrorState() {
+      $lazyThrow = function() { throw new \Exception("Forced Throwable!"); };
       $okay = Result::okay("It's Okay!");
 
       $errorValue = new \Exception("Oh no!");
@@ -438,10 +426,10 @@ class ResultTest extends PHPUnit\Framework\TestCase {
       $after = $okay->flatMap($lazyThrow);
       $this->assertTrue($after->isError());
 
-      $after = $okay->toErrorIf($lazyThrow, new \Exception("Another Exception"));
+      $after = $okay->toErrorIf($lazyThrow, new \Exception("Another Throwable"));
       $this->assertTrue($after->isError());
 
-      $after = $error->toOkayIf($lazyThrow, new \Exception("Another Exception"));
+      $after = $error->toOkayIf($lazyThrow, new \Exception("Another Throwable"));
       $this->assertTrue($after->isError());
 
       $after = Result::okayWhen("Okay", $errorValue, $lazyThrow);
@@ -452,27 +440,27 @@ class ResultTest extends PHPUnit\Framework\TestCase {
 
       try {
          $after = $okay->run($lazyThrow, $lazyThrow);
-         $this->fail("Run will throw an exception");
-      } catch (\Exception $e) {}
+         $this->fail("Run will throw an Exception");
+      } catch (\Throwable $e) {}
 
       try {
          $after = $error->dataOrReturn($lazyThrow);
-         $this->fail("DataOrReturn will throw an exception");
-      } catch (\Exception $e) {}
+         $this->fail("DataOrReturn will throw an Exception");
+      } catch (\Throwable $e) {}
 
       try {
          $after = $okay->exists($lazyThrow);
-         $this->fail("Exists will throw an exception");
-      } catch (\Exception $e) {}
+         $this->fail("Exists will throw an Exception");
+      } catch (\Throwable $e) {}
 
       try {
          $after = $okay->runOnOkay($lazyThrow);
-         $this->fail("RunOnOkay will throw an exception");
-      } catch (\Exception $e) {}
+         $this->fail("RunOnOkay will throw an Exception");
+      } catch (\Throwable $e) {}
 
       try {
          $after = $okay->runOnError($lazyThrow);
-         $this->fail("RunOnError will throw an exception");
-      } catch (\Exception $e) {}
+         $this->fail("RunOnError will throw an Exception");
+      } catch (\Throwable $e) {}
    }
 }

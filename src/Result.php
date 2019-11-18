@@ -6,11 +6,12 @@ namespace Optional;
 
 use Optional\Either;
 
+use Throwable;
 use Exception;
 
 /**
  * @template TOkay
- * @template TError as Exception
+ * @template TError as Throwable
  */
 class Result {
    /** @var Either */
@@ -25,7 +26,7 @@ class Result {
 
    /**
     * @param TOkay $data
-    * @return Result<TOkay, Exception>
+    * @return Result<TOkay, Throwable>
     **/
    public static function okay($data): self {
       $either = Either::left($data);
@@ -33,10 +34,10 @@ class Result {
    }
 
    /**
-    * @param  Exception $errorData
-    * @return Result<TOkay, Exception>
+    * @param Throwable $errorData
+    * @return Result<TOkay, Throwable>
     **/
-   public static function error(Exception $errorData): self {
+   public static function error(Throwable $errorData): self {
       $either = Either::right($errorData);
       return new self($either);
    }
@@ -76,10 +77,10 @@ class Result {
     *
     * _Notes:_
     *
-    *  - Returns `Result<TOkay,  Exception>`
+    *  - Returns `Result<TOkay, Throwable>`
     *
     * @param TOkay $data
-    * @return Result<TOkay,  Exception>
+    * @return Result<TOkay, Throwable>
     **/
    public function orSetDataTo($data): self {
       $either = $this->either->orLeft($data);
@@ -91,9 +92,9 @@ class Result {
     *
     * _Notes:_
     *
-    *  - `$alternativeFactory` must follow this interface `callable(Exception):TOkay`
+    *  - `$alternativeFactory` must follow this interface `callable(Throwable):TOkay`
     *
-    * @param callable(Exception):TOkay $alternativeFactory
+    * @param callable(Throwable):TOkay $alternativeFactory
     * @return TOkay
     **/
    public function dataOrReturn(callable $alternativeFactory) {
@@ -108,17 +109,17 @@ class Result {
     *
     * _Notes:_
     *
-    *  - `$alternativeFactory` must follow this interface `callable(Exception):TOkay`
-    *  - Returns `Result<TOkay, Exception>`
+    *  - `$alternativeFactory` must follow this interface `callable(Throwable):TOkay`
+    *  - Returns `Result<TOkay, Throwable>`
     *
-    * @param callable(Exception):TOkay $alternativeFactory
-    * @return Result<TOkay, Exception>
+    * @param callable(Throwable):TOkay $alternativeFactory
+    * @return Result<TOkay, Throwable>
     **/
    public function orCreateResultWithData(callable $alternativeFactory): self {
       try {
          $either = $this->either->orCreateLeft($alternativeFactory);
          return new self($either);
-      } catch (\Exception $e) {
+      } catch (\Throwable $e) {
          $either = Either::right($e);
          return new self($either);
       }
@@ -129,11 +130,11 @@ class Result {
     *
     * _Notes:_
     *
-    *  - `$alternativeResult` must be of type `Result<TOkay, Exception>`
-    *  - Returns `Result<TOkay, Exception>`
+    *  - `$alternativeResult` must be of type `Result<TOkay, Throwable>`
+    *  - Returns `Result<TOkay, Throwable>`
     *
-    * @param Result<TOkay, Exception> $alternativeResult
-    * @return Result<TOkay, Exception>
+    * @param Result<TOkay, Throwable> $alternativeResult
+    * @return Result<TOkay, Throwable>
     **/
    public function  okayOr(self $alternativeResult): self {
       $either = $this->either->elseLeft($alternativeResult->either);
@@ -147,17 +148,17 @@ class Result {
     *
     * _Notes:_
     *
-    *  - `$alternativeResultFactory` must be of type `callable(Exception):Result<TOkay, Exception> `
-    *  - Returns `Result<TOkay, Exception>`
+    *  - `$alternativeResultFactory` must be of type `callable(Throwable):Result<TOkay, Throwable> `
+    *  - Returns `Result<TOkay, Throwable>`
     *
-    * @param callable(Exception):Result<TOkay, Exception> $alternativeResultFactory
-    * @return Result<TOkay, Exception>
+    * @param callable(Throwable):Result<TOkay, Throwable> $alternativeResultFactory
+    * @return Result<TOkay, Throwable>
     **/
    public function createIfError(callable $alternativeResultFactory): self {
-      /** @var callable(TOkay):Either<TOkay, Exception> **/
+      /** @var callable(TOkay):Either<TOkay, Throwable> **/
       $realFactory =
-      /** @param Exception $errorValue */
-      function (Exception $errorValue) use ($alternativeResultFactory): Either {
+      /** @param Throwable $errorValue */
+      function (Throwable $errorValue) use ($alternativeResultFactory): Either {
          $result = $alternativeResultFactory($errorValue);
          return $result->either;
       };
@@ -165,7 +166,7 @@ class Result {
       try {
          $either = $this->either->elseCreateLeft($realFactory);
          return new self($either);
-      } catch (\Exception $e) {
+      } catch (\Throwable $e) {
          $either = Either::right($e);
          return new self($either);
       }
@@ -180,11 +181,11 @@ class Result {
     * _Notes:_
     *
     *  - `$dataFunc` must follow this interface `callable(TOkay):U`
-    *  - `$errorFunc` must follow this interface `callable(Exception):U`
+    *  - `$errorFunc` must follow this interface `callable(Throwable):U`
     *
     * @template U
     * @param callable(TOkay):U $dataFunc
-    * @param callable(Exception):U $errorFunc
+    * @param callable(Throwable):U $errorFunc
     * @return U
     **/
    public function run(callable $dataFunc, callable $errorFunc) {
@@ -209,16 +210,16 @@ class Result {
     *
     * _Notes:_
     *
-    *  - `$errorFunc` must follow this interface `callable(Exception):U`
+    *  - `$errorFunc` must follow this interface `callable(Throwable):U`
     *
-    * @param callable(Exception) $errorFunc
+    * @param callable(Throwable) $errorFunc
     **/
    public function runOnError(callable $errorFunc): void {
       $this->either->matchRight($errorFunc);
    }
 
    /**
-    * `map`, but if an exception occurs, return `Result::error(exception)`
+    * `map`, but if an Throwable occurs, return `Result::error(Throwable)`
     *
     * The `map` function runs iff the Result is a `Result::okay`
     * Otherwise the `Result:error($errorValue)` is propagated
@@ -226,11 +227,11 @@ class Result {
     * _Notes:_
     *
     *  - `$mapFunc` must follow this interface `callable(TOkay):UOkay`
-    *  - Returns `Result<UOkay, Exception>`
+    *  - Returns `Result<UOkay, Throwable>`
     *
     * @template UOkay
     * @param callable(TOkay):UOkay $mapFunc
-    * @return Result<UOkay, Exception>
+    * @return Result<UOkay, Throwable>
     **/
    public function map(callable $mapFunc): self {
       $either = $this->either->mapLeftSafely($mapFunc);
@@ -245,17 +246,17 @@ class Result {
     *
     * _Notes:_
     *
-    *  - `$mapFunc` must follow this interface `callable(Exception):Exception`
-    *  - Returns `Result<TOkay, Exception>`
+    *  - `$mapFunc` must follow this interface `callable(Throwable):Throwable`
+    *  - Returns `Result<TOkay, Throwable>`
     *
-    * @param callable(Exception):Exception $mapFunc
-    * @return Result<TOkay, Exception>
+    * @param callable(Throwable):Throwable $mapFunc
+    * @return Result<TOkay, Throwable>
     **/
    public function mapError(callable $mapFunc): self {
       try {
          $either = $this->either->mapRight($mapFunc);
          return new self($either);
-      } catch (\Exception $e) {
+      } catch (\Throwable $e) {
          $either = Either::right($e);
          return new self($either);
       }
@@ -267,12 +268,12 @@ class Result {
     *
     * _Notes:_
     *
-    *  - `$alternativeFactory` must follow this interface `callable(TOkay):Result<UOkay, Exception>`
-    *  - Returns `Result<UOkay, Exception>`
+    *  - `$alternativeFactory` must follow this interface `callable(TOkay):Result<UOkay, Throwable>`
+    *  - Returns `Result<UOkay, Throwable>`
     *
     * @template UOkay
-    * @param callable(TOkay):Result<UOkay, Exception> $mapFunc
-    * @return Result<UOkay, Exception>
+    * @param callable(TOkay):Result<UOkay, Throwable> $mapFunc
+    * @return Result<UOkay, Throwable>
     **/
    public function andThen(callable $mapFunc): self {
       return $this->flatMap($mapFunc);
@@ -283,15 +284,15 @@ class Result {
     *
     * _Notes:_
     *
-    *  - `$alternativeFactory` must follow this interface `callable(TOkay):Result<UOkay, Exception>`
-    *  - Returns `Result<UOkay, Exception>`
+    *  - `$alternativeFactory` must follow this interface `callable(TOkay):Result<UOkay, Throwable>`
+    *  - Returns `Result<UOkay, Throwable>`
     *
     * @template UOkay
-    * @param callable(TOkay):Result<UOkay, Exception> $mapFunc
-    * @return Result<UOkay, Exception>
+    * @param callable(TOkay):Result<UOkay, Throwable> $mapFunc
+    * @return Result<UOkay, Throwable>
     **/
    public function flatMap(callable $mapFunc): self {
-      /** @var callable(TOkay):Either<UOkay, Exception> **/
+      /** @var callable(TOkay):Either<UOkay, Throwable> **/
       $realMap =
       /** @param TOkay $data */
       function ($data) use ($mapFunc): Either {
@@ -302,15 +303,15 @@ class Result {
       try {
          $either = $this->either->flatMapLeft($realMap);
          return new self($either);
-      } catch (\Exception $e) {
+      } catch (\Throwable $e) {
          $either = Either::right($e);
          return new self($either);
       }
    }
 
    /**
-    * @param Exception $errorValue
-    * @return Result<TOkay, Exception>
+    * @param Throwable $errorValue
+    * @return Result<TOkay, Throwable>
     **/
    public function toError($errorValue): self {
       $either = $this->either->filterLeft(false, $errorValue);
@@ -319,7 +320,7 @@ class Result {
 
    /**
     * @param TOkay $dataValue
-    * @return Result<TOkay, Exception>
+    * @return Result<TOkay, Throwable>
     **/
    public function toOkay($dataValue): self {
       $either = $this->either->filterRight(false, $dataValue);
@@ -333,17 +334,17 @@ class Result {
     * _Notes:_
     *
     *  - `$filterFunc` must follow this interface `callable(TOkay):bool`
-    *  - Returns `Result<TOkay, Exception>`
+    *  - Returns `Result<TOkay, Throwable>`
     *
     * @param callable(TOkay):bool $filterFunc
-    * @param Exception $errorValue
-    * @return Result<TOkay, Exception>
+    * @param Throwable $errorValue
+    * @return Result<TOkay, Throwable>
     **/
-   public function toErrorIf(callable $filterFunc, Exception $errorValue): self {
+   public function toErrorIf(callable $filterFunc, Throwable $errorValue): self {
       try {
          $either = $this->either->filterLeftIf($filterFunc, $errorValue);
          return new self($either);
-      } catch (\Exception $e) {
+      } catch (\Throwable $e) {
          $either = Either::right($e);
          return new self($either);
       }
@@ -355,18 +356,18 @@ class Result {
     *
     * _Notes:_
     *
-    *  - `$filterFunc` must follow this interface `callable(Exception):bool`
-    *  - Returns `Result<TOkay, Exception>`
+    *  - `$filterFunc` must follow this interface `callable(Throwable):bool`
+    *  - Returns `Result<TOkay, Throwable>`
     *
-    * @param callable(Exception):bool $filterFunc
+    * @param callable(Throwable):bool $filterFunc
     * @param TOkay $data
-    * @return Result<TOkay, Exception>
+    * @return Result<TOkay, Throwable>
     **/
    public function toOkayIf(callable $filterFunc, $data): self {
       try {
          $either = $this->either->filterRightIf($filterFunc, $data);
          return new self($either);
-      } catch (\Exception $e) {
+      } catch (\Throwable $e) {
          $either = Either::right($e);
          return new self($either);
       }
@@ -377,12 +378,12 @@ class Result {
     *
     * _Notes:_
     *
-    *  - Returns `Result<TOkay, Exception>`
+    *  - Returns `Result<TOkay, Throwable>`
     *
-    * @param Exception $errorValue
-    * @return Result<TOkay, Exception>
+    * @param Throwable $errorValue
+    * @return Result<TOkay, Throwable>
     **/
-   public function notNull(Exception $errorValue): self {
+   public function notNull(Throwable $errorValue): self {
       $either = $this->either->leftNotNull($errorValue);
       return new self($either);
    }
@@ -392,12 +393,12 @@ class Result {
     *
     * _Notes:_
     *
-    *  - Returns `Result<TOkay, Exception>`
+    *  - Returns `Result<TOkay, Throwable>`
     *
-    * @param Exception $errorValue
-    * @return Result<TOkay, Exception>
+    * @param Throwable $errorValue
+    * @return Result<TOkay, Throwable>
     **/
-   public function notFalsy(Exception $errorValue): self {
+   public function notFalsy(Throwable $errorValue): self {
       $either = $this->either->leftNotFalsy($errorValue);
       return new self($either);
    }
@@ -440,18 +441,18 @@ class Result {
     * _Notes:_
     *
     *  - `$filterFunc` must follow this interface `callable(TOkay): bool`
-    *  - Returns `Result<TOkay, Exception>`
+    *  - Returns `Result<TOkay, Throwable>`
     *
     * @param TOkay $data
-    * @param Exception $errorValue
+    * @param Throwable $errorValue
     * @param callable(TOkay): bool $filterFunc
-    * @return Result<TOkay, Exception>
+    * @return Result<TOkay, Throwable>
     **/
-   public static function okayWhen($data, Exception $errorValue, callable $filterFunc): self {
+   public static function okayWhen($data, Throwable $errorValue, callable $filterFunc): self {
       try {
          $either = Either::leftWhen($data, $errorValue, $filterFunc);
          return new self($either);
-      } catch (\Exception $e) {
+      } catch (\Throwable $e) {
          $either = Either::right($e);
          return new self($either);
       }
@@ -464,18 +465,18 @@ class Result {
     * _Notes:_
     *
     *  - `$filterFunc` must follow this interface `callable(TOkay): bool`
-    *  - Returns `Result<TOkay, Exception>`
+    *  - Returns `Result<TOkay, Throwable>`
     *
     * @param TOkay $data
-    * @param Exception $errorValue
+    * @param Throwable $errorValue
     * @param callable(TOkay): bool $filterFunc
-    * @return Result<TOkay, Exception>
+    * @return Result<TOkay, Throwable>
     **/
-   public static function errorWhen($data, Exception $errorValue, callable $filterFunc): self {
+   public static function errorWhen($data, Throwable $errorValue, callable $filterFunc): self {
       try {
          $either = Either::rightWhen($data, $errorValue, $filterFunc);
          return new self($either);
-      } catch (\Exception $e) {
+      } catch (\Throwable $e) {
          $either = Either::right($e);
          return new self($either);
       }
@@ -486,13 +487,13 @@ class Result {
     *
     * _Notes:_
     *
-    * - Returns `Result<TOkay, Exception>`
+    * - Returns `Result<TOkay, Throwable>`
     *
     * @param TOkay $data
-    * @param Exception $errorValue
-    * @return Result<TOkay, Exception>
+    * @param Throwable $errorValue
+    * @return Result<TOkay, Throwable>
     **/
-   public static function okayNotNull($data, Exception $errorValue): self {
+   public static function okayNotNull($data, Throwable $errorValue): self {
       $either = Either::notNullLeft($data, $errorValue);
       return new self($either);
    }
@@ -502,14 +503,14 @@ class Result {
     *
     * _Notes:_
     *
-    * - Returns `Result<TOkay, Exception>`
+    * - Returns `Result<TOkay, Throwable>`
     *
     * @param array<array-key, mixed> $array
     * @param array-key $key The key of the array
-    * @param Exception $rightValue
-    *  @return Result<TOkay, Exception>
+    * @param Throwable $rightValue
+    *  @return Result<TOkay, Throwable>
     **/
-   public static function fromArray(array $array, $key, Exception $rightValue = null): self {
+   public static function fromArray(array $array, $key, Throwable $rightValue = null): self {
       $either = Either::fromArray($array, $key, $rightValue);
       return new self($either);
    }
