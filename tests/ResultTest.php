@@ -24,26 +24,26 @@ class ResultTest extends PHPUnit\Framework\TestCase {
       $this->assertFalse($okayNullable->isError());
       $this->assertFalse($okayClass->isError());
 
-      $noname = Result::fromArray(['name' => 'value'], 'noname', new \Exception('oh no'));
+      $noname = Result::fromArray(['name' => 'value'], 'noname', 'oh no');
       $this->assertTrue($noname->isError());
       $this->assertFalse($noname->isOkay());
 
-      $name = Result::fromArray(['name' => 'value'], 'name', new \Exception('oh no'));
+      $name = Result::fromArray(['name' => 'value'], 'name', 'oh no');
       $this->assertTrue($name->isOkay());
       $this->assertFalse($name->isError());
 
-      $nonameNull = Result::fromArray(['name' => 'value'], 'missing', new \Exception('noname'));
+      $nonameNull = Result::fromArray(['name' => 'value'], 'missing', 'noname');
       $this->assertTrue($nonameNull->isError());
 
-      $error = Result::okayNotNull(null, $errorValue);
-      $okay = Result::okayNotNull('', $errorValue);
+      $error = Result::okayNotNull(null, "Oh no!");
+      $okay = Result::okayNotNull('', "Oh no!");
 
       $this->assertFalse($error->isOkay());
       $this->assertTrue($okay->isOkay());
    }
 
    public function testCreateAndCheckExistenceWhen() {
-      $errorValue = new \Exception("Oh no!");
+      $errorValue = "Oh no!";
 
       $okayThing = Result::okayWhen(1, $errorValue, function($x) { return $x > 0; });
       $okayThing2 = Result::okayWhen(-1, $errorValue, function($x) { return $x > 0; });
@@ -213,9 +213,9 @@ class ResultTest extends PHPUnit\Framework\TestCase {
       $okay = Result::okay("a");
       $okayNull = Result::okay(null);
 
-      $errorNotNull = $error->flatMap(function($x) use ($errorValue) { return Result::okay($x)->notNull($errorValue); });
-      $notNull = $okay->flatMap(function($x) use ($errorValue) { return Result::okay($x)->notNull($errorValue); });
-      $okayNullNotNull = $okayNull->flatMap(function($x) use ($errorValue) { return Result::okay($x)->notNull($errorValue); });
+      $errorNotNull = $error->flatMap(function($x) use ($errorValue) { return Result::okay($x)->notNull("Oh no!"); });
+      $notNull = $okay->flatMap(function($x) use ($errorValue) { return Result::okay($x)->notNull("Oh no!"); });
+      $okayNullNotNull = $okayNull->flatMap(function($x) use ($errorValue) { return Result::okay($x)->notNull("Oh no!"); });
 
       $this->assertFalse($errorNotNull->isOkay());
       $this->assertTrue($notNull->isOkay());
@@ -255,12 +255,12 @@ class ResultTest extends PHPUnit\Framework\TestCase {
 
       $okayNull = Result::okay(null);
       $this->assertTrue($okayNull->isOkay());
-      $errorNull = $okayNull->notNull($errorValue);
+      $errorNull = $okayNull->notNull("Oh no!");
       $this->assertFalse($errorNull->isOkay());
 
       $okayEmpty = Result::okay("");
       $this->assertTrue($okayEmpty->isOkay());
-      $errorEmpty = $okayEmpty->notFalsy($errorValue);
+      $errorEmpty = $okayEmpty->notFalsy("Oh no!");
       $this->assertFalse($errorEmpty->isOkay());
    }
 
@@ -309,7 +309,7 @@ class ResultTest extends PHPUnit\Framework\TestCase {
          ]
       ];
 
-      $person = Result::fromArray($okayPerson, 'name', new \Exception('name was missing'));
+      $person = Result::fromArray($okayPerson, 'name', 'name was missing');
 
       $name = $person->andThen(function($person) {
          $fullName = $person['first'] . $person['last'];
@@ -328,7 +328,7 @@ class ResultTest extends PHPUnit\Framework\TestCase {
          ]
       ];
 
-      $person = Result::fromArray($okayPerson, 'name', new \Exception('name was missing'));
+      $person = Result::fromArray($okayPerson, 'name', 'name was missing');
 
       $name = $person->andThen(function($person) {
          $fullName = $person['first'] . $person['last'];
@@ -352,7 +352,7 @@ class ResultTest extends PHPUnit\Framework\TestCase {
          ]
       ];
 
-      $person = Result::fromArray($okayPerson, 'name', new \Exception('name was missing'));
+      $person = Result::fromArray($okayPerson, 'name', 'name was missing');
 
       $name = $person->map(function($person): string {
          $fullName = $person['first'] . $person['last'];
@@ -380,8 +380,8 @@ class ResultTest extends PHPUnit\Framework\TestCase {
       $lazyThrow = function() { throw new \Exception("Forced Throwable!"); };
       $okay = Result::okay("It's Okay!");
 
-      $errorValue = new \Exception("Oh no!");
-      $error = Result::error($errorValue);
+      $errorValue = "Oh no!";
+      $error = Result::error(new \Exception($errorValue));
 
       $after = $error->orCreateResultWithData($lazyThrow);
       $this->assertTrue($after->isError());

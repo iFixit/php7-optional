@@ -90,7 +90,7 @@ $dbConnectionStr = $result
    ->map(function ($result) {
       return json_decode($result['data'], true);
    })
-   ->notFalsy(new Exception("Json failed to decode!"))
+   ->notFalsy("Json failed to decode!")
    ->map(function(array $json) {
       $dbData = $json['environment_config']['database'];
 
@@ -110,7 +110,7 @@ $dbConnectionResult = $result
    ->map(function ($result) {
       return false;
    })
-   ->notFalsy(new Exception("Json failed to decode!"))
+   ->notFalsy("Json failed to decode!")
    ->map(function(array $json) {
       $dbData = $json['environment_config']['database'];
 
