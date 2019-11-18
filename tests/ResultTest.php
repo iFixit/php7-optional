@@ -48,29 +48,26 @@ class ResultTest extends PHPUnit\Framework\TestCase {
       $okayThing = Result::okayWhen(1, $errorValue, function($x) { return $x > 0; });
       $okayThing2 = Result::okayWhen(-1, $errorValue, function($x) { return $x > 0; });
 
-      $this->assertSame($okayThing->dataOr(-5), 1);
-      $this->assertSame($okayThing2->dataOr(-5), -5);
+      $this->assertSame($okayThing->dataOrThrow(), 1);
+      $this->assertTrue($okayThing2->isError());
 
       $okayThing3 = Result::errorWhen(1, $errorValue, function($x) { return $x > 0; });
       $okayThing4 = Result::errorWhen(-1, $errorValue, function($x) { return $x > 0; });
 
-      $this->assertSame($okayThing3->dataOr(-5), -5);
-      $this->assertSame($okayThing4->dataOr(-5), -1);
+      $this->assertTrue($okayThing3->isError());
+      $this->assertSame($okayThing4->dataOrThrow(), -1);
    }
 
    public function testGettingValue() {
       $errorValue = new \Exception("Oh no!");
-      $errorResult = Result::error($errorValue);
-
-      $this->assertSame($errorResult->dataOr(-1), -1);
 
       $someObject = new SomeObject();
 
       $okayThing = Result::okay(1);
       $okayClass = Result::okay($someObject);
 
-      $this->assertSame($okayThing->dataOr(-1), 1);
-      $this->assertSame($okayClass->dataOr(-1), $someObject);
+      $this->assertSame($okayThing->dataOrThrow(), 1);
+      $this->assertSame($okayClass->dataOrThrow(), $someObject);
    }
 
    public function testGettingValueLazily() {
@@ -111,16 +108,16 @@ class ResultTest extends PHPUnit\Framework\TestCase {
       $this->assertTrue($okayThing->isOkay());
       $this->assertTrue($okayClass->isOkay());
 
-      $this->assertSame($okayThing->dataOr(-1), 1);
-      $this->assertSame($okayClass->dataOr("-1"), $someObject);
+      $this->assertSame($okayThing->dataOrThrow(), 1);
+      $this->assertSame($okayClass->dataOrThrow(), $someObject);
 
       $lazyokay = $errorResult->orCreateResultWithData(function() { return 10; });
       $this->assertTrue($lazyokay->isOkay());
-      $this->assertSame($lazyokay->dataOr(-1), 10);
+      $this->assertSame($lazyokay->dataOrThrow(), 10);
 
       $lazyPassThrough = $okayThing->orCreateResultWithData(function() { return 10; });
       $this->assertTrue($lazyPassThrough->isOkay());
-      $this->assertSame($lazyPassThrough->dataOr(-1), 1);
+      $this->assertSame($lazyPassThrough->dataOrThrow(), 1);
    }
 
    public function testGettingAlternitiveResult() {
@@ -139,8 +136,8 @@ class ResultTest extends PHPUnit\Framework\TestCase {
       $this->assertTrue($okayThing->isOkay());
       $this->assertTrue($okayClass->isOkay());
 
-      $this->assertSame($okayThing->dataOr(-1), 1);
-      $this->assertSame($okayClass->dataOr("-1"), $someObject);
+      $this->assertSame($okayThing->dataOrThrow(), 1);
+      $this->assertSame($okayClass->dataOrThrow(), $someObject);
    }
 
    public function testGettingAlternitiveResultLazy() {
@@ -166,8 +163,8 @@ class ResultTest extends PHPUnit\Framework\TestCase {
       $this->assertTrue($okayThing->isOkay());
       $this->assertTrue($okayClass->isOkay());
 
-      $this->assertSame($okayThing->dataOr(-1), 1);
-      $this->assertSame($okayClass->dataOr("-1"), $someObject);
+      $this->assertSame($okayThing->dataOrThrow(), 1);
+      $this->assertSame($okayClass->dataOrThrow(), $someObject);
 
       $okayThing->createIfError(function($x) {
          $this->fail('Callback should not have been run!');
@@ -235,8 +232,7 @@ class ResultTest extends PHPUnit\Framework\TestCase {
 
       $this->assertFalse($errorUpper->isOkay());
       $this->assertTrue($okayUpper->isOkay());
-      $this->assertSame($errorUpper->dataOr("b"), "b");
-      $this->assertSame($okayUpper->dataOr("b"), "A");
+      $this->assertSame($okayUpper->dataOrThrow(), "A");
 
       $error = Result::error(new \Exception("a"));
       $okay = Result::okay("a");
@@ -352,7 +348,7 @@ class ResultTest extends PHPUnit\Framework\TestCase {
          return Result::okay($thing);
       });
 
-      $this->assertSame($name->dataOr(''), 'FirstLast');
+      $this->assertSame($name->dataOrThrow(), 'FirstLast');
    }
 
    public function testFlatMapWithException() {
@@ -378,7 +374,11 @@ class ResultTest extends PHPUnit\Framework\TestCase {
       });
 
       $this->assertFalse($name->isOkay());
-      $this->assertSame($name->dataOr('oh no'), 'oh no');
+
+      try {
+         $data = $name->dataOrThrow();
+         $this->fail("Expected to throw exception");
+      } catch (\Exception $e) {}
    }
 
    public function testSafelyMapWithException() {
@@ -397,7 +397,11 @@ class ResultTest extends PHPUnit\Framework\TestCase {
       });
 
       $this->assertFalse($name->isOkay());
-      $this->assertSame($name->dataOr('oh no'), 'oh no');
+
+      try {
+         $data = $name->dataOrThrow();
+         $this->fail("Expected to throw exception");
+      } catch (\Exception $e) {}
 
       $out = 'This should change';
 
