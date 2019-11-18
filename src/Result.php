@@ -56,14 +56,19 @@ class Result {
    }
 
    /**
-    * Returns the Result value or returns `$alternative`
+    * Returns the Result value or throws the current error
     *
-    * @param TOkay $alternative
     * @return TOkay
     **/
-   public function dataOr($alternative) {
-      /** @var TOkay **/
-      return $this->either->leftOr($alternative);
+   public function dataOrThrow() {
+      if ($this->either->isLeft()) {
+         /** @var TOkay **/
+         return $this->either->leftOr(null);
+      } else {
+         /** @var TError **/
+         $ex = $this->either->rightOr(null);
+         throw new Exception($ex->getMessage(), (int)$ex->getCode(), $ex);
+      }
    }
 
    /**
