@@ -49,26 +49,49 @@ $result = $responseToResult($response);
 
 $dbConnectionStr = $result
    ->map(function ($result) {
-      try {
-         return json_decode($result['data'], true);
-      } catch(JsonDecodeException $ex) {
-         return false;
-      }
+      return json_decode($result['data'], true);
    })
-   ->notFalsy("Json failed to decode!")
+   ->notFalsy(new Exception("Json failed to decode!"))
    ->map(function(array $json) {
-      return $json['environment_config'];
-   })
-   ->map(function(array $environment_config) {
-      return $environment_config['database'];
-   })
-   ->map(function(array $dbData) {
+      $dbData = $json['environment_config']['database'];
+
       $host = $dbData['host'];
       $port = $dbData['port'];
       $username = $dbData['username'];
       $password = $dbData['password'];
+
       return "Server=$host;Port=$port;Uid=$username;Pwd=$password;";
    })
-   ->dataOr('Server=myServerAddress;Port=1234;Database=myDataBase;Uid=myUsername;Pwd=myPassword;');
+   ->dataOrThrow();
 
 echo "Connection str: $dbConnectionStr \n";
+
+
+$dbConnectionResult = $result
+   ->map(function ($result) {
+      return false;
+   })
+   ->notFalsy(new Exception("Json failed to decode!"))
+   ->map(function(array $json) {
+      $dbData = $json['environment_config']['database'];
+
+      $host = $dbData['host'];
+      $port = $dbData['port'];
+      $username = $dbData['username'];
+      $password = $dbData['password'];
+
+      return "Server=$host;Port=$port;Uid=$username;Pwd=$password;";
+   });
+
+   try {
+      $dbConnectionResult->dataOrThrow();
+   } catch (Throwable $ex) {
+      // Don't want to kill the example
+      echo "Example of a wrapped exception: {$ex->getMessage()}\n";
+   }
+
+   $defaultValue = $dbConnectionResult
+   ->orSetDataTo('Server=myServerAddress;Port=1234;Database=myDataBase;Uid=myUsername;Pwd=myPassword;')
+   ->dataOrThrow();
+
+   echo "Example of setting to a default: $defaultValue\n";
