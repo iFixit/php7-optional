@@ -70,31 +70,6 @@ class ResultTest extends PHPUnit\Framework\TestCase {
       $this->assertSame($okayClass->dataOrThrow(), $someObject);
    }
 
-   public function testGettingValueLazily() {
-      $errorValue = new \Exception("Oh no!");
-      $errorResult = Result::error($errorValue);
-
-      $this->assertSame($errorResult->dataOrReturn(function($x) { return $x; }), $errorValue);
-
-      $someObject = new SomeObject();
-
-      $okayThing = Result::okay(1);
-      $okayClass = Result::okay($someObject);
-
-      $this->assertSame($okayThing->dataOrReturn(function($x) { return $x; }), 1);
-      $this->assertSame($okayClass->dataOrReturn(function($x) { return $x; }), $someObject);
-
-      $this->assertSame($okayThing->dataOrReturn(function($x) {
-         $this->fail('Callback should not have been run!');
-         return $x;
-      }), 1);
-
-      $this->assertSame($okayClass->dataOrReturn(function($x) {
-         $this->fail('Callback should not have been run!');
-         return $x;
-      }), $someObject);
-   }
-
    public function testGettingAlternitiveValue() {
       $errorValue = new \Exception("Oh no!");
       $someObject = new SomeObject();
