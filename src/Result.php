@@ -365,11 +365,12 @@ class Result {
     *
     *  - Returns `Result<TOkay, Throwable>`
     *
-    * @param Throwable $errorValue
+    * @param string $errorValue
     * @return Result<TOkay, Throwable>
     **/
-   public function notNull(Throwable $errorValue): self {
-      $either = $this->either->leftNotNull($errorValue);
+   public function notNull(string $errorValue): self {
+      $ex = new Exception($errorValue);
+      $either = $this->either->leftNotNull($ex);
       return new self($either);
    }
 
@@ -380,11 +381,12 @@ class Result {
     *
     *  - Returns `Result<TOkay, Throwable>`
     *
-    * @param Throwable $errorValue
+    * @param string $errorValue
     * @return Result<TOkay, Throwable>
     **/
-   public function notFalsy(Throwable $errorValue): self {
-      $either = $this->either->leftNotFalsy($errorValue);
+   public function notFalsy(string $errorValue): self {
+      $ex = new Exception($errorValue);
+      $either = $this->either->leftNotFalsy($ex);
       return new self($either);
    }
 
@@ -429,13 +431,14 @@ class Result {
     *  - Returns `Result<TOkay, Throwable>`
     *
     * @param TOkay $data
-    * @param Throwable $errorValue
+    * @param string $reason
     * @param callable(TOkay): bool $filterFunc
     * @return Result<TOkay, Throwable>
     **/
-   public static function okayWhen($data, Throwable $errorValue, callable $filterFunc): self {
+   public static function okayWhen($data, string $reason, callable $filterFunc): self {
       try {
-         $either = Either::leftWhen($data, $errorValue, $filterFunc);
+         $ex = new Exception($reason);
+         $either = Either::leftWhen($data, $ex, $filterFunc);
          return new self($either);
       } catch (\Throwable $e) {
          $either = Either::right($e);
@@ -453,13 +456,14 @@ class Result {
     *  - Returns `Result<TOkay, Throwable>`
     *
     * @param TOkay $data
-    * @param Throwable $errorValue
+    * @param string $reason
     * @param callable(TOkay): bool $filterFunc
     * @return Result<TOkay, Throwable>
     **/
-   public static function errorWhen($data, Throwable $errorValue, callable $filterFunc): self {
+   public static function errorWhen($data, string $reason, callable $filterFunc): self {
       try {
-         $either = Either::rightWhen($data, $errorValue, $filterFunc);
+         $ex = new Exception($reason);
+         $either = Either::rightWhen($data, $ex, $filterFunc);
          return new self($either);
       } catch (\Throwable $e) {
          $either = Either::right($e);
@@ -475,11 +479,12 @@ class Result {
     * - Returns `Result<TOkay, Throwable>`
     *
     * @param TOkay $data
-    * @param Throwable $errorValue
+    * @param string $reason
     * @return Result<TOkay, Throwable>
     **/
-   public static function okayNotNull($data, Throwable $errorValue): self {
-      $either = Either::notNullLeft($data, $errorValue);
+   public static function okayNotNull($data, string $reason): self {
+      $ex = new Exception($reason);
+      $either = Either::notNullLeft($data, $ex);
       return new self($either);
    }
 
@@ -492,11 +497,15 @@ class Result {
     *
     * @param array<array-key, mixed> $array
     * @param array-key $key The key of the array
-    * @param Throwable $rightValue
+    * @param string $reason
     *  @return Result<TOkay, Throwable>
     **/
-   public static function fromArray(array $array, $key, Throwable $rightValue = null): self {
-      $either = Either::fromArray($array, $key, $rightValue);
+   public static function fromArray(array $array, $key, string $reason = null): self {
+      $ex = $reason
+         ? new Exception($reason)
+         : new \Exception("Result could not grab $key from array. No reason given.");
+
+      $either = Either::fromArray($array, $key, $ex);
       return new self($either);
    }
 }
