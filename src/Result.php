@@ -88,21 +88,6 @@ class Result {
    }
 
    /**
-    * Returns the Result's value or calls `$alternativeFactory` and returns the value of that function
-    *
-    * _Notes:_
-    *
-    *  - `$alternativeFactory` must follow this interface `callable(Throwable):TOkay`
-    *
-    * @param callable(Throwable):TOkay $alternativeFactory
-    * @return TOkay
-    **/
-   public function dataOrReturn(callable $alternativeFactory) {
-      /** @var TOkay **/
-      return $this->either->leftOrCreate($alternativeFactory);
-   }
-
-   /**
     * Returns a `Result::okay($value)` iff the the Result orginally was `Result::error($errorValue)`
     *
     * The `$alternativeFactory` is called lazily - iff the Result orginally was `Result::error($errorValue)`
