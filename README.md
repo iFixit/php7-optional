@@ -20,6 +20,10 @@ There are 3 main classes:
    * Conceptually: Left or Right. This is a box that is bi-state. Can be Left, or Right. Not Both, not none. You can apply the same transformations to the left side as you can to the right.
 * [Optional\Result](https://php7-optional.surge.sh/Optional/Result.html)
    * Conceptually: Okay or Error. This is a box that is bi-state, but leans towards okay state. The error state is limited as we want to make this object easy to deal with mapping or dump error.
+   * All callables have `Throwable` auto wrapped and thrown at the end of the chain.
+* [Optional\UnsafeResult](https://php7-optional.surge.sh/Optional/UnsafeResult.html)
+   * Conceptually: Okay or Error. This is a box that is bi-state, but leans towards okay state. The error state is limited as we want to make this object easy to deal with mapping or dump error.
+   * All callables do not have `Throwable` auto wrapped. Thus, an Exception will be thrown immediately.
 
 ## [Read the full docs](https://php7-optional.surge.sh/)
 
@@ -84,29 +88,52 @@ $result = $responseToResult($response);
 
 $dbConnectionStr = $result
    ->map(function ($result) {
-      try {
-         return json_decode($result['data'], true);
-      } catch(JsonDecodeException $ex) {
-         return false;
-      }
+      return json_decode($result['data'], true);
    })
-   ->notFalsy("Json failed to decode!")
+   ->notFalsy(new Exception("Json failed to decode!"))
    ->map(function(array $json) {
-      return $json['environment_config'];
-   })
-   ->map(function(array $environment_config) {
-      return $environment_config['database'];
-   })
-   ->map(function(array $dbData) {
+      $dbData = $json['environment_config']['database'];
+
       $host = $dbData['host'];
       $port = $dbData['port'];
       $username = $dbData['username'];
       $password = $dbData['password'];
+
       return "Server=$host;Port=$port;Uid=$username;Pwd=$password;";
    })
-   ->dataOr('Server=myServerAddress;Port=1234;Database=myDataBase;Uid=myUsername;Pwd=myPassword;');
+   ->dataOrThrow();
 
 echo "Connection str: $dbConnectionStr \n";
+
+
+$dbConnectionResult = $result
+   ->map(function ($result) {
+      return false;
+   })
+   ->notFalsy(new Exception("Json failed to decode!"))
+   ->map(function(array $json) {
+      $dbData = $json['environment_config']['database'];
+
+      $host = $dbData['host'];
+      $port = $dbData['port'];
+      $username = $dbData['username'];
+      $password = $dbData['password'];
+
+      return "Server=$host;Port=$port;Uid=$username;Pwd=$password;";
+   });
+
+   try {
+      $dbConnectionResult->dataOrThrow();
+   } catch (Throwable $ex) {
+      // Don't want to kill the example
+      echo "Example of a wrapped exception: {$ex->getMessage()}\n";
+   }
+
+   $defaultValue = $dbConnectionResult
+   ->orSetDataTo('Server=myServerAddress;Port=1234;Database=myDataBase;Uid=myUsername;Pwd=myPassword;')
+   ->dataOrThrow();
+
+   echo "Example of setting to a default: $defaultValue\n";
 ```
 
 ## Using Either
@@ -124,6 +151,57 @@ To use Result, simply import the following namespace:
 ```php
 use Optional\Result;
 ```
+
+### Result Methods
+
+#### Creation (Boxing)
+---
+- static okay($data): Result
+- static error(Throwable $errorData): Result
+- static okayWhen($data, Throwable $errorValue, callable $filterFunc): Result
+- static errorWhen($data, Throwable $errorValue, callable $filterFunc): Result
+- static okayNotNull($data, Throwable $errorValue): Result
+- static fromArray(array $array, $key, Throwable $rightValue = null): Result
+
+### Flipping
+---
+- toError($errorValue): Result
+- toOkay($dataValue): Result
+
+### Unboxing
+---
+- dataOrThrow()
+
+### State
+---
+- isOkay(): bool
+- isError(): bool
+- contains($value): bool
+- errorContains($value): bool
+- exists(callable $existsFunc): bool
+
+
+
+### Transformation
+---
+- orSetDataTo($data): Result
+- orCreateResultWithData(callable $alternativeFactory): Result
+- okayOr(self $alternativeResult): Result
+- createIfError(callable $alternativeResultFactory): Result
+- map(callable $mapFunc): Result
+- mapError(callable $mapFunc): Result
+- andThen(callable $mapFunc): Result
+- flatMap(callable $mapFunc): Result
+- toErrorIf(callable $filterFunc, Throwable $errorValue): Result
+- toOkayIf(callable $filterFunc, $data): Result
+- notNull(Throwable $errorValue): Result
+- notFalsy(Throwable $errorValue): Result
+
+### Side Effect
+- run(callable $dataFunc, callable $errorFunc)
+- runOnOkay(callable $dataFunc): void
+- runOnError(callable $errorFunc): void
+
 
 # Licence
  MIT
