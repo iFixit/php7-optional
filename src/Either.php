@@ -904,4 +904,25 @@ class Either {
 
       return self::right($rightValue);
    }
+
+   /**
+    * @psalm-suppress InvalidCast
+    *
+    * This is due to this class being a box.
+    * I can't ensure the boxed value is stringable.
+    * https://github.com/vimeo/psalm/issues/1982
+    */
+    public function __toString() {
+      if ($this->isLeft) {
+         if ($this->leftValue === null) {
+            return "Left(null)";
+         }
+         return "Left({$this->leftValue})";
+      } else {
+         if ($this->rightValue === null) {
+            return "Right(null)";
+         }
+         return "Right({$this->rightValue})";
+      }
+   }
 }
