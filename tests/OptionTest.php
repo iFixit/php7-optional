@@ -376,6 +376,13 @@ class OptionTest extends PHPUnit\Framework\TestCase {
       $this->assertFalse($name->hasValue());
       $this->assertSame($name->valueOr('oh no'), 'oh no');
    }
+
+   public function testToString() {
+      $this->assertEquals("Some(null)", (string)Option::some(null));
+      $this->assertEquals("Some(10)", (string)Option::some(10));
+
+      $this->assertEquals("None()", (string)Option::none());
+   }
 }
 
 class SomeObject {};
