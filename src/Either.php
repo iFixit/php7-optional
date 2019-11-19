@@ -61,7 +61,9 @@ class Either {
     * @return TLeft|null
     **/
    public function leftOr($alternative) {
-      return $this->isLeft ? $this->leftValue : $alternative;
+      return $this->isLeft
+         ? $this->leftValue
+         : $alternative;
    }
 
    /**
@@ -71,7 +73,9 @@ class Either {
     * @return TRight|null
     **/
     public function rightOr($alternative) {
-      return !$this->isLeft ? $this->rightValue : $alternative;
+      return !$this->isLeft
+         ? $this->rightValue
+         : $alternative;
    }
 
    /**
@@ -97,7 +101,9 @@ class Either {
     * @return TLeft|null
     **/
    public function leftOrCreate(callable $alternativeFactory) {
-      return $this->isLeft ? $this->leftValue : $alternativeFactory($this->rightValue);
+      return $this->isLeft
+         ? $this->leftValue
+         : $alternativeFactory($this->rightValue);
    }
 
    /**
@@ -111,7 +117,9 @@ class Either {
     * @return TRight|null
     **/
    public function rightOrCreate(callable $alternativeFactory) {
-      return !$this->isLeft ? $this->rightValue : $alternativeFactory($this->leftValue);
+      return !$this->isLeft
+         ? $this->rightValue
+         : $alternativeFactory($this->leftValue);
    }
 
    /**
@@ -130,7 +138,9 @@ class Either {
     * @return Either<TLeft, TRight>
     **/
    public function orLeft($alternative): self {
-      return $this->isLeft ? $this : self::left($alternative);
+      return $this->isLeft
+         ? $this
+         : self::left($alternative);
    }
 
    /**
@@ -144,7 +154,9 @@ class Either {
     * @return Either<TLeft, TRight>
     **/
    public function orRight($alternative): self {
-      return !$this->isLeft ? $this : self::right($alternative);
+      return !$this->isLeft
+         ? $this
+         : self::right($alternative);
    }
 
    /**
@@ -166,7 +178,9 @@ class Either {
     * @return Either<TLeft, TRight>
     **/
    public function orCreateLeft(callable $alternativeFactory): self {
-      return $this->isLeft ? $this : self::left($alternativeFactory($this->rightValue));
+      return $this->isLeft
+         ? $this
+         : self::left($alternativeFactory($this->rightValue));
    }
 
    /**
@@ -183,7 +197,9 @@ class Either {
     * @return Either<TLeft, TRight>
     **/
    public function orCreateRight(callable $alternativeFactory): self {
-      return !$this->isLeft ? $this : self::right($alternativeFactory($this->leftValue));
+      return !$this->isLeft
+         ? $this
+         : self::right($alternativeFactory($this->leftValue));
    }
 
    /**
@@ -204,7 +220,9 @@ class Either {
     * @return Either<TLeft, TRight>
     **/
    public function elseLeft(self $alternativeEither): self {
-      return $this->isLeft ? $this : $alternativeEither;
+      return $this->isLeft
+         ? $this
+         : $alternativeEither;
    }
 
    /**
@@ -219,7 +237,9 @@ class Either {
     * @return Either<TLeft, TRight>
     **/
    public function elseRight(self $alternativeEither): self {
-      return !$this->isLeft ? $this : $alternativeEither;
+      return !$this->isLeft
+         ? $this
+         : $alternativeEither;
    }
 
    /**
@@ -242,7 +262,9 @@ class Either {
     * @return Either<TLeft, TRight>
     **/
    public function elseCreateLeft(callable $alternativeEitherFactory): self {
-      return $this->isLeft ? $this : $alternativeEitherFactory($this->rightValue);
+      return $this->isLeft
+         ? $this
+         : $alternativeEitherFactory($this->rightValue);
    }
 
    /**
@@ -257,7 +279,9 @@ class Either {
     * @return Either<TLeft, TRight>
     **/
    public function elseCreateRight(callable $alternativeEitherFactory): self {
-      return !$this->isLeft ? $this : $alternativeEitherFactory($this->leftValue);
+      return !$this->isLeft
+         ? $this
+         : $alternativeEitherFactory($this->leftValue);
    }
 
    /**
@@ -294,7 +318,9 @@ class Either {
     * @return U
     **/
    public function match(callable $left, callable $right) {
-      return $this->isLeft ? $left($this->leftValue) : $right($this->rightValue);
+      return $this->isLeft
+         ? $left($this->leftValue)
+         : $right($this->rightValue);
    }
 
    /**
@@ -527,7 +553,9 @@ class Either {
     * @return Either<TLeft, TRight>
     **/
    public function filterLeft(bool $condition, $rightValue): self {
-      return $this->isLeft && !$condition ? self::right($rightValue) : $this;
+      return $this->isLeft && !$condition
+         ? self::right($rightValue)
+         : $this;
    }
 
    /**
@@ -536,7 +564,9 @@ class Either {
     * @return Either<TLeft, TRight>
     **/
    public function filterRight(bool $condition, $leftValue): self {
-      return !$this->isLeft && !$condition ? self::left($leftValue) : $this;
+      return !$this->isLeft && !$condition
+         ? self::left($leftValue)
+         : $this;
    }
 
    /**
@@ -562,7 +592,9 @@ class Either {
     * @return Either<TLeft, TRight>
     **/
    public function filterLeftIf(callable $filterFunc, $rightValue): self {
-      return $this->isLeft && !$filterFunc($this->leftValue) ? self::right($rightValue) : $this;
+      return $this->isLeft && !$filterFunc($this->leftValue)
+         ? self::right($rightValue)
+         : $this;
    }
 
    /**
@@ -579,7 +611,9 @@ class Either {
     * @return Either<TLeft, TRight>
     **/
     public function filterRightIf(callable $filterFunc, $leftValue): self {
-      return !$this->isLeft && !$filterFunc($this->rightValue) ? self::left($leftValue) : $this;
+      return !$this->isLeft && !$filterFunc($this->rightValue)
+         ? self::left($leftValue)
+         : $this;
    }
 
    /**
@@ -598,7 +632,8 @@ class Either {
     * @return Either<TLeft, TRight>
     **/
    public function leftNotNull($rightValue): self {
-      return $this->isLeft && is_null($this->leftValue) ? self::right($rightValue) : $this;
+      return $this->isLeft && is_null($this->leftValue)
+      ? self::right($rightValue): $this;
    }
 
    /**
@@ -612,7 +647,9 @@ class Either {
     * @return Either<TLeft, TRight>
     **/
     public function rightNotNull($leftValue): self {
-      return !$this->isLeft && is_null($this->rightValue) ? self::left($leftValue) : $this;
+      return !$this->isLeft && is_null($this->rightValue)
+         ? self::left($leftValue)
+         : $this;
    }
 
    /**
@@ -631,7 +668,9 @@ class Either {
     * @return Either<TLeft, TRight>
     **/
    public function leftNotFalsy($rightValue): self {
-      return $this->isLeft && !$this->leftValue ? self::right($rightValue) : $this;
+      return $this->isLeft && !$this->leftValue
+         ? self::right($rightValue)
+         : $this;
    }
 
    /**
@@ -645,7 +684,9 @@ class Either {
     * @return Either<TLeft, TRight>
     **/
    public function rightNotFalsy($leftValue): self {
-      return !$this->isLeft && !$this->rightValue ? self::left($leftValue) : $this;
+      return !$this->isLeft && !$this->rightValue
+         ? self::left($leftValue)
+         : $this;
    }
 
    /**
