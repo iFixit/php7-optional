@@ -94,6 +94,8 @@ class OptionTest extends PHPUnit\Framework\TestCase {
       $someThing= $noneOption->or(1);
       $someClass = $noneOption->or($someObject);
 
+      $this->assertSame($someClass->or("Hello"), $someClass);
+
       $this->assertTrue($someThing->hasValue());
       $this->assertTrue($someClass->hasValue());
 
@@ -120,6 +122,8 @@ class OptionTest extends PHPUnit\Framework\TestCase {
 
       $someThing = $noneOption->else(Option::some(1));
       $someClass = $noneOption->else(Option::some($someObject));
+
+      $this->assertSame($someThing->else(Option::some(1)), $someThing);
 
       $this->assertTrue($someThing->hasValue());
       $this->assertTrue($someClass->hasValue());
