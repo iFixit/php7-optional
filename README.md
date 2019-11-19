@@ -3,6 +3,7 @@
 [![Build Status](https://travis-ci.org/iFixit/php7-optional.svg?branch=master)](https://travis-ci.org/iFixit/php7-optional)
 [![Stable Version](https://img.shields.io/packagist/v/ifixit/php7-optional.svg)](https://packagist.org/packages/ifixit/php7-optional)
 [![Downloads](https://img.shields.io/packagist/dm/ifixit/php7-optional.svg)](https://packagist.org/packages/ifixit/php7-optional)
+[![codecov](https://codecov.io/gh/iFixit/php7-optional/branch/master/graph/badge.svg)](https://codecov.io/gh/iFixit/php7-optional)
 
 ## Installation
 
