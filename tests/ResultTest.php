@@ -233,7 +233,9 @@ class ResultTest extends PHPUnit\Framework\TestCase {
       $error = Result::error($errorValue);
       $okay = Result::okay("a");
 
-      $okayTrue = $okay->toError($errorValue);
+      $okayTrue = $error->toOkay("a");
+      $this->assertTrue($okayTrue->isOkay());
+
       $okayFalse = $okay->toError($errorValue);
       $errorTrue = $error->toError($errorValue);
       $errorFalse = $error->toError($errorValue);
