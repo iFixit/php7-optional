@@ -522,7 +522,7 @@ class Result {
       /** @var TOkay|null **/
       $lv = $either->leftOr(null);
 
-      /** @var TError|null **/
+      /** @var TError **/
       $rv = $either->rightOr(new Exception("Result::error was not a Result::error?"));
 
       if ($either->isLeft()) {
