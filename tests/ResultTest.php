@@ -438,4 +438,11 @@ class ResultTest extends PHPUnit\Framework\TestCase {
          $this->fail("RunOnError will throw an Exception");
       } catch (\Throwable $e) {}
    }
+
+   public function testToString() {
+      $this->assertEquals("Okay(null)", (string)Result::okay(null));
+      $this->assertEquals("Okay(10)", (string)Result::okay(10));
+
+      $this->assertEquals("Error(Error!)", (string)Result::error(new \Exception("Error!")));
+   }
 }
