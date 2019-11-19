@@ -193,8 +193,11 @@ class EitherTest extends PHPUnit\Framework\TestCase {
       $rightEither2 = $rightEither->elseLeft(Either::right($rightValue));
       $this->assertFalse($rightEither2->isLeft());
 
+      $this->assertSame($rightEither, $rightEither->elseRight(Either::left(5)));
       $leftThing = $rightEither->elseLeft(Either::left(1));
       $leftClass = $rightEither->elseLeft(Either::left($someObject));
+
+      $this->assertSame($leftThing, $leftThing->elseLeft(Either::left(5)));
 
       $this->assertTrue($leftThing->isLeft());
       $this->assertTrue($leftClass->isLeft());
