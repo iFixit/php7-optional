@@ -269,7 +269,15 @@ class UnsafeResultTest extends PHPUnit\Framework\TestCase {
       $error = UnsafeResult::error($errorValue);
       $okay = UnsafeResult::okay("a");
 
-      $okayTrue = $okay->toError($errorValue);
+      $okayTrue = $error->toOkay("a");
+      $this->assertTrue($okayTrue->isOkay());
+
+      $stillError = $error->toOkayIf(function($errorValue) {
+         return true;
+      }, "a");
+
+      $this->assertTrue($stillError->isError());
+
       $okayFalse = $okay->toError($errorValue);
       $errorTrue = $error->toError($errorValue);
       $errorFalse = $error->toError($errorValue);
@@ -426,5 +434,13 @@ class UnsafeResultTest extends PHPUnit\Framework\TestCase {
       );
 
       $this->assertSame($out, "Forcing exception");
+   }
+
+   public function testToString() {
+      $this->assertEquals("Okay(null)", (string)UnsafeResult::okay(null));
+      $this->assertEquals("Okay(10)", (string)UnsafeResult::okay(10));
+
+      $this->assertEquals("Error(10)", (string)UnsafeResult::error(10));
+      $this->assertEquals("Error(null)", (string)UnsafeResult::error(null));
    }
 }
