@@ -47,7 +47,9 @@ class Option {
     * @return T|null
     **/
    public function valueOr($alternative) {
-      return $this->hasValue ? $this->value : $alternative;
+      return $this->hasValue
+         ? $this->value
+         : $alternative;
    }
 
    /**
@@ -72,7 +74,9 @@ class Option {
     * @return T|null
     **/
    public function valueOrCreate(callable $alternativeFactory) {
-      return $this->hasValue ? $this->value : $alternativeFactory();
+      return $this->hasValue
+         ? $this->value
+         : $alternativeFactory();
    }
 
    /**
@@ -91,7 +95,9 @@ class Option {
     * @return Option<T>
     **/
    public function or($alternative): self {
-      return $this->hasValue ? $this : self::some($alternative);
+      return $this->hasValue
+         ? $this
+         : self::some($alternative);
    }
 
    /**
@@ -113,7 +119,9 @@ class Option {
     * @return Option<T>
     **/
    public function orCreate(callable $alternativeFactory): self {
-      return $this->hasValue ? $this : self::some($alternativeFactory());
+      return $this->hasValue
+         ? $this
+         : self::some($alternativeFactory());
    }
 
    /**
@@ -133,7 +141,9 @@ class Option {
     * @return Option<T>
     **/
    public function else(self $alternativeOption): self {
-      return $this->hasValue ? $this : $alternativeOption;
+      return $this->hasValue
+         ? $this
+         : $alternativeOption;
    }
 
    /**
@@ -156,7 +166,9 @@ class Option {
     * @return Option<T>
     **/
    public function elseCreate(callable $alternativeOptionFactory): self {
-      return $this->hasValue ? $this : $alternativeOptionFactory();
+      return $this->hasValue
+         ? $this
+         : $alternativeOptionFactory();
    }
 
    /**
@@ -192,7 +204,9 @@ class Option {
     * @return U
     **/
    public function match(callable $some, callable $none) {
-      return $this->hasValue ? $some($this->value) : $none();
+      return $this->hasValue
+         ? $some($this->value)
+         : $none();
    }
 
    /**
@@ -386,7 +400,9 @@ class Option {
     }
 
    public function filter(bool $condition): self {
-      return $this->hasValue && !$condition ? self::none() : $this;
+      return $this->hasValue && !$condition
+         ? self::none()
+         : $this;
    }
 
    /**
@@ -411,7 +427,9 @@ class Option {
     * @return Option<T>
     **/
    public function filterIf(callable $filterFunc): self {
-      return $this->hasValue && !$filterFunc($this->value) ? self::none() : $this;
+      return $this->hasValue && !$filterFunc($this->value)
+         ? self::none()
+         : $this;
    }
 
    /**
@@ -425,7 +443,9 @@ class Option {
     * @return Option<T>
     **/
    public function notNull(): self {
-      return $this->hasValue && is_null($this->value) ? self::none() : $this;
+      return $this->hasValue && is_null($this->value)
+         ? self::none()
+         : $this;
    }
 
    /**
@@ -440,7 +460,9 @@ class Option {
     * @return Option<T>
     **/
     public function notFalsy(): self {
-      return $this->hasValue && !$this->value ? self::none() : $this;
+      return $this->hasValue && !$this->value
+         ? self::none()
+         : $this;
    }
 
    /**
