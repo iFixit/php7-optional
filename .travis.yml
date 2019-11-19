@@ -17,6 +17,8 @@ jobs:
       script:
       - docker run -v $(pwd):/data --rm phpunit/phpunit
       - ./vendor/bin/psalm
+      after_success:
+      - bash <(curl -s https://codecov.io/bash)
     - stage: Generate/Deploy Docs
       before_script:
       - curl -O http://get.sensiolabs.org/sami.phar
