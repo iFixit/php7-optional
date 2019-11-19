@@ -445,6 +445,8 @@ class EitherTest extends PHPUnit\Framework\TestCase {
       $this->assertFalse($right->rightContains(2));
       $this->assertFalse($right->rightContains("A"));
       $this->assertFalse($right->rightContains(null));
+
+      $this->assertFalse($leftString->rightContains(2));
    }
 
    public function testExists() {
