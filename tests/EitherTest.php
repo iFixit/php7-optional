@@ -142,6 +142,8 @@ class EitherTest extends PHPUnit\Framework\TestCase {
       $someObject = new SomeObject();
       $rightEither = Either::right($rightValue);
 
+      $this->assertSame($rightEither, $rightEither->orRight(1));
+
       $this->assertFalse($rightEither->isLeft());
 
       $leftThing= $rightEither->orLeft(1);
@@ -163,6 +165,8 @@ class EitherTest extends PHPUnit\Framework\TestCase {
 
 
       $leftEither = Either::left("Hello");
+
+      $this->assertSame($leftEither, $leftEither->orLeft(1));
 
       $rightThing= $leftEither->orRight(1);
       $rightClass = $leftEither->orRight($someObject);
