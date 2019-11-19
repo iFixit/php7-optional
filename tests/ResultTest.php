@@ -255,6 +255,9 @@ class ResultTest extends PHPUnit\Framework\TestCase {
       $this->assertFalse($errorA->isOkay());
       $this->assertTrue($okayA->isOkay());
 
+      $nowOkay = $error->toOkayIf(function($e) { return $e == "a"; }, "Hello");
+      $this->assertTrue($nowOkay->isOkay());
+
       $okayNull = Result::okay(null);
       $this->assertTrue($okayNull->isOkay());
       $errorNull = $okayNull->notNull("Oh no!");
