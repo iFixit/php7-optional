@@ -523,7 +523,7 @@ class Result {
       $lv = $either->leftOr(null);
 
       /** @var TError|null **/
-      $rv = $either->rightOr(null);
+      $rv = $either->rightOr(new Exception("Result::error was not a Result::error?"));
 
       if ($either->isLeft()) {
          if ($lv === null) {
@@ -531,10 +531,7 @@ class Result {
          }
          return "Okay({$lv})";
       } else {
-         if ($rv === null) {
-            return "Error(null)";
-         }
-         return "Error({$rv})";
+         return "Error({$rv->getMessage()})";
       }
    }
 }
