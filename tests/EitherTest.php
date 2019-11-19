@@ -556,4 +556,12 @@ class EitherTest extends PHPUnit\Framework\TestCase {
       $this->assertEquals($leftOption, Option::some(10));
       $this->assertEquals($rightOption, Option::none());
    }
+
+   public function testToString() {
+      $this->assertEquals("Left(null)", (string)Either::left(null));
+      $this->assertEquals("Left(10)", (string)Either::left(10));
+
+      $this->assertEquals("Right(null)", (string)Either::right(null));
+      $this->assertEquals("Right(10)", (string)Either::right(10));
+   }
 }
