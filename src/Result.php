@@ -10,6 +10,7 @@ use Throwable;
 use Exception;
 
 /**
+ * @psalm-immutable
  * @template TOkay
  * @template TError as Throwable
  */
@@ -25,6 +26,8 @@ class Result {
    }
 
    /**
+    * @psalm-mutation-free
+    * @psalm-pure
     * @param TOkay $data
     * @return Result<TOkay, Throwable>
     **/
@@ -34,6 +37,8 @@ class Result {
    }
 
    /**
+    * @psalm-mutation-free
+    * @psalm-pure
     * @param Throwable $errorData
     * @return Result<TOkay, Throwable>
     **/
@@ -44,6 +49,8 @@ class Result {
 
    /**
     * Returns true iff the Result is `Result::okay`
+    * @psalm-mutation-free
+    * @psalm-pure
     **/
    public function isOkay(): bool {
       return $this->either->isLeft();
@@ -51,6 +58,8 @@ class Result {
 
    /**
     * Returns true iff the Result is `Result::error`
+    * @psalm-mutation-free
+    * @psalm-pure
     **/
    public function isError(): bool {
       return $this->either->isRight();
@@ -58,6 +67,8 @@ class Result {
 
    /**
     * Returns the Result value or throws the current error
+    * @psalm-mutation-free
+    * @psalm-pure
     *
     * @return TOkay
     **/
@@ -79,6 +90,8 @@ class Result {
     *
     *  - Returns `Result<TOkay, Throwable>`
     *
+    * @psalm-mutation-free
+    * @psalm-pure
     * @param TOkay $data
     * @return Result<TOkay, Throwable>
     **/
@@ -97,6 +110,8 @@ class Result {
     *  - `$alternativeFactory` must follow this interface `callable(Throwable):TOkay`
     *  - Returns `Result<TOkay, Throwable>`
     *
+    * @psalm-mutation-free
+    * @psalm-pure
     * @param callable(Throwable):TOkay $alternativeFactory
     * @return Result<TOkay, Throwable>
     **/
@@ -118,6 +133,8 @@ class Result {
     *  - `$alternativeResult` must be of type `Result<TOkay, Throwable>`
     *  - Returns `Result<TOkay, Throwable>`
     *
+    * @psalm-mutation-free
+    * @psalm-pure
     * @param Result<TOkay, Throwable> $alternativeResult
     * @return Result<TOkay, Throwable>
     **/
@@ -136,6 +153,8 @@ class Result {
     *  - `$alternativeResultFactory` must be of type `callable(Throwable):Result<TOkay, Throwable> `
     *  - Returns `Result<TOkay, Throwable>`
     *
+    * @psalm-mutation-free
+    * @psalm-pure
     * @param callable(Throwable):Result<TOkay, Throwable> $alternativeResultFactory
     * @return Result<TOkay, Throwable>
     **/
@@ -168,6 +187,8 @@ class Result {
     *  - `$dataFunc` must follow this interface `callable(TOkay):U`
     *  - `$errorFunc` must follow this interface `callable(Throwable):U`
     *
+    * @psalm-mutation-free
+    * @psalm-pure
     * @template U
     * @param callable(TOkay):U $dataFunc
     * @param callable(Throwable):U $errorFunc
@@ -184,6 +205,8 @@ class Result {
     *
     *  - `$dataFunc` must follow this interface `callable(TOkay):U`
     *
+    * @psalm-mutation-free
+    * @psalm-pure
     * @param callable(TOkay) $dataFunc
     **/
    public function runOnOkay(callable $dataFunc): void {
@@ -197,6 +220,8 @@ class Result {
     *
     *  - `$errorFunc` must follow this interface `callable(Throwable):U`
     *
+    * @psalm-mutation-free
+    * @psalm-pure
     * @param callable(Throwable) $errorFunc
     **/
    public function runOnError(callable $errorFunc): void {
@@ -214,6 +239,8 @@ class Result {
     *  - `$mapFunc` must follow this interface `callable(TOkay):UOkay`
     *  - Returns `Result<UOkay, Throwable>`
     *
+    * @psalm-mutation-free
+    * @psalm-pure
     * @template UOkay
     * @param callable(TOkay):UOkay $mapFunc
     * @return Result<UOkay, Throwable>
@@ -234,6 +261,8 @@ class Result {
     *  - `$mapFunc` must follow this interface `callable(Throwable):Throwable`
     *  - Returns `Result<TOkay, Throwable>`
     *
+    * @psalm-mutation-free
+    * @psalm-pure
     * @param callable(Throwable):Throwable $mapFunc
     * @return Result<TOkay, Throwable>
     **/
@@ -256,6 +285,8 @@ class Result {
     *  - `$alternativeFactory` must follow this interface `callable(TOkay):Result<UOkay, Throwable>`
     *  - Returns `Result<UOkay, Throwable>`
     *
+    * @psalm-mutation-free
+    * @psalm-pure
     * @template UOkay
     * @param callable(TOkay):Result<UOkay, Throwable> $mapFunc
     * @return Result<UOkay, Throwable>
@@ -272,6 +303,8 @@ class Result {
     *  - `$alternativeFactory` must follow this interface `callable(TOkay):Result<UOkay, Throwable>`
     *  - Returns `Result<UOkay, Throwable>`
     *
+    * @psalm-mutation-free
+    * @psalm-pure
     * @template UOkay
     * @param callable(TOkay):Result<UOkay, Throwable> $mapFunc
     * @return Result<UOkay, Throwable>
@@ -295,6 +328,8 @@ class Result {
    }
 
    /**
+    * @psalm-mutation-free
+    * @psalm-pure
     * @param Throwable $errorValue
     * @return Result<TOkay, Throwable>
     **/
@@ -304,6 +339,8 @@ class Result {
    }
 
    /**
+    * @psalm-mutation-free
+    * @psalm-pure
     * @param TOkay $dataValue
     * @return Result<TOkay, Throwable>
     **/
@@ -321,6 +358,8 @@ class Result {
     *  - `$filterFunc` must follow this interface `callable(TOkay):bool`
     *  - Returns `Result<TOkay, Throwable>`
     *
+    * @psalm-mutation-free
+    * @psalm-pure
     * @param callable(TOkay):bool $filterFunc
     * @param Throwable $errorValue
     * @return Result<TOkay, Throwable>
@@ -344,6 +383,8 @@ class Result {
     *  - `$filterFunc` must follow this interface `callable(Throwable):bool`
     *  - Returns `Result<TOkay, Throwable>`
     *
+    * @psalm-mutation-free
+    * @psalm-pure
     * @param callable(Throwable):bool $filterFunc
     * @param TOkay $data
     * @return Result<TOkay, Throwable>
@@ -365,6 +406,8 @@ class Result {
     *
     *  - Returns `Result<TOkay, Throwable>`
     *
+    * @psalm-mutation-free
+    * @psalm-pure
     * @param string $errorValue
     * @return Result<TOkay, Throwable>
     **/
@@ -381,6 +424,8 @@ class Result {
     *
     *  - Returns `Result<TOkay, Throwable>`
     *
+    * @psalm-mutation-free
+    * @psalm-pure
     * @param string $errorValue
     * @return Result<TOkay, Throwable>
     **/
@@ -393,6 +438,8 @@ class Result {
    /**
     * Returns true if the Result's data == `$value`, otherwise false.
     *
+    * @psalm-mutation-free
+    * @psalm-pure
     * @param mixed $value
     **/
    public function contains($value): bool {
@@ -402,6 +449,8 @@ class Result {
    /**
     * Returns true if the Result's error == `$value`, otherwise false.
     *
+    * @psalm-mutation-free
+    * @psalm-pure
     * @param mixed $value
     **/
    public function errorContains($value): bool {
@@ -415,6 +464,8 @@ class Result {
     *
     *  - `$filterFunc` must follow this interface `callable(TOkay):bool`
     *
+    * @psalm-mutation-free
+    * @psalm-pure
     * @param callable(TOkay):bool $existsFunc
     **/
    public function exists(callable $existsFunc): bool {
@@ -430,6 +481,8 @@ class Result {
     *  - `$filterFunc` must follow this interface `callable(TOkay): bool`
     *  - Returns `Result<TOkay, Throwable>`
     *
+    * @psalm-mutation-free
+    * @psalm-pure
     * @param TOkay $data
     * @param string $reason
     * @param callable(TOkay): bool $filterFunc
@@ -455,6 +508,8 @@ class Result {
     *  - `$filterFunc` must follow this interface `callable(TOkay): bool`
     *  - Returns `Result<TOkay, Throwable>`
     *
+    * @psalm-mutation-free
+    * @psalm-pure
     * @param TOkay $data
     * @param string $reason
     * @param callable(TOkay): bool $filterFunc
@@ -478,6 +533,8 @@ class Result {
     *
     * - Returns `Result<TOkay, Throwable>`
     *
+    * @psalm-mutation-free
+    * @psalm-pure
     * @param TOkay $data
     * @param string $reason
     * @return Result<TOkay, Throwable>
@@ -495,6 +552,8 @@ class Result {
     *
     * - Returns `Result<TOkay, Throwable>`
     *
+    * @psalm-mutation-free
+    * @psalm-pure
     * @param array<array-key, mixed> $array
     * @param array-key $key The key of the array
     * @param string $reason
@@ -515,6 +574,8 @@ class Result {
     * This is due to this class being a box.
     * I can't ensure the boxed value is stringable.
     * https://github.com/vimeo/psalm/issues/1982
+    * @psalm-mutation-free
+    * @psalm-pure
     */
     public function __toString() {
       $either = $this->either;
