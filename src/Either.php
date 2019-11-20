@@ -29,8 +29,8 @@ class Either {
    private $rightValue;
 
    /**
-    * @param TLeft|null $leftValue
-    * @param TRight|null $rightValue
+    * @psalm-param TLeft|null $leftValue
+    * @psalm-param TRight|null $rightValue
     **/
    private function __construct($leftValue, $rightValue, bool $isLeft) {
       $this->isLeft = $isLeft;
@@ -75,7 +75,7 @@ class Either {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @param TLeft|null $alternative
+    * @psalm-param TLeft|null $alternative
     * @psalm-return TLeft|null
     **/
    public function leftOr($alternative) {
@@ -89,7 +89,7 @@ class Either {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @param TRight|null $alternative
+    * @psalm-param TRight|null $alternative
     * @psalm-return TRight|null
     **/
     public function rightOr($alternative) {
@@ -119,7 +119,7 @@ class Either {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @param callable(TRight|null):TLeft $alternativeFactory
+    * @psalm-param callable(TRight|null):TLeft $alternativeFactory
     * @psalm-return TLeft|null
     **/
    public function leftOrCreate(callable $alternativeFactory) {
@@ -137,7 +137,7 @@ class Either {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @param callable(TLeft|null):TRight $alternativeFactory
+    * @psalm-param callable(TLeft|null):TRight $alternativeFactory
     * @psalm-return TRight|null
     **/
    public function rightOrCreate(callable $alternativeFactory) {
@@ -160,7 +160,7 @@ class Either {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @param TLeft $alternative
+    * @psalm-param TLeft $alternative
     * @psalm-return Either<TLeft, TRight>
     **/
    public function orLeft($alternative): self {
@@ -178,7 +178,7 @@ class Either {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @param TRight $alternative
+    * @psalm-param TRight $alternative
     * @psalm-return Either<TLeft, TRight>
     **/
    public function orRight($alternative): self {
@@ -204,7 +204,7 @@ class Either {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @param callable(TRight|null):TLeft $alternativeFactory
+    * @psalm-param callable(TRight|null):TLeft $alternativeFactory
     * @psalm-return Either<TLeft, TRight>
     **/
    public function orCreateLeft(callable $alternativeFactory): self {
@@ -225,7 +225,7 @@ class Either {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @param callable(TLeft|null):TRight $alternativeFactory
+    * @psalm-param callable(TLeft|null):TRight $alternativeFactory
     * @psalm-return Either<TLeft, TRight>
     **/
    public function orCreateRight(callable $alternativeFactory): self {
@@ -250,7 +250,7 @@ class Either {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @param Either<TLeft, TRight> $alternativeEither
+    * @psalm-param Either<TLeft, TRight> $alternativeEither
     * @psalm-return Either<TLeft, TRight>
     **/
    public function elseLeft(self $alternativeEither): self {
@@ -269,7 +269,7 @@ class Either {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @param Either<TLeft, TRight> $alternativeEither
+    * @psalm-param Either<TLeft, TRight> $alternativeEither
     * @psalm-return Either<TLeft, TRight>
     **/
    public function elseRight(self $alternativeEither): self {
@@ -296,7 +296,7 @@ class Either {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @param callable(TRight|null):Either<TLeft, TRight> $alternativeEitherFactory
+    * @psalm-param callable(TRight|null):Either<TLeft, TRight> $alternativeEitherFactory
     * @psalm-return Either<TLeft, TRight>
     **/
    public function elseCreateLeft(callable $alternativeEitherFactory): self {
@@ -315,7 +315,7 @@ class Either {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @param callable(TLeft|null):Either<TLeft, TRight> $alternativeEitherFactory
+    * @psalm-param callable(TLeft|null):Either<TLeft, TRight> $alternativeEitherFactory
     * @psalm-return Either<TLeft, TRight>
     **/
    public function elseCreateRight(callable $alternativeEitherFactory): self {
@@ -355,8 +355,8 @@ class Either {
     * @psalm-mutation-free
     * @psalm-pure
     * @template U
-    * @param callable(TLeft|null):U $left
-    * @param callable(TRight|null):U $right
+    * @psalm-param callable(TLeft|null):U $left
+    * @psalm-param callable(TRight|null):U $right
     * @psalm-return U
     **/
    public function match(callable $left, callable $right) {
@@ -382,7 +382,7 @@ class Either {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @param callable(TLeft|null) $left
+    * @psalm-param callable(TLeft|null) $left
     **/
    public function matchLeft(callable $left): void {
       if (!$this->isLeft) {
@@ -409,7 +409,7 @@ class Either {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @param callable(TRight|null) $right
+    * @psalm-param callable(TRight|null) $right
     **/
    public function matchRight(callable $right): void {
       if ($this->isLeft) {
@@ -441,20 +441,20 @@ class Either {
     * @psalm-mutation-free
     * @psalm-pure
     * @template ULeft
-    * @param callable(TLeft):ULeft $mapFunc
+    * @psalm-param callable(TLeft):ULeft $mapFunc
     * @psalm-return Either<ULeft, TRight>
     **/
    public function mapLeft(callable $mapFunc): self {
       /** @var callable(TLeft):Either<ULeft, TRight> **/
       $leftFunc =
-      /** @param TLeft $value */
+      /** @psalm-param TLeft $value */
       function($value) use ($mapFunc): Either {
          return self::left($mapFunc($value));
       };
 
       /** @var callable(TRight):Either<ULeft, TRight> **/
       $rightFunc =
-      /** @param TRight $rightValue */
+      /** @psalm-param TRight $rightValue */
       function($rightValue): Either {
          return self::right($rightValue);
       };
@@ -476,20 +476,20 @@ class Either {
     * @psalm-mutation-free
     * @psalm-pure
     * @template URight
-    * @param callable(TRight):URight $mapFunc
+    * @psalm-param callable(TRight):URight $mapFunc
     * @psalm-return Either<TLeft, URight>
     **/
     public function mapRight(callable $mapFunc): self {
       /** @var callable(TLeft):Either<TLeft, URight> **/
       $leftFunc =
-      /** @param TLeft $value */
+      /** @psalm-param TLeft $value */
       function($value) use ($mapFunc): Either {
          return self::left($value);
       };
 
       /** @var callable(TRight):Either<TLeft, URight> **/
       $rightFunc =
-      /** @param TRight $rightValue */
+      /** @psalm-param TRight $rightValue */
       function($rightValue) use ($mapFunc): Either {
          return self::right($mapFunc($rightValue));
       };
@@ -519,7 +519,7 @@ class Either {
     * @psalm-mutation-free
     * @psalm-pure
     * @template ULeft
-    * @param callable(TLeft):ULeft $mapFunc
+    * @psalm-param callable(TLeft):ULeft $mapFunc
     * @psalm-return Either<ULeft, TRight>
     **/
    public function mapLeftSafely(callable $mapFunc): self {
@@ -563,7 +563,7 @@ class Either {
     * @psalm-mutation-free
     * @psalm-pure
     * @template ULeft
-    * @param callable(TLeft):Either<ULeft, TRight> $mapFunc
+    * @psalm-param callable(TLeft):Either<ULeft, TRight> $mapFunc
     * @psalm-return Either<ULeft, TRight>
     **/
     public function andThen(callable $mapFunc): self {
@@ -589,13 +589,13 @@ class Either {
     * @psalm-mutation-free
     * @psalm-pure
     * @template ULeft
-    * @param callable(TLeft):Either<ULeft, TRight> $mapFunc
+    * @psalm-param callable(TLeft):Either<ULeft, TRight> $mapFunc
     * @psalm-return Either<ULeft, TRight>
     **/
    public function flatMapLeft(callable $mapFunc): self {
       /** @var callable(TRight):Either<ULeft, TRight> **/
       $rightFunc =
-      /** @param TRight $rightValue */
+      /** @psalm-param TRight $rightValue */
       function($rightValue): self {
          return self::right($rightValue);
       };
@@ -606,8 +606,8 @@ class Either {
    /**
     * @psalm-mutation-free
     * @psalm-pure
-    * @param bool $condition
-    * @param TRight $rightValue
+    * @psalm-param bool $condition
+    * @psalm-param TRight $rightValue
     * @psalm-return Either<TLeft, TRight>
     **/
    public function filterLeft(bool $condition, $rightValue): self {
@@ -619,8 +619,8 @@ class Either {
    /**
     * @psalm-mutation-free
     * @psalm-pure
-    * @param bool $condition
-    * @param TLeft $leftValue
+    * @psalm-param bool $condition
+    * @psalm-param TLeft $leftValue
     * @psalm-return Either<TLeft, TRight>
     **/
    public function filterRight(bool $condition, $leftValue): self {
@@ -649,8 +649,8 @@ class Either {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @param callable(TLeft|null):bool $filterFunc
-    * @param TRight $rightValue
+    * @psalm-param callable(TLeft|null):bool $filterFunc
+    * @psalm-param TRight $rightValue
     * @psalm-return Either<TLeft, TRight>
     **/
    public function filterLeftIf(callable $filterFunc, $rightValue): self {
@@ -670,8 +670,8 @@ class Either {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @param callable(TRight|null):bool $filterFunc
-    * @param TLeft $leftValue
+    * @psalm-param callable(TRight|null):bool $filterFunc
+    * @psalm-param TLeft $leftValue
     * @psalm-return Either<TLeft, TRight>
     **/
     public function filterRightIf(callable $filterFunc, $leftValue): self {
@@ -694,7 +694,7 @@ class Either {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @param TRight $rightValue
+    * @psalm-param TRight $rightValue
     * @psalm-return Either<TLeft, TRight>
     **/
    public function leftNotNull($rightValue): self {
@@ -711,7 +711,7 @@ class Either {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @param TLeft $leftValue
+    * @psalm-param TLeft $leftValue
     * @psalm-return Either<TLeft, TRight>
     **/
     public function rightNotNull($leftValue): self {
@@ -734,7 +734,7 @@ class Either {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @param TRight $rightValue
+    * @psalm-param TRight $rightValue
     * @psalm-return Either<TLeft, TRight>
     **/
    public function leftNotFalsy($rightValue): self {
@@ -752,7 +752,7 @@ class Either {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @param TLeft $leftValue
+    * @psalm-param TLeft $leftValue
     * @psalm-return Either<TLeft, TRight>
     **/
    public function rightNotFalsy($leftValue): self {
@@ -775,7 +775,7 @@ class Either {
     *
     ** @psalm-mutation-free
     * @psalm-pure
-    * @param mixed $value
+    * @psalm-param mixed $value
     **/
    public function leftContains($value): bool {
       if (!$this->isLeft()) {
@@ -790,7 +790,7 @@ class Either {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @param mixed $value
+    * @psalm-param mixed $value
     **/
    public function rightContains($value): bool {
       if (!$this->isRight()) {
@@ -818,7 +818,7 @@ class Either {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @param callable(TLeft|null):bool $existsFunc
+    * @psalm-param callable(TLeft|null):bool $existsFunc
     **/
    public function existsLeft(callable $existsFunc): bool {
       if (!$this->isLeft()) {
@@ -837,7 +837,7 @@ class Either {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @param callable(TRight|null):bool $existsFunc
+    * @psalm-param callable(TRight|null):bool $existsFunc
     **/
    public function existsRight(callable $existsFunc): bool {
       if (!$this->isRight()) {
@@ -868,14 +868,14 @@ class Either {
 
       /** @var callable(TLeft):Option<U> **/
       $leftFunc =
-      /** @param TLeft $value **/
+      /** @psalm-param TLeft $value **/
       function($value): Option {
          return Option::some($value);
       };
 
       /** @var callable(TRight):Option<U> **/
       $rightFunc =
-      /** @param TLeft $rightValue **/
+      /** @psalm-param TLeft $rightValue **/
       function($rightValue): Option {
          return Option::none();
       };
@@ -903,7 +903,7 @@ class Either {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @param TLeft $leftValue
+    * @psalm-param TLeft $leftValue
     * @psalm-return Either<TLeft, mixed>
     **/
    public static function left($leftValue): self {
@@ -923,7 +923,7 @@ class Either {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @param TRight $rightValue
+    * @psalm-param TRight $rightValue
     * @psalm-return Either<TLeft, TRight>
     **/
    public static function right($rightValue): self {
@@ -948,9 +948,9 @@ class Either {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @param TLeft $leftValue
-    * @param TRight $rightValue
-    * @param callable(TLeft): bool $filterFunc
+    * @psalm-param TLeft $leftValue
+    * @psalm-param TRight $rightValue
+    * @psalm-param callable(TLeft): bool $filterFunc
     * @psalm-return Either<TLeft, TRight>
     **/
    public static function leftWhen($leftValue, $rightValue, callable $filterFunc): self {
@@ -976,9 +976,9 @@ class Either {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @param TLeft $leftValue
-    * @param TRight $rightValue
-    * @param callable(TLeft): bool $filterFunc
+    * @psalm-param TLeft $leftValue
+    * @psalm-param TRight $rightValue
+    * @psalm-param callable(TLeft): bool $filterFunc
     * @psalm-return Either<TLeft, TRight>
     **/
    public static function rightWhen($leftValue, $rightValue, callable $filterFunc): self {
@@ -1001,8 +1001,8 @@ class Either {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @param TLeft $leftValue
-    * @param TRight $rightValue
+    * @psalm-param TLeft $leftValue
+    * @psalm-param TRight $rightValue
     * @psalm-return Either<TLeft, TRight>
     **/
     public static function notNullLeft($leftValue, $rightValue): self {
@@ -1024,9 +1024,9 @@ class Either {
     *
     * @psalm-pure
     * @psalm-mutation-free
-    * @param array<array-key, mixed> $array
-    * @param array-key $key The key of the array
-    * @param TRight $rightValue
+    * @psalm-param array<array-key, mixed> $array
+    * @psalm-param array-key $key The key of the array
+    * @psalm-param TRight $rightValue
     *  @psalm-return Either<TLeft, TRight>
     **/
     public static function fromArray(array $array, $key, $rightValue = null): self {

@@ -22,7 +22,7 @@ class Result {
    private $either;
 
    /**
-    * @param Either $either
+    * @psalm-param Either $either
     **/
     private function __construct(Either $either) {
       $this->either = $either;
@@ -31,7 +31,7 @@ class Result {
    /**
     * @psalm-mutation-free
     * @psalm-pure
-    * @param TOkay $data
+    * @psalm-param TOkay $data
     * @psalm-return Result<TOkay, Throwable>
     **/
    public static function okay($data): self {
@@ -42,7 +42,7 @@ class Result {
    /**
     * @psalm-mutation-free
     * @psalm-pure
-    * @param Throwable $errorData
+    * @psalm-param Throwable $errorData
     * @psalm-return Result<TOkay, Throwable>
     **/
    public static function error(Throwable $errorData): self {
@@ -95,7 +95,7 @@ class Result {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @param TOkay $data
+    * @psalm-param TOkay $data
     * @psalm-return Result<TOkay, Throwable>
     **/
    public function orSetDataTo($data): self {
@@ -115,7 +115,7 @@ class Result {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @param callable(Throwable):TOkay $alternativeFactory
+    * @psalm-param callable(Throwable):TOkay $alternativeFactory
     * @psalm-return Result<TOkay, Throwable>
     **/
    public function orCreateResultWithData(callable $alternativeFactory): self {
@@ -138,7 +138,7 @@ class Result {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @param Result<TOkay, Throwable> $alternativeResult
+    * @psalm-param Result<TOkay, Throwable> $alternativeResult
     * @psalm-return Result<TOkay, Throwable>
     **/
    public function  okayOr(self $alternativeResult): self {
@@ -158,13 +158,13 @@ class Result {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @param callable(Throwable):Result<TOkay, Throwable> $alternativeResultFactory
+    * @psalm-param callable(Throwable):Result<TOkay, Throwable> $alternativeResultFactory
     * @psalm-return Result<TOkay, Throwable>
     **/
    public function createIfError(callable $alternativeResultFactory): self {
       /** @var callable(TOkay):Either<TOkay, Throwable> **/
       $realFactory =
-      /** @param Throwable $errorValue */
+      /** @psalm-param Throwable $errorValue */
       function (Throwable $errorValue) use ($alternativeResultFactory): Either {
          $result = $alternativeResultFactory($errorValue);
          return $result->either;
@@ -193,8 +193,8 @@ class Result {
     * @psalm-mutation-free
     * @psalm-pure
     * @template U
-    * @param callable(TOkay):U $dataFunc
-    * @param callable(Throwable):U $errorFunc
+    * @psalm-param callable(TOkay):U $dataFunc
+    * @psalm-param callable(Throwable):U $errorFunc
     * @psalm-return U
     **/
    public function run(callable $dataFunc, callable $errorFunc) {
@@ -210,7 +210,7 @@ class Result {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @param callable(TOkay) $dataFunc
+    * @psalm-param callable(TOkay) $dataFunc
     **/
    public function runOnOkay(callable $dataFunc): void {
       $this->either->matchLeft($dataFunc);
@@ -225,7 +225,7 @@ class Result {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @param callable(Throwable) $errorFunc
+    * @psalm-param callable(Throwable) $errorFunc
     **/
    public function runOnError(callable $errorFunc): void {
       $this->either->matchRight($errorFunc);
@@ -245,7 +245,7 @@ class Result {
     * @psalm-mutation-free
     * @psalm-pure
     * @template UOkay
-    * @param callable(TOkay):UOkay $mapFunc
+    * @psalm-param callable(TOkay):UOkay $mapFunc
     * @psalm-return Result<UOkay, Throwable>
     **/
    public function map(callable $mapFunc): self {
@@ -266,7 +266,7 @@ class Result {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @param callable(Throwable):Throwable $mapFunc
+    * @psalm-param callable(Throwable):Throwable $mapFunc
     * @psalm-return Result<TOkay, Throwable>
     **/
    public function mapError(callable $mapFunc): self {
@@ -291,7 +291,7 @@ class Result {
     * @psalm-mutation-free
     * @psalm-pure
     * @template UOkay
-    * @param callable(TOkay):Result<UOkay, Throwable> $mapFunc
+    * @psalm-param callable(TOkay):Result<UOkay, Throwable> $mapFunc
     * @psalm-return Result<UOkay, Throwable>
     **/
    public function andThen(callable $mapFunc): self {
@@ -309,13 +309,13 @@ class Result {
     * @psalm-mutation-free
     * @psalm-pure
     * @template UOkay
-    * @param callable(TOkay):Result<UOkay, Throwable> $mapFunc
+    * @psalm-param callable(TOkay):Result<UOkay, Throwable> $mapFunc
     * @psalm-return Result<UOkay, Throwable>
     **/
    public function flatMap(callable $mapFunc): self {
       /** @var callable(TOkay):Either<UOkay, Throwable> **/
       $realMap =
-      /** @param TOkay $data */
+      /** @psalm-param TOkay $data */
       function ($data) use ($mapFunc): Either {
          $result = $mapFunc($data);
          return $result->either;
@@ -333,7 +333,7 @@ class Result {
    /**
     * @psalm-mutation-free
     * @psalm-pure
-    * @param Throwable $errorValue
+    * @psalm-param Throwable $errorValue
     * @psalm-return Result<TOkay, Throwable>
     **/
    public function toError($errorValue): self {
@@ -344,7 +344,7 @@ class Result {
    /**
     * @psalm-mutation-free
     * @psalm-pure
-    * @param TOkay $dataValue
+    * @psalm-param TOkay $dataValue
     * @psalm-return Result<TOkay, Throwable>
     **/
    public function toOkay($dataValue): self {
@@ -363,8 +363,8 @@ class Result {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @param callable(TOkay):bool $filterFunc
-    * @param Throwable $errorValue
+    * @psalm-param callable(TOkay):bool $filterFunc
+    * @psalm-param Throwable $errorValue
     * @psalm-return Result<TOkay, Throwable>
     **/
    public function toErrorIf(callable $filterFunc, Throwable $errorValue): self {
@@ -388,8 +388,8 @@ class Result {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @param callable(Throwable):bool $filterFunc
-    * @param TOkay $data
+    * @psalm-param callable(Throwable):bool $filterFunc
+    * @psalm-param TOkay $data
     * @psalm-return Result<TOkay, Throwable>
     **/
    public function toOkayIf(callable $filterFunc, $data): self {
@@ -411,7 +411,7 @@ class Result {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @param string $errorValue
+    * @psalm-param string $errorValue
     * @psalm-return Result<TOkay, Throwable>
     **/
    public function notNull(string $errorValue): self {
@@ -429,7 +429,7 @@ class Result {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @param string $errorValue
+    * @psalm-param string $errorValue
     * @psalm-return Result<TOkay, Throwable>
     **/
    public function notFalsy(string $errorValue): self {
@@ -443,7 +443,7 @@ class Result {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @param mixed $value
+    * @psalm-param mixed $value
     **/
    public function contains($value): bool {
       return $this->either->leftContains($value);
@@ -454,7 +454,7 @@ class Result {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @param mixed $value
+    * @psalm-param mixed $value
     **/
    public function errorContains($value): bool {
       return $this->either->rightContains($value);
@@ -469,7 +469,7 @@ class Result {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @param callable(TOkay):bool $existsFunc
+    * @psalm-param callable(TOkay):bool $existsFunc
     **/
    public function exists(callable $existsFunc): bool {
       return $this->either->existsLeft($existsFunc);
@@ -486,9 +486,9 @@ class Result {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @param TOkay $data
-    * @param string $reason
-    * @param callable(TOkay): bool $filterFunc
+    * @psalm-param TOkay $data
+    * @psalm-param string $reason
+    * @psalm-param callable(TOkay): bool $filterFunc
     * @psalm-return Result<TOkay, Throwable>
     **/
    public static function okayWhen($data, string $reason, callable $filterFunc): self {
@@ -513,9 +513,9 @@ class Result {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @param TOkay $data
-    * @param string $reason
-    * @param callable(TOkay): bool $filterFunc
+    * @psalm-param TOkay $data
+    * @psalm-param string $reason
+    * @psalm-param callable(TOkay): bool $filterFunc
     * @psalm-return Result<TOkay, Throwable>
     **/
    public static function errorWhen($data, string $reason, callable $filterFunc): self {
@@ -538,8 +538,8 @@ class Result {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @param TOkay $data
-    * @param string $reason
+    * @psalm-param TOkay $data
+    * @psalm-param string $reason
     * @psalm-return Result<TOkay, Throwable>
     **/
    public static function okayNotNull($data, string $reason): self {
@@ -557,9 +557,9 @@ class Result {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @param array<array-key, mixed> $array
-    * @param array-key $key The key of the array
-    * @param string $reason
+    * @psalm-param array<array-key, mixed> $array
+    * @psalm-param array-key $key The key of the array
+    * @psalm-param string $reason
     *  @psalm-return Result<TOkay, Throwable>
     **/
    public static function fromArray(array $array, $key, string $reason = null): self {

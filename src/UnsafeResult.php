@@ -19,7 +19,7 @@ class UnsafeResult {
    private $either;
 
    /**
-    * @param Either $either
+    * @psalm-param Either $either
     **/
     private function __construct(Either $either) {
       $this->either = $either;
@@ -28,7 +28,7 @@ class UnsafeResult {
    /**
     * @psalm-mutation-free
     * @psalm-pure
-    * @param TOkay $data
+    * @psalm-param TOkay $data
     * @psalm-return UnsafeResult<TOkay, TError>
     **/
    public static function okay($data): self {
@@ -39,7 +39,7 @@ class UnsafeResult {
    /**
     * @psalm-mutation-free
     * @psalm-pure
-    * @param TError $errorData
+    * @psalm-param TError $errorData
     * @psalm-return UnsafeResult<TOkay, TError>
     **/
    public static function error($errorData): self {
@@ -70,7 +70,7 @@ class UnsafeResult {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @param TOkay $alternative
+    * @psalm-param TOkay $alternative
     * @psalm-return TOkay
     **/
    public function dataOr($alternative) {
@@ -83,7 +83,7 @@ class UnsafeResult {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @param TError $alternative
+    * @psalm-param TError $alternative
     * @psalm-return TError
     **/
    public function errorOr($alternative) {
@@ -100,7 +100,7 @@ class UnsafeResult {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @param TOkay $data
+    * @psalm-param TOkay $data
     * @psalm-return UnsafeResult<TOkay, TError>
     **/
    public function orSetDataTo($data): self {
@@ -117,7 +117,7 @@ class UnsafeResult {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @param callable(TError):TOkay $alternativeFactory
+    * @psalm-param callable(TError):TOkay $alternativeFactory
     * @psalm-return TOkay
     **/
    public function dataOrReturn(callable $alternativeFactory) {
@@ -137,7 +137,7 @@ class UnsafeResult {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @param callable(TError):TOkay $alternativeFactory
+    * @psalm-param callable(TError):TOkay $alternativeFactory
     * @psalm-return UnsafeResult<TOkay, TError>
     **/
    public function orCreateResultWithData(callable $alternativeFactory): self {
@@ -155,7 +155,7 @@ class UnsafeResult {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @param UnsafeResult<TOkay, TError> $alternativeUnsafeResult
+    * @psalm-param UnsafeResult<TOkay, TError> $alternativeUnsafeResult
     * @psalm-return UnsafeResult<TOkay, TError>
     **/
    public function  okayOr(self $alternativeUnsafeResult): self {
@@ -175,13 +175,13 @@ class UnsafeResult {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @param callable(TError):UnsafeResult<TOkay, TError> $alternativeUnsafeResultFactory
+    * @psalm-param callable(TError):UnsafeResult<TOkay, TError> $alternativeUnsafeResultFactory
     * @psalm-return UnsafeResult<TOkay, TError>
     **/
    public function createIfError(callable $alternativeUnsafeResultFactory): self {
       /** @var callable(TOkay):Either<TOkay, TError> **/
       $realFactory =
-      /** @param TError $errorValue */
+      /** @psalm-param TError $errorValue */
       function ($errorValue) use ($alternativeUnsafeResultFactory): Either {
          $uResult = $alternativeUnsafeResultFactory($errorValue);
          return $uResult->either;
@@ -205,8 +205,8 @@ class UnsafeResult {
     * @psalm-mutation-free
     * @psalm-pure
     * @template U
-    * @param callable(TOkay):U $dataFunc
-    * @param callable(TError):U $errorFunc
+    * @psalm-param callable(TOkay):U $dataFunc
+    * @psalm-param callable(TError):U $errorFunc
     * @psalm-return U
     **/
    public function run(callable $dataFunc, callable $errorFunc) {
@@ -222,7 +222,7 @@ class UnsafeResult {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @param callable(TOkay) $dataFunc
+    * @psalm-param callable(TOkay) $dataFunc
     **/
    public function runOnOkay(callable $dataFunc): void {
       $this->either->matchLeft($dataFunc);
@@ -237,7 +237,7 @@ class UnsafeResult {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @param callable(TError) $errorFunc
+    * @psalm-param callable(TError) $errorFunc
     **/
    public function runOnError(callable $errorFunc): void {
       $this->either->matchRight($errorFunc);
@@ -257,7 +257,7 @@ class UnsafeResult {
     * @psalm-mutation-free
     * @psalm-pure
     * @template UOkay
-    * @param callable(TOkay):UOkay $mapFunc
+    * @psalm-param callable(TOkay):UOkay $mapFunc
     * @psalm-return UnsafeResult<UOkay, TError>
     **/
    public function map(callable $mapFunc): self {
@@ -279,7 +279,7 @@ class UnsafeResult {
     * @psalm-mutation-free
     * @psalm-pure
     * @template UOkay
-    * @param callable(TOkay):UOkay $mapFunc
+    * @psalm-param callable(TOkay):UOkay $mapFunc
     * @psalm-return UnsafeResult<UOkay, TError>
     **/
    public function mapSafely(callable $mapFunc): self {
@@ -301,7 +301,7 @@ class UnsafeResult {
     * @psalm-mutation-free
     * @psalm-pure
     * @template UError
-    * @param callable(TError):UError $mapFunc
+    * @psalm-param callable(TError):UError $mapFunc
     * @psalm-return UnsafeResult<TOkay, UError>
     **/
    public function mapError(callable $mapFunc): self {
@@ -321,7 +321,7 @@ class UnsafeResult {
     * @psalm-mutation-free
     * @psalm-pure
     * @template UOkay
-    * @param callable(TOkay):UnsafeResult<UOkay, TError> $mapFunc
+    * @psalm-param callable(TOkay):UnsafeResult<UOkay, TError> $mapFunc
     * @psalm-return UnsafeResult<UOkay, TError>
     **/
    public function andThen(callable $mapFunc): self {
@@ -339,13 +339,13 @@ class UnsafeResult {
     * @psalm-mutation-free
     * @psalm-pure
     * @template UOkay
-    * @param callable(TOkay):UnsafeResult<UOkay, TError> $mapFunc
+    * @psalm-param callable(TOkay):UnsafeResult<UOkay, TError> $mapFunc
     * @psalm-return UnsafeResult<UOkay, TError>
     **/
    public function flatMap(callable $mapFunc): self {
       /** @var callable(TOkay):Either<UOkay, TError> **/
       $realMap =
-      /** @param TOkay $data */
+      /** @psalm-param TOkay $data */
       function ($data) use ($mapFunc): Either {
          $uResult = $mapFunc($data);
          return $uResult->either;
@@ -358,7 +358,7 @@ class UnsafeResult {
    /**
     * @psalm-mutation-free
     * @psalm-pure
-    * @param TError $errorValue
+    * @psalm-param TError $errorValue
     * @psalm-return UnsafeResult<TOkay, TError>
     **/
    public function toError($errorValue): self {
@@ -369,7 +369,7 @@ class UnsafeResult {
    /**
     * @psalm-mutation-free
     * @psalm-pure
-    * @param TOkay $dataValue
+    * @psalm-param TOkay $dataValue
     * @psalm-return UnsafeResult<TOkay, TError>
     **/
    public function toOkay($dataValue): self {
@@ -388,8 +388,8 @@ class UnsafeResult {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @param callable(TOkay):bool $filterFunc
-    * @param TError $errorValue
+    * @psalm-param callable(TOkay):bool $filterFunc
+    * @psalm-param TError $errorValue
     * @psalm-return UnsafeResult<TOkay, TError>
     **/
    public function toErrorIf(callable $filterFunc, $errorValue): self {
@@ -408,8 +408,8 @@ class UnsafeResult {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @param callable(TError):bool $filterFunc
-    * @param TOkay $data
+    * @psalm-param callable(TError):bool $filterFunc
+    * @psalm-param TOkay $data
     * @psalm-return UnsafeResult<TOkay, TError>
     **/
    public function toOkayIf(callable $filterFunc, $data): self {
@@ -426,7 +426,7 @@ class UnsafeResult {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @param TError $errorValue
+    * @psalm-param TError $errorValue
     * @psalm-return UnsafeResult<TOkay, TError>
     **/
    public function notNull($errorValue): self {
@@ -443,7 +443,7 @@ class UnsafeResult {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @param TError $errorValue
+    * @psalm-param TError $errorValue
     * @psalm-return UnsafeResult<TOkay, TError>
     **/
    public function notFalsy($errorValue): self {
@@ -456,7 +456,7 @@ class UnsafeResult {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @param mixed $value
+    * @psalm-param mixed $value
     **/
    public function contains($value): bool {
       return $this->either->leftContains($value);
@@ -467,7 +467,7 @@ class UnsafeResult {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @param mixed $value
+    * @psalm-param mixed $value
     **/
    public function errorContains($value): bool {
       return $this->either->rightContains($value);
@@ -482,7 +482,7 @@ class UnsafeResult {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @param callable(TOkay):bool $existsFunc
+    * @psalm-param callable(TOkay):bool $existsFunc
     **/
    public function exists(callable $existsFunc): bool {
       return $this->either->existsLeft($existsFunc);
@@ -499,9 +499,9 @@ class UnsafeResult {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @param TOkay $data
-    * @param TError $errorValue
-    * @param callable(TOkay): bool $filterFunc
+    * @psalm-param TOkay $data
+    * @psalm-param TError $errorValue
+    * @psalm-param callable(TOkay): bool $filterFunc
     * @psalm-return UnsafeResult<TOkay, TError>
     **/
    public static function okayWhen($data, $errorValue, callable $filterFunc): self {
@@ -520,9 +520,9 @@ class UnsafeResult {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @param TOkay $data
-    * @param TError $errorValue
-    * @param callable(TOkay): bool $filterFunc
+    * @psalm-param TOkay $data
+    * @psalm-param TError $errorValue
+    * @psalm-param callable(TOkay): bool $filterFunc
     * @psalm-return UnsafeResult<TOkay, TError>
     **/
    public static function errorWhen($data, $errorValue, callable $filterFunc): self {
@@ -539,8 +539,8 @@ class UnsafeResult {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @param TOkay $data
-    * @param TError $errorValue
+    * @psalm-param TOkay $data
+    * @psalm-param TError $errorValue
     * @psalm-return UnsafeResult<TOkay, TError>
     **/
    public static function okayNotNull($data, $errorValue): self {
@@ -557,9 +557,9 @@ class UnsafeResult {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @param array<array-key, mixed> $array
-    * @param array-key $key The key of the array
-    * @param TError $rightValue
+    * @psalm-param array<array-key, mixed> $array
+    * @psalm-param array-key $key The key of the array
+    * @psalm-param TError $rightValue
     *  @psalm-return UnsafeResult<TOkay, TError>
     **/
    public static function fromArray(array $array, $key, $rightValue = null): self {
