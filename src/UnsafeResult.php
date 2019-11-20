@@ -13,7 +13,7 @@ use Optional\Either;
  */
 class UnsafeResult {
    /**
-    * @var Either
+    * @psalm-var Either
     * @psalm-readonly
     */
    private $either;
@@ -74,7 +74,7 @@ class UnsafeResult {
     * @psalm-return TOkay
     **/
    public function dataOr($alternative) {
-      /** @var TOkay **/
+      /** @psalm-var TOkay **/
       return $this->either->leftOr($alternative);
    }
 
@@ -87,7 +87,7 @@ class UnsafeResult {
     * @psalm-return TError
     **/
    public function errorOr($alternative) {
-      /** @var TError **/
+      /** @psalm-var TError **/
       return $this->either->rightOr($alternative);
    }
 
@@ -121,7 +121,7 @@ class UnsafeResult {
     * @psalm-return TOkay
     **/
    public function dataOrReturn(callable $alternativeFactory) {
-      /** @var TOkay **/
+      /** @psalm-var TOkay **/
       return $this->either->leftOrCreate($alternativeFactory);
    }
 
@@ -179,7 +179,7 @@ class UnsafeResult {
     * @psalm-return UnsafeResult<TOkay, TError>
     **/
    public function createIfError(callable $alternativeUnsafeResultFactory): self {
-      /** @var callable(TOkay):Either<TOkay, TError> **/
+      /** @psalm-var callable(TOkay):Either<TOkay, TError> **/
       $realFactory =
       /** @psalm-param TError $errorValue */
       function ($errorValue) use ($alternativeUnsafeResultFactory): Either {
@@ -343,7 +343,7 @@ class UnsafeResult {
     * @psalm-return UnsafeResult<UOkay, TError>
     **/
    public function flatMap(callable $mapFunc): self {
-      /** @var callable(TOkay):Either<UOkay, TError> **/
+      /** @psalm-var callable(TOkay):Either<UOkay, TError> **/
       $realMap =
       /** @psalm-param TOkay $data */
       function ($data) use ($mapFunc): Either {
@@ -579,10 +579,10 @@ class UnsafeResult {
     public function __toString() {
       $either = $this->either;
 
-      /** @var TOkay|null **/
+      /** @psalm-var TOkay|null **/
       $lv = $either->leftOr(null);
 
-      /** @var TError|null **/
+      /** @psalm-var TError|null **/
       $rv = $either->rightOr(null);
 
       if ($either->isLeft()) {

@@ -10,13 +10,13 @@ namespace Optional;
  */
 class Option {
    /**
-    * @var bool
+    * @psalm-var bool
     * @psalm-readonly
     */
    private $hasValue;
 
    /**
-    * @var T|null
+    * @psalm-var T|null
     * @psalm-readonly
     */
    private $value;
@@ -312,14 +312,14 @@ class Option {
     * @psalm-return Option<U>
     **/
    public function map(callable $mapFunc): self {
-      /** @var callable(T):Option<U> **/
+      /** @psalm-var callable(T):Option<U> **/
       $someFunc =
       /** @psalm-param T $value **/
       function($value) use ($mapFunc): self {
          return self::some($mapFunc($value));
       };
 
-      /** @var callable():Option<U> **/
+      /** @psalm-var callable():Option<U> **/
       $noneFunc = function(): self {
          return self::none();
       };
@@ -391,7 +391,7 @@ class Option {
     * @psalm-return Option<U>
     **/
    public function flatMap(callable $mapFunc): self {
-      /** @var callable():Option<U> **/
+      /** @psalm-var callable():Option<U> **/
       $noneFunc = function(): self {
          return self::none();
       };
@@ -604,7 +604,7 @@ class Option {
     * @psalm-return Option<T>
     **/
    public static function none(): self {
-      /** @var Option<T> */
+      /** @psalm-var Option<T> */
       return new self(null, false);
    }
 

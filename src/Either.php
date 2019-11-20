@@ -11,19 +11,19 @@ namespace Optional;
  */
 class Either {
    /**
-    * @var bool
+    * @psalm-var bool
     * @psalm-readonly
     */
    private $isLeft;
 
    /**
-    * @var TLeft|null
+    * @psalm-var TLeft|null
     * @psalm-readonly
     */
     private $leftValue;
 
     /**
-     * @var TRight|null
+     * @psalm-var TRight|null
      * @psalm-readonly
      */
    private $rightValue;
@@ -445,14 +445,14 @@ class Either {
     * @psalm-return Either<ULeft, TRight>
     **/
    public function mapLeft(callable $mapFunc): self {
-      /** @var callable(TLeft):Either<ULeft, TRight> **/
+      /** @psalm-var callable(TLeft):Either<ULeft, TRight> **/
       $leftFunc =
       /** @psalm-param TLeft $value */
       function($value) use ($mapFunc): Either {
          return self::left($mapFunc($value));
       };
 
-      /** @var callable(TRight):Either<ULeft, TRight> **/
+      /** @psalm-var callable(TRight):Either<ULeft, TRight> **/
       $rightFunc =
       /** @psalm-param TRight $rightValue */
       function($rightValue): Either {
@@ -480,14 +480,14 @@ class Either {
     * @psalm-return Either<TLeft, URight>
     **/
     public function mapRight(callable $mapFunc): self {
-      /** @var callable(TLeft):Either<TLeft, URight> **/
+      /** @psalm-var callable(TLeft):Either<TLeft, URight> **/
       $leftFunc =
       /** @psalm-param TLeft $value */
       function($value) use ($mapFunc): Either {
          return self::left($value);
       };
 
-      /** @var callable(TRight):Either<TLeft, URight> **/
+      /** @psalm-var callable(TRight):Either<TLeft, URight> **/
       $rightFunc =
       /** @psalm-param TRight $rightValue */
       function($rightValue) use ($mapFunc): Either {
@@ -593,7 +593,7 @@ class Either {
     * @psalm-return Either<ULeft, TRight>
     **/
    public function flatMapLeft(callable $mapFunc): self {
-      /** @var callable(TRight):Either<ULeft, TRight> **/
+      /** @psalm-var callable(TRight):Either<ULeft, TRight> **/
       $rightFunc =
       /** @psalm-param TRight $rightValue */
       function($rightValue): self {
@@ -866,14 +866,14 @@ class Either {
     **/
    public function toOptionFromLeft(): Option {
 
-      /** @var callable(TLeft):Option<U> **/
+      /** @psalm-var callable(TLeft):Option<U> **/
       $leftFunc =
       /** @psalm-param TLeft $value **/
       function($value): Option {
          return Option::some($value);
       };
 
-      /** @var callable(TRight):Option<U> **/
+      /** @psalm-var callable(TRight):Option<U> **/
       $rightFunc =
       /** @psalm-param TLeft $rightValue **/
       function($rightValue): Option {
@@ -927,7 +927,7 @@ class Either {
     * @psalm-return Either<TLeft, TRight>
     **/
    public static function right($rightValue): self {
-      /** @var Either<TLeft, TRight> */
+      /** @psalm-var Either<TLeft, TRight> */
       return new self(null, $rightValue, false);
    }
 
