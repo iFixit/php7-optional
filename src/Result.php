@@ -32,7 +32,7 @@ class Result {
     * @psalm-mutation-free
     * @psalm-pure
     * @param TOkay $data
-    * @return Result<TOkay, Throwable>
+    * @psalm-return Result<TOkay, Throwable>
     **/
    public static function okay($data): self {
       $either = Either::left($data);
@@ -43,7 +43,7 @@ class Result {
     * @psalm-mutation-free
     * @psalm-pure
     * @param Throwable $errorData
-    * @return Result<TOkay, Throwable>
+    * @psalm-return Result<TOkay, Throwable>
     **/
    public static function error(Throwable $errorData): self {
       $either = Either::right($errorData);
@@ -73,7 +73,7 @@ class Result {
     * @psalm-mutation-free
     * @psalm-pure
     *
-    * @return TOkay
+    * @psalm-return TOkay
     **/
    public function dataOrThrow() {
       if ($this->either->isLeft()) {
@@ -96,7 +96,7 @@ class Result {
     * @psalm-mutation-free
     * @psalm-pure
     * @param TOkay $data
-    * @return Result<TOkay, Throwable>
+    * @psalm-return Result<TOkay, Throwable>
     **/
    public function orSetDataTo($data): self {
       $either = $this->either->orLeft($data);
@@ -116,7 +116,7 @@ class Result {
     * @psalm-mutation-free
     * @psalm-pure
     * @param callable(Throwable):TOkay $alternativeFactory
-    * @return Result<TOkay, Throwable>
+    * @psalm-return Result<TOkay, Throwable>
     **/
    public function orCreateResultWithData(callable $alternativeFactory): self {
       try {
@@ -139,7 +139,7 @@ class Result {
     * @psalm-mutation-free
     * @psalm-pure
     * @param Result<TOkay, Throwable> $alternativeResult
-    * @return Result<TOkay, Throwable>
+    * @psalm-return Result<TOkay, Throwable>
     **/
    public function  okayOr(self $alternativeResult): self {
       $either = $this->either->elseLeft($alternativeResult->either);
@@ -159,7 +159,7 @@ class Result {
     * @psalm-mutation-free
     * @psalm-pure
     * @param callable(Throwable):Result<TOkay, Throwable> $alternativeResultFactory
-    * @return Result<TOkay, Throwable>
+    * @psalm-return Result<TOkay, Throwable>
     **/
    public function createIfError(callable $alternativeResultFactory): self {
       /** @var callable(TOkay):Either<TOkay, Throwable> **/
@@ -195,7 +195,7 @@ class Result {
     * @template U
     * @param callable(TOkay):U $dataFunc
     * @param callable(Throwable):U $errorFunc
-    * @return U
+    * @psalm-return U
     **/
    public function run(callable $dataFunc, callable $errorFunc) {
       return $this->either->match($dataFunc, $errorFunc);
@@ -246,7 +246,7 @@ class Result {
     * @psalm-pure
     * @template UOkay
     * @param callable(TOkay):UOkay $mapFunc
-    * @return Result<UOkay, Throwable>
+    * @psalm-return Result<UOkay, Throwable>
     **/
    public function map(callable $mapFunc): self {
       $either = $this->either->mapLeftSafely($mapFunc);
@@ -267,7 +267,7 @@ class Result {
     * @psalm-mutation-free
     * @psalm-pure
     * @param callable(Throwable):Throwable $mapFunc
-    * @return Result<TOkay, Throwable>
+    * @psalm-return Result<TOkay, Throwable>
     **/
    public function mapError(callable $mapFunc): self {
       try {
@@ -292,7 +292,7 @@ class Result {
     * @psalm-pure
     * @template UOkay
     * @param callable(TOkay):Result<UOkay, Throwable> $mapFunc
-    * @return Result<UOkay, Throwable>
+    * @psalm-return Result<UOkay, Throwable>
     **/
    public function andThen(callable $mapFunc): self {
       return $this->flatMap($mapFunc);
@@ -310,7 +310,7 @@ class Result {
     * @psalm-pure
     * @template UOkay
     * @param callable(TOkay):Result<UOkay, Throwable> $mapFunc
-    * @return Result<UOkay, Throwable>
+    * @psalm-return Result<UOkay, Throwable>
     **/
    public function flatMap(callable $mapFunc): self {
       /** @var callable(TOkay):Either<UOkay, Throwable> **/
@@ -334,7 +334,7 @@ class Result {
     * @psalm-mutation-free
     * @psalm-pure
     * @param Throwable $errorValue
-    * @return Result<TOkay, Throwable>
+    * @psalm-return Result<TOkay, Throwable>
     **/
    public function toError($errorValue): self {
       $either = $this->either->filterLeft(false, $errorValue);
@@ -345,7 +345,7 @@ class Result {
     * @psalm-mutation-free
     * @psalm-pure
     * @param TOkay $dataValue
-    * @return Result<TOkay, Throwable>
+    * @psalm-return Result<TOkay, Throwable>
     **/
    public function toOkay($dataValue): self {
       $either = $this->either->filterRight(false, $dataValue);
@@ -365,7 +365,7 @@ class Result {
     * @psalm-pure
     * @param callable(TOkay):bool $filterFunc
     * @param Throwable $errorValue
-    * @return Result<TOkay, Throwable>
+    * @psalm-return Result<TOkay, Throwable>
     **/
    public function toErrorIf(callable $filterFunc, Throwable $errorValue): self {
       try {
@@ -390,7 +390,7 @@ class Result {
     * @psalm-pure
     * @param callable(Throwable):bool $filterFunc
     * @param TOkay $data
-    * @return Result<TOkay, Throwable>
+    * @psalm-return Result<TOkay, Throwable>
     **/
    public function toOkayIf(callable $filterFunc, $data): self {
       try {
@@ -412,7 +412,7 @@ class Result {
     * @psalm-mutation-free
     * @psalm-pure
     * @param string $errorValue
-    * @return Result<TOkay, Throwable>
+    * @psalm-return Result<TOkay, Throwable>
     **/
    public function notNull(string $errorValue): self {
       $ex = new Exception($errorValue);
@@ -430,7 +430,7 @@ class Result {
     * @psalm-mutation-free
     * @psalm-pure
     * @param string $errorValue
-    * @return Result<TOkay, Throwable>
+    * @psalm-return Result<TOkay, Throwable>
     **/
    public function notFalsy(string $errorValue): self {
       $ex = new Exception($errorValue);
@@ -489,7 +489,7 @@ class Result {
     * @param TOkay $data
     * @param string $reason
     * @param callable(TOkay): bool $filterFunc
-    * @return Result<TOkay, Throwable>
+    * @psalm-return Result<TOkay, Throwable>
     **/
    public static function okayWhen($data, string $reason, callable $filterFunc): self {
       try {
@@ -516,7 +516,7 @@ class Result {
     * @param TOkay $data
     * @param string $reason
     * @param callable(TOkay): bool $filterFunc
-    * @return Result<TOkay, Throwable>
+    * @psalm-return Result<TOkay, Throwable>
     **/
    public static function errorWhen($data, string $reason, callable $filterFunc): self {
       try {
@@ -540,7 +540,7 @@ class Result {
     * @psalm-pure
     * @param TOkay $data
     * @param string $reason
-    * @return Result<TOkay, Throwable>
+    * @psalm-return Result<TOkay, Throwable>
     **/
    public static function okayNotNull($data, string $reason): self {
       $ex = new Exception($reason);
@@ -560,7 +560,7 @@ class Result {
     * @param array<array-key, mixed> $array
     * @param array-key $key The key of the array
     * @param string $reason
-    *  @return Result<TOkay, Throwable>
+    *  @psalm-return Result<TOkay, Throwable>
     **/
    public static function fromArray(array $array, $key, string $reason = null): self {
       $ex = $reason
