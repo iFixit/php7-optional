@@ -9,9 +9,16 @@ namespace Optional;
  * @template T
  */
 class Option {
-   /** @var bool */
+   /**
+    * @var bool
+    * @psalm-readonly
+    */
    private $hasValue;
-   /** @var T|null */
+
+   /**
+    * @var T|null
+    * @psalm-readonly
+    */
    private $value;
 
    /** @param T|null $value */
