@@ -298,7 +298,7 @@ class Option {
     *  - `$mapFunc` must follow this interface `callable(T):U`
     *  - Returns `Option<U>`
     *
-    * @psalm-external-mutation-free
+    * @psalm-mutation-free
     * @psalm-pure
     * @template U
     * @param $mapFunc callable(T):U
@@ -338,7 +338,7 @@ class Option {
     *  - `$mapFunc` must follow this interface `callable(T):U`
     *  - Returns `Option<U>`
     *
-    * @psalm-external-mutation-free
+    * @psalm-mutation-free
     * @psalm-pure
     * @template U
     * @param $mapFunc callable(T):U
@@ -376,7 +376,7 @@ class Option {
     *  });
     * ```
     *
-    * @psalm-external-mutation-free
+    * @psalm-mutation-free
     * @psalm-pure
     * Note: `$mapFunc` must follow this interface `function mapFunc(mixed $value): Option`
     * @template U
@@ -419,7 +419,7 @@ class Option {
     *
     * Note: `$mapFunc` must follow this interface `function mapFunc(mixed $value): Option`
     *
-    * @psalm-external-mutation-free
+    * @psalm-mutation-free
     * @psalm-pure
     * @template U
     * @param callable(T):Option<U> $mapFunc
@@ -453,7 +453,7 @@ class Option {
     *  - `$filterFunc` must follow this interface `callable(T):bool`
     *  - Returns `Option<T>`
     *
-    * @psalm-external-mutation-free
+    * @psalm-mutation-free
     * @psalm-pure
     * @param callable(T|null):bool $filterFunc
     * @return Option<T>
@@ -472,7 +472,7 @@ class Option {
     * $noneThing = $someThing->notNull(); // Turn null into an none Option
     * ```
     *
-    * @psalm-external-mutation-free
+    * @psalm-mutation-free
     * @psalm-pure
     * @return Option<T>
     **/
@@ -491,7 +491,7 @@ class Option {
     * $none =  Option::some("")->notFalsy(); // Turn empty string into an none Option
     * ```
     *
-    * @psalm-external-mutation-free
+    * @psalm-mutation-free
     * @psalm-pure
     * @return Option<T>
     **/
@@ -664,7 +664,7 @@ class Option {
     *
     * - Returns `Option<T>`
     *
-    * @psalm-external-mutation-free
+    * @psalm-mutation-free
     * @psalm-pure
     * @param T $someValue
     * @return Option<T>
