@@ -16,7 +16,7 @@ use Exception;
  */
 class Result {
    /**
-    * @var Either
+    * @psalm-var Either
     * @psalm-readonly
     */
    private $either;
@@ -77,10 +77,10 @@ class Result {
     **/
    public function dataOrThrow() {
       if ($this->either->isLeft()) {
-         /** @var TOkay **/
+         /** @psalm-var TOkay **/
          return $this->either->leftOr(null);
       } else {
-         /** @var TError **/
+         /** @psalm-var TError **/
          $ex = $this->either->rightOr(null);
          throw new Exception($ex->getMessage(), (int)$ex->getCode(), $ex);
       }
@@ -162,7 +162,7 @@ class Result {
     * @psalm-return Result<TOkay, Throwable>
     **/
    public function createIfError(callable $alternativeResultFactory): self {
-      /** @var callable(TOkay):Either<TOkay, Throwable> **/
+      /** @psalm-var callable(TOkay):Either<TOkay, Throwable> **/
       $realFactory =
       /** @psalm-param Throwable $errorValue */
       function (Throwable $errorValue) use ($alternativeResultFactory): Either {
@@ -313,7 +313,7 @@ class Result {
     * @psalm-return Result<UOkay, Throwable>
     **/
    public function flatMap(callable $mapFunc): self {
-      /** @var callable(TOkay):Either<UOkay, Throwable> **/
+      /** @psalm-var callable(TOkay):Either<UOkay, Throwable> **/
       $realMap =
       /** @psalm-param TOkay $data */
       function ($data) use ($mapFunc): Either {
@@ -583,10 +583,10 @@ class Result {
     public function __toString() {
       $either = $this->either;
 
-      /** @var TOkay|null **/
+      /** @psalm-var TOkay|null **/
       $lv = $either->leftOr(null);
 
-      /** @var TError **/
+      /** @psalm-var TError **/
       $rv = $either->rightOr(new Exception("Result::error was not a Result::error?"));
 
       if ($either->isLeft()) {
