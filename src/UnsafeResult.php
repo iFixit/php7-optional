@@ -29,7 +29,7 @@ class UnsafeResult {
     * @psalm-mutation-free
     * @psalm-pure
     * @param TOkay $data
-    * @return UnsafeResult<TOkay, TError>
+    * @psalm-return UnsafeResult<TOkay, TError>
     **/
    public static function okay($data): self {
       $either = Either::left($data);
@@ -40,7 +40,7 @@ class UnsafeResult {
     * @psalm-mutation-free
     * @psalm-pure
     * @param TError $errorData
-    * @return UnsafeResult<TOkay, TError>
+    * @psalm-return UnsafeResult<TOkay, TError>
     **/
    public static function error($errorData): self {
       $either = Either::right($errorData);
@@ -71,7 +71,7 @@ class UnsafeResult {
     * @psalm-mutation-free
     * @psalm-pure
     * @param TOkay $alternative
-    * @return TOkay
+    * @psalm-return TOkay
     **/
    public function dataOr($alternative) {
       /** @var TOkay **/
@@ -84,7 +84,7 @@ class UnsafeResult {
     * @psalm-mutation-free
     * @psalm-pure
     * @param TError $alternative
-    * @return TError
+    * @psalm-return TError
     **/
    public function errorOr($alternative) {
       /** @var TError **/
@@ -101,7 +101,7 @@ class UnsafeResult {
     * @psalm-mutation-free
     * @psalm-pure
     * @param TOkay $data
-    * @return UnsafeResult<TOkay, TError>
+    * @psalm-return UnsafeResult<TOkay, TError>
     **/
    public function orSetDataTo($data): self {
       $either = $this->either->orLeft($data);
@@ -118,7 +118,7 @@ class UnsafeResult {
     * @psalm-mutation-free
     * @psalm-pure
     * @param callable(TError):TOkay $alternativeFactory
-    * @return TOkay
+    * @psalm-return TOkay
     **/
    public function dataOrReturn(callable $alternativeFactory) {
       /** @var TOkay **/
@@ -138,7 +138,7 @@ class UnsafeResult {
     * @psalm-mutation-free
     * @psalm-pure
     * @param callable(TError):TOkay $alternativeFactory
-    * @return UnsafeResult<TOkay, TError>
+    * @psalm-return UnsafeResult<TOkay, TError>
     **/
    public function orCreateResultWithData(callable $alternativeFactory): self {
       $either = $this->either->orCreateLeft($alternativeFactory);
@@ -156,7 +156,7 @@ class UnsafeResult {
     * @psalm-mutation-free
     * @psalm-pure
     * @param UnsafeResult<TOkay, TError> $alternativeUnsafeResult
-    * @return UnsafeResult<TOkay, TError>
+    * @psalm-return UnsafeResult<TOkay, TError>
     **/
    public function  okayOr(self $alternativeUnsafeResult): self {
       $either = $this->either->elseLeft($alternativeUnsafeResult->either);
@@ -176,7 +176,7 @@ class UnsafeResult {
     * @psalm-mutation-free
     * @psalm-pure
     * @param callable(TError):UnsafeResult<TOkay, TError> $alternativeUnsafeResultFactory
-    * @return UnsafeResult<TOkay, TError>
+    * @psalm-return UnsafeResult<TOkay, TError>
     **/
    public function createIfError(callable $alternativeUnsafeResultFactory): self {
       /** @var callable(TOkay):Either<TOkay, TError> **/
@@ -207,7 +207,7 @@ class UnsafeResult {
     * @template U
     * @param callable(TOkay):U $dataFunc
     * @param callable(TError):U $errorFunc
-    * @return U
+    * @psalm-return U
     **/
    public function run(callable $dataFunc, callable $errorFunc) {
       return $this->either->match($dataFunc, $errorFunc);
@@ -258,7 +258,7 @@ class UnsafeResult {
     * @psalm-pure
     * @template UOkay
     * @param callable(TOkay):UOkay $mapFunc
-    * @return UnsafeResult<UOkay, TError>
+    * @psalm-return UnsafeResult<UOkay, TError>
     **/
    public function map(callable $mapFunc): self {
       $either = $this->either->mapLeft($mapFunc);
@@ -280,7 +280,7 @@ class UnsafeResult {
     * @psalm-pure
     * @template UOkay
     * @param callable(TOkay):UOkay $mapFunc
-    * @return UnsafeResult<UOkay, TError>
+    * @psalm-return UnsafeResult<UOkay, TError>
     **/
    public function mapSafely(callable $mapFunc): self {
       $either = $this->either->mapLeftSafely($mapFunc);
@@ -302,7 +302,7 @@ class UnsafeResult {
     * @psalm-pure
     * @template UError
     * @param callable(TError):UError $mapFunc
-    * @return UnsafeResult<TOkay, UError>
+    * @psalm-return UnsafeResult<TOkay, UError>
     **/
    public function mapError(callable $mapFunc): self {
       $either = $this->either->mapRight($mapFunc);
@@ -322,7 +322,7 @@ class UnsafeResult {
     * @psalm-pure
     * @template UOkay
     * @param callable(TOkay):UnsafeResult<UOkay, TError> $mapFunc
-    * @return UnsafeResult<UOkay, TError>
+    * @psalm-return UnsafeResult<UOkay, TError>
     **/
    public function andThen(callable $mapFunc): self {
       return $this->flatMap($mapFunc);
@@ -340,7 +340,7 @@ class UnsafeResult {
     * @psalm-pure
     * @template UOkay
     * @param callable(TOkay):UnsafeResult<UOkay, TError> $mapFunc
-    * @return UnsafeResult<UOkay, TError>
+    * @psalm-return UnsafeResult<UOkay, TError>
     **/
    public function flatMap(callable $mapFunc): self {
       /** @var callable(TOkay):Either<UOkay, TError> **/
@@ -359,7 +359,7 @@ class UnsafeResult {
     * @psalm-mutation-free
     * @psalm-pure
     * @param TError $errorValue
-    * @return UnsafeResult<TOkay, TError>
+    * @psalm-return UnsafeResult<TOkay, TError>
     **/
    public function toError($errorValue): self {
       $either = $this->either->filterLeft(false, $errorValue);
@@ -370,7 +370,7 @@ class UnsafeResult {
     * @psalm-mutation-free
     * @psalm-pure
     * @param TOkay $dataValue
-    * @return UnsafeResult<TOkay, TError>
+    * @psalm-return UnsafeResult<TOkay, TError>
     **/
    public function toOkay($dataValue): self {
       $either = $this->either->filterRight(false, $dataValue);
@@ -390,7 +390,7 @@ class UnsafeResult {
     * @psalm-pure
     * @param callable(TOkay):bool $filterFunc
     * @param TError $errorValue
-    * @return UnsafeResult<TOkay, TError>
+    * @psalm-return UnsafeResult<TOkay, TError>
     **/
    public function toErrorIf(callable $filterFunc, $errorValue): self {
       $either = $this->either->filterLeftIf($filterFunc, $errorValue);
@@ -410,7 +410,7 @@ class UnsafeResult {
     * @psalm-pure
     * @param callable(TError):bool $filterFunc
     * @param TOkay $data
-    * @return UnsafeResult<TOkay, TError>
+    * @psalm-return UnsafeResult<TOkay, TError>
     **/
    public function toOkayIf(callable $filterFunc, $data): self {
       $either = $this->either->filterRightIf($filterFunc, $data);
@@ -427,7 +427,7 @@ class UnsafeResult {
     * @psalm-mutation-free
     * @psalm-pure
     * @param TError $errorValue
-    * @return UnsafeResult<TOkay, TError>
+    * @psalm-return UnsafeResult<TOkay, TError>
     **/
    public function notNull($errorValue): self {
       $either = $this->either->leftNotNull($errorValue);
@@ -444,7 +444,7 @@ class UnsafeResult {
     * @psalm-mutation-free
     * @psalm-pure
     * @param TError $errorValue
-    * @return UnsafeResult<TOkay, TError>
+    * @psalm-return UnsafeResult<TOkay, TError>
     **/
    public function notFalsy($errorValue): self {
       $either = $this->either->leftNotFalsy($errorValue);
@@ -502,7 +502,7 @@ class UnsafeResult {
     * @param TOkay $data
     * @param TError $errorValue
     * @param callable(TOkay): bool $filterFunc
-    * @return UnsafeResult<TOkay, TError>
+    * @psalm-return UnsafeResult<TOkay, TError>
     **/
    public static function okayWhen($data, $errorValue, callable $filterFunc): self {
       $either = Either::leftWhen($data, $errorValue, $filterFunc);
@@ -523,7 +523,7 @@ class UnsafeResult {
     * @param TOkay $data
     * @param TError $errorValue
     * @param callable(TOkay): bool $filterFunc
-    * @return UnsafeResult<TOkay, TError>
+    * @psalm-return UnsafeResult<TOkay, TError>
     **/
    public static function errorWhen($data, $errorValue, callable $filterFunc): self {
       $either = Either::rightWhen($data, $errorValue, $filterFunc);
@@ -541,7 +541,7 @@ class UnsafeResult {
     * @psalm-pure
     * @param TOkay $data
     * @param TError $errorValue
-    * @return UnsafeResult<TOkay, TError>
+    * @psalm-return UnsafeResult<TOkay, TError>
     **/
    public static function okayNotNull($data, $errorValue): self {
       $either = Either::notNullLeft($data, $errorValue);
@@ -560,7 +560,7 @@ class UnsafeResult {
     * @param array<array-key, mixed> $array
     * @param array-key $key The key of the array
     * @param TError $rightValue
-    *  @return UnsafeResult<TOkay, TError>
+    *  @psalm-return UnsafeResult<TOkay, TError>
     **/
    public static function fromArray(array $array, $key, $rightValue = null): self {
       $either = Either::fromArray($array, $key, $rightValue);
