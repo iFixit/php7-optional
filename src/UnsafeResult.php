@@ -7,6 +7,7 @@ namespace Optional;
 use Optional\Either;
 
 /**
+ * @psalm-immutable
  * @template TOkay
  * @template TError
  */
@@ -22,6 +23,8 @@ class UnsafeResult {
    }
 
    /**
+    * @psalm-mutation-free
+    * @psalm-pure
     * @param TOkay $data
     * @return UnsafeResult<TOkay, TError>
     **/
@@ -31,6 +34,8 @@ class UnsafeResult {
    }
 
    /**
+    * @psalm-mutation-free
+    * @psalm-pure
     * @param TError $errorData
     * @return UnsafeResult<TOkay, TError>
     **/
@@ -41,6 +46,8 @@ class UnsafeResult {
 
    /**
     * Returns true iff the UnsafeResult is `UnsafeResult::okay`
+    * @psalm-mutation-free
+    * @psalm-pure
     **/
    public function isOkay(): bool {
       return $this->either->isLeft();
@@ -48,6 +55,8 @@ class UnsafeResult {
 
    /**
     * Returns true iff the UnsafeResult is `UnsafeResult::error`
+    * @psalm-mutation-free
+    * @psalm-pure
     **/
    public function isError(): bool {
       return $this->either->isRight();
@@ -56,6 +65,8 @@ class UnsafeResult {
    /**
     * Returns the UnsafeResult value or returns `$alternative`
     *
+    * @psalm-mutation-free
+    * @psalm-pure
     * @param TOkay $alternative
     * @return TOkay
     **/
@@ -67,6 +78,8 @@ class UnsafeResult {
    /**
     * Returns the UnsafeResult erro value or returns `$alternative`
     *
+    * @psalm-mutation-free
+    * @psalm-pure
     * @param TError $alternative
     * @return TError
     **/
@@ -82,6 +95,8 @@ class UnsafeResult {
     *
     *  - Returns `UnsafeResult<TOkay, TError>`
     *
+    * @psalm-mutation-free
+    * @psalm-pure
     * @param TOkay $data
     * @return UnsafeResult<TOkay, TError>
     **/
@@ -97,6 +112,8 @@ class UnsafeResult {
     *
     *  - `$alternativeFactory` must follow this interface `callable(TError):TOkay`
     *
+    * @psalm-mutation-free
+    * @psalm-pure
     * @param callable(TError):TOkay $alternativeFactory
     * @return TOkay
     **/
@@ -115,6 +132,8 @@ class UnsafeResult {
     *  - `$alternativeFactory` must follow this interface `callable(TError):TOkay`
     *  - Returns `UnsafeResult<TOkay, TError>`
     *
+    * @psalm-mutation-free
+    * @psalm-pure
     * @param callable(TError):TOkay $alternativeFactory
     * @return UnsafeResult<TOkay, TError>
     **/
@@ -131,6 +150,8 @@ class UnsafeResult {
     *  - `$alternativeUnsafeResult` must be of type `UnsafeResult<TOkay, TError>`
     *  - Returns `UnsafeResult<TOkay, TError>`
     *
+    * @psalm-mutation-free
+    * @psalm-pure
     * @param UnsafeResult<TOkay, TError> $alternativeUnsafeResult
     * @return UnsafeResult<TOkay, TError>
     **/
@@ -149,6 +170,8 @@ class UnsafeResult {
     *  - `$alternativeUnsafeResultFactory` must be of type `callable(TError):UnsafeResult<TOkay, TError> `
     *  - Returns `UnsafeResult<TOkay, TError>`
     *
+    * @psalm-mutation-free
+    * @psalm-pure
     * @param callable(TError):UnsafeResult<TOkay, TError> $alternativeUnsafeResultFactory
     * @return UnsafeResult<TOkay, TError>
     **/
@@ -176,6 +199,8 @@ class UnsafeResult {
     *  - `$dataFunc` must follow this interface `callable(TOkay):U`
     *  - `$errorFunc` must follow this interface `callable(TError):U`
     *
+    * @psalm-mutation-free
+    * @psalm-pure
     * @template U
     * @param callable(TOkay):U $dataFunc
     * @param callable(TError):U $errorFunc
@@ -192,6 +217,8 @@ class UnsafeResult {
     *
     *  - `$dataFunc` must follow this interface `callable(TOkay):U`
     *
+    * @psalm-mutation-free
+    * @psalm-pure
     * @param callable(TOkay) $dataFunc
     **/
    public function runOnOkay(callable $dataFunc): void {
@@ -205,6 +232,8 @@ class UnsafeResult {
     *
     *  - `$errorFunc` must follow this interface `callable(TError):U`
     *
+    * @psalm-mutation-free
+    * @psalm-pure
     * @param callable(TError) $errorFunc
     **/
    public function runOnError(callable $errorFunc): void {
@@ -222,6 +251,8 @@ class UnsafeResult {
     *  - `$mapFunc` must follow this interface `callable(TOkay):UOkay`
     *  - Returns `UnsafeResult<UOkay, TError>`
     *
+    * @psalm-mutation-free
+    * @psalm-pure
     * @template UOkay
     * @param callable(TOkay):UOkay $mapFunc
     * @return UnsafeResult<UOkay, TError>
@@ -242,6 +273,8 @@ class UnsafeResult {
     *  - `$mapFunc` must follow this interface `callable(TOkay):UOkay`
     *  - Returns `UnsafeResult<UOkay, TError>`
     *
+    * @psalm-mutation-free
+    * @psalm-pure
     * @template UOkay
     * @param callable(TOkay):UOkay $mapFunc
     * @return UnsafeResult<UOkay, TError>
@@ -262,6 +295,8 @@ class UnsafeResult {
     *  - `$mapFunc` must follow this interface `callable(TError):UError`
     *  - Returns `UnsafeResult<TOkay, UError>`
     *
+    * @psalm-mutation-free
+    * @psalm-pure
     * @template UError
     * @param callable(TError):UError $mapFunc
     * @return UnsafeResult<TOkay, UError>
@@ -280,6 +315,8 @@ class UnsafeResult {
     *  - `$alternativeFactory` must follow this interface `callable(TOkay):UnsafeResult<UOkay, TError>`
     *  - Returns `UnsafeResult<UOkay, TError>`
     *
+    * @psalm-mutation-free
+    * @psalm-pure
     * @template UOkay
     * @param callable(TOkay):UnsafeResult<UOkay, TError> $mapFunc
     * @return UnsafeResult<UOkay, TError>
@@ -296,6 +333,8 @@ class UnsafeResult {
     *  - `$alternativeFactory` must follow this interface `callable(TOkay):UnsafeResult<UOkay, TError>`
     *  - Returns `UnsafeResult<UOkay, TError>`
     *
+    * @psalm-mutation-free
+    * @psalm-pure
     * @template UOkay
     * @param callable(TOkay):UnsafeResult<UOkay, TError> $mapFunc
     * @return UnsafeResult<UOkay, TError>
@@ -314,6 +353,8 @@ class UnsafeResult {
    }
 
    /**
+    * @psalm-mutation-free
+    * @psalm-pure
     * @param TError $errorValue
     * @return UnsafeResult<TOkay, TError>
     **/
@@ -323,6 +364,8 @@ class UnsafeResult {
    }
 
    /**
+    * @psalm-mutation-free
+    * @psalm-pure
     * @param TOkay $dataValue
     * @return UnsafeResult<TOkay, TError>
     **/
@@ -340,6 +383,8 @@ class UnsafeResult {
     *  - `$filterFunc` must follow this interface `callable(TOkay):bool`
     *  - Returns `UnsafeResult<TOkay, TError>`
     *
+    * @psalm-mutation-free
+    * @psalm-pure
     * @param callable(TOkay):bool $filterFunc
     * @param TError $errorValue
     * @return UnsafeResult<TOkay, TError>
@@ -358,6 +403,8 @@ class UnsafeResult {
     *  - `$filterFunc` must follow this interface `callable(TError):bool`
     *  - Returns `UnsafeResult<TOkay, TError>`
     *
+    * @psalm-mutation-free
+    * @psalm-pure
     * @param callable(TError):bool $filterFunc
     * @param TOkay $data
     * @return UnsafeResult<TOkay, TError>
@@ -374,6 +421,8 @@ class UnsafeResult {
     *
     *  - Returns `UnsafeResult<TOkay, TError>`
     *
+    * @psalm-mutation-free
+    * @psalm-pure
     * @param TError $errorValue
     * @return UnsafeResult<TOkay, TError>
     **/
@@ -389,6 +438,8 @@ class UnsafeResult {
     *
     *  - Returns `UnsafeResult<TOkay, TError>`
     *
+    * @psalm-mutation-free
+    * @psalm-pure
     * @param TError $errorValue
     * @return UnsafeResult<TOkay, TError>
     **/
@@ -400,6 +451,8 @@ class UnsafeResult {
    /**
     * Returns true if the UnsafeResult's data == `$value`, otherwise false.
     *
+    * @psalm-mutation-free
+    * @psalm-pure
     * @param mixed $value
     **/
    public function contains($value): bool {
@@ -409,6 +462,8 @@ class UnsafeResult {
    /**
     * Returns true if the UnsafeResult's error == `$value`, otherwise false.
     *
+    * @psalm-mutation-free
+    * @psalm-pure
     * @param mixed $value
     **/
    public function errorContains($value): bool {
@@ -422,6 +477,8 @@ class UnsafeResult {
     *
     *  - `$filterFunc` must follow this interface `callable(TOkay):bool`
     *
+    * @psalm-mutation-free
+    * @psalm-pure
     * @param callable(TOkay):bool $existsFunc
     **/
    public function exists(callable $existsFunc): bool {
@@ -437,6 +494,8 @@ class UnsafeResult {
     *  - `$filterFunc` must follow this interface `callable(TOkay): bool`
     *  - Returns `UnsafeResult<TOkay, TError>`
     *
+    * @psalm-mutation-free
+    * @psalm-pure
     * @param TOkay $data
     * @param TError $errorValue
     * @param callable(TOkay): bool $filterFunc
@@ -456,6 +515,8 @@ class UnsafeResult {
     *  - `$filterFunc` must follow this interface `callable(TOkay): bool`
     *  - Returns `UnsafeResult<TOkay, TError>`
     *
+    * @psalm-mutation-free
+    * @psalm-pure
     * @param TOkay $data
     * @param TError $errorValue
     * @param callable(TOkay): bool $filterFunc
@@ -473,6 +534,8 @@ class UnsafeResult {
     *
     * - Returns `UnsafeResult<TOkay, TError>`
     *
+    * @psalm-mutation-free
+    * @psalm-pure
     * @param TOkay $data
     * @param TError $errorValue
     * @return UnsafeResult<TOkay, TError>
@@ -489,6 +552,8 @@ class UnsafeResult {
     *
     * - Returns `UnsafeResult<TOkay, TError>`
     *
+    * @psalm-mutation-free
+    * @psalm-pure
     * @param array<array-key, mixed> $array
     * @param array-key $key The key of the array
     * @param TError $rightValue
@@ -505,6 +570,8 @@ class UnsafeResult {
     * This is due to this class being a box.
     * I can't ensure the boxed value is stringable.
     * https://github.com/vimeo/psalm/issues/1982
+    * @psalm-mutation-free
+    * @psalm-pure
     */
     public function __toString() {
       $either = $this->either;
