@@ -10,11 +10,22 @@ namespace Optional;
  * @template TRight
  */
 class Either {
-   /** @var bool */
+   /**
+    * @var bool
+    * @psalm-readonly
+    */
    private $isLeft;
-   /** @var TLeft|null */
-   private $leftValue;
-   /** @var TRight|null */
+
+   /**
+    * @var TLeft|null
+    * @psalm-readonly
+    */
+    private $leftValue;
+
+    /**
+     * @var TRight|null
+     * @psalm-readonly
+     */
    private $rightValue;
 
    /**

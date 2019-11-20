@@ -15,7 +15,10 @@ use Exception;
  * @template TError as Throwable
  */
 class Result {
-   /** @var Either */
+   /**
+    * @var Either
+    * @psalm-readonly
+    */
    private $either;
 
    /**

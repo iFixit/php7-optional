@@ -12,7 +12,10 @@ use Optional\Either;
  * @template TError
  */
 class UnsafeResult {
-   /** @var Either */
+   /**
+    * @var Either
+    * @psalm-readonly
+    */
    private $either;
 
    /**
