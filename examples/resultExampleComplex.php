@@ -1,7 +1,7 @@
 <?php
 declare(strict_types = 1);
 
-require_once dirname(__FILE__) . '/../src/Result.php';
+require_once dirname(__FILE__) . '/../src/SimpleResult.php';
 require_once dirname(__FILE__) . '/../src/Either.php';
 use Optional\Result;
 
@@ -35,11 +35,11 @@ $responseToResult = function (array $response): Result {
    $wasGood = $response['code'] == 200;
 
    if ($wasGood) {
-      return Result::okay($response);
+      return SimpleResult::okay($response);
    } else {
       $url = $response['url'];
       $code = $response['code'];
-      return Result::error("The request to $url failed with code $code!");
+      return SimpleResult::error("The request to $url failed with code $code!");
    }
 };
 
