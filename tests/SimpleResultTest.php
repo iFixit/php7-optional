@@ -1,20 +1,20 @@
 <?php
 declare(strict_types = 1);
 
-require_once dirname(__FILE__) . '/../src/Result.php';
+require_once dirname(__FILE__) . '/../src/SimpleResult.php';
 
-use Optional\Result;
+use Optional\SimpleResult;
 
-class ResultTest extends PHPUnit\Framework\TestCase {
+class SimpleResultTest extends PHPUnit\Framework\TestCase {
    public function testCreateAndCheckExistence() {
       $errorValue = new \Exception("Oh no!");
-      $errorResult = Result::error($errorValue);
+      $errorSimpleResult = SimpleResult::error($errorValue);
 
-      $this->assertFalse($errorResult->isOkay());
+      $this->assertFalse($errorSimpleResult->isOkay());
 
-      $okayThing = Result::okay(1);
-      $okayNullable = Result::okay(null);
-      $okayClass = Result::okay(new SomeObject());
+      $okayThing = SimpleResult::okay(1);
+      $okayNullable = SimpleResult::okay(null);
+      $okayClass = SimpleResult::okay(new SomeObject());
 
       $this->assertTrue($okayThing->isOkay());
       $this->assertTrue($okayNullable->isOkay());
@@ -24,19 +24,19 @@ class ResultTest extends PHPUnit\Framework\TestCase {
       $this->assertFalse($okayNullable->isError());
       $this->assertFalse($okayClass->isError());
 
-      $noname = Result::fromArray(['name' => 'value'], 'noname', 'oh no');
+      $noname = SimpleResult::fromArray(['name' => 'value'], 'noname', 'oh no');
       $this->assertTrue($noname->isError());
       $this->assertFalse($noname->isOkay());
 
-      $name = Result::fromArray(['name' => 'value'], 'name', 'oh no');
+      $name = SimpleResult::fromArray(['name' => 'value'], 'name', 'oh no');
       $this->assertTrue($name->isOkay());
       $this->assertFalse($name->isError());
 
-      $nonameNull = Result::fromArray(['name' => 'value'], 'missing', 'noname');
+      $nonameNull = SimpleResult::fromArray(['name' => 'value'], 'missing', 'noname');
       $this->assertTrue($nonameNull->isError());
 
-      $error = Result::okayNotNull(null, "Oh no!");
-      $okay = Result::okayNotNull('', "Oh no!");
+      $error = SimpleResult::okayNotNull(null, "Oh no!");
+      $okay = SimpleResult::okayNotNull('', "Oh no!");
 
       $this->assertFalse($error->isOkay());
       $this->assertTrue($okay->isOkay());
@@ -45,14 +45,14 @@ class ResultTest extends PHPUnit\Framework\TestCase {
    public function testCreateAndCheckExistenceWhen() {
       $errorValue = "Oh no!";
 
-      $okayThing = Result::okayWhen(1, $errorValue, function($x) { return $x > 0; });
-      $okayThing2 = Result::okayWhen(-1, $errorValue, function($x) { return $x > 0; });
+      $okayThing = SimpleResult::okayWhen(1, $errorValue, function($x) { return $x > 0; });
+      $okayThing2 = SimpleResult::okayWhen(-1, $errorValue, function($x) { return $x > 0; });
 
       $this->assertSame($okayThing->dataOrThrow(), 1);
       $this->assertTrue($okayThing2->isError());
 
-      $okayThing3 = Result::errorWhen(1, $errorValue, function($x) { return $x > 0; });
-      $okayThing4 = Result::errorWhen(-1, $errorValue, function($x) { return $x > 0; });
+      $okayThing3 = SimpleResult::errorWhen(1, $errorValue, function($x) { return $x > 0; });
+      $okayThing4 = SimpleResult::errorWhen(-1, $errorValue, function($x) { return $x > 0; });
 
       $this->assertTrue($okayThing3->isError());
       $this->assertSame($okayThing4->dataOrThrow(), -1);
@@ -63,8 +63,8 @@ class ResultTest extends PHPUnit\Framework\TestCase {
 
       $someObject = new SomeObject();
 
-      $okayThing = Result::okay(1);
-      $okayClass = Result::okay($someObject);
+      $okayThing = SimpleResult::okay(1);
+      $okayClass = SimpleResult::okay($someObject);
 
       $this->assertSame($okayThing->dataOrThrow(), 1);
       $this->assertSame($okayClass->dataOrThrow(), $someObject);
@@ -73,12 +73,12 @@ class ResultTest extends PHPUnit\Framework\TestCase {
    public function testGettingAlternitiveValue() {
       $errorValue = new \Exception("Oh no!");
       $someObject = new SomeObject();
-      $errorResult = Result::error($errorValue);
+      $errorSimpleResult = SimpleResult::error($errorValue);
 
-      $this->assertFalse($errorResult->isOkay());
+      $this->assertFalse($errorSimpleResult->isOkay());
 
-      $okayThing = $errorResult->orSetDataTo(1);
-      $okayClass = $errorResult->orSetDataTo($someObject);
+      $okayThing = $errorSimpleResult->orSetDataTo(1);
+      $okayClass = $errorSimpleResult->orSetDataTo($someObject);
 
       $this->assertTrue($okayThing->isOkay());
       $this->assertTrue($okayClass->isOkay());
@@ -86,27 +86,27 @@ class ResultTest extends PHPUnit\Framework\TestCase {
       $this->assertSame($okayThing->dataOrThrow(), 1);
       $this->assertSame($okayClass->dataOrThrow(), $someObject);
 
-      $lazyokay = $errorResult->orCreateResultWithData(function() { return 10; });
+      $lazyokay = $errorSimpleResult->orCreateSimpleResultWithData(function() { return 10; });
       $this->assertTrue($lazyokay->isOkay());
       $this->assertSame($lazyokay->dataOrThrow(), 10);
 
-      $lazyPassThrough = $okayThing->orCreateResultWithData(function() { return 10; });
+      $lazyPassThrough = $okayThing->orCreateSimpleResultWithData(function() { return 10; });
       $this->assertTrue($lazyPassThrough->isOkay());
       $this->assertSame($lazyPassThrough->dataOrThrow(), 1);
    }
 
-   public function testGettingAlternitiveResult() {
+   public function testGettingAlternitiveSimpleResult() {
       $errorValue = new \Exception("Oh no!");
       $someObject = new SomeObject();
-      $errorResult = Result::error($errorValue);
+      $errorSimpleResult = SimpleResult::error($errorValue);
 
-      $this->assertFalse($errorResult->isOkay());
+      $this->assertFalse($errorSimpleResult->isOkay());
 
-      $errorResult2 = $errorResult->okayOr(Result::error($errorValue));
-      $this->assertFalse($errorResult2->isOkay());
+      $errorSimpleResult2 = $errorSimpleResult->okayOr(SimpleResult::error($errorValue));
+      $this->assertFalse($errorSimpleResult2->isOkay());
 
-      $okayThing = $errorResult->okayOr(Result::okay(1));
-      $okayClass = $errorResult->okayOr(Result::okay($someObject));
+      $okayThing = $errorSimpleResult->okayOr(SimpleResult::okay(1));
+      $okayClass = $errorSimpleResult->okayOr(SimpleResult::okay($someObject));
 
       $this->assertTrue($okayThing->isOkay());
       $this->assertTrue($okayClass->isOkay());
@@ -115,24 +115,24 @@ class ResultTest extends PHPUnit\Framework\TestCase {
       $this->assertSame($okayClass->dataOrThrow(), $someObject);
    }
 
-   public function testGettingAlternitiveResultLazy() {
+   public function testGettingAlternitiveSimpleResultLazy() {
       $errorValue = new \Exception("Oh no!");
       $someObject = new SomeObject();
-      $errorResult = Result::error($errorValue);
+      $errorSimpleResult = SimpleResult::error($errorValue);
 
-      $this->assertFalse($errorResult->isOkay());
+      $this->assertFalse($errorSimpleResult->isOkay());
 
-      $errorResult2 = $errorResult->createIfError(function($x) {
-         return Result::error($x);
+      $errorSimpleResult2 = $errorSimpleResult->createIfError(function($x) {
+         return SimpleResult::error($x);
       });
-      $this->assertFalse($errorResult2->isOkay());
+      $this->assertFalse($errorSimpleResult2->isOkay());
 
-      $okayThing = $errorResult->createIfError(function($x) {
-         return Result::okay(1);
+      $okayThing = $errorSimpleResult->createIfError(function($x) {
+         return SimpleResult::okay(1);
       });
 
-      $okayClass = $errorResult->createIfError(function($x) use ($someObject) {
-         return Result::okay($someObject);
+      $okayClass = $errorSimpleResult->createIfError(function($x) use ($someObject) {
+         return SimpleResult::okay($someObject);
       });
 
       $this->assertTrue($okayThing->isOkay());
@@ -143,18 +143,18 @@ class ResultTest extends PHPUnit\Framework\TestCase {
 
       $okayThing->createIfError(function($x) {
          $this->fail('Callback should not have been run!');
-         return Result::error($x);
+         return SimpleResult::error($x);
       });
       $okayClass->createIfError(function($x) {
          $this->fail('Callback should not have been run!');
-         return Result::error($x);
+         return SimpleResult::error($x);
       });
    }
 
    public function testMatching() {
       $errorValue = new \Exception("Oh no!");
-      $error = Result::error($errorValue);
-      $okay = Result::okay(1);
+      $error = SimpleResult::error($errorValue);
+      $okay = SimpleResult::okay(1);
 
       $failure = $error->run(
             function($x) { return 2; },
@@ -198,9 +198,9 @@ class ResultTest extends PHPUnit\Framework\TestCase {
 
    public function testMapping() {
       $errorValue = new \Exception("Oh no!");
-      $error = Result::error($errorValue);
-      $okay = Result::okay("a");
-      $okayNull = Result::okay(null);
+      $error = SimpleResult::error($errorValue);
+      $okay = SimpleResult::okay("a");
+      $okayNull = SimpleResult::okay(null);
 
       $errorUpper = $error->map(function($x) { return strtoupper($x); });
       $okayUpper = $okay->map(function($x) { return strtoupper($x); });
@@ -209,13 +209,13 @@ class ResultTest extends PHPUnit\Framework\TestCase {
       $this->assertTrue($okayUpper->isOkay());
       $this->assertSame($okayUpper->dataOrThrow(), "A");
 
-      $error = Result::error(new \Exception("a"));
-      $okay = Result::okay("a");
-      $okayNull = Result::okay(null);
+      $error = SimpleResult::error(new \Exception("a"));
+      $okay = SimpleResult::okay("a");
+      $okayNull = SimpleResult::okay(null);
 
-      $errorNotNull = $error->flatMap(function($x) use ($errorValue) { return Result::okay($x)->notNull("Oh no!"); });
-      $notNull = $okay->flatMap(function($x) use ($errorValue) { return Result::okay($x)->notNull("Oh no!"); });
-      $okayNullNotNull = $okayNull->flatMap(function($x) use ($errorValue) { return Result::okay($x)->notNull("Oh no!"); });
+      $errorNotNull = $error->flatMap(function($x) use ($errorValue) { return SimpleResult::okay($x)->notNull("Oh no!"); });
+      $notNull = $okay->flatMap(function($x) use ($errorValue) { return SimpleResult::okay($x)->notNull("Oh no!"); });
+      $okayNullNotNull = $okayNull->flatMap(function($x) use ($errorValue) { return SimpleResult::okay($x)->notNull("Oh no!"); });
 
       $this->assertFalse($errorNotNull->isOkay());
       $this->assertTrue($notNull->isOkay());
@@ -230,8 +230,8 @@ class ResultTest extends PHPUnit\Framework\TestCase {
 
    public function testFiltering() {
       $errorValue = new \Exception("Oh no!");
-      $error = Result::error($errorValue);
-      $okay = Result::okay("a");
+      $error = SimpleResult::error($errorValue);
+      $okay = SimpleResult::okay("a");
 
       $okayTrue = $error->toOkay("a");
       $this->assertTrue($okayTrue->isOkay());
@@ -258,12 +258,12 @@ class ResultTest extends PHPUnit\Framework\TestCase {
       $nowOkay = $error->toOkayIf(function($e) { return $e == "a"; }, "Hello");
       $this->assertTrue($nowOkay->isOkay());
 
-      $okayNull = Result::okay(null);
+      $okayNull = SimpleResult::okay(null);
       $this->assertTrue($okayNull->isOkay());
       $errorNull = $okayNull->notNull("Oh no!");
       $this->assertFalse($errorNull->isOkay());
 
-      $okayEmpty = Result::okay("");
+      $okayEmpty = SimpleResult::okay("");
       $this->assertTrue($okayEmpty->isOkay());
       $errorEmpty = $okayEmpty->notFalsy("Oh no!");
       $this->assertFalse($errorEmpty->isOkay());
@@ -271,9 +271,9 @@ class ResultTest extends PHPUnit\Framework\TestCase {
 
    public function testContains() {
       $errorValue = new \Exception("Oh no!");
-      $error = Result::error($errorValue);
-      $okayString = Result::okay("a");
-      $okayInt = Result::okay(1);
+      $error = SimpleResult::error($errorValue);
+      $okayString = SimpleResult::okay("a");
+      $okayInt = SimpleResult::okay(1);
 
       $this->assertTrue($okayString->contains("a"));
       $this->assertFalse($okayString->contains("A"));
@@ -294,8 +294,8 @@ class ResultTest extends PHPUnit\Framework\TestCase {
 
    public function testExists() {
       $errorValue = new \Exception("Oh no!");
-      $error = Result::error($errorValue);
-      $okay = Result::okay(10);
+      $error = SimpleResult::error($errorValue);
+      $okay = SimpleResult::okay(10);
 
       $errorFalse = $error->exists(function($x) { return $x == 10; });
       $okayTrue = $okay->exists(function($x) { return $x >= 10; });
@@ -314,12 +314,12 @@ class ResultTest extends PHPUnit\Framework\TestCase {
          ]
       ];
 
-      $person = Result::fromArray($okayPerson, 'name', 'name was missing');
+      $person = SimpleResult::fromArray($okayPerson, 'name', 'name was missing');
 
       $name = $person->andThen(function($person) {
          $fullName = $person['first'] . $person['last'];
          $thing = SomeComplexThing::doWork($fullName);
-         return Result::okay($thing);
+         return SimpleResult::okay($thing);
       });
 
       $this->assertSame($name->dataOrThrow(), 'FirstLast');
@@ -333,12 +333,12 @@ class ResultTest extends PHPUnit\Framework\TestCase {
          ]
       ];
 
-      $person = Result::fromArray($okayPerson, 'name', 'name was missing');
+      $person = SimpleResult::fromArray($okayPerson, 'name', 'name was missing');
 
       $name = $person->andThen(function($person) {
          $fullName = $person['first'] . $person['last'];
          $thing = SomeComplexThing::doWork($fullName, "Forcing Throwable");
-         return Result::okay($thing);
+         return SimpleResult::okay($thing);
       });
 
       $this->assertFalse($name->isOkay());
@@ -357,7 +357,7 @@ class ResultTest extends PHPUnit\Framework\TestCase {
          ]
       ];
 
-      $person = Result::fromArray($okayPerson, 'name', 'name was missing');
+      $person = SimpleResult::fromArray($okayPerson, 'name', 'name was missing');
 
       $name = $person->map(function($person): string {
          $fullName = $person['first'] . $person['last'];
@@ -383,12 +383,12 @@ class ResultTest extends PHPUnit\Framework\TestCase {
 
    public function testThrowableToErrorState() {
       $lazyThrow = function() { throw new \Exception("Forced Throwable!"); };
-      $okay = Result::okay("It's Okay!");
+      $okay = SimpleResult::okay("It's Okay!");
 
       $errorValue = "Oh no!";
-      $error = Result::error(new \Exception($errorValue));
+      $error = SimpleResult::error(new \Exception($errorValue));
 
-      $after = $error->orCreateResultWithData($lazyThrow);
+      $after = $error->orCreateSimpleResultWithData($lazyThrow);
       $this->assertTrue($after->isError());
 
       $after = $error->createIfError($lazyThrow);
@@ -412,10 +412,10 @@ class ResultTest extends PHPUnit\Framework\TestCase {
       $after = $error->toOkayIf($lazyThrow, new \Exception("Another Throwable"));
       $this->assertTrue($after->isError());
 
-      $after = Result::okayWhen("Okay", $errorValue, $lazyThrow);
+      $after = SimpleResult::okayWhen("Okay", $errorValue, $lazyThrow);
       $this->assertTrue($after->isError());
 
-      $after = Result::errorWhen("Okay", $errorValue, $lazyThrow);
+      $after = SimpleResult::errorWhen("Okay", $errorValue, $lazyThrow);
       $this->assertTrue($after->isError());
 
       try {
@@ -445,9 +445,9 @@ class ResultTest extends PHPUnit\Framework\TestCase {
    }
 
    public function testToString() {
-      $this->assertEquals("Okay(null)", (string)Result::okay(null));
-      $this->assertEquals("Okay(10)", (string)Result::okay(10));
+      $this->assertEquals("Okay(null)", (string)SimpleResult::okay(null));
+      $this->assertEquals("Okay(10)", (string)SimpleResult::okay(10));
 
-      $this->assertEquals("Error(Error!)", (string)Result::error(new \Exception("Error!")));
+      $this->assertEquals("Error(Error!)", (string)SimpleResult::error(new \Exception("Error!")));
    }
 }

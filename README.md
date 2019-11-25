@@ -75,11 +75,11 @@ $responseToResult = function (array $response): Result {
    $wasGood = $response['code'] == 200;
 
    if ($wasGood) {
-      return Result::okay($response);
+      return SimpleResult::okay($response);
    } else {
       $url = $response['url'];
       $code = $response['code'];
-      return Result::error("The request to $url failed with code $code!");
+      return SimpleResult::error("The request to $url failed with code $code!");
    }
 };
 

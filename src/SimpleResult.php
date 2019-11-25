@@ -14,7 +14,7 @@ use Exception;
  * @template TOkay
  * @template TError as Throwable
  */
-class Result {
+class SimpleResult {
    /**
     * @psalm-var Either
     * @psalm-readonly
@@ -32,7 +32,7 @@ class Result {
     * @psalm-mutation-free
     * @psalm-pure
     * @psalm-param TOkay $data
-    * @psalm-return Result<TOkay, Throwable>
+    * @psalm-return SimpleResult<TOkay, Throwable>
     **/
    public static function okay($data): self {
       $either = Either::left($data);
@@ -43,7 +43,7 @@ class Result {
     * @psalm-mutation-free
     * @psalm-pure
     * @psalm-param Throwable $errorData
-    * @psalm-return Result<TOkay, Throwable>
+    * @psalm-return SimpleResult<TOkay, Throwable>
     **/
    public static function error(Throwable $errorData): self {
       $either = Either::right($errorData);
@@ -51,7 +51,7 @@ class Result {
    }
 
    /**
-    * Returns true iff the Result is `Result::okay`
+    * Returns true iff the SimpleResult is `SimpleResult::okay`
     * @psalm-mutation-free
     * @psalm-pure
     **/
@@ -60,7 +60,7 @@ class Result {
    }
 
    /**
-    * Returns true iff the Result is `Result::error`
+    * Returns true iff the SimpleResult is `SimpleResult::error`
     * @psalm-mutation-free
     * @psalm-pure
     **/
@@ -69,7 +69,7 @@ class Result {
    }
 
    /**
-    * Returns the Result value or throws the current error
+    * Returns the SimpleResult value or throws the current error
     * @psalm-mutation-free
     * @psalm-pure
     *
@@ -87,16 +87,16 @@ class Result {
    }
 
    /**
-    * Returns a `Result::okay($data)` iff the Result orginally was `Result::error($errorValue)`
+    * Returns a `SimpleResult::okay($data)` iff the SimpleResult orginally was `SimpleResult::error($errorValue)`
     *
     * _Notes:_
     *
-    *  - Returns `Result<TOkay, Throwable>`
+    *  - Returns `SimpleResult<TOkay, Throwable>`
     *
     * @psalm-mutation-free
     * @psalm-pure
     * @psalm-param TOkay $data
-    * @psalm-return Result<TOkay, Throwable>
+    * @psalm-return SimpleResult<TOkay, Throwable>
     **/
    public function orSetDataTo($data): self {
       $either = $this->either->orLeft($data);
@@ -104,21 +104,21 @@ class Result {
    }
 
    /**
-    * Returns a `Result::okay($value)` iff the the Result orginally was `Result::error($errorValue)`
+    * Returns a `SimpleResult::okay($value)` iff the the SimpleResult orginally was `SimpleResult::error($errorValue)`
     *
-    * The `$alternativeFactory` is called lazily - iff the Result orginally was `Result::error($errorValue)`
+    * The `$alternativeFactory` is called lazily - iff the SimpleResult orginally was `SimpleResult::error($errorValue)`
     *
     * _Notes:_
     *
     *  - `$alternativeFactory` must follow this interface `callable(Throwable):TOkay`
-    *  - Returns `Result<TOkay, Throwable>`
+    *  - Returns `SimpleResult<TOkay, Throwable>`
     *
     * @psalm-mutation-free
     * @psalm-pure
     * @psalm-param callable(Throwable):TOkay $alternativeFactory
-    * @psalm-return Result<TOkay, Throwable>
+    * @psalm-return SimpleResult<TOkay, Throwable>
     **/
-   public function orCreateResultWithData(callable $alternativeFactory): self {
+   public function orCreateSimpleResultWithData(callable $alternativeFactory): self {
       try {
          $either = $this->either->orCreateLeft($alternativeFactory);
          return new self($either);
@@ -129,45 +129,45 @@ class Result {
    }
 
    /**
-    * iff `Result::error($errorValue)` return `$alternativeResult`, otherwise return the original `$result`
+    * iff `SimpleResult::error($errorValue)` return `$alternativeSimpleResult`, otherwise return the original `$SimpleResult`
     *
     * _Notes:_
     *
-    *  - `$alternativeResult` must be of type `Result<TOkay, Throwable>`
-    *  - Returns `Result<TOkay, Throwable>`
+    *  - `$alternativeSimpleResult` must be of type `SimpleResult<TOkay, Throwable>`
+    *  - Returns `SimpleResult<TOkay, Throwable>`
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @psalm-param Result<TOkay, Throwable> $alternativeResult
-    * @psalm-return Result<TOkay, Throwable>
+    * @psalm-param SimpleResult<TOkay, Throwable> $alternativeSimpleResult
+    * @psalm-return SimpleResult<TOkay, Throwable>
     **/
-   public function  okayOr(self $alternativeResult): self {
-      $either = $this->either->elseLeft($alternativeResult->either);
+   public function  okayOr(self $alternativeSimpleResult): self {
+      $either = $this->either->elseLeft($alternativeSimpleResult->either);
       return new self($either);
    }
 
    /**
-    * iff `Result::error` return the `Result` returned by `$alternativeResultFactory`, otherwise return the orginal `$result`
+    * iff `SimpleResult::error` return the `SimpleResult` returned by `$alternativeSimpleResultFactory`, otherwise return the orginal `$SimpleResult`
     *
-    * `$alternativeResultFactory` is run lazily
+    * `$alternativeSimpleResultFactory` is run lazily
     *
     * _Notes:_
     *
-    *  - `$alternativeResultFactory` must be of type `callable(Throwable):Result<TOkay, Throwable> `
-    *  - Returns `Result<TOkay, Throwable>`
+    *  - `$alternativeSimpleResultFactory` must be of type `callable(Throwable):SimpleResult<TOkay, Throwable> `
+    *  - Returns `SimpleResult<TOkay, Throwable>`
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @psalm-param callable(Throwable):Result<TOkay, Throwable> $alternativeResultFactory
-    * @psalm-return Result<TOkay, Throwable>
+    * @psalm-param callable(Throwable):SimpleResult<TOkay, Throwable> $alternativeSimpleResultFactory
+    * @psalm-return SimpleResult<TOkay, Throwable>
     **/
-   public function createIfError(callable $alternativeResultFactory): self {
+   public function createIfError(callable $alternativeSimpleResultFactory): self {
       /** @psalm-var callable(TOkay):Either<TOkay, Throwable> **/
       $realFactory =
       /** @psalm-param Throwable $errorValue */
-      function (Throwable $errorValue) use ($alternativeResultFactory): Either {
-         $result = $alternativeResultFactory($errorValue);
-         return $result->either;
+      function (Throwable $errorValue) use ($alternativeSimpleResultFactory): Either {
+         $SimpleResult = $alternativeSimpleResultFactory($errorValue);
+         return $SimpleResult->either;
       };
 
       try {
@@ -182,8 +182,8 @@ class Result {
    /**
     * Runs only 1 function:
     *
-    *  - `$dataFunc` iff the Result is `Result::okay`
-    *  - `$errorFunc` iff the Result is `Result::error`
+    *  - `$dataFunc` iff the SimpleResult is `SimpleResult::okay`
+    *  - `$errorFunc` iff the SimpleResult is `SimpleResult::error`
     *
     * _Notes:_
     *
@@ -202,7 +202,7 @@ class Result {
    }
 
    /**
-    * Side effect function: Runs the function iff the Result is `Result::okay`
+    * Side effect function: Runs the function iff the SimpleResult is `SimpleResult::okay`
     *
     * _Notes:_
     *
@@ -217,7 +217,7 @@ class Result {
    }
 
    /**
-    * Side effect function: Runs the function iff the Result is `Result::error`
+    * Side effect function: Runs the function iff the SimpleResult is `SimpleResult::error`
     *
     * _Notes:_
     *
@@ -232,21 +232,21 @@ class Result {
    }
 
    /**
-    * `map`, but if an Throwable occurs, return `Result::error(Throwable)`
+    * `map`, but if an Throwable occurs, return `SimpleResult::error(Throwable)`
     *
-    * The `map` function runs iff the Result is a `Result::okay`
-    * Otherwise the `Result:error($errorValue)` is propagated
+    * The `map` function runs iff the SimpleResult is a `SimpleResult::okay`
+    * Otherwise the `SimpleResult:error($errorValue)` is propagated
     *
     * _Notes:_
     *
     *  - `$mapFunc` must follow this interface `callable(TOkay):UOkay`
-    *  - Returns `Result<UOkay, Throwable>`
+    *  - Returns `SimpleResult<UOkay, Throwable>`
     *
     * @psalm-mutation-free
     * @psalm-pure
     * @template UOkay
     * @psalm-param callable(TOkay):UOkay $mapFunc
-    * @psalm-return Result<UOkay, Throwable>
+    * @psalm-return SimpleResult<UOkay, Throwable>
     **/
    public function map(callable $mapFunc): self {
       $either = $this->either->mapLeftSafely($mapFunc);
@@ -254,20 +254,20 @@ class Result {
    }
 
    /**
-    * Maps the `$value` of a `Result::error($errorValue)`
+    * Maps the `$value` of a `SimpleResult::error($errorValue)`
     *
-    * The `map` function runs iff the Result is a `Result::error`
-    * Otherwise the `Result:okay($data)` is propagated
+    * The `map` function runs iff the SimpleResult is a `SimpleResult::error`
+    * Otherwise the `SimpleResult:okay($data)` is propagated
     *
     * _Notes:_
     *
     *  - `$mapFunc` must follow this interface `callable(Throwable):Throwable`
-    *  - Returns `Result<TOkay, Throwable>`
+    *  - Returns `SimpleResult<TOkay, Throwable>`
     *
     * @psalm-mutation-free
     * @psalm-pure
     * @psalm-param callable(Throwable):Throwable $mapFunc
-    * @psalm-return Result<TOkay, Throwable>
+    * @psalm-return SimpleResult<TOkay, Throwable>
     **/
    public function mapError(callable $mapFunc): self {
       try {
@@ -281,44 +281,44 @@ class Result {
 
    /**
     * A copy of flatMapData
-    * Allows a function to map over the internal value, the function returns an Result
+    * Allows a function to map over the internal value, the function returns an SimpleResult
     *
     * _Notes:_
     *
-    *  - `$alternativeFactory` must follow this interface `callable(TOkay):Result<UOkay, Throwable>`
-    *  - Returns `Result<UOkay, Throwable>`
+    *  - `$alternativeFactory` must follow this interface `callable(TOkay):SimpleResult<UOkay, Throwable>`
+    *  - Returns `SimpleResult<UOkay, Throwable>`
     *
     * @psalm-mutation-free
     * @psalm-pure
     * @template UOkay
-    * @psalm-param callable(TOkay):Result<UOkay, Throwable> $mapFunc
-    * @psalm-return Result<UOkay, Throwable>
+    * @psalm-param callable(TOkay):SimpleResult<UOkay, Throwable> $mapFunc
+    * @psalm-return SimpleResult<UOkay, Throwable>
     **/
    public function andThen(callable $mapFunc): self {
       return $this->flatMap($mapFunc);
    }
 
    /**
-    * Allows a function to map over the internal value, the function returns an Result
+    * Allows a function to map over the internal value, the function returns an SimpleResult
     *
     * _Notes:_
     *
-    *  - `$alternativeFactory` must follow this interface `callable(TOkay):Result<UOkay, Throwable>`
-    *  - Returns `Result<UOkay, Throwable>`
+    *  - `$alternativeFactory` must follow this interface `callable(TOkay):SimpleResult<UOkay, Throwable>`
+    *  - Returns `SimpleResult<UOkay, Throwable>`
     *
     * @psalm-mutation-free
     * @psalm-pure
     * @template UOkay
-    * @psalm-param callable(TOkay):Result<UOkay, Throwable> $mapFunc
-    * @psalm-return Result<UOkay, Throwable>
+    * @psalm-param callable(TOkay):SimpleResult<UOkay, Throwable> $mapFunc
+    * @psalm-return SimpleResult<UOkay, Throwable>
     **/
    public function flatMap(callable $mapFunc): self {
       /** @psalm-var callable(TOkay):Either<UOkay, Throwable> **/
       $realMap =
       /** @psalm-param TOkay $data */
       function ($data) use ($mapFunc): Either {
-         $result = $mapFunc($data);
-         return $result->either;
+         $SimpleResult = $mapFunc($data);
+         return $SimpleResult->either;
       };
 
       try {
@@ -334,7 +334,7 @@ class Result {
     * @psalm-mutation-free
     * @psalm-pure
     * @psalm-param Throwable $errorValue
-    * @psalm-return Result<TOkay, Throwable>
+    * @psalm-return SimpleResult<TOkay, Throwable>
     **/
    public function toError($errorValue): self {
       $either = $this->either->filterLeft(false, $errorValue);
@@ -345,7 +345,7 @@ class Result {
     * @psalm-mutation-free
     * @psalm-pure
     * @psalm-param TOkay $dataValue
-    * @psalm-return Result<TOkay, Throwable>
+    * @psalm-return SimpleResult<TOkay, Throwable>
     **/
    public function toOkay($dataValue): self {
       $either = $this->either->filterRight(false, $dataValue);
@@ -353,19 +353,19 @@ class Result {
    }
 
    /**
-    * Change the `Result::okay($value)` into `Result::error($errorValue)` iff `$filterFunc` returns false,
-    * otherwise propigate the `Result::error()`
+    * Change the `SimpleResult::okay($value)` into `SimpleResult::error($errorValue)` iff `$filterFunc` returns false,
+    * otherwise propigate the `SimpleResult::error()`
     *
     * _Notes:_
     *
     *  - `$filterFunc` must follow this interface `callable(TOkay):bool`
-    *  - Returns `Result<TOkay, Throwable>`
+    *  - Returns `SimpleResult<TOkay, Throwable>`
     *
     * @psalm-mutation-free
     * @psalm-pure
     * @psalm-param callable(TOkay):bool $filterFunc
     * @psalm-param Throwable $errorValue
-    * @psalm-return Result<TOkay, Throwable>
+    * @psalm-return SimpleResult<TOkay, Throwable>
     **/
    public function toErrorIf(callable $filterFunc, Throwable $errorValue): self {
       try {
@@ -378,19 +378,19 @@ class Result {
    }
 
    /**
-    * Change the `Result::error($errorValue)` into `Result::okay($data)` iff `$filterFunc` returns false,
-    * otherwise propigate the `Result::okay()`
+    * Change the `SimpleResult::error($errorValue)` into `SimpleResult::okay($data)` iff `$filterFunc` returns false,
+    * otherwise propigate the `SimpleResult::okay()`
     *
     * _Notes:_
     *
     *  - `$filterFunc` must follow this interface `callable(Throwable):bool`
-    *  - Returns `Result<TOkay, Throwable>`
+    *  - Returns `SimpleResult<TOkay, Throwable>`
     *
     * @psalm-mutation-free
     * @psalm-pure
     * @psalm-param callable(Throwable):bool $filterFunc
     * @psalm-param TOkay $data
-    * @psalm-return Result<TOkay, Throwable>
+    * @psalm-return SimpleResult<TOkay, Throwable>
     **/
    public function toOkayIf(callable $filterFunc, $data): self {
       try {
@@ -403,16 +403,16 @@ class Result {
    }
 
    /**
-    * Turn an `Result::okay(null)` into an `Result::error($errorValue)` iff `is_null($value)`
+    * Turn an `SimpleResult::okay(null)` into an `SimpleResult::error($errorValue)` iff `is_null($value)`
     *
     * _Notes:_
     *
-    *  - Returns `Result<TOkay, Throwable>`
+    *  - Returns `SimpleResult<TOkay, Throwable>`
     *
     * @psalm-mutation-free
     * @psalm-pure
     * @psalm-param string $errorValue
-    * @psalm-return Result<TOkay, Throwable>
+    * @psalm-return SimpleResult<TOkay, Throwable>
     **/
    public function notNull(string $errorValue): self {
       $ex = new Exception($errorValue);
@@ -421,16 +421,16 @@ class Result {
    }
 
    /**
-    * Turn an `Result::okay($value)` into an `Result::error($errorValue)` iff `!$value == true`
+    * Turn an `SimpleResult::okay($value)` into an `SimpleResult::error($errorValue)` iff `!$value == true`
     *
     * _Notes:_
     *
-    *  - Returns `Result<TOkay, Throwable>`
+    *  - Returns `SimpleResult<TOkay, Throwable>`
     *
     * @psalm-mutation-free
     * @psalm-pure
     * @psalm-param string $errorValue
-    * @psalm-return Result<TOkay, Throwable>
+    * @psalm-return SimpleResult<TOkay, Throwable>
     **/
    public function notFalsy(string $errorValue): self {
       $ex = new Exception($errorValue);
@@ -439,7 +439,7 @@ class Result {
    }
 
    /**
-    * Returns true if the Result's data == `$value`, otherwise false.
+    * Returns true if the SimpleResult's data == `$value`, otherwise false.
     *
     * @psalm-mutation-free
     * @psalm-pure
@@ -450,7 +450,7 @@ class Result {
    }
 
    /**
-    * Returns true if the Result's error == `$value`, otherwise false.
+    * Returns true if the SimpleResult's error == `$value`, otherwise false.
     *
     * @psalm-mutation-free
     * @psalm-pure
@@ -476,20 +476,20 @@ class Result {
    }
 
    /**
-    * Take a value, turn it a `Result::okay($data)` iff the `$filterFunc` returns true
-    * otherwise an `Result::error($errorValue)`
+    * Take a value, turn it a `SimpleResult::okay($data)` iff the `$filterFunc` returns true
+    * otherwise an `SimpleResult::error($errorValue)`
     *
     * _Notes:_
     *
     *  - `$filterFunc` must follow this interface `callable(TOkay): bool`
-    *  - Returns `Result<TOkay, Throwable>`
+    *  - Returns `SimpleResult<TOkay, Throwable>`
     *
     * @psalm-mutation-free
     * @psalm-pure
     * @psalm-param TOkay $data
     * @psalm-param string $reason
     * @psalm-param callable(TOkay): bool $filterFunc
-    * @psalm-return Result<TOkay, Throwable>
+    * @psalm-return SimpleResult<TOkay, Throwable>
     **/
    public static function okayWhen($data, string $reason, callable $filterFunc): self {
       try {
@@ -503,20 +503,20 @@ class Result {
    }
 
    /**
-    * Take a value, turn it a `Result::error($errorValue)` iff the `$filterFunc` returns true
-    * otherwise an `Result::okay($data)`
+    * Take a value, turn it a `SimpleResult::error($errorValue)` iff the `$filterFunc` returns true
+    * otherwise an `SimpleResult::okay($data)`
     *
     * _Notes:_
     *
     *  - `$filterFunc` must follow this interface `callable(TOkay): bool`
-    *  - Returns `Result<TOkay, Throwable>`
+    *  - Returns `SimpleResult<TOkay, Throwable>`
     *
     * @psalm-mutation-free
     * @psalm-pure
     * @psalm-param TOkay $data
     * @psalm-param string $reason
     * @psalm-param callable(TOkay): bool $filterFunc
-    * @psalm-return Result<TOkay, Throwable>
+    * @psalm-return SimpleResult<TOkay, Throwable>
     **/
    public static function errorWhen($data, string $reason, callable $filterFunc): self {
       try {
@@ -530,17 +530,17 @@ class Result {
    }
 
    /**
-    * Take a value, turn it a `Result::okay($data)` iff `!is_null($data)`, otherwise returns `Result::error($errorValue)`
+    * Take a value, turn it a `SimpleResult::okay($data)` iff `!is_null($data)`, otherwise returns `SimpleResult::error($errorValue)`
     *
     * _Notes:_
     *
-    * - Returns `Result<TOkay, Throwable>`
+    * - Returns `SimpleResult<TOkay, Throwable>`
     *
     * @psalm-mutation-free
     * @psalm-pure
     * @psalm-param TOkay $data
     * @psalm-param string $reason
-    * @psalm-return Result<TOkay, Throwable>
+    * @psalm-return SimpleResult<TOkay, Throwable>
     **/
    public static function okayNotNull($data, string $reason): self {
       $ex = new Exception($reason);
@@ -549,23 +549,23 @@ class Result {
    }
 
    /**
-    * Creates a Result if the `$key` exists in `$array`
+    * Creates a SimpleResult if the `$key` exists in `$array`
     *
     * _Notes:_
     *
-    * - Returns `Result<TOkay, Throwable>`
+    * - Returns `SimpleResult<TOkay, Throwable>`
     *
     * @psalm-mutation-free
     * @psalm-pure
     * @psalm-param array<array-key, mixed> $array
     * @psalm-param array-key $key The key of the array
     * @psalm-param string $reason
-    *  @psalm-return Result<TOkay, Throwable>
+    *  @psalm-return SimpleResult<TOkay, Throwable>
     **/
    public static function fromArray(array $array, $key, string $reason = null): self {
       $ex = $reason
          ? new Exception($reason)
-         : new \Exception("Result could not grab $key from array. No reason given.");
+         : new \Exception("SimpleResult could not grab $key from array. No reason given.");
 
       $either = Either::fromArray($array, $key, $ex);
       return new self($either);
@@ -587,7 +587,7 @@ class Result {
       $lv = $either->leftOr(null);
 
       /** @psalm-var TError **/
-      $rv = $either->rightOr(new Exception("Result::error was not a Result::error?"));
+      $rv = $either->rightOr(new Exception("SimpleResult::error was not a SimpleResult::error?"));
 
       if ($either->isLeft()) {
          if ($lv === null) {
