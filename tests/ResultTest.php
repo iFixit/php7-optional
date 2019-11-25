@@ -1,20 +1,20 @@
 <?php
 declare(strict_types = 1);
 
-require_once dirname(__FILE__) . '/../src/UnsafeResult.php';
+require_once dirname(__FILE__) . '/../src/Result.php';
 
-use Optional\UnsafeResult;
+use Optional\Result;
 
-class UnsafeResultTest extends PHPUnit\Framework\TestCase {
+class ResultTest extends PHPUnit\Framework\TestCase {
    public function testCreateAndCheckExistence() {
       $errorValue = "goodbye";
-      $errorResult = UnsafeResult::error($errorValue);
+      $errorResult = Result::error($errorValue);
 
       $this->assertFalse($errorResult->isOkay());
 
-      $okayThing = UnsafeResult::okay(1);
-      $okayNullable = UnsafeResult::okay(null);
-      $okayClass = UnsafeResult::okay(new SomeObject());
+      $okayThing = Result::okay(1);
+      $okayNullable = Result::okay(null);
+      $okayClass = Result::okay(new SomeObject());
 
       $this->assertTrue($okayThing->isOkay());
       $this->assertTrue($okayNullable->isOkay());
@@ -24,21 +24,21 @@ class UnsafeResultTest extends PHPUnit\Framework\TestCase {
       $this->assertFalse($okayNullable->isError());
       $this->assertFalse($okayClass->isError());
 
-      $noname = UnsafeResult::fromArray(['name' => 'value'], 'noname', 'oh no');
+      $noname = Result::fromArray(['name' => 'value'], 'noname', 'oh no');
       $this->assertTrue($noname->isError());
       $this->assertFalse($noname->isOkay());
 
-      $name = UnsafeResult::fromArray(['name' => 'value'], 'name', 'oh no');
+      $name = Result::fromArray(['name' => 'value'], 'name', 'oh no');
       $this->assertTrue($name->isOkay());
       $this->assertFalse($name->isError());
 
-      $nonameResult = UnsafeResult::fromArray(['name' => 'value'], 'noname');
-      $nonameNull = UnsafeResult::fromArray(['name' => 'value'], 'noname');
+      $nonameResult = Result::fromArray(['name' => 'value'], 'noname');
+      $nonameNull = Result::fromArray(['name' => 'value'], 'noname');
       $this->assertFalse($nonameResult->isOkay());
       $this->assertFalse($nonameNull->isOkay());
 
-      $error = UnsafeResult::okayNotNull(null, $errorValue);
-      $okay = UnsafeResult::okayNotNull('', $errorValue);
+      $error = Result::okayNotNull(null, $errorValue);
+      $okay = Result::okayNotNull('', $errorValue);
 
       $this->assertFalse($error->isOkay());
       $this->assertTrue($okay->isOkay());
@@ -47,32 +47,32 @@ class UnsafeResultTest extends PHPUnit\Framework\TestCase {
    public function testCreateAndCheckExistenceWhen() {
       $errorValue = "goodbye";
 
-      $okayThing = UnsafeResult::okayWhen(1, $errorValue, function($x) { return $x > 0; });
-      $okayThing2 = UnsafeResult::okayWhen(-1, $errorValue, function($x) { return $x > 0; });
+      $okayThing = Result::okayWhen(1, $errorValue, function($x) { return $x > 0; });
+      $okayThing2 = Result::okayWhen(-1, $errorValue, function($x) { return $x > 0; });
 
       $this->assertSame($okayThing->dataOr(-5), 1);
       $this->assertSame($okayThing2->dataOr(-5), -5);
 
-      $okayThing3 = UnsafeResult::errorWhen(1, $errorValue, function($x) { return $x > 0; });
-      $okayThing4 = UnsafeResult::errorWhen(-1, $errorValue, function($x) { return $x > 0; });
+      $okayThing3 = Result::errorWhen(1, $errorValue, function($x) { return $x > 0; });
+      $okayThing4 = Result::errorWhen(-1, $errorValue, function($x) { return $x > 0; });
 
       $this->assertSame($okayThing3->dataOr(-5), -5);
       $this->assertSame($okayThing4->dataOr(-5), -1);
 
-      $errorThing = UnsafeResult::errorWhen(1, 100, function($x) { return $x > 0; });
-      $errorThing2 = UnsafeResult::errorWhen(-1, 100, function($x) { return $x > 0; });
+      $errorThing = Result::errorWhen(1, 100, function($x) { return $x > 0; });
+      $errorThing2 = Result::errorWhen(-1, 100, function($x) { return $x > 0; });
    }
 
    public function testGettingValue() {
       $errorValue = "goodbye";
-      $errorResult = UnsafeResult::error($errorValue);
+      $errorResult = Result::error($errorValue);
 
       $this->assertSame($errorResult->dataOr(-1), -1);
 
       $someObject = new SomeObject();
 
-      $okayThing = UnsafeResult::okay(1);
-      $okayClass = UnsafeResult::okay($someObject);
+      $okayThing = Result::okay(1);
+      $okayClass = Result::okay($someObject);
 
       $this->assertSame($okayThing->dataOr(-1), 1);
       $this->assertSame($okayClass->dataOr(-1), $someObject);
@@ -80,14 +80,14 @@ class UnsafeResultTest extends PHPUnit\Framework\TestCase {
 
    public function testGettingValueLazily() {
       $errorValue = "goodbye";
-      $errorResult = UnsafeResult::error($errorValue);
+      $errorResult = Result::error($errorValue);
 
       $this->assertSame($errorResult->dataOrReturn(function($x) { return $x; }), $errorValue);
 
       $someObject = new SomeObject();
 
-      $okayThing = UnsafeResult::okay(1);
-      $okayClass = UnsafeResult::okay($someObject);
+      $okayThing = Result::okay(1);
+      $okayClass = Result::okay($someObject);
 
       $this->assertSame($okayThing->dataOrReturn(function($x) { return $x; }), 1);
       $this->assertSame($okayClass->dataOrReturn(function($x) { return $x; }), $someObject);
@@ -106,7 +106,7 @@ class UnsafeResultTest extends PHPUnit\Framework\TestCase {
    public function testGettingAlternitiveValue() {
       $errorValue = "goodbye";
       $someObject = new SomeObject();
-      $errorResult = UnsafeResult::error($errorValue);
+      $errorResult = Result::error($errorValue);
 
       $this->assertFalse($errorResult->isOkay());
 
@@ -131,15 +131,15 @@ class UnsafeResultTest extends PHPUnit\Framework\TestCase {
    public function testGettingAlternitiveResult() {
       $errorValue = "goodbye";
       $someObject = new SomeObject();
-      $errorResult = UnsafeResult::error($errorValue);
+      $errorResult = Result::error($errorValue);
 
       $this->assertFalse($errorResult->isOkay());
 
-      $errorResult2 = $errorResult->okayOr(UnsafeResult::error($errorValue));
+      $errorResult2 = $errorResult->okayOr(Result::error($errorValue));
       $this->assertFalse($errorResult2->isOkay());
 
-      $okayThing = $errorResult->okayOr(UnsafeResult::okay(1));
-      $okayClass = $errorResult->okayOr(UnsafeResult::okay($someObject));
+      $okayThing = $errorResult->okayOr(Result::okay(1));
+      $okayClass = $errorResult->okayOr(Result::okay($someObject));
 
       $this->assertTrue($okayThing->isOkay());
       $this->assertTrue($okayClass->isOkay());
@@ -151,21 +151,21 @@ class UnsafeResultTest extends PHPUnit\Framework\TestCase {
    public function testGettingAlternitiveResultLazy() {
       $errorValue = "goodbye";
       $someObject = new SomeObject();
-      $errorResult = UnsafeResult::error($errorValue);
+      $errorResult = Result::error($errorValue);
 
       $this->assertFalse($errorResult->isOkay());
 
       $errorResult2 = $errorResult->createIfError(function($x) {
-         return UnsafeResult::error($x);
+         return Result::error($x);
       });
       $this->assertFalse($errorResult2->isOkay());
 
       $okayThing = $errorResult->createIfError(function($x) {
-         return UnsafeResult::okay(1);
+         return Result::okay(1);
       });
 
       $okayClass = $errorResult->createIfError(function($x) use ($someObject) {
-         return UnsafeResult::okay($someObject);
+         return Result::okay($someObject);
       });
 
       $this->assertTrue($okayThing->isOkay());
@@ -176,18 +176,18 @@ class UnsafeResultTest extends PHPUnit\Framework\TestCase {
 
       $okayThing->createIfError(function($x) {
          $this->fail('Callback should not have been run!');
-         return UnsafeResult::error($x);
+         return Result::error($x);
       });
       $okayClass->createIfError(function($x) {
          $this->fail('Callback should not have been run!');
-         return UnsafeResult::error($x);
+         return Result::error($x);
       });
    }
 
    public function testMatching() {
       $errorValue = "goodbye";
-      $error = UnsafeResult::error($errorValue);
-      $okay = UnsafeResult::okay(1);
+      $error = Result::error($errorValue);
+      $okay = Result::okay(1);
 
       $failure = $error->run(
             function($x) { return 2; },
@@ -231,9 +231,9 @@ class UnsafeResultTest extends PHPUnit\Framework\TestCase {
 
    public function testMapping() {
       $errorValue = "goodbye";
-      $error = UnsafeResult::error($errorValue);
-      $okay = UnsafeResult::okay("a");
-      $okayNull = UnsafeResult::okay(null);
+      $error = Result::error($errorValue);
+      $okay = Result::okay("a");
+      $okayNull = Result::okay(null);
 
       $errorUpper = $error->map(function($x) { return strtoupper($x); });
       $okayUpper = $okay->map(function($x) { return strtoupper($x); });
@@ -243,13 +243,13 @@ class UnsafeResultTest extends PHPUnit\Framework\TestCase {
       $this->assertSame($errorUpper->dataOr("b"), "b");
       $this->assertSame($okayUpper->dataOr("b"), "A");
 
-      $error = UnsafeResult::error("a");
-      $okay = UnsafeResult::okay("a");
-      $okayNull = UnsafeResult::okay(null);
+      $error = Result::error("a");
+      $okay = Result::okay("a");
+      $okayNull = Result::okay(null);
 
-      $errorNotNull = $error->flatMap(function($x) use ($errorValue) { return UnsafeResult::okay($x)->notNull($errorValue); });
-      $notNull = $okay->flatMap(function($x) use ($errorValue) { return UnsafeResult::okay($x)->notNull($errorValue); });
-      $okayNullNotNull = $okayNull->flatMap(function($x) use ($errorValue) { return UnsafeResult::okay($x)->notNull($errorValue); });
+      $errorNotNull = $error->flatMap(function($x) use ($errorValue) { return Result::okay($x)->notNull($errorValue); });
+      $notNull = $okay->flatMap(function($x) use ($errorValue) { return Result::okay($x)->notNull($errorValue); });
+      $okayNullNotNull = $okayNull->flatMap(function($x) use ($errorValue) { return Result::okay($x)->notNull($errorValue); });
 
       $this->assertFalse($errorNotNull->isOkay());
       $this->assertTrue($notNull->isOkay());
@@ -266,8 +266,8 @@ class UnsafeResultTest extends PHPUnit\Framework\TestCase {
 
    public function testFiltering() {
       $errorValue = "goodbye";
-      $error = UnsafeResult::error($errorValue);
-      $okay = UnsafeResult::okay("a");
+      $error = Result::error($errorValue);
+      $okay = Result::okay("a");
 
       $okayTrue = $error->toOkay("a");
       $this->assertTrue($okayTrue->isOkay());
@@ -297,12 +297,12 @@ class UnsafeResultTest extends PHPUnit\Framework\TestCase {
       $this->assertFalse($errorA->isOkay());
       $this->assertTrue($okayA->isOkay());
 
-      $okayNull = UnsafeResult::okay(null);
+      $okayNull = Result::okay(null);
       $this->assertTrue($okayNull->isOkay());
       $errorNull = $okayNull->notNull($errorValue);
       $this->assertFalse($errorNull->isOkay());
 
-      $okayEmpty = UnsafeResult::okay("");
+      $okayEmpty = Result::okay("");
       $this->assertTrue($okayEmpty->isOkay());
       $errorEmpty = $okayEmpty->notFalsy($errorValue);
       $this->assertFalse($errorEmpty->isOkay());
@@ -310,9 +310,9 @@ class UnsafeResultTest extends PHPUnit\Framework\TestCase {
 
    public function testContains() {
       $errorValue = "goodbye";
-      $error = UnsafeResult::error($errorValue);
-      $okayString = UnsafeResult::okay("a");
-      $okayInt = UnsafeResult::okay(1);
+      $error = Result::error($errorValue);
+      $okayString = Result::okay("a");
+      $okayInt = Result::okay(1);
 
       $this->assertTrue($okayString->contains("a"));
       $this->assertFalse($okayString->contains("A"));
@@ -329,8 +329,8 @@ class UnsafeResultTest extends PHPUnit\Framework\TestCase {
       $this->assertFalse($error->contains("A"));
       $this->assertFalse($error->contains(null));
 
-      $errorString = UnsafeResult::error("a");
-      $errorInt = UnsafeResult::error(1);
+      $errorString = Result::error("a");
+      $errorInt = Result::error(1);
 
       $this->assertTrue($errorString->errorContains("a"));
       $this->assertFalse($errorString->errorContains("A"));
@@ -345,8 +345,8 @@ class UnsafeResultTest extends PHPUnit\Framework\TestCase {
 
    public function testExists() {
       $errorValue = "goodbye";
-      $error = UnsafeResult::error($errorValue);
-      $okay = UnsafeResult::okay(10);
+      $error = Result::error($errorValue);
+      $okay = Result::okay(10);
 
       $errorFalse = $error->exists(function($x) { return $x == 10; });
       $okayTrue = $okay->exists(function($x) { return $x >= 10; });
@@ -365,7 +365,7 @@ class UnsafeResultTest extends PHPUnit\Framework\TestCase {
          ]
       ];
 
-      $person = UnsafeResult::fromArray($okayPerson, 'name', 'name was missing');
+      $person = Result::fromArray($okayPerson, 'name', 'name was missing');
 
       $name = $person->andThen(function($person) {
          $fullName = $person['first'] . $person['last'];
@@ -373,10 +373,10 @@ class UnsafeResultTest extends PHPUnit\Framework\TestCase {
          try {
             $thing = SomeComplexThing::doWork($fullName);
          } catch (ErrorException $e) {
-            return UnsafeResult::error('SomeComplexThing had an error!');
+            return Result::error('SomeComplexThing had an error!');
          }
 
-         return UnsafeResult::okay($thing);
+         return Result::okay($thing);
       });
 
       $this->assertSame($name->dataOr(''), 'FirstLast');
@@ -390,7 +390,7 @@ class UnsafeResultTest extends PHPUnit\Framework\TestCase {
          ]
       ];
 
-      $person = UnsafeResult::fromArray($okayPerson, 'name', 'name was missing');
+      $person = Result::fromArray($okayPerson, 'name', 'name was missing');
 
       $name = $person->andThen(function($person) {
          $fullName = $person['first'] . $person['last'];
@@ -398,10 +398,10 @@ class UnsafeResultTest extends PHPUnit\Framework\TestCase {
          try {
             $thing = SomeComplexThing::doWork($fullName, "Forcing exception");
          } catch (\Exception $e) {
-            return UnsafeResult::error('SomeComplexThing had an error!');
+            return Result::error('SomeComplexThing had an error!');
          }
 
-         return UnsafeResult::okay($thing);
+         return Result::okay($thing);
       });
 
       $this->assertFalse($name->isOkay());
@@ -416,7 +416,7 @@ class UnsafeResultTest extends PHPUnit\Framework\TestCase {
          ]
       ];
 
-      $person = UnsafeResult::fromArray($okayPerson, 'name', 'name was missing');
+      $person = Result::fromArray($okayPerson, 'name', 'name was missing');
 
       $name = $person->mapSafely(function($person): string {
          $fullName = $person['first'] . $person['last'];
@@ -437,10 +437,10 @@ class UnsafeResultTest extends PHPUnit\Framework\TestCase {
    }
 
    public function testToString() {
-      $this->assertEquals("Okay(null)", (string)UnsafeResult::okay(null));
-      $this->assertEquals("Okay(10)", (string)UnsafeResult::okay(10));
+      $this->assertEquals("Okay(null)", (string)Result::okay(null));
+      $this->assertEquals("Okay(10)", (string)Result::okay(10));
 
-      $this->assertEquals("Error(10)", (string)UnsafeResult::error(10));
-      $this->assertEquals("Error(null)", (string)UnsafeResult::error(null));
+      $this->assertEquals("Error(10)", (string)Result::error(10));
+      $this->assertEquals("Error(null)", (string)Result::error(null));
    }
 }
