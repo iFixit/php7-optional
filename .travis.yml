@@ -12,7 +12,7 @@ jobs:
     - stage: Test and Type-check
       script:
       - phpunit tests/
-      - ./vendor/bin/psalm
+      - ./vendor/bin/psalm --shepherd
       after_success:
       - bash <(curl -s https://codecov.io/bash)
     - stage: Generate/Deploy Docs
