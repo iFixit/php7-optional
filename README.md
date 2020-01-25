@@ -5,6 +5,8 @@
 [![Downloads](https://img.shields.io/packagist/dm/ifixit/php7-optional.svg)](https://packagist.org/packages/ifixit/php7-optional)
 [![codecov](https://codecov.io/gh/iFixit/php7-optional/branch/master/graph/badge.svg)](https://codecov.io/gh/iFixit/php7-optional)
 [![psalm](https://shepherd.dev/github/ifixit/php7-optional/coverage.svg)](https://shepherd.dev/github/ifixit/php7-optional)
+[![Pull Requests](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?longCache=true)](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?longCache=true)
+
 
 ## Installation
 
