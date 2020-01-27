@@ -31,8 +31,9 @@ class SimpleResult {
    /**
     * @psalm-mutation-free
     * @psalm-pure
-    * @psalm-param TOkay $data
-    * @psalm-return SimpleResult<TOkay, Throwable>
+    * @template TTOkay
+    * @psalm-param TTOkay $data
+    * @psalm-return SimpleResult<TTOkay, Throwable>
     **/
    public static function okay($data): self {
       $either = Either::left($data);
@@ -42,8 +43,9 @@ class SimpleResult {
    /**
     * @psalm-mutation-free
     * @psalm-pure
+    * @template TTOkay
     * @psalm-param Throwable $errorData
-    * @psalm-return SimpleResult<TOkay, Throwable>
+    * @psalm-return SimpleResult<TTOkay, Throwable>
     **/
    public static function error(Throwable $errorData): self {
       $either = Either::right($errorData);
@@ -481,15 +483,16 @@ class SimpleResult {
     *
     * _Notes:_
     *
-    *  - `$filterFunc` must follow this interface `callable(TOkay): bool`
-    *  - Returns `SimpleResult<TOkay, Throwable>`
+    *  - `$filterFunc` must follow this interface `callable(TTOkay): bool`
+    *  - Returns `SimpleResult<TTOkay, Throwable>`
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @psalm-param TOkay $data
+    * @template TTOkay
+    * @psalm-param TTOkay $data
     * @psalm-param string $reason
-    * @psalm-param callable(TOkay): bool $filterFunc
-    * @psalm-return SimpleResult<TOkay, Throwable>
+    * @psalm-param callable(TTOkay): bool $filterFunc
+    * @psalm-return SimpleResult<TTOkay, Throwable>
     **/
    public static function okayWhen($data, string $reason, callable $filterFunc): self {
       try {
@@ -508,15 +511,16 @@ class SimpleResult {
     *
     * _Notes:_
     *
-    *  - `$filterFunc` must follow this interface `callable(TOkay): bool`
-    *  - Returns `SimpleResult<TOkay, Throwable>`
+    *  - `$filterFunc` must follow this interface `callable(TTOkay): bool`
+    *  - Returns `SimpleResult<TTOkay, Throwable>`
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @psalm-param TOkay $data
+    * @template TTOkay
+    * @psalm-param TTOkay $data
     * @psalm-param string $reason
-    * @psalm-param callable(TOkay): bool $filterFunc
-    * @psalm-return SimpleResult<TOkay, Throwable>
+    * @psalm-param callable(TTOkay): bool $filterFunc
+    * @psalm-return SimpleResult<TTOkay, Throwable>
     **/
    public static function errorWhen($data, string $reason, callable $filterFunc): self {
       try {
@@ -534,13 +538,14 @@ class SimpleResult {
     *
     * _Notes:_
     *
-    * - Returns `SimpleResult<TOkay, Throwable>`
+    * - Returns `SimpleResult<TTOkay, Throwable>`
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @psalm-param TOkay $data
+    * @template TTOkay
+    * @psalm-param TTOkay $data
     * @psalm-param string $reason
-    * @psalm-return SimpleResult<TOkay, Throwable>
+    * @psalm-return SimpleResult<TTOkay, Throwable>
     **/
    public static function okayNotNull($data, string $reason): self {
       $ex = new Exception($reason);
@@ -553,14 +558,15 @@ class SimpleResult {
     *
     * _Notes:_
     *
-    * - Returns `SimpleResult<TOkay, Throwable>`
+    * - Returns `SimpleResult<TTOkay, Throwable>`
     *
     * @psalm-mutation-free
     * @psalm-pure
+    * @template TTOkay
     * @psalm-param array<array-key, mixed> $array
     * @psalm-param array-key $key The key of the array
     * @psalm-param string $reason
-    *  @psalm-return SimpleResult<TOkay, Throwable>
+    * @psalm-return SimpleResult<TTOkay, Throwable>
     **/
    public static function fromArray(array $array, $key, string $reason = null): self {
       $ex = $reason
