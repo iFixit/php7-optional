@@ -106,10 +106,13 @@ class Option {
     *  - Returns `Option<T>`
     *
     * @psalm-mutation-free
+    *
     * @psalm-pure
+    *
     * @psalm-param T $alternative
-    * @psalm-return Option<T>
-    **/
+    *
+    * @psalm-return self<T>
+    */
    public function or($alternative): self {
       return $this->hasValue
          ? $this
@@ -132,10 +135,13 @@ class Option {
     *  - Returns `Option<T>`
     *
     * @psalm-mutation-free
+    *
     * @psalm-pure
+    *
     * @psalm-param callable():T $alternativeFactory
-    * @psalm-return Option<T>
-    **/
+    *
+    * @psalm-return self<T>
+    */
    public function orCreate(callable $alternativeFactory): self {
       return $this->hasValue
          ? $this
@@ -346,11 +352,15 @@ class Option {
     *  - Returns `Option<U>`
     *
     * @psalm-mutation-free
+    *
     * @psalm-pure
+    *
     * @template U
+    *
     * @psalm-param $mapFunc callable(T):U
-    * @psalm-return Option<U>
-    **/
+    *
+    * @psalm-return self<T>
+    */
    public function mapSafely(callable $mapFunc): self {
       try {
          return $this->map($mapFunc);
@@ -461,10 +471,13 @@ class Option {
     *  - Returns `Option<T>`
     *
     * @psalm-mutation-free
+    *
     * @psalm-pure
+    *
     * @psalm-param callable(T|null):bool $filterFunc
-    * @psalm-return Option<T>
-    **/
+    *
+    * @psalm-return self<T>
+    */
    public function filterIf(callable $filterFunc): self {
       return $this->hasValue && !$filterFunc($this->value)
          ? self::none()
@@ -480,28 +493,32 @@ class Option {
     * ```
     *
     * @psalm-mutation-free
+    *
     * @psalm-pure
-    * @psalm-return Option<T>
-    **/
-   public function notNull(): self {
+    *
+    * @psalm-return self<T>
+    */
+   public function notNull(): self{
       return $this->hasValue && is_null($this->value)
          ? self::none()
          : $this;
    }
 
    /**
-    * Turn a `Option::some(null)` into an `Option::none()` iff `!$value == true`
-    *
-    * ```php
-    * $someThing = Option::some(null); // Valid
-    * $none = $someThing->notFalsy(); // Turn null into an none Option
-    * $none =  Option::some("")->notFalsy(); // Turn empty string into an none Option
-    * ```
-    *
-    * @psalm-mutation-free
-    * @psalm-pure
-    * @psalm-return Option<T>
-    **/
+     * Turn a `Option::some(null)` into an `Option::none()` iff `!$value == true`
+     *
+     * ```php
+     * $someThing = Option::some(null); // Valid
+     * $none = $someThing->notFalsy(); // Turn null into an none Option
+     * $none =  Option::some("")->notFalsy(); // Turn empty string into an none Option
+     * ```
+     *
+     * @psalm-mutation-free
+     *
+     * @psalm-pure
+     *
+     * @psalm-return self<T>
+     */
     public function notFalsy(): self {
       return $this->hasValue && !$this->value
          ? self::none()
