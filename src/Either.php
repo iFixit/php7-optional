@@ -520,7 +520,7 @@ class Either {
     * @psalm-pure
     * @template ULeft
     * @psalm-param callable(TLeft):ULeft $mapFunc
-    * @psalm-return Either<ULeft, TRight>
+    * @psalm-return Either<ULeft, TRight>|Either<mixed, \Exception>
     **/
    public function mapLeftSafely(callable $mapFunc): self {
       try {
@@ -773,7 +773,7 @@ class Either {
     * $false = $left->leftContains("Thing");
     * ```
     *
-    ** @psalm-mutation-free
+    * @psalm-mutation-free
     * @psalm-pure
     * @psalm-param mixed $value
     **/
@@ -899,12 +899,13 @@ class Either {
     *
     * _Notes:_
     *
-    *  - Returns `Either<TLeft, mixed>`
+    *  - Returns `Either<TTLeft, mixed>`
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @psalm-param TLeft $leftValue
-    * @psalm-return Either<TLeft, mixed>
+    * @template TTLeft
+    * @psalm-param TTLeft $leftValue
+    * @psalm-return Either<TTLeft, mixed>
     **/
    public static function left($leftValue): self {
       return new self($leftValue, null, true);
@@ -919,15 +920,17 @@ class Either {
     *
     * _Notes:_
     *
-    *  - Returns `Either<mixed, TRight>`
+    *  - Returns `Either<TTLeft, TTRight>`
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @psalm-param TRight $rightValue
-    * @psalm-return Either<TLeft, TRight>
+    * @template TTLeft
+    * @template TTRight
+    * @psalm-param TTRight $rightValue
+    * @psalm-return Either<TTLeft, TTRight>
     **/
    public static function right($rightValue): self {
-      /** @psalm-var Either<TLeft, TRight> */
+      /** @psalm-var Either<TTLeft, TTRight> */
       return new self(null, $rightValue, false);
    }
 
@@ -943,15 +946,17 @@ class Either {
     *
     * _Notes:_
     *
-    *  - `$filterFunc` must follow this interface `callable():T`
-    *  - Returns `Either<mixed, TRight>`
+    *  - `$filterFunc` must follow this interface `callable(TTLeft): bool`
+    *  - Returns `Either<mixed, TTRight>`
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @psalm-param TLeft $leftValue
-    * @psalm-param TRight $rightValue
-    * @psalm-param callable(TLeft): bool $filterFunc
-    * @psalm-return Either<TLeft, TRight>
+    * @template TTLeft
+    * @template TTRight
+    * @psalm-param TTLeft $leftValue
+    * @psalm-param TTRight $rightValue
+    * @psalm-param callable(TTLeft): bool $filterFunc
+    * @psalm-return Either<TTLeft, TTRight>
     **/
    public static function leftWhen($leftValue, $rightValue, callable $filterFunc): self {
       if ($filterFunc($leftValue)) {
@@ -971,15 +976,17 @@ class Either {
     *
     * _Notes:_
     *
-    *  - `$filterFunc` must follow this interface `callable():T`
-    *  - Returns `Either<mixed, TRight>`
+    *  - `$filterFunc` must follow this interface `callable(TTLeft): bool`
+    *  - Returns `Either<mixed, TTRight>`
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @psalm-param TLeft $leftValue
-    * @psalm-param TRight $rightValue
-    * @psalm-param callable(TLeft): bool $filterFunc
-    * @psalm-return Either<TLeft, TRight>
+    * @template TTLeft
+    * @template TTRight
+    * @psalm-param TTLeft $leftValue
+    * @psalm-param TTRight $rightValue
+    * @psalm-param callable(TTLeft): bool $filterFunc
+    * @psalm-return Either<TTLeft, TTRight>
     **/
    public static function rightWhen($leftValue, $rightValue, callable $filterFunc): self {
       if ($filterFunc($leftValue)) {
@@ -997,13 +1004,15 @@ class Either {
     * ```
     * _Notes:_
     *
-    * - Returns `Either<TLeft, TRight>`
+    * - Returns `Either<TTLeft, TTRight>`
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @psalm-param TLeft $leftValue
-    * @psalm-param TRight $rightValue
-    * @psalm-return Either<TLeft, TRight>
+    * @template TTLeft
+    * @template TTRight
+    * @psalm-param TTLeft $leftValue
+    * @psalm-param TTRight $rightValue
+    * @psalm-return Either<TTLeft, TTRight>
     **/
     public static function notNullLeft($leftValue, $rightValue): self {
       return self::left($leftValue)->leftNotNull($rightValue);
@@ -1020,14 +1029,16 @@ class Either {
     * ```
     * _Notes:_
     *
-    * - Returns `Either<TLeft, TRight>`
+    * - Returns `Either<TTLeft, TTRight>`
     *
     * @psalm-pure
     * @psalm-mutation-free
+    * @template TTLeft
+    * @template TTRight
     * @psalm-param array<array-key, mixed> $array
     * @psalm-param array-key $key The key of the array
-    * @psalm-param TRight $rightValue
-    *  @psalm-return Either<TLeft, TRight>
+    * @psalm-param TTRight $rightValue
+    * @psalm-return Either<TTLeft, TTRight>|Either<mixed, \Exception>
     **/
     public static function fromArray(array $array, $key, $rightValue = null): self {
       if (isset($array[$key])) {
