@@ -593,13 +593,14 @@ class Option {
     * ```
     * _Notes:_
     *
-    * - Returns `Option<T>`
+    * - Returns `Option<TT>`
     *
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @psalm-param T $someValue
-    * @psalm-return Option<T>
+    * @template TT
+    * @psalm-param TT $someValue
+    * @psalm-return Option<TT>
     **/
    public static function some($someValue): self {
       return new self($someValue, true);
@@ -614,14 +615,15 @@ class Option {
     *
     * _Notes:_
     *
-    * - Returns `Option<T>`
+    * - Returns `Option<TT>`
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @psalm-return Option<T>
+    * @template TT
+    * @psalm-return Option<TT>
     **/
    public static function none(): self {
-      /** @psalm-var Option<T> */
+      /** @psalm-var Option<TT> */
       return new self(null, false);
    }
 
@@ -635,15 +637,20 @@ class Option {
     *
     * _Notes:_
     *
-    *  - `$filterFunc` must follow this interface `callable(T):bool`
-    *  - Returns `Option<T>`
+    *  - `$filterFunc` must follow this interface `callable(TT):bool`
+    *  - Returns `Option<TT>`
     *
     * @psalm-mutation-free
+    *
     * @psalm-pure
-    * @psalm-param T $someValue
-    * @psalm-param callable(T):bool $filterFunc
-    * @psalm-return Option<T>
-    **/
+    *
+    * @template TT
+    *
+    * @psalm-param TT $someValue
+    * @psalm-param callable(TT):bool $filterFunc
+    *
+    * @psalm-return self<TT>
+    */
    public static function someWhen($someValue, callable $filterFunc): self {
       if ($filterFunc($someValue)) {
          return self::some($someValue);
@@ -661,15 +668,20 @@ class Option {
     *
     * _Notes:_
     *
-    *  - `$filterFunc` must follow this interface `callable(T):bool`
-    *  - Returns `Option<T>`
+    *  - `$filterFunc` must follow this interface `callable(TT):bool`
+    *  - Returns `Option<TT>`
     *
     * @psalm-mutation-free
+    *
     * @psalm-pure
-    * @psalm-param T $someValue
-    * @psalm-param callable(T):bool $filterFunc
-    * @psalm-return Option<T>
-    **/
+    *
+    * @template TT
+    *
+    * @psalm-param TT $someValue
+    * @psalm-param callable(TT):bool $filterFunc
+    *
+    * @psalm-return self<TT>
+    */
    public static function noneWhen($someValue, callable $filterFunc): self {
       if ($filterFunc($someValue)) {
          return self::none();
@@ -686,13 +698,18 @@ class Option {
     * ```
     * _Notes:_
     *
-    * - Returns `Option<T>`
+    * - Returns `Option<TT>`
     *
     * @psalm-mutation-free
+    *
     * @psalm-pure
-    * @psalm-param T $someValue
-    * @psalm-return Option<T>
-    **/
+    *
+    * @template TT
+    *
+    * @psalm-param TT $someValue
+    *
+    * @psalm-return self<TT>
+    */
    public static function someNotNull($someValue): self {
       return self::some($someValue)->notNull();
    }
@@ -706,14 +723,19 @@ class Option {
     * ```
     * _Notes:_
     *
-    * - Returns `Option<T>`
+    * - Returns `Option<TT>`
+    *
     * @psalm-pure
+    *
     * @psalm-mutation-free
+    *
+    * @template TT
     *
     * @psalm-param array<array-key, mixed> $array
     * @psalm-param array-key $key The key of the array
-    * @psalm-return Option<T>
-    **/
+    *
+    * @psalm-return self<TT>
+    */
    public static function fromArray(array $array, $key): self {
       if (isset($array[$key])) {
          return self::some($array[$key]);
