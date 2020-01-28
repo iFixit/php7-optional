@@ -28,8 +28,10 @@ class Result {
    /**
     * @psalm-mutation-free
     * @psalm-pure
-    * @psalm-param TOkay $data
-    * @psalm-return Result<TOkay, TError>
+    * @template TTOkay
+    * @template TTError
+    * @psalm-param TTOkay $data
+    * @psalm-return Result<TTOkay, TTError>
     **/
    public static function okay($data): self {
       $either = Either::left($data);
@@ -39,8 +41,10 @@ class Result {
    /**
     * @psalm-mutation-free
     * @psalm-pure
-    * @psalm-param TError $errorData
-    * @psalm-return Result<TOkay, TError>
+    * @template TTOkay
+    * @template TTError
+    * @psalm-param TTError $errorData
+    * @psalm-return Result<TTOkay, TTError>
     **/
    public static function error($errorData): self {
       $either = Either::right($errorData);
@@ -494,15 +498,17 @@ class Result {
     *
     * _Notes:_
     *
-    *  - `$filterFunc` must follow this interface `callable(TOkay): bool`
-    *  - Returns `Result<TOkay, TError>`
+    *  - `$filterFunc` must follow this interface `callable(TTOkay): bool`
+    *  - Returns `Result<TTOkay, TTError>`
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @psalm-param TOkay $data
-    * @psalm-param TError $errorValue
-    * @psalm-param callable(TOkay): bool $filterFunc
-    * @psalm-return Result<TOkay, TError>
+    * @template TTOkay
+    * @template TTError
+    * @psalm-param TTOkay $data
+    * @psalm-param TTError $errorValue
+    * @psalm-param callable(TTOkay): bool $filterFunc
+    * @psalm-return Result<TTOkay, TTError>
     **/
    public static function okayWhen($data, $errorValue, callable $filterFunc): self {
       $either = Either::leftWhen($data, $errorValue, $filterFunc);
@@ -515,15 +521,17 @@ class Result {
     *
     * _Notes:_
     *
-    *  - `$filterFunc` must follow this interface `callable(TOkay): bool`
-    *  - Returns `Result<TOkay, TError>`
+    *  - `$filterFunc` must follow this interface `callable(TTOkay): bool`
+    *  - Returns `Result<TTOkay, TTError>`
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @psalm-param TOkay $data
-    * @psalm-param TError $errorValue
-    * @psalm-param callable(TOkay): bool $filterFunc
-    * @psalm-return Result<TOkay, TError>
+    * @template TTOkay
+    * @template TTError
+    * @psalm-param TTOkay $data
+    * @psalm-param TTError $errorValue
+    * @psalm-param callable(TTOkay): bool $filterFunc
+    * @psalm-return Result<TTOkay, TTError>
     **/
    public static function errorWhen($data, $errorValue, callable $filterFunc): self {
       $either = Either::rightWhen($data, $errorValue, $filterFunc);
@@ -535,13 +543,15 @@ class Result {
     *
     * _Notes:_
     *
-    * - Returns `Result<TOkay, TError>`
+    * - Returns `Result<TTOkay, TTError>`
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @psalm-param TOkay $data
-    * @psalm-param TError $errorValue
-    * @psalm-return Result<TOkay, TError>
+    * @template TTOkay
+    * @template TTError
+    * @psalm-param TTOkay $data
+    * @psalm-param TTError $errorValue
+    * @psalm-return Result<TTOkay, TTError>
     **/
    public static function okayNotNull($data, $errorValue): self {
       $either = Either::notNullLeft($data, $errorValue);
@@ -553,14 +563,16 @@ class Result {
     *
     * _Notes:_
     *
-    * - Returns `Result<TOkay, TError>`
+    * - Returns `Result<TTOkay, TTError>`
     *
     * @psalm-mutation-free
     * @psalm-pure
+    * @template TTOkay
+    * @template TTError
     * @psalm-param array<array-key, mixed> $array
     * @psalm-param array-key $key The key of the array
-    * @psalm-param TError $rightValue
-    *  @psalm-return Result<TOkay, TError>
+    * @psalm-param TTError $rightValue
+    *  @psalm-return Result<TTOkay, TTError>
     **/
    public static function fromArray(array $array, $key, $rightValue = null): self {
       $either = Either::fromArray($array, $key, $rightValue);
