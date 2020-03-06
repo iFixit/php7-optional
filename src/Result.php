@@ -566,7 +566,6 @@ class Result {
     * - Returns `Result<TTOkay, TTError>`
     *
     * @psalm-mutation-free
-    * @psalm-pure
     * @template TTOkay
     * @template TTError
     * @psalm-param array<array-key, mixed> $array
