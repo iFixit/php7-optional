@@ -412,7 +412,6 @@ class SimpleResult {
     *  - Returns `SimpleResult<TOkay, Throwable>`
     *
     * @psalm-mutation-free
-    * @psalm-pure
     * @psalm-param string $errorValue
     * @psalm-return SimpleResult<TOkay, Throwable>
     **/
@@ -430,7 +429,6 @@ class SimpleResult {
     *  - Returns `SimpleResult<TOkay, Throwable>`
     *
     * @psalm-mutation-free
-    * @psalm-pure
     * @psalm-param string $errorValue
     * @psalm-return SimpleResult<TOkay, Throwable>
     **/
@@ -487,7 +485,6 @@ class SimpleResult {
     *  - Returns `SimpleResult<TTOkay, Throwable>`
     *
     * @psalm-mutation-free
-    * @psalm-pure
     * @template TTOkay
     * @psalm-param TTOkay $data
     * @psalm-param string $reason
@@ -515,7 +512,6 @@ class SimpleResult {
     *  - Returns `SimpleResult<TTOkay, Throwable>`
     *
     * @psalm-mutation-free
-    * @psalm-pure
     * @template TTOkay
     * @psalm-param TTOkay $data
     * @psalm-param string $reason
@@ -541,7 +537,6 @@ class SimpleResult {
     * - Returns `SimpleResult<TTOkay, Throwable>`
     *
     * @psalm-mutation-free
-    * @psalm-pure
     * @template TTOkay
     * @psalm-param TTOkay $data
     * @psalm-param string $reason
@@ -561,7 +556,6 @@ class SimpleResult {
     * - Returns `SimpleResult<TTOkay, Throwable>`
     *
     * @psalm-mutation-free
-    * @psalm-pure
     * @template TTOkay
     * @psalm-param array<array-key, mixed> $array
     * @psalm-param array-key $key The key of the array
@@ -584,7 +578,6 @@ class SimpleResult {
     * I can't ensure the boxed value is stringable.
     * https://github.com/vimeo/psalm/issues/1982
     * @psalm-mutation-free
-    * @psalm-pure
     */
     public function __toString() {
       $either = $this->either;

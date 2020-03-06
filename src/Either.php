@@ -1031,7 +1031,6 @@ class Either {
     *
     * - Returns `Either<TTLeft, TTRight>`
     *
-    * @psalm-pure
     * @psalm-mutation-free
     * @template TTLeft
     * @template TTRight
