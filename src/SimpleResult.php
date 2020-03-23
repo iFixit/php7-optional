@@ -84,6 +84,11 @@ class SimpleResult {
       } else {
          /** @psalm-var TError **/
          $ex = $this->either->rightOr(null);
+         /** @psalm-suppress ImpureMethodCall since
+          * psalm is opinionated about exceptions
+          * (calling them impure unless thrown)
+          * but we wrap then immediately throw
+          */
          throw new Exception($ex->getMessage(), (int)$ex->getCode(), $ex);
       }
    }
