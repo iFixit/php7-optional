@@ -4,6 +4,7 @@ env:
 language: php
 php:
      - 7.2
+     - 8.0
 before_script:
       - curl -s http://getcomposer.org/installer | php
       - php composer.phar install
