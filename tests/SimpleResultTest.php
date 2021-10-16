@@ -1,11 +1,13 @@
 <?php
+
 declare(strict_types = 1);
 
-require_once dirname(__FILE__) . '/../src/SimpleResult.php';
+namespace Optional\Tests;
 
 use Optional\SimpleResult;
+use PHPUnit\Framework\TestCase;
 
-class SimpleResultTest extends PHPUnit\Framework\TestCase {
+class SimpleResultTest extends TestCase {
    public function testCreateAndCheckExistence() {
       $errorValue = new \Exception("Oh no!");
       $errorSimpleResult = SimpleResult::error($errorValue);

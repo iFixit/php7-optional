@@ -1,0 +1,33 @@
+name: Tests
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        php-versions: [7.2, 7.3, 7.4, 8.0, 8.1]
+
+    name: PHP ${{ matrix.php-versions }}
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-versions }}
+          coverage: xdebug
+          tools: composer:v2
+      - name: Install dependencies
+        uses: "ramsey/composer-install@v1"
+        with:
+          composer-options: "${{ matrix.composer-options }}"
+      - run: vendor/bin/phpunit --coverage-text
+      - run: vendor/bin/psalm --shepherd

@@ -1,14 +1,17 @@
 <?php
+
 declare(strict_types = 1);
 
-require_once dirname(__FILE__) . '/../src/Either.php';
+namespace Optional\Tests;
 
 use Optional\Either;
 use Optional\Option;
+use PHPUnit\Framework\TestCase;
 
-class EitherTest extends PHPUnit\Framework\TestCase {
-
-   public function testCreateAndCheckExistence() {
+class EitherTest extends TestCase
+{
+   public function testCreateAndCheckExistence(): void
+   {
       $rightValue = "goodbye";
       $rightEither = Either::right($rightValue);
 

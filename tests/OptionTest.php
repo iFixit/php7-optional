@@ -1,12 +1,13 @@
 <?php
+
 declare(strict_types = 1);
 
-require_once dirname(__FILE__) . '/../src/Option.php';
+namespace Optional\Tests;
 
 use Optional\Option;
+use PHPUnit\Framework\TestCase;
 
-class OptionTest extends PHPUnit\Framework\TestCase {
-
+class OptionTest extends TestCase {
    public function testCreateAndCheckExistence() {
       $noneOption = Option::none();
 

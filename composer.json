@@ -16,7 +16,13 @@
          "Optional\\": "src/"
       }
     },
+    "autoload-dev": {
+      "psr-4": {
+        "Optional\\Tests\\": "tests/"
+      }
+    },
     "require-dev": {
+        "phpunit/phpunit": "^8.5",
         "vimeo/psalm": "^3.9"
     }
 }

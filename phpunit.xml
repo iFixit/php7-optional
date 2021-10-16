@@ -1,11 +1,29 @@
 <?xml version="1.0"?>
-<phpunit>
+<phpunit backupGlobals="false"
+         backupStaticAttributes="false"
+         beStrictAboutTestsThatDoNotTestAnything="true"
+         beStrictAboutOutputDuringTests="true"
+         bootstrap="vendor/autoload.php"
+         colors="true"
+         convertDeprecationsToExceptions="true"
+         convertErrorsToExceptions="true"
+         convertNoticesToExceptions="true"
+         convertWarningsToExceptions="true"
+         failOnRisky="true"
+         failOnWarning="false"
+         processIsolation="false"
+         stopOnError="false"
+         stopOnFailure="false"
+         verbose="true"
+>
+    <testsuites>
+        <testsuite name="PHP Optional Test Suite">
+            <directory suffix="Test.php">./tests</directory>
+        </testsuite>
+    </testsuites>
     <filter>
-        <whitelist addUncoveredFilesFromWhitelist="true">
+        <whitelist processUncoveredFilesFromWhitelist="true">
             <directory suffix=".php">./src</directory>
         </whitelist>
     </filter>
-    <logging>
-        <log type="coverage-clover" target="./clover.xml"/>
-    </logging>
 </phpunit>
