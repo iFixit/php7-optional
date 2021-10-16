@@ -1,11 +1,13 @@
 <?php
+
 declare(strict_types = 1);
 
-require_once dirname(__FILE__) . '/../src/Result.php';
+namespace Optional\Tests;
 
 use Optional\Result;
+use PHPUnit\Framework\TestCase;
 
-class ResultTest extends PHPUnit\Framework\TestCase {
+class ResultTest extends TestCase {
    public function testCreateAndCheckExistence() {
       $errorValue = "goodbye";
       $errorResult = Result::error($errorValue);
