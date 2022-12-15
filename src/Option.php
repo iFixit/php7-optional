@@ -55,7 +55,7 @@ class Option {
     * @psalm-mutation-free
     * @template TT
     * @psalm-param TT $alternative
-    * @psalm-return ($this->hasValue ? T : TT)
+    * @psalm-return (T is never ? TT : T)
     **/
    public function valueOr($alternative) {
       return $this->hasValue
@@ -83,8 +83,8 @@ class Option {
     *
     * @psalm-mutation-free
     * @template TT
-    * @psalm-param callable():TT $alternativeFactory
-    * @psalm-return ($this->hasValue ? T : TT)
+    * @psalm-param pure-callable():TT $alternativeFactory
+    * @psalm-return (T is never ? TT : T)
     **/
    public function valueOrCreate(callable $alternativeFactory) {
       return $this->hasValue
@@ -109,7 +109,7 @@ class Option {
     * @template TT
     * @psalm-param TT $alternative
     *
-    * @psalm-return ($this->hasValue ? self<T> : self<TT>)
+    * @psalm-return (T is never ? self<TT> : self<T>)
     */
    public function or($alternative): self {
       return $this->hasValue
@@ -135,9 +135,9 @@ class Option {
     * @psalm-mutation-free
     *
     * @template TT
-    * @psalm-param callable():TT $alternativeFactory
+    * @psalm-param pure-callable():TT $alternativeFactory
     *
-    * @psalm-return ($this->hasValue ? self<T> : self<TT>)
+    * @psalm-return (T is never ? self<TT> : self<T>)
     */
    public function orCreate(callable $alternativeFactory): self {
       return $this->hasValue
@@ -161,7 +161,7 @@ class Option {
     * @psalm-mutation-free
     * @template TT
     * @psalm-param Option<TT> $alternativeOption
-    * @psalm-return ($this->hasValue ? Option<T> : Option<TT>)
+    * @psalm-return (T is never ? Option<TT> : Option<T>)
     **/
    public function else(self $alternativeOption): self {
       return $this->hasValue
@@ -187,8 +187,8 @@ class Option {
     *
     * @psalm-mutation-free
     * @template TT
-    * @psalm-param callable():Option<TT> $alternativeOptionFactory
-    * @psalm-return ($this->hasValue ? Option<T> : Option<TT>)
+    * @psalm-param pure-callable():Option<TT> $alternativeOptionFactory
+    * @psalm-return (T is never ? Option<TT> : Option<T>)
     **/
    public function elseCreate(callable $alternativeOptionFactory): self {
       return $this->hasValue
@@ -225,8 +225,8 @@ class Option {
     *
     * @psalm-mutation-free
     * @template U
-    * @psalm-param callable(T):U $some
-    * @psalm-param callable():U $none
+    * @psalm-param pure-callable(T):U $some
+    * @psalm-param pure-callable():U $none
     * @psalm-return U
     **/
    public function match(callable $some, callable $none) {
@@ -250,7 +250,7 @@ class Option {
     *  - `$some` must follow this interface `callable(T):U`
     *
     * @psalm-mutation-free
-    * @psalm-param $some callable(T)
+    * @psalm-param pure-callable(T) $some
     **/
    public function matchSome(callable $some): void {
       if (!$this->hasValue) {
@@ -276,7 +276,7 @@ class Option {
     *  - `$none` must follow this interface `callable():U`
     *
     * @psalm-mutation-free
-    * @psalm-param $none callable(T)
+    * @psalm-param pure-callable() $none
     **/
    public function matchNone(callable $none): void {
       if ($this->hasValue) {
@@ -307,18 +307,18 @@ class Option {
     *
     * @psalm-mutation-free
     * @template U
-    * @psalm-param $mapFunc callable(T):U
+    * @psalm-param $mapFunc pure-callable(T):U
     * @psalm-return Option<U>
     **/
    public function map(callable $mapFunc): self {
-      /** @psalm-var callable(T):Option<U> **/
+      /** @psalm-var pure-callable(T):Option<U> **/
       $someFunc =
       /** @psalm-param T $value **/
       function($value) use ($mapFunc): self {
          return self::some($mapFunc($value));
       };
 
-      /** @psalm-var callable():Option<U> **/
+      /** @psalm-var pure-callable():Option<U> **/
       $noneFunc = function(): self {
          return self::none();
       };
@@ -387,11 +387,11 @@ class Option {
     * @psalm-mutation-free
     * Note: `$mapFunc` must follow this interface `function mapFunc(mixed $value): Option`
     * @template U
-    * @psalm-param callable(T):Option<U> $mapFunc
+    * @psalm-param pure-callable(T):Option<U> $mapFunc
     * @psalm-return Option<U>
     **/
    public function flatMap(callable $mapFunc): self {
-      /** @psalm-var callable():Option<U> **/
+      /** @psalm-var pure-callable():Option<U> **/
       $noneFunc = function(): self {
          return self::none();
       };
@@ -428,7 +428,7 @@ class Option {
     *
     * @psalm-mutation-free
     * @template U
-    * @psalm-param callable(T):Option<U> $mapFunc
+    * @psalm-param pure-callable(T):Option<U> $mapFunc
     * @psalm-return Option<U>
     **/
     public function andThen(callable $mapFunc): self {
@@ -461,7 +461,7 @@ class Option {
     *
     * @psalm-mutation-free
     *
-    * @psalm-param callable(T):bool $filterFunc
+    * @psalm-param pure-callable(T):bool $filterFunc
     *
     * @psalm-return self<T>
     */
@@ -478,12 +478,10 @@ class Option {
     * $someThing = Option::some(null); // Valid
     * $noneThing = $someThing->notNull(); // Turn null into an none Option
     * ```
-    *
     * @psalm-mutation-free
-    *
-    * @psalm-return self<T>
+    * @psalm-return (T is null ? self<never> : self<T>)
     */
-   public function notNull(): self{
+   public function notNull(): self {
       return $this->hasValue && is_null($this->value)
          ? self::none()
          : $this;
@@ -497,9 +495,17 @@ class Option {
      * $none = $someThing->notFalsy(); // Turn null into an none Option
      * $none =  Option::some("")->notFalsy(); // Turn empty string into an none Option
      * ```
-     *
      * @psalm-mutation-free
-     * @psalm-return self<T>
+     * @psalm-return (
+     *     T is null                ? self<never> : (
+     *     T is false               ? self<never> : (
+     *     T is array<never, never> ? self<never> : (
+     *     T is 0                   ? self<never> : (
+     *     T is 0.0                 ? self<never> : (
+     *     T is ''                  ? self<never> : (
+     *     T is '0'                 ? self<never> :
+     *     self<T>
+     * )))))))
      */
     public function notFalsy(): self {
       return $this->hasValue && !$this->value
@@ -548,7 +554,7 @@ class Option {
     *  - Returns `Option<T>`
     *
     * @psalm-mutation-free
-    * @psalm-param callable(T):bool $existsFunc
+    * @psalm-param pure-callable(T):bool $existsFunc
     **/
    public function exists(callable $existsFunc): bool {
       if (!$this->hasValue()) {
@@ -595,15 +601,14 @@ class Option {
     *
     * _Notes:_
     *
-    * - Returns `Option<TT>`
+    * - Returns `Option<never>`
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @template TT
-    * @psalm-return Option<TT>
+    * @psalm-return Option<never>
     **/
    public static function none(): self {
-      /** @psalm-var Option<TT> */
+      /** @var Option<never> */
       return new self(null, false);
    }
 
