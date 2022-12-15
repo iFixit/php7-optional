@@ -16,12 +16,12 @@ class Option {
    private $hasValue;
 
    /**
-    * @psalm-var T|null
+    * @psalm-var T
     * @psalm-readonly
     */
    private $value;
 
-   /** @psalm-param T|null $value */
+   /** @psalm-param T $value */
    private function __construct($value, bool $hasValue) {
       $this->hasValue = $hasValue;
       $this->value = $value;
@@ -55,8 +55,8 @@ class Option {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @psalm-param T|null $alternative
-    * @psalm-return T|null
+    * @psalm-param T $alternative
+    * @psalm-return T
     **/
    public function valueOr($alternative) {
       return $this->hasValue
@@ -85,7 +85,7 @@ class Option {
     * @psalm-mutation-free
     * @psalm-pure
     * @psalm-param callable():T $alternativeFactory
-    * @psalm-return T|null
+    * @psalm-return T
     **/
    public function valueOrCreate(callable $alternativeFactory) {
       return $this->hasValue
@@ -229,7 +229,7 @@ class Option {
     * @psalm-mutation-free
     * @psalm-pure
     * @template U
-    * @psalm-param callable(T|null):U $some
+    * @psalm-param callable(T):U $some
     * @psalm-param callable():U $none
     * @psalm-return U
     **/
@@ -474,7 +474,7 @@ class Option {
     *
     * @psalm-pure
     *
-    * @psalm-param callable(T|null):bool $filterFunc
+    * @psalm-param callable(T):bool $filterFunc
     *
     * @psalm-return self<T>
     */
@@ -568,7 +568,7 @@ class Option {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @psalm-param callable(T|null):bool $existsFunc
+    * @psalm-param callable(T):bool $existsFunc
     **/
    public function exists(callable $existsFunc): bool {
       if (!$this->hasValue()) {
