@@ -53,8 +53,9 @@ class Option {
     * ```
     *
     * @psalm-mutation-free
-    * @psalm-param T $alternative
-    * @psalm-return T
+    * @template TT
+    * @psalm-param TT $alternative
+    * @psalm-return ($this->hasValue ? T : TT)
     **/
    public function valueOr($alternative) {
       return $this->hasValue
@@ -81,8 +82,9 @@ class Option {
     *  - `$alternativeFactory` must follow this interface `callable():T`
     *
     * @psalm-mutation-free
-    * @psalm-param callable():T $alternativeFactory
-    * @psalm-return T
+    * @template TT
+    * @psalm-param callable():TT $alternativeFactory
+    * @psalm-return ($this->hasValue ? T : TT)
     **/
    public function valueOrCreate(callable $alternativeFactory) {
       return $this->hasValue
@@ -104,9 +106,10 @@ class Option {
     *
     * @psalm-mutation-free
     *
-    * @psalm-param T $alternative
+    * @template TT
+    * @psalm-param TT $alternative
     *
-    * @psalm-return self<T>
+    * @psalm-return ($this->hasValue ? self<T> : self<TT>)
     */
    public function or($alternative): self {
       return $this->hasValue
@@ -131,9 +134,10 @@ class Option {
     *
     * @psalm-mutation-free
     *
-    * @psalm-param callable():T $alternativeFactory
+    * @template TT
+    * @psalm-param callable():TT $alternativeFactory
     *
-    * @psalm-return self<T>
+    * @psalm-return ($this->hasValue ? self<T> : self<TT>)
     */
    public function orCreate(callable $alternativeFactory): self {
       return $this->hasValue
@@ -155,8 +159,9 @@ class Option {
     *  - Returns `Option<T>`
     *
     * @psalm-mutation-free
-    * @psalm-param Option<T> $alternativeOption
-    * @psalm-return Option<T>
+    * @template TT
+    * @psalm-param Option<TT> $alternativeOption
+    * @psalm-return ($this->hasValue ? Option<T> : Option<TT>)
     **/
    public function else(self $alternativeOption): self {
       return $this->hasValue
@@ -181,8 +186,9 @@ class Option {
     *  - Returns `Option<T>`
     *
     * @psalm-mutation-free
-    * @psalm-param callable():Option<T> $alternativeOptionFactory
-    * @psalm-return Option<T>
+    * @template TT
+    * @psalm-param callable():Option<TT> $alternativeOptionFactory
+    * @psalm-return ($this->hasValue ? Option<T> : Option<TT>)
     **/
    public function elseCreate(callable $alternativeOptionFactory): self {
       return $this->hasValue

@@ -8,7 +8,7 @@ use Optional\Option;
 use PHPUnit\Framework\TestCase;
 
 class OptionTest extends TestCase {
-   public function testCreateAndCheckExistence() {
+   public function testCreateAndCheckExistence(): void {
       $noneOption = Option::none();
 
       $this->assertFalse($noneOption->hasValue());
@@ -34,21 +34,21 @@ class OptionTest extends TestCase {
       $this->assertTrue($some->hasValue());
    }
 
-   public function testCreateAndCheckExistenceWhen() {
-      $someThing = Option::someWhen(1, function($x) { return $x > 0; });
-      $someThing2 = Option::someWhen(-1, function($x) { return $x > 0; });
+   public function testCreateAndCheckExistenceWhen(): void {
+      $someThing = Option::someWhen(1, function(int $x) { return $x > 0; });
+      $someThing2 = Option::someWhen(-1, function(int $x) { return $x > 0; });
 
       $this->assertSame($someThing->valueOr(-5), 1);
       $this->assertSame($someThing2->valueOr(-5), -5);
 
-      $someThing3 = Option::noneWhen(1, function($x) { return $x > 0; });
-      $someThing4 = Option::noneWhen(-1, function($x) { return $x > 0; });
+      $someThing3 = Option::noneWhen(1, function(int $x) { return $x > 0; });
+      $someThing4 = Option::noneWhen(-1, function(int $x) { return $x > 0; });
 
       $this->assertSame($someThing3->valueOr(-5), -5);
       $this->assertSame($someThing4->valueOr(-5), -1);
    }
 
-   public function testGettingValue() {
+   public function testGettingValue(): void {
       $noneOption = Option::none();
 
       $this->assertSame($noneOption->valueOr(-1), -1);
@@ -62,7 +62,7 @@ class OptionTest extends TestCase {
       $this->assertSame($someClass->valueOr(-1), $someObject);
    }
 
-   public function testGettingValueLazily() {
+   public function testGettingValueLazily(): void {
       $noneOption = Option::none();
 
       $this->assertSame($noneOption->valueOrCreate(function() { return -1; }), -1);
@@ -86,7 +86,7 @@ class OptionTest extends TestCase {
       }), $someObject);
    }
 
-   public function testGettingAlternitiveValue() {
+   public function testGettingAlternitiveValue(): void {
       $someObject = new SomeObject();
       $noneOption = Option::none();
 
@@ -112,7 +112,7 @@ class OptionTest extends TestCase {
       $this->assertSame($lazyPassThrough->valueOr(-1), 1);
    }
 
-   public function testGettingAlternitiveOption() {
+   public function testGettingAlternitiveOption(): void {
       $someObject = new SomeObject();
       $noneOption = Option::none();
 
@@ -133,7 +133,7 @@ class OptionTest extends TestCase {
       $this->assertSame($someClass->valueOr("-1"), $someObject);
    }
 
-   public function testGettingAlternitiveOptionLazy() {
+   public function testGettingAlternitiveOptionLazy(): void {
       $someObject = new SomeObject();
       $noneOption = Option::none();
 
@@ -168,7 +168,7 @@ class OptionTest extends TestCase {
       });
    }
 
-   public function testMatching() {
+   public function testMatching(): void {
       $none = Option::none();
       $some = Option::some(1);
 
@@ -199,10 +199,10 @@ class OptionTest extends TestCase {
       );
       $this->assertTrue($hasMatched);
 
-      $none->matchSome(function($x) { $this->fail('Callback should not have been run!'); });
+      $none->matchSome(function(int $_x) { $this->fail('Callback should not have been run!'); });
 
       $hasMatched = false;
-      $some->matchSome(function($x) use (&$hasMatched) { return $hasMatched = $x == 1; });
+      $some->matchSome(function(int $x) use (&$hasMatched) { return $hasMatched = $x == 1; });
       $this->assertTrue($hasMatched);
 
       $some->matchNone(function() { $this->fail('Callback should not have been run!'); });
@@ -212,13 +212,13 @@ class OptionTest extends TestCase {
       $this->assertTrue($hasMatched);
    }
 
-   public function testMapping() {
+   public function testMapping(): void {
       $none = Option::none();
       $some = Option::some("a");
       $someNull = Option::some(null);
 
-      $noneUpper = $none->map(function($x) { return strtoupper($x); });
-      $someUpper = $some->map(function($x) { return strtoupper($x); });
+      $noneUpper = $none->map(function(string $x) { return strtoupper($x); });
+      $someUpper = $some->map(function(string $x) { return strtoupper($x); });
 
       $this->assertFalse($noneUpper->hasValue());
       $this->assertTrue($someUpper->hasValue());
@@ -242,7 +242,7 @@ class OptionTest extends TestCase {
       $this->assertFalse($someNullNotNull->hasValue());
    }
 
-   public function testFiltering() {
+   public function testFiltering(): void {
       $none = Option::none();
       $some = Option::some("a");
 
@@ -278,7 +278,7 @@ class OptionTest extends TestCase {
       $this->assertFalse($noneEmpty->hasValue());
    }
 
-   public function testContains() {
+   public function testContains(): void {
       $none = Option::none();
       $someString = Option::some("a");
       $someInt = Option::some(1);
@@ -299,7 +299,7 @@ class OptionTest extends TestCase {
       $this->assertFalse($none->contains(null));
    }
 
-   public function testExists() {
+   public function testExists(): void {
       $none = Option::none();
       $some = Option::some(10);
 
@@ -312,7 +312,7 @@ class OptionTest extends TestCase {
       $this->assertFalse($someFalse);
    }
 
-   public function testFlatMap() {
+   public function testFlatMap(): void {
       $somePerson = [
          'name' => [
             'first' => 'First',
@@ -322,22 +322,24 @@ class OptionTest extends TestCase {
 
       $person = Option::fromArray($somePerson, 'name');
 
-      $name = $person->andThen(function($person) {
-         $fullName = $person['first'] . $person['last'];
+      $name = $person->andThen(
+         /** @param array{first: string, last: string} $person */
+         function(array $person) {
+            $fullName = $person['first'] . $person['last'];
 
-         try {
-            $thing = SomeComplexThing::doWork($fullName);
-         } catch (ErrorException $e) {
-            return Option::none();
-         }
+            try {
+               $thing = SomeComplexThing::doWork($fullName);
+            } catch (\ErrorException $_e) {
+               return Option::none();
+            }
 
-         return Option::some($thing);
-      });
+            return Option::some($thing);
+         });
 
       $this->assertSame($name->valueOr(''), 'FirstLast');
    }
 
-   public function testFlatMapWithException() {
+   public function testFlatMapWithException(): void {
       $somePerson = [
          'name' => [
             'first' => 'First',
@@ -347,23 +349,25 @@ class OptionTest extends TestCase {
 
       $person = Option::fromArray($somePerson, 'name');
 
-      $name = $person->andThen(function($person) {
-         $fullName = $person['first'] . $person['last'];
+      $name = $person->andThen(
+         /** @param array{first: string, last: string} $person */
+         function(array $person) {
+            $fullName = $person['first'] . $person['last'];
 
-         try {
-            $thing = SomeComplexThing::doWork($fullName, "Forcing some exception");
-         } catch (\Exception $e) {
-            return Option::none();
-         }
+            try {
+               $thing = SomeComplexThing::doWork($fullName, "Forcing some exception");
+            } catch (\Exception $e) {
+               return Option::none();
+            }
 
-         return Option::some($thing);
-      });
+            return Option::some($thing);
+         });
 
       $this->assertFalse($name->hasValue());
       $this->assertSame($name->valueOr('oh no'), 'oh no');
    }
 
-   public function testSafelyMapWithException() {
+   public function testSafelyMapWithException(): void {
       $somePerson = [
          'name' => [
             'first' => 'First',
@@ -373,16 +377,18 @@ class OptionTest extends TestCase {
 
       $person = Option::fromArray($somePerson, 'name');
 
-      $name = $person->mapSafely(function($person): string {
-         $fullName = $person['first'] . $person['last'];
-         return SomeComplexThing::doWork($fullName, "Forcing some exception");
-      });
+      $name = $person->mapSafely(
+         /** @param array{first: string, last: string} $person */
+         function(array $person): string {
+            $fullName = $person['first'] . $person['last'];
+            return SomeComplexThing::doWork($fullName, "Forcing some exception");
+         });
 
       $this->assertFalse($name->hasValue());
       $this->assertSame($name->valueOr('oh no'), 'oh no');
    }
 
-   public function testToString() {
+   public function testToString(): void {
       $this->assertEquals("Some(null)", (string)Option::some(null));
       $this->assertEquals("Some(10)", (string)Option::some(10));
 
