@@ -714,15 +714,14 @@ class Option {
     *
     * @psalm-mutation-free
     *
-    * @template TT
+    * @template TArray of array
+    * @param TArray $array
+    * @param array-key $key
     *
-    * @psalm-param array<array-key, mixed> $array
-    * @psalm-param array-key $key The key of the array
-    *
-    * @psalm-return self<TT>
+    * @psalm-return ($key is key-of<TArray> ? self<value-of<TArray>>|self<mixed> : self<never>)
     */
    public static function fromArray(array $array, $key): self {
-      if (isset($array[$key])) {
+      if (array_key_exists($key, $array)) {
          return self::some($array[$key]);
       }
 
