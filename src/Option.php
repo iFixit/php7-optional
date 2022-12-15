@@ -30,7 +30,6 @@ class Option {
    /**
     * Returns true iff the option is `Option::some`
     * @psalm-mutation-free
-    * @psalm-pure
     **/
    public function hasValue(): bool {
       return $this->hasValue;
@@ -54,7 +53,6 @@ class Option {
     * ```
     *
     * @psalm-mutation-free
-    * @psalm-pure
     * @psalm-param T $alternative
     * @psalm-return T
     **/
@@ -83,7 +81,6 @@ class Option {
     *  - `$alternativeFactory` must follow this interface `callable():T`
     *
     * @psalm-mutation-free
-    * @psalm-pure
     * @psalm-param callable():T $alternativeFactory
     * @psalm-return T
     **/
@@ -106,8 +103,6 @@ class Option {
     *  - Returns `Option<T>`
     *
     * @psalm-mutation-free
-    *
-    * @psalm-pure
     *
     * @psalm-param T $alternative
     *
@@ -136,8 +131,6 @@ class Option {
     *
     * @psalm-mutation-free
     *
-    * @psalm-pure
-    *
     * @psalm-param callable():T $alternativeFactory
     *
     * @psalm-return self<T>
@@ -162,7 +155,6 @@ class Option {
     *  - Returns `Option<T>`
     *
     * @psalm-mutation-free
-    * @psalm-pure
     * @psalm-param Option<T> $alternativeOption
     * @psalm-return Option<T>
     **/
@@ -189,7 +181,6 @@ class Option {
     *  - Returns `Option<T>`
     *
     * @psalm-mutation-free
-    * @psalm-pure
     * @psalm-param callable():Option<T> $alternativeOptionFactory
     * @psalm-return Option<T>
     **/
@@ -227,7 +218,6 @@ class Option {
     *  - `$none` must follow this interface `callable():U`
     *
     * @psalm-mutation-free
-    * @psalm-pure
     * @template U
     * @psalm-param callable(T):U $some
     * @psalm-param callable():U $none
@@ -254,7 +244,6 @@ class Option {
     *  - `$some` must follow this interface `callable(T):U`
     *
     * @psalm-mutation-free
-    * @psalm-pure
     * @psalm-param $some callable(T)
     **/
    public function matchSome(callable $some): void {
@@ -281,7 +270,6 @@ class Option {
     *  - `$none` must follow this interface `callable():U`
     *
     * @psalm-mutation-free
-    * @psalm-pure
     * @psalm-param $none callable(T)
     **/
    public function matchNone(callable $none): void {
@@ -312,7 +300,6 @@ class Option {
     *  - Returns `Option<U>`
     *
     * @psalm-mutation-free
-    * @psalm-pure
     * @template U
     * @psalm-param $mapFunc callable(T):U
     * @psalm-return Option<U>
@@ -353,8 +340,6 @@ class Option {
     *
     * @psalm-mutation-free
     *
-    * @psalm-pure
-    *
     * @template U
     *
     * @psalm-param $mapFunc callable(T):U
@@ -394,7 +379,6 @@ class Option {
     * ```
     *
     * @psalm-mutation-free
-    * @psalm-pure
     * Note: `$mapFunc` must follow this interface `function mapFunc(mixed $value): Option`
     * @template U
     * @psalm-param callable(T):Option<U> $mapFunc
@@ -437,7 +421,6 @@ class Option {
     * Note: `$mapFunc` must follow this interface `function mapFunc(mixed $value): Option`
     *
     * @psalm-mutation-free
-    * @psalm-pure
     * @template U
     * @psalm-param callable(T):Option<U> $mapFunc
     * @psalm-return Option<U>
@@ -472,8 +455,6 @@ class Option {
     *
     * @psalm-mutation-free
     *
-    * @psalm-pure
-    *
     * @psalm-param callable(T):bool $filterFunc
     *
     * @psalm-return self<T>
@@ -494,8 +475,6 @@ class Option {
     *
     * @psalm-mutation-free
     *
-    * @psalm-pure
-    *
     * @psalm-return self<T>
     */
    public function notNull(): self{
@@ -514,9 +493,6 @@ class Option {
      * ```
      *
      * @psalm-mutation-free
-     *
-     * @psalm-pure
-     *
      * @psalm-return self<T>
      */
     public function notFalsy(): self {
@@ -538,7 +514,6 @@ class Option {
     * ```
     *
     * @psalm-mutation-free
-    * @psalm-pure
     * @psalm-param mixed $value
     **/
    public function contains($value): bool {
@@ -567,7 +542,6 @@ class Option {
     *  - Returns `Option<T>`
     *
     * @psalm-mutation-free
-    * @psalm-pure
     * @psalm-param callable(T):bool $existsFunc
     **/
    public function exists(callable $existsFunc): bool {
@@ -647,7 +621,7 @@ class Option {
     * @template TT
     *
     * @psalm-param TT $someValue
-    * @psalm-param callable(TT):bool $filterFunc
+    * @psalm-param pure-callable(TT):bool $filterFunc
     *
     * @psalm-return self<TT>
     */
@@ -678,7 +652,7 @@ class Option {
     * @template TT
     *
     * @psalm-param TT $someValue
-    * @psalm-param callable(TT):bool $filterFunc
+    * @psalm-param pure-callable(TT):bool $filterFunc
     *
     * @psalm-return self<TT>
     */
@@ -751,7 +725,6 @@ class Option {
     * I can't ensure the boxed value is stringable.
     * https://github.com/vimeo/psalm/issues/1982
     * @psalm-mutation-free
-    * @psalm-pure
     */
    public function __toString() {
       if ($this->hasValue) {
