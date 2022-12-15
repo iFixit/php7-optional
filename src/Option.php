@@ -7,6 +7,12 @@ namespace Optional;
 /**
  * @psalm-immutable
  * @template T
+ *
+ * @psalm-suppress ImpureFunctionCall
+ *   Since we want to allow users to pass in function that are possibly non-pure
+ *   I am in debate around this because it opens up the library to mutation, based bugs.
+ *   If we force purity, then the utility of the library decreases.
+ *   EX: Option::some(false)->match(fn() => $this->passUnitTest(), fn() => $this->failUnitTest())
  */
 class Option {
    /**
@@ -83,7 +89,7 @@ class Option {
     *
     * @psalm-mutation-free
     * @template TT
-    * @psalm-param pure-callable():TT $alternativeFactory
+    * @psalm-param callable():TT $alternativeFactory
     * @psalm-return (T is never ? TT : T)
     **/
    public function valueOrCreate(callable $alternativeFactory) {
@@ -135,7 +141,7 @@ class Option {
     * @psalm-mutation-free
     *
     * @template TT
-    * @psalm-param pure-callable():TT $alternativeFactory
+    * @psalm-param callable():TT $alternativeFactory
     *
     * @psalm-return (T is never ? self<TT> : self<T>)
     */
@@ -187,7 +193,7 @@ class Option {
     *
     * @psalm-mutation-free
     * @template TT
-    * @psalm-param pure-callable():Option<TT> $alternativeOptionFactory
+    * @psalm-param callable():Option<TT> $alternativeOptionFactory
     * @psalm-return (T is never ? Option<TT> : Option<T>)
     **/
    public function elseCreate(callable $alternativeOptionFactory): self {
@@ -225,8 +231,8 @@ class Option {
     *
     * @psalm-mutation-free
     * @template U
-    * @psalm-param pure-callable(T):U $some
-    * @psalm-param pure-callable():U $none
+    * @psalm-param callable(T):U $some
+    * @psalm-param callable():U $none
     * @psalm-return U
     **/
    public function match(callable $some, callable $none) {
@@ -250,7 +256,7 @@ class Option {
     *  - `$some` must follow this interface `callable(T):U`
     *
     * @psalm-mutation-free
-    * @psalm-param pure-callable(T) $some
+    * @psalm-param callable(T) $some
     **/
    public function matchSome(callable $some): void {
       if (!$this->hasValue) {
@@ -275,8 +281,7 @@ class Option {
     *
     *  - `$none` must follow this interface `callable():U`
     *
-    * @psalm-mutation-free
-    * @psalm-param pure-callable() $none
+    * @psalm-param callable() $none
     **/
    public function matchNone(callable $none): void {
       if ($this->hasValue) {
@@ -307,18 +312,18 @@ class Option {
     *
     * @psalm-mutation-free
     * @template U
-    * @psalm-param $mapFunc pure-callable(T):U
+    * @psalm-param $mapFunc callable(T):U
     * @psalm-return Option<U>
     **/
    public function map(callable $mapFunc): self {
-      /** @psalm-var pure-callable(T):Option<U> **/
+      /** @psalm-var callable(T):Option<U> **/
       $someFunc =
       /** @psalm-param T $value **/
       function($value) use ($mapFunc): self {
          return self::some($mapFunc($value));
       };
 
-      /** @psalm-var pure-callable():Option<U> **/
+      /** @psalm-var callable():Option<U> **/
       $noneFunc = function(): self {
          return self::none();
       };
@@ -387,11 +392,11 @@ class Option {
     * @psalm-mutation-free
     * Note: `$mapFunc` must follow this interface `function mapFunc(mixed $value): Option`
     * @template U
-    * @psalm-param pure-callable(T):Option<U> $mapFunc
+    * @psalm-param callable(T):Option<U> $mapFunc
     * @psalm-return Option<U>
     **/
    public function flatMap(callable $mapFunc): self {
-      /** @psalm-var pure-callable():Option<U> **/
+      /** @psalm-var callable():Option<U> **/
       $noneFunc = function(): self {
          return self::none();
       };
@@ -428,7 +433,7 @@ class Option {
     *
     * @psalm-mutation-free
     * @template U
-    * @psalm-param pure-callable(T):Option<U> $mapFunc
+    * @psalm-param callable(T):Option<U> $mapFunc
     * @psalm-return Option<U>
     **/
     public function andThen(callable $mapFunc): self {
@@ -461,7 +466,7 @@ class Option {
     *
     * @psalm-mutation-free
     *
-    * @psalm-param pure-callable(T):bool $filterFunc
+    * @psalm-param callable(T):bool $filterFunc
     *
     * @psalm-return self<T>
     */
@@ -554,7 +559,7 @@ class Option {
     *  - Returns `Option<T>`
     *
     * @psalm-mutation-free
-    * @psalm-param pure-callable(T):bool $existsFunc
+    * @psalm-param callable(T):bool $existsFunc
     **/
    public function exists(callable $existsFunc): bool {
       if (!$this->hasValue()) {
@@ -632,7 +637,7 @@ class Option {
     * @template TT
     *
     * @psalm-param TT $someValue
-    * @psalm-param pure-callable(TT):bool $filterFunc
+    * @psalm-param callable(TT):bool $filterFunc
     *
     * @psalm-return self<TT>
     */
@@ -663,7 +668,7 @@ class Option {
     * @template TT
     *
     * @psalm-param TT $someValue
-    * @psalm-param pure-callable(TT):bool $filterFunc
+    * @psalm-param callable(TT):bool $filterFunc
     *
     * @psalm-return self<TT>
     */
