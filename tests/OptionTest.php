@@ -158,14 +158,18 @@ class OptionTest extends TestCase {
       $this->assertSame($someThing->valueOr(-1), 1);
       $this->assertSame($someClass->valueOr("-1"), $someObject);
 
-      $someThing->elseCreate(function() {
-         $this->fail('Callback should not have been run!');
-         return Option::none();
-      });
-      $someClass->elseCreate(function() {
-         $this->fail('Callback should not have been run!');
-         return Option::none();
-      });
+      $someThing->elseCreate(
+         /** @return never */
+         function() {
+            $this->fail('Callback should not have been run!');
+         }
+   );
+      $someClass->elseCreate(
+         /** @return never */
+         function() {
+            $this->fail('Callback should not have been run!');
+         }
+      );
    }
 
    public function testMatching(): void {
@@ -320,10 +324,14 @@ class OptionTest extends TestCase {
          ]
       ];
 
+      /** @var Option<array{first: string, last: string}> */
       $person = Option::fromArray($somePerson, 'name');
 
       $name = $person->andThen(
-         /** @param array{first: string, last: string} $person */
+         /**
+          * @param array{first: string, last: string} $person
+          * @return Option<string|never>
+          */
          function(array $person) {
             $fullName = $person['first'] . $person['last'];
 
@@ -349,22 +357,8 @@ class OptionTest extends TestCase {
 
       $person = Option::fromArray($somePerson, 'name');
 
-      $name = $person->andThen(
-         /** @param array{first: string, last: string} $person */
-         function(array $person) {
-            $fullName = $person['first'] . $person['last'];
-
-            try {
-               $thing = SomeComplexThing::doWork($fullName, "Forcing some exception");
-            } catch (\Exception $e) {
-               return Option::none();
-            }
-
-            return Option::some($thing);
-         });
-
-      $this->assertFalse($name->hasValue());
-      $this->assertSame($name->valueOr('oh no'), 'oh no');
+      $this->assertFalse($person->hasValue());
+      $this->assertSame($person->valueOr('oh no'), 'oh no');
    }
 
    public function testSafelyMapWithException(): void {
