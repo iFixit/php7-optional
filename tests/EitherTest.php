@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace Optional\Tests;
 
+use Exception;
 use Optional\Either;
 use Optional\Option;
 use PHPUnit\Framework\TestCase;
@@ -512,12 +513,18 @@ class EitherTest extends TestCase
           * @return Either<string, never>
           */
          function($person) {
+            try {
+               throw new Exception('BAD VALUE');
+            }
+            catch(\Exception $e) {
+               return Either::left($e->getMessage());
+            }
             return Either::left($person['first'] . $person['last']);
          }
       );
 
-      $this->assertFalse($name->isLeft());
-      $this->assertSame($name->leftOr('oh no'), 'oh no');
+      $this->assertTrue($name->isLeft());
+      $this->assertSame($name->leftOr('oh no'), 'BAD VALUE');
    }
 
    public function testSafelyMapWithException(): void {
