@@ -355,7 +355,7 @@ class OptionTest extends TestCase {
          ]
       ];
 
-      $person = Option::fromArray($somePerson, 'name');
+      $person = Option::fromArray($somePerson, 'BAD VALUE');
 
       $this->assertFalse($person->hasValue());
       $this->assertSame($person->valueOr('oh no'), 'oh no');
