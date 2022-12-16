@@ -392,6 +392,9 @@ class OptionTest extends TestCase {
 
 class SomeObject {};
 class SomeComplexThing {
+   /**
+    * @throws \Exception
+    */
    public static function doWork(string $thing, string $ex = null): string {
       if($ex) {
          throw new \Exception($ex);
