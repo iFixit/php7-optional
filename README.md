@@ -1,6 +1,6 @@
 # php7-optional
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Build Status](https://travis-ci.org/iFixit/php7-optional.svg?branch=master)](https://travis-ci.org/iFixit/php7-optional)
+[![Tests](https://github.com/iFixit/php7-optional/actions/workflows/test.yaml/badge.svg?branch=master)](https://github.com/iFixit/php7-optional/actions/workflows/test.yaml)
 [![Stable Version](https://img.shields.io/packagist/v/ifixit/php7-optional.svg)](https://packagist.org/packages/ifixit/php7-optional)
 [![Downloads](https://img.shields.io/packagist/dm/ifixit/php7-optional.svg)](https://packagist.org/packages/ifixit/php7-optional)
 [![codecov](https://codecov.io/gh/iFixit/php7-optional/branch/master/graph/badge.svg)](https://codecov.io/gh/iFixit/php7-optional)
