@@ -3,9 +3,8 @@ name: documentation
 on:
   push:
     branches: [master]
-
   # Allow running the workflow manually from the Actions tab
-  #workflow_dispatch:
+  workflow_dispatch:
 
 # Allow GITHUB_TOKEN to deploy to GitHub Pages
 permissions:
