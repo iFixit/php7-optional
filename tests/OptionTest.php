@@ -77,12 +77,10 @@ class OptionTest extends TestCase {
 
       $this->assertSame($someThing->valueOrCreate(function() {
          $this->fail('Callback should not have been run!');
-         return -1;
       }), 1);
 
       $this->assertSame($someClass->valueOrCreate(function() {
          $this->fail('Callback should not have been run!');
-         return -1;
       }), $someObject);
    }
 
@@ -158,12 +156,15 @@ class OptionTest extends TestCase {
       $this->assertSame($someThing->valueOr(-1), 1);
       $this->assertSame($someClass->valueOr("-1"), $someObject);
 
+      /** @psalm-suppress UnusedMethodCall so we can show that psalm even knows this is impossible */
       $someThing->elseCreate(
          /** @return never */
          function() {
             $this->fail('Callback should not have been run!');
          }
-   );
+      );
+
+      /** @psalm-suppress UnusedMethodCall so we can show that psalm even knows this is impossible */
       $someClass->elseCreate(
          /** @return never */
          function() {
@@ -177,40 +178,39 @@ class OptionTest extends TestCase {
       $some = Option::some(1);
 
       $failure = $none->match(
-          function($x) { return 2; },
+          function($_x) { return 2; },
           function() { return -2; }
       );
 
       $success = $some->match(
-          function($x) { return 2; },
+          function($_x) { return 2; },
           function() { return -2; }
       );
 
       $this->assertSame($failure, -2);
       $this->assertSame($success, 2);
 
-      $hasMatched = false;
-      $none->match(
-          function($x) { $this->fail('Callback should not have been run!'); },
-          function() use (&$hasMatched) { $hasMatched = true; }
+      $hasMatched = $none->match(
+          function($_x) { $this->fail('Callback should not have been run!'); },
+          function() { return true; }
       );
       $this->assertTrue($hasMatched);
 
-      $hasMatched = false;
-      $some->match(
-          function($x) use (&$hasMatched) { return $hasMatched = $x == 1; },
-          function() use (&$hasMatched) { $this->fail('Callback should not have been run!'); }
+      $hasMatched = $some->match(
+          function($x) { return $x == 1; },
+          function() { $this->fail('Callback should not have been run!'); }
       );
       $this->assertTrue($hasMatched);
 
+      /** @psalm-suppress UnusedMethodCall so we can show that psalm even knows this is impossible */
       $none->matchSome(function(int $_x) { $this->fail('Callback should not have been run!'); });
 
       $hasMatched = false;
       $some->matchSome(function(int $x) use (&$hasMatched) { return $hasMatched = $x == 1; });
       $this->assertTrue($hasMatched);
 
+      /** @psalm-suppress UnusedMethodCall so we can show that psalm even knows this is impossible */
       $some->matchNone(function() { $this->fail('Callback should not have been run!'); });
-      $hasMatched = false;
 
       $none->matchNone(function() use (&$hasMatched) { $hasMatched = true; });
       $this->assertTrue($hasMatched);

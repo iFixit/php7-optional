@@ -95,11 +95,6 @@ class EitherTest extends TestCase
    }
 
    public function testGettingValueLazily(): void {
-      $rightValue = "goodbye";
-      $rightEither = Either::right($rightValue);
-
-      $someObject = new stdClass();
-
       $leftEither = Either::left("Hello");
 
       $this->assertSame($leftEither->rightOrCreate(function($x) { return $x; }), "Hello");
@@ -109,14 +104,12 @@ class EitherTest extends TestCase
       $rightThing = Either::right(1);
       $rightClass = Either::right($someObject);
 
-      $this->assertSame($rightThing->rightOrCreate(function($x) {
+      $this->assertSame($rightThing->rightOrCreate(function($_x) {
          $this->fail('Callback should not have been run!');
-         return $x;
       }), 1);
 
-      $this->assertSame($rightClass->rightOrCreate(function($x) {
+      $this->assertSame($rightClass->rightOrCreate(function($_x) {
          $this->fail('Callback should not have been run!');
-         return $x;
       }), $someObject);
    }
 
@@ -213,11 +206,11 @@ class EitherTest extends TestCase
       });
       $this->assertFalse($rightEither2->isLeft());
 
-      $leftThing = $rightEither->elseCreateLeft(function($x) {
+      $leftThing = $rightEither->elseCreateLeft(function($_x) {
          return Either::left(1);
       });
 
-      $leftClass = $rightEither->elseCreateLeft(function($x) use ($someObject) {
+      $leftClass = $rightEither->elseCreateLeft(function($_x) use ($someObject) {
          return Either::left($someObject);
       });
 
@@ -227,34 +220,35 @@ class EitherTest extends TestCase
       $this->assertSame($leftThing->leftOr(-1), 1);
       $this->assertSame($leftClass->leftOr("-1"), $someObject);
 
+      /** @psalm-suppress UnusedMethodCall so we can show that psalm even knows this is impossible */
       $leftThing->elseCreateLeft(
          /** @return never */
-         function(string $x) {
+         function(string $_x) {
             $this->fail('Callback should not have been run!');
-            return Either::right($x);
          }
       );
+
+      /** @psalm-suppress UnusedMethodCall so we can show that psalm even knows this is impossible */
       $leftClass->elseCreateLeft(
          /** @return never */
-         function(string $x) {
+         function(string $_x) {
             $this->fail('Callback should not have been run!');
-            return Either::right($x);
          }
       );
 
 
-      $rightThing = $rightEither->elseCreateRight(function($x) {
+      $rightThing = $rightEither->elseCreateRight(function($_x) {
          return Either::right(1);
       });
 
       $this->assertTrue($rightThing->isRight());
       $this->assertSame($rightThing->rightOr(-1), $rightValue);
 
+      /** @psalm-suppress UnusedMethodCall so we can show that psalm even knows this is impossible */
       $rightThing->elseCreateRight(
          /** @return never */
-         function(string $x) {
+         function(string $_x) {
             $this->fail('Callback should not have been run!');
-            return Either::right($x);
          }
       );
    }
@@ -265,7 +259,7 @@ class EitherTest extends TestCase
       $left = Either::left(1);
 
       $failure = $right->match(
-          function($x) { return 2; },
+          function($_x) { return 2; },
           function($x) { return $x; }
       );
 
@@ -278,21 +272,22 @@ class EitherTest extends TestCase
       $this->assertSame($failure, $rightValue);
       $this->assertSame($success, 2);
 
-      $hasMatched = false;
-      $right->match(
-          function($x) { $this->fail('Callback should not have been run!'); },
-          function($x) use (&$hasMatched) { $hasMatched = true; }
+
+      $hasMatched = $right->match(
+          function($_x) { $this->fail('Callback should not have been run!'); },
+          function($_x) { return true; }
       );
+
       $this->assertTrue($hasMatched);
 
-      $hasMatched = false;
-      $left->match(
-          function($x) use (&$hasMatched) { return $hasMatched = $x == 1; },
-          function($x) use (&$hasMatched) { $this->fail('Callback should not have been run!'); }
+      $hasMatched = $left->match(
+          function($x) { return $x == 1; },
+          function($_x) { $this->fail('Callback should not have been run!'); }
       );
+
       $this->assertTrue($hasMatched);
 
-      $right->matchleft(function($x) { $this->fail('Callback should not have been run!'); });
+      $right->matchleft(function($_x) { $this->fail('Callback should not have been run!'); });
 
       $hasMatched = false;
       $left->matchleft(function($x) use (&$hasMatched) { return $hasMatched = $x == 1; });
@@ -509,17 +504,16 @@ class EitherTest extends TestCase
 
       $name = $person->andThen(
          /**
-          * @param array{first: string, last: string} $person
+          * @param array{first: string, last: string} $_person
           * @return Either<string, never>
           */
-         function($person) {
+         function(array $_person) {
             try {
                throw new Exception('BAD VALUE');
             }
             catch(\Exception $e) {
                return Either::left($e->getMessage());
             }
-            return Either::left($person['first'] . $person['last']);
          }
       );
 
@@ -549,11 +543,9 @@ class EitherTest extends TestCase
       $this->assertFalse($name->isLeft());
       $this->assertSame($name->leftOr('oh no'), 'oh no');
 
-      $out = 'This should change';
-
-      $name->match(
+      $out = $name->match(
          function ($_leftValue) { $this->fail('Callback should not have been run!'); },
-         function (\Exception $exception) use(&$out) { $out = $exception->getMessage(); }
+         function (\Exception $exception) { return $exception->getMessage(); }
       );
 
       $this->assertSame($out, "Forcing left exception");

@@ -5,14 +5,8 @@ declare(strict_types = 1);
 namespace Optional;
 
 /**
- * @psalm-immutable
  * @template T
  *
- * @psalm-suppress ImpureFunctionCall
- *   Since we want to allow users to pass in function that are possibly non-pure
- *   I am in debate around this because it opens up the library to mutation, based bugs.
- *   If we force purity, then the utility of the library decreases.
- *   EX: Option::some(false)->match(fn() => $this->passUnitTest(), fn() => $this->failUnitTest())
  */
 class Option {
    /**
@@ -27,7 +21,10 @@ class Option {
     */
    private $value;
 
-   /** @psalm-param T $value */
+   /**
+    * @psalm-param T $value
+    * @psalm-mutation-free
+    */
    private function __construct($value, bool $hasValue) {
       $this->hasValue = $hasValue;
       $this->value = $value;
@@ -87,7 +84,6 @@ class Option {
     *
     *  - `$alternativeFactory` must follow this interface `callable():T`
     *
-    * @psalm-mutation-free
     * @template TT
     * @psalm-param callable():TT $alternativeFactory
     * @psalm-return (T is never ? TT : T)
@@ -137,8 +133,6 @@ class Option {
     *
     *  - `$alternativeFactory` must follow this interface `callable():T`
     *  - Returns `Option<T>`
-    *
-    * @psalm-mutation-free
     *
     * @template TT
     * @psalm-param callable():TT $alternativeFactory
@@ -191,7 +185,6 @@ class Option {
     *  - `$alternativeOptionFactory` must follow this interface `callable():Option<T>`
     *  - Returns `Option<T>`
     *
-    * @psalm-mutation-free
     * @template TT
     * @psalm-param callable():Option<TT> $alternativeOptionFactory
     * @psalm-return (T is never ? Option<TT> : Option<T>)
@@ -229,7 +222,6 @@ class Option {
     *  - `$some` must follow this interface `callable(T):U`
     *  - `$none` must follow this interface `callable():U`
     *
-    * @psalm-mutation-free
     * @template U
     * @psalm-param callable(T):U $some
     * @psalm-param callable():U $none
@@ -254,8 +246,6 @@ class Option {
     * _Notes:_
     *
     *  - `$some` must follow this interface `callable(T):U`
-    *
-    * @psalm-mutation-free
     * @psalm-param callable(T) $some
     **/
    public function matchSome(callable $some): void {
@@ -310,7 +300,6 @@ class Option {
     *  - `$mapFunc` must follow this interface `callable(T):U`
     *  - Returns `Option<U>`
     *
-    * @psalm-mutation-free
     * @template U
     * @psalm-param $mapFunc callable(T):U
     * @psalm-return Option<U>
@@ -348,8 +337,6 @@ class Option {
     *
     *  - `$mapFunc` must follow this interface `callable(T):U`
     *  - Returns `Option<U>`
-    *
-    * @psalm-mutation-free
     *
     * @template U
     *
@@ -389,7 +376,6 @@ class Option {
     *  });
     * ```
     *
-    * @psalm-mutation-free
     * Note: `$mapFunc` must follow this interface `function mapFunc(mixed $value): Option`
     * @template U
     * @psalm-param callable(T):Option<U> $mapFunc
@@ -431,7 +417,6 @@ class Option {
     *
     * Note: `$mapFunc` must follow this interface `function mapFunc(mixed $value): Option`
     *
-    * @psalm-mutation-free
     * @template U
     * @psalm-param callable(T):Option<U> $mapFunc
     * @psalm-return Option<U>
@@ -463,8 +448,6 @@ class Option {
     *
     *  - `$filterFunc` must follow this interface `callable(T):bool`
     *  - Returns `Option<T>`
-    *
-    * @psalm-mutation-free
     *
     * @psalm-param callable(T):bool $filterFunc
     *
@@ -558,7 +541,6 @@ class Option {
     *  - `$existsFunc` must follow this interface `callable(T):bool`
     *  - Returns `Option<T>`
     *
-    * @psalm-mutation-free
     * @psalm-param callable(T):bool $existsFunc
     **/
    public function exists(callable $existsFunc): bool {
@@ -630,9 +612,6 @@ class Option {
     *  - `$filterFunc` must follow this interface `callable(TT):bool`
     *  - Returns `Option<TT>`
     *
-    * @psalm-mutation-free
-    *
-    * @psalm-pure
     *
     * @template TT
     *
@@ -661,10 +640,6 @@ class Option {
     *  - `$filterFunc` must follow this interface `callable(TT):bool`
     *  - Returns `Option<TT>`
     *
-    * @psalm-mutation-free
-    *
-    * @psalm-pure
-    *
     * @template TT
     *
     * @psalm-param TT $someValue
@@ -689,10 +664,6 @@ class Option {
     * _Notes:_
     *
     * - Returns `Option<TT>`
-    *
-    * @psalm-mutation-free
-    *
-    * @psalm-pure
     *
     * @template TT
     *
