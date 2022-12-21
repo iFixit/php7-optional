@@ -80,6 +80,11 @@ class EitherTest extends TestCase
       $this->assertSame($rightThing4->rightOr(-5), 100);
    }
 
+   /**
+    * @psalm-suppress UnevaluatedCode since php unit is catching the throw
+    * @psalm-suppress UnevaluatedCode since php unit is catching the throw
+    * @psalm-suppress UnusedMethodCall since php unit is catching the throw
+    */
    public function testValueOrThrow(): void {
       $left = Either::left(1);
       $this->assertSame($left->getLeft(), 1);
