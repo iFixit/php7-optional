@@ -4,6 +4,8 @@ declare(strict_types = 1);
 
 namespace Optional;
 
+use Exception;
+
 /**
  * @template TLeft
  * @template TRight
@@ -83,6 +85,20 @@ class Either {
    }
 
    /**
+    * Returns the either value or throws
+    *
+    * @psalm-mutation-free
+    * @psalm-return (TLeft is never ? never : TLeft)
+    **/
+    public function getLeft() {
+      if (!$this->isLeft) {
+         throw new Exception("Left value is missing.");
+      }
+
+      return $this->leftValue;
+   }
+
+   /**
     * Returns the either value or returns `$alternative`
     *
     * @psalm-mutation-free
@@ -94,6 +110,20 @@ class Either {
       return !$this->isLeft
          ? $this->rightValue
          : $alternative;
+   }
+
+   /**
+    * Returns the either value or throws
+    *
+    * @psalm-mutation-free
+    * @psalm-return (TRight is never ? never : TRight)
+    **/
+    public function getRight() {
+      if ($this->isLeft) {
+         throw new \Exception("Right value is missing.");
+      }
+
+      return $this->rightValue;
    }
 
    /**

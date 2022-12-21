@@ -79,6 +79,26 @@ class EitherTest extends TestCase
       $this->assertSame($rightThing4->rightOr(-5), 100);
    }
 
+   public function testValueOrThrow(): void {
+      $left = Either::left(1);
+      $this->assertSame($left->getLeft(), 1);
+
+      $this->expectException(\Exception::class);
+      $left->getRight();
+
+      $this->expectExceptionMessage("Right is missing.");
+      $left->getRight();
+
+      $right = Either::right(1);
+      $this->assertSame($left->getRight(1), 1);
+
+      $this->expectException(\Exception::class);
+      $right->getLeft();
+
+      $this->expectExceptionMessage("Left is missing.");
+      $right->getLeft();
+   }
+
    public function testGettingValue(): void {
       $rightValue = "goodbye";
       $rightEither = Either::right($rightValue);

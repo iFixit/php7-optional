@@ -4,6 +4,8 @@ declare(strict_types = 1);
 
 namespace Optional;
 
+use Exception;
+
 /**
  * @template T
  *
@@ -64,6 +66,31 @@ class Option {
       return $this->hasValue
          ? $this->value
          : $alternative;
+   }
+
+   /**
+    * Returns the options value or throws
+    *
+    * ```php
+    * $someThing = Option::some(1);
+    * $someClass = Option::some(new SomeObject());
+    *
+    * $none = Option::none();
+    *
+    * $myVar = $someThing->value(); // 1
+    * $myVar = $someClass->value(); // instance of SomeObject
+    *
+    * $myVar = $none->valueOr(); // throws Exception("Value is missing.")
+    * ```
+    *
+    * @psalm-mutation-free
+    * @psalm-return (T is never ? never : T)
+    **/
+    public function value() {
+      if(!$this->hasValue) {
+         throw new Exception("Value is missing.");
+      }
+      return $this->value;
    }
 
    /**
@@ -347,7 +374,7 @@ class Option {
    public function mapSafely(callable $mapFunc): self {
       try {
          return $this->map($mapFunc);
-      } catch (\Exception $e) {
+      } catch (Exception $_e) {
          return Option::none();
       }
    }
