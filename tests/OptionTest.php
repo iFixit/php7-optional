@@ -35,22 +35,19 @@ class OptionTest extends TestCase {
       $this->assertTrue($some->hasValue());
    }
 
-   /**
-    * @psalm-suppress UnevaluatedCode since php unit is catching the throw
-    * @psalm-suppress UnevaluatedCode since php unit is catching the throw
-    * @psalm-suppress UnusedMethodCall since php unit is catching the throw
-    */
    public function testValueOrThrow(): void {
       $some = Option::some(1);
       $this->assertSame($some->value(), 1);
 
       $none = Option::none();
 
-      $this->expectException(MissingValueException::class);
-      $none->value();
-
-      $this->expectExceptionMessage("Value is missing.");
-      $none->value();
+      try {
+         /** @psalm-suppress UnusedMethodCall since php unit is catching the throw */
+         $none->value();
+      } catch(\Exception $e) {
+         $this->assertTrue($e instanceof MissingValueException);
+         $this->assertSame("Value is missing.", $e->getMessage());
+      }
    }
 
    public function testCreateAndCheckExistenceWhen(): void {

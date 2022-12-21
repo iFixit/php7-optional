@@ -80,29 +80,27 @@ class EitherTest extends TestCase
       $this->assertSame($rightThing4->rightOr(-5), 100);
    }
 
-   /**
-    * @psalm-suppress UnevaluatedCode since php unit is catching the throw
-    * @psalm-suppress UnevaluatedCode since php unit is catching the throw
-    * @psalm-suppress UnusedMethodCall since php unit is catching the throw
-    */
    public function testValueOrThrow(): void {
       $left = Either::left(1);
       $this->assertSame($left->getLeft(), 1);
 
-      $this->expectException(MissingValueException::class);
-      $left->getRight();
-
-      $this->expectExceptionMessage("Right is missing.");
-      $left->getRight();
+      try {
+         /** @psalm-suppress UnusedMethodCall since php unit is catching the throw */
+         $left->getRight();
+      } catch(Exception $e) {
+         $this->assertTrue($e instanceof MissingValueException);
+         $this->assertSame("Right value is missing.", $e->getMessage());
+      }
 
       $right = Either::right(1);
-      $this->assertSame($left->getRight(1), 1);
 
-      $this->expectException(MissingValueException::class);
-      $right->getLeft();
-
-      $this->expectExceptionMessage("Left is missing.");
-      $right->getLeft();
+      try {
+         /** @psalm-suppress UnusedMethodCall since php unit is catching the throw */
+         $right->getLeft();
+      } catch(Exception $e) {
+         $this->assertTrue($e instanceof MissingValueException);
+         $this->assertSame("Left value is missing.", $e->getMessage());
+      }
    }
 
    public function testGettingValue(): void {
