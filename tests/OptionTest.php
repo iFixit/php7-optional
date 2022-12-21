@@ -34,6 +34,19 @@ class OptionTest extends TestCase {
       $this->assertTrue($some->hasValue());
    }
 
+   public function testValueOrThrow(): void {
+      $some = Option::some(1);
+      $this->assertSame($some->value(), 1);
+
+      $none = Option::none();
+
+      $this->expectException(\Exception::class);
+      $none->value();
+
+      $this->expectExceptionMessage("Value is missing.");
+      $none->value();
+   }
+
    public function testCreateAndCheckExistenceWhen(): void {
       $someThing = Option::someWhen(1, function(int $x) { return $x > 0; });
       $someThing2 = Option::someWhen(-1, function(int $x) { return $x > 0; });
