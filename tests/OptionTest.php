@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace Optional\Tests;
 
+use Optional\Exceptions\MissingValueException;
 use Optional\Option;
 use PHPUnit\Framework\TestCase;
 
@@ -40,7 +41,7 @@ class OptionTest extends TestCase {
 
       $none = Option::none();
 
-      $this->expectException(\Exception::class);
+      $this->expectException(MissingValueException::class);
       $none->value();
 
       $this->expectExceptionMessage("Value is missing.");
