@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<files psalm-version="5.2.0@fb685a16df3050d4c18d8a4100fe83abe6458cba">
+  <file src="tests/EitherTest.php">
+    <PropertyNotSetInConstructor occurrences="2">
+      <code>EitherTest</code>
+      <code>EitherTest</code>
+    </PropertyNotSetInConstructor>
+  </file>
+  <file src="tests/OptionTest.php">
+    <PropertyNotSetInConstructor occurrences="2">
+      <code>OptionTest</code>
+      <code>OptionTest</code>
+    </PropertyNotSetInConstructor>
+  </file>
+</files>
