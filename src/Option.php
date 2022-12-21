@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace Optional;
 
 use Exception;
+use Optional\Exceptions\MissingValueException;
 
 /**
  * @template T
@@ -88,7 +89,7 @@ class Option {
     **/
     public function value() {
       if(!$this->hasValue) {
-         throw new Exception("Value is missing.");
+         throw new MissingValueException("Value is missing.");
       }
       return $this->value;
    }

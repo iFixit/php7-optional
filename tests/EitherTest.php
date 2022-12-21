@@ -6,6 +6,7 @@ namespace Optional\Tests;
 
 use Exception;
 use Optional\Either;
+use Optional\Exceptions\MissingValueException;
 use Optional\Option;
 use PHPUnit\Framework\TestCase;
 use stdClass;
@@ -83,7 +84,7 @@ class EitherTest extends TestCase
       $left = Either::left(1);
       $this->assertSame($left->getLeft(), 1);
 
-      $this->expectException(\Exception::class);
+      $this->expectException(MissingValueException::class);
       $left->getRight();
 
       $this->expectExceptionMessage("Right is missing.");
@@ -92,7 +93,7 @@ class EitherTest extends TestCase
       $right = Either::right(1);
       $this->assertSame($left->getRight(1), 1);
 
-      $this->expectException(\Exception::class);
+      $this->expectException(MissingValueException::class);
       $right->getLeft();
 
       $this->expectExceptionMessage("Left is missing.");

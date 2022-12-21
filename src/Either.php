@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace Optional;
 
-use Exception;
+use Optional\Exceptions\MissingValueException;
 
 /**
  * @template TLeft
@@ -92,7 +92,7 @@ class Either {
     **/
     public function getLeft() {
       if (!$this->isLeft) {
-         throw new Exception("Left value is missing.");
+         throw new MissingValueException("Left value is missing.");
       }
 
       return $this->leftValue;
@@ -120,7 +120,7 @@ class Either {
     **/
     public function getRight() {
       if ($this->isLeft) {
-         throw new \Exception("Right value is missing.");
+         throw new MissingValueException("Right value is missing.");
       }
 
       return $this->rightValue;
