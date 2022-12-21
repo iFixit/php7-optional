@@ -35,6 +35,11 @@ class OptionTest extends TestCase {
       $this->assertTrue($some->hasValue());
    }
 
+   /**
+    * @psalm-suppress UnevaluatedCode since php unit is catching the throw
+    * @psalm-suppress UnevaluatedCode since php unit is catching the throw
+    * @psalm-suppress UnusedMethodCall since php unit is catching the throw
+    */
    public function testValueOrThrow(): void {
       $some = Option::some(1);
       $this->assertSame($some->value(), 1);
