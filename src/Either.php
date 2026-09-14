@@ -373,6 +373,7 @@ final class Either {
     * );
     *
     *
+    * $config = null; // whatever your config loader handed back
     * $configEither = Either::left($config)->leftNotNull("Config was missing!");
     *
     * $configEither->match(
@@ -402,6 +403,7 @@ final class Either {
     * Side effect function: Runs the function iff the either is `Either::left`
     *
     * ```php
+    * $config = null; // whatever your config loader handed back
     * $configEither = Either::left($config)->leftNotNull("Config was missing!");
     *
     * $configEither->matchLeft(
@@ -427,6 +429,7 @@ final class Either {
     * Side effect function: Runs the function iff the either is `Either::right`
     *
     * ```php
+    * $config = null; // whatever your config loader handed back
     * $configEither = Either::left($config)->leftNotNull("Config was missing!");
     *
     * $configEither->matchRight(
@@ -713,6 +716,7 @@ final class Either {
     * Turn an `Either::left(null)` into an `Either::right($rightValue)` iff `is_null($value)`
     *
     * ```php
+    * $myVar = null;
     * $leftThing = Either::left($myVar); // Valid
     * $rightThing = $leftThing->leftNotNull("The var was null"); // Turn null into an Either::right($rightValue)
     * ```
@@ -753,6 +757,7 @@ final class Either {
     * Turn an `Either::left(null)` into an `Either::right($rightValue)` iff `!$value == true`
     *
     * ```php
+    * $myVar = null;
     * $leftThing = Either::left($myVar); // Valid
     * $rightThing = $leftThing->leftNotNull("The var was null"); // Turn null into an Either::right($rightValue)
     * ```

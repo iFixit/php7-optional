@@ -88,7 +88,11 @@ final class Option {
     * $myVar = $someThing->value(); // 1
     * $myVar = $someClass->value(); // instance of SomeObject
     *
-    * $myVar = $none->valueOr(); // throws Exception("Value is missing.")
+    * try {
+    *    $none->value();
+    * } catch (\Optional\Exceptions\MissingValueException $e) {
+    *    echo $e->getMessage(); // "Value is missing."
+    * }
     * ```
     *
     * @psalm-mutation-free
@@ -245,6 +249,7 @@ final class Option {
     * );
     *
     *
+    * $config = null; // whatever your config loader handed back
     * $configOption = Option::some($config)->notNull();
     *
     * $configOption->match(
@@ -272,6 +277,7 @@ final class Option {
     * Side effect function: Runs the function iff the option is `Option::some`
     *
     * ```php
+    * $config = null; // whatever your config loader handed back
     * $configOption = Option::some($config)->notNull();
     *
     * $configOption->matchSome(
@@ -295,6 +301,7 @@ final class Option {
     * Side effect function: Runs the function iff the option is `Option::none`
     *
     * ```php
+    * $config = null; // whatever your config loader handed back
     * $configOption = Option::some($config)->notNull();
     *
     * $configOption->matchNone(
