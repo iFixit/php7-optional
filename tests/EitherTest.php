@@ -11,7 +11,7 @@ use Optional\Option;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 
-class EitherTest extends TestCase
+final class EitherTest extends TestCase
 {
    public function testCreateAndCheckExistence(): void
    {
@@ -311,10 +311,10 @@ class EitherTest extends TestCase
 
       $this->assertTrue($hasMatched);
 
-      $right->matchleft(function($_x) { $this->fail('Callback should not have been run!'); });
+      $right->matchLeft(function($_x) { $this->fail('Callback should not have been run!'); });
 
       $hasMatched = false;
-      $left->matchleft(function($x) use (&$hasMatched) { return $hasMatched = $x == 1; });
+      $left->matchLeft(function($x) use (&$hasMatched) { return $hasMatched = $x == 1; });
       $this->assertTrue($hasMatched);
 
       $left->matchRight(function() { $this->fail('Callback should not have been run!'); });

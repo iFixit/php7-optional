@@ -8,7 +8,7 @@ use Optional\Exceptions\MissingValueException;
 use Optional\Option;
 use PHPUnit\Framework\TestCase;
 
-class OptionTest extends TestCase {
+final class OptionTest extends TestCase {
    public function testCreateAndCheckExistence(): void {
       $noneOption = Option::none();
 
@@ -406,16 +406,16 @@ class OptionTest extends TestCase {
    }
 }
 
-class SomeObject {};
-class SomeComplexThing {
+final class SomeObject {}
+final class SomeComplexThing {
    /**
     * @throws \Exception
     */
-   public static function doWork(string $thing, string $ex = null): string {
-      if($ex) {
+   public static function doWork(string $thing, ?string $ex = null): string {
+      if ($ex !== null) {
          throw new \Exception($ex);
       }
 
       return $thing;
    }
-};
+}
