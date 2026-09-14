@@ -1,6 +1,6 @@
 {
     "name": "ifixit/php7-optional",
-    "description": "PHP 7 optional wrapper that provides an alternative to null",
+    "description": "Option and Either types for PHP: an alternative to null and to throwing",
     "license": "MIT",
     "authors": [
         {
@@ -9,7 +9,7 @@
         }
     ],
     "require": {
-      "php": "^7.2 || ^8.0"
+      "php": "^8.4"
     },
     "autoload": {
       "psr-4": {
@@ -22,7 +22,7 @@
       }
     },
     "require-dev": {
-        "phpunit/phpunit": "^9.5",
-        "vimeo/psalm": "^5.2"
+        "phpunit/phpunit": "^11.5",
+        "vimeo/psalm": "^6.0"
     }
 }
