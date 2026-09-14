@@ -184,8 +184,8 @@ final class Either {
     * Returns a `Either::left($value)` iff the either orginally was `Either::right($rightValue)`
     *
     * ```php
-    * $right = Either::right();
-    * $myVar = $right->or(10); // A left instance, with value 10
+    * $right = Either::right("no value");
+    * $myVar = $right->orLeft(10); // A left instance, with value 10
     * ```
     *
     * _Notes:_
@@ -227,7 +227,7 @@ final class Either {
     * The `$valueFactoryFunc` is called lazily - iff the either orginally was `Either::right($rightValue)`
     *
     * ```php
-    * $right = Either::right();
+    * $right = Either::right("no value");
     * $myVar = $right->orCreateLeft(function($rightValue) { return 10; }); // A left instance, with value 10, but lazy
     * ```
     *
@@ -318,7 +318,7 @@ final class Either {
     * `$otherEitherFactoryFunc` is run lazily
     *
     * ```php
-    * $right = Either::right();
+    * $right = Either::right("no value");
     *
     * $myVar = $right->elseCreateLeft(function($rightValue) { return Either::left(10); }); // A left instance, with value 10, but lazy
     * ```
@@ -533,7 +533,7 @@ final class Either {
     *
     * ```php
     * $left = Either::left(['key' => 'value']);
-    * $right = $left->mapLeftSafely(function($array) { $thing = $array['Missing Key will cause error']; return 5; });
+    * $right = $left->mapLeftSafely(function(array $array) { throw new \Exception("boom"); }); // Right(Exception("boom"))
     * ```
     *
     * _Notes:_
@@ -596,10 +596,10 @@ final class Either {
     *
     * ```php
     * $right = Either::right(null);
-    * $rightNotNull = $right->flatMapLeft(function($rightValue) { return Either::left($rightValue)->leftNotNull(); });
+    * $rightNotNull = $right->flatMapLeft(function($rightValue) { return Either::left($rightValue)->leftNotNull("was null"); });
     *
     * $left = Either::left(null);
-    * $leftNotNull = $left->flatMapLeft(function($leftValue) { return Either::left($leftValue)->leftNotNull(); });
+    * $leftNotNull = $left->flatMapLeft(function($leftValue) { return Either::left($leftValue)->leftNotNull("was null"); });
     * ```
     *
     * _Notes:_
@@ -892,8 +892,8 @@ final class Either {
     * Returns an `Option` which drops the right value.
     *
     * ```php
-    * $either = Either::right("Some Error Message");
-    * $option = $either->toOption();
+    * $none = Either::right("Some Error Message")->toOptionFromLeft(); // Option::none()
+    * $some = Either::left(10)->toOptionFromLeft();                    // Option::some(10)
     * ```
     *
     * _Notes:_
@@ -1037,7 +1037,8 @@ final class Either {
     *
     * ```php
     * $left = Either::left(null); // Valid, returns left(null)
-    * $right = Either::leftNotNull(null); // Valid, returns Right()
+    * $right = Either::notNullLeft(null, "was null"); // Right("was null")
+    * $left = Either::notNullLeft(10, "was null");    // Left(10)
     * ```
     * _Notes:_
     *

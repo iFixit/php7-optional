@@ -365,7 +365,7 @@ final class Option {
     *
     * ```php
     * $some = Option::some(['key' => 'value']);
-    * $none = $some->safeMap(function($array) { $thing = $array['Missing Key will cause error']; return 5; });
+    * $none = $some->mapSafely(function(array $array) { throw new \Exception("boom"); }); // Option::none()
     * ```
     *
     * _Notes:_
