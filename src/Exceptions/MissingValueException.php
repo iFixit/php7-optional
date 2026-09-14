@@ -5,10 +5,16 @@ declare(strict_types = 1);
 namespace Optional\Exceptions;
 
 use Exception;
-use Throwable;
 
-class MissingValueException extends Exception {
-   public function __construct(string $message = "", int $code = 0, ?Throwable $previous = null) {
-      parent::__construct($message, $code, $previous);
-   }
+/**
+ * Thrown when a value is read off the empty side of a box.
+ *
+ * `Option::none()->value()`, `Either::right(...)->getLeft()` and
+ * `Either::left(...)->getRight()` all raise this. Every other way of reading a
+ * box either takes an alternative or hands you both cases, so this is the only
+ * exception the library throws on its own.
+ *
+ * @api
+ */
+final class MissingValueException extends Exception {
 }

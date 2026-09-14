@@ -7,10 +7,18 @@ namespace Optional;
 use Optional\Exceptions\MissingValueException;
 
 /**
+ * A box holding exactly one of two values: `Either::left()` or `Either::right()`.
+ *
+ * Never both, never neither. The same transformations are available on each side.
+ *
+ * The class is final because the static factories build with `new self`, so a
+ * subclass would be silently downgraded to an `Either` by the first `mapLeft`.
+ *
+ * @api
  * @template TLeft
  * @template TRight
  */
-class Either {
+final class Either {
    /**
     * @psalm-var bool
     * @psalm-readonly

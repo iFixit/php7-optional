@@ -8,10 +8,17 @@ use Exception;
 use Optional\Exceptions\MissingValueException;
 
 /**
- * @template T
+ * A box that optionally holds a value: `Option::some($value)` or `Option::none()`.
  *
+ * Use it in place of a nullable return so a caller cannot forget the empty case.
+ *
+ * The class is final because the static factories build with `new self`, so a
+ * subclass would be silently downgraded to an `Option` by the first `map` call.
+ *
+ * @api
+ * @template T
  */
-class Option {
+final class Option {
    /**
     * @psalm-var bool
     * @psalm-readonly
