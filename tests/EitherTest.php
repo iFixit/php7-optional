@@ -244,21 +244,19 @@ final class EitherTest extends TestCase
       $this->assertSame($leftThing->leftOr(-1), 1);
       $this->assertSame($leftClass->leftOr("-1"), $someObject);
 
-      /** @psalm-suppress UnusedMethodCall so we can show that psalm even knows this is impossible */
-      $leftThing->elseCreateLeft(
-         /** @return never */
-         function(string $_x) {
-            $this->fail('Callback should not have been run!');
-         }
-      );
+      $factoryRan = false;
+      $leftThing->elseCreateLeft(function() use (&$factoryRan): Either {
+         $factoryRan = true;
+         return Either::left('unreachable');
+      });
+      $this->assertFalse($factoryRan, 'elseCreateLeft must not build an alternative for a Left');
 
-      /** @psalm-suppress UnusedMethodCall so we can show that psalm even knows this is impossible */
-      $leftClass->elseCreateLeft(
-         /** @return never */
-         function(string $_x) {
-            $this->fail('Callback should not have been run!');
-         }
-      );
+      $factoryRan = false;
+      $leftClass->elseCreateLeft(function() use (&$factoryRan): Either {
+         $factoryRan = true;
+         return Either::left('unreachable');
+      });
+      $this->assertFalse($factoryRan, 'elseCreateLeft must not build an alternative for a Left');
 
 
       $rightThing = $rightEither->elseCreateRight(function($_x) {
@@ -268,13 +266,12 @@ final class EitherTest extends TestCase
       $this->assertTrue($rightThing->isRight());
       $this->assertSame($rightThing->rightOr(-1), $rightValue);
 
-      /** @psalm-suppress UnusedMethodCall so we can show that psalm even knows this is impossible */
-      $rightThing->elseCreateRight(
-         /** @return never */
-         function(string $_x) {
-            $this->fail('Callback should not have been run!');
-         }
-      );
+      $factoryRan = false;
+      $rightThing->elseCreateRight(function() use (&$factoryRan): Either {
+         $factoryRan = true;
+         return Either::left('unreachable');
+      });
+      $this->assertFalse($factoryRan, 'elseCreateRight must not build an alternative for a Right');
    }
 
    public function testMatching(): void {
@@ -289,35 +286,46 @@ final class EitherTest extends TestCase
 
       $success = $left->match(
           function($_x) { return 2; },
-          /** @psalm-suppress NoValue */
-          function(int $x) { return $x; }
+          function() { return -1; }
       );
 
       $this->assertSame($failure, $rightValue);
       $this->assertSame($success, 2);
 
 
-      $hasMatched = $right->match(
-          function($_x) { $this->fail('Callback should not have been run!'); },
-          function($_x) { return true; }
+      $whichRan = $right->match(
+          function() { return 'left'; },
+          function() { return 'right'; }
       );
 
-      $this->assertTrue($hasMatched);
+      $this->assertSame('right', $whichRan, 'match on a Right runs the right branch');
 
-      $hasMatched = $left->match(
-          function($x) { return $x == 1; },
-          function($_x) { $this->fail('Callback should not have been run!'); }
+      $whichRan = $left->match(
+          function(int $x) { return "left:{$x}"; },
+          function() { return 'right'; }
       );
 
-      $this->assertTrue($hasMatched);
+      /**
+       * @psalm-suppress RedundantConditionGivenDocblockType psalm folds this to
+       * 'left:1' because Either::left(1) types the right branch as never, so it
+       * proves the outcome statically. Keeping the runtime check anyway: it is
+       * what catches match() wiring the two callables up backwards, which the
+       * types alone would not.
+       */
+      $this->assertSame('left:1', $whichRan, 'match on a Left runs the left branch with its value');
 
-      $right->matchLeft(function($_x) { $this->fail('Callback should not have been run!'); });
+      $leftRan = false;
+      $right->matchLeft(function() use (&$leftRan) { $leftRan = true; });
+      $this->assertFalse($leftRan, 'matchLeft must not run its callback on a Right');
 
       $hasMatched = false;
       $left->matchLeft(function($x) use (&$hasMatched) { return $hasMatched = $x == 1; });
       $this->assertTrue($hasMatched);
 
-      $left->matchRight(function() { $this->fail('Callback should not have been run!'); });
+      $rightRan = false;
+      $left->matchRight(function() use (&$rightRan) { $rightRan = true; });
+      $this->assertFalse($rightRan, 'matchRight must not run its callback on a Left');
+
       $hasMatched = false;
 
       $right->matchRight(function() use (&$hasMatched) { $hasMatched = true; });
@@ -343,10 +351,7 @@ final class EitherTest extends TestCase
       $left = Either::left("a");
 
       $rightUpper = $right->mapRight(function(string $x) { return strtoupper($x); });
-      $leftUpper = $left->mapRight(
-         /** @psalm-suppress NoValue */
-         function(string $x) { return strtoupper($x); }
-      );
+      $leftUpper = $left->mapRight(function() { return 'UNREACHABLE'; });
 
       $this->assertFalse($rightUpper->isLeft());
       $this->assertTrue($leftUpper->isLeft());

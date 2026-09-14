@@ -206,30 +206,33 @@ final class OptionTest extends TestCase {
       $this->assertSame($failure, -2);
       $this->assertSame($success, 2);
 
-      $hasMatched = $none->match(
-          function($_x) { $this->fail('Callback should not have been run!'); },
-          function() { return true; }
+      $whichRan = $none->match(
+          function() { return 'some'; },
+          function() { return 'none'; }
       );
-      $this->assertTrue($hasMatched);
+      $this->assertSame('none', $whichRan, 'match on a None runs the none branch');
 
-      $hasMatched = $some->match(
-          function($x) { return $x == 1; },
-          function() { $this->fail('Callback should not have been run!'); }
+      $whichRan = $some->match(
+          function() { return 'some'; },
+          function() { return 'none'; }
       );
-      $this->assertTrue($hasMatched);
+      $this->assertSame('some', $whichRan, 'match on a Some runs the some branch');
 
-      /** @psalm-suppress UnusedMethodCall so we can show that psalm even knows this is impossible */
-      $none->matchSome(function(int $_x) { $this->fail('Callback should not have been run!'); });
+      $someRan = false;
+      $none->matchSome(function() use (&$someRan) { $someRan = true; });
+      $this->assertFalse($someRan, 'matchSome must not run its callback on a None');
 
       $hasMatched = false;
       $some->matchSome(function(int $x) use (&$hasMatched) { return $hasMatched = $x == 1; });
       $this->assertTrue($hasMatched);
 
-      /** @psalm-suppress UnusedMethodCall so we can show that psalm even knows this is impossible */
-      $some->matchNone(function() { $this->fail('Callback should not have been run!'); });
+      $noneRan = false;
+      $some->matchNone(function() use (&$noneRan) { $noneRan = true; });
+      $this->assertFalse($noneRan, 'matchNone must not run its callback on a Some');
 
+      $hasMatched = false;
       $none->matchNone(function() use (&$hasMatched) { $hasMatched = true; });
-      $this->assertTrue($hasMatched);
+      $this->assertTrue($hasMatched, 'matchNone must run its callback on a None');
    }
 
    public function testMapping(): void {
