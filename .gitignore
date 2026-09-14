@@ -1,4 +1,4 @@
 .DS_Store
 vendor/
-.phpunit.result.cache
 clover.xml
+.phpunit.cache/
