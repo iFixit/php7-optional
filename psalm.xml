@@ -11,6 +11,7 @@
     <projectFiles>
         <directory name="src"/>
         <directory name="tests"/>
+        <directory name="bin"/>
         <ignoreFiles>
             <directory name="vendor"/>
         </ignoreFiles>
@@ -19,4 +20,76 @@
     <plugins>
         <pluginClass class="Psalm\PhpUnitPlugin\Plugin"/>
     </plugins>
+
+    <!--
+        tests/generated/DocblockExamples.php holds every ```php example from src/
+        and README.md, so psalm checks that the documentation type-checks and not
+        just that it runs. Either::flatMapLeft demanded an impossible
+        Either<never, never> for years and its own example was an InvalidArgument
+        that nothing reported.
+
+        The suppressions below are the ways an example is legitimately unlike
+        production code, and nothing more. An example assigns $myVar to show a
+        result and never reads it, echoes to show output, casts a box to string,
+        and leaves closure types off for brevity. The Mixed* and InvalidOperand
+        entries are the library's own honest edges: fromArray cannot narrow past
+        mixed, and arithmetic inside a callback psalm has proved unreachable is
+        arithmetic on never. NoValue and InvalidArrayOffset are the same shape:
+        an example that shows a miss uses a key psalm can see is absent, and one
+        that shows both branches has a branch psalm has proved unreachable.
+
+        Everything that catches a real defect stays on, which is
+        UndefinedClass, UndefinedMethod, InvalidArgument, TooFewArguments and
+        the rest of the default set.
+    -->
+    <issueHandlers>
+        <UnusedVariable>
+            <errorLevel type="suppress"><file name="tests/generated/DocblockExamples.php"/></errorLevel>
+        </UnusedVariable>
+        <UnusedClosureParam>
+            <errorLevel type="suppress"><file name="tests/generated/DocblockExamples.php"/></errorLevel>
+        </UnusedClosureParam>
+        <UnusedMethodCall>
+            <errorLevel type="suppress"><file name="tests/generated/DocblockExamples.php"/></errorLevel>
+        </UnusedMethodCall>
+        <MissingClosureReturnType>
+            <errorLevel type="suppress"><file name="tests/generated/DocblockExamples.php"/></errorLevel>
+        </MissingClosureReturnType>
+        <MissingClosureParamType>
+            <errorLevel type="suppress"><file name="tests/generated/DocblockExamples.php"/></errorLevel>
+        </MissingClosureParamType>
+        <ForbiddenCode>
+            <errorLevel type="suppress"><file name="tests/generated/DocblockExamples.php"/></errorLevel>
+        </ForbiddenCode>
+        <InvalidCast>
+            <errorLevel type="suppress"><file name="tests/generated/DocblockExamples.php"/></errorLevel>
+        </InvalidCast>
+        <ReservedWord>
+            <errorLevel type="suppress"><file name="tests/generated/DocblockExamples.php"/></errorLevel>
+        </ReservedWord>
+        <MixedArrayAccess>
+            <errorLevel type="suppress"><file name="tests/generated/DocblockExamples.php"/></errorLevel>
+        </MixedArrayAccess>
+        <MixedAssignment>
+            <errorLevel type="suppress"><file name="tests/generated/DocblockExamples.php"/></errorLevel>
+        </MixedAssignment>
+        <MixedOperand>
+            <errorLevel type="suppress"><file name="tests/generated/DocblockExamples.php"/></errorLevel>
+        </MixedOperand>
+        <InvalidOperand>
+            <errorLevel type="suppress"><file name="tests/generated/DocblockExamples.php"/></errorLevel>
+        </InvalidOperand>
+        <PossiblyNullOperand>
+            <errorLevel type="suppress"><file name="tests/generated/DocblockExamples.php"/></errorLevel>
+        </PossiblyNullOperand>
+        <NoValue>
+            <errorLevel type="suppress"><file name="tests/generated/DocblockExamples.php"/></errorLevel>
+        </NoValue>
+        <InvalidArrayOffset>
+            <errorLevel type="suppress"><file name="tests/generated/DocblockExamples.php"/></errorLevel>
+        </InvalidArrayOffset>
+        <MixedArgument>
+            <errorLevel type="suppress"><file name="tests/generated/DocblockExamples.php"/></errorLevel>
+        </MixedArgument>
+    </issueHandlers>
 </psalm>

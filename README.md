@@ -152,7 +152,7 @@ try {
       return new RuntimeException("could not load the build", 0, $cause);
    });
 } catch (RuntimeException $e) {
-   echo $e->getMessage() . ": " . $e->getPrevious()->getMessage() . "\n";
+   echo $e->getMessage() . ": " . $e->getPrevious()?->getMessage() . "\n";
    // "could not load the build: the api said no"
 }
 ```

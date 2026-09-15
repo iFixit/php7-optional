@@ -189,7 +189,7 @@ final class Either {
     *       return new \Exception("No build id", 0, $cause);
     *    });
     * } catch (\Exception $e) {
-    *    echo $e->getPrevious()->getMessage(); // "the api said no"
+    *    echo $e->getPrevious()?->getMessage(); // "the api said no"
     * }
     * ```
     *
@@ -720,7 +720,15 @@ final class Either {
     *
     * _Notes:_
     *
-    *  - `$mapFunc` must follow this interface `callable(TLeft):Either<ULeft, TRight>`
+    *  - `$mapFunc` must follow this interface `callable(TLeft):Either<ULeft, URight>`
+    *  - When your callback returns a `Either::left` on one branch and a
+    *    `Either::right` on another, psalm infers a union of two Either types
+    *    and cannot bind it to the templates. Give the callback an explicit
+    *    `@psalm-return Either<L, R>`, or use a named function with a declared
+    *    return type, and it binds
+    *  - The callback may change the right type as well. Deciding a value is
+    *    bad is the point of this method, and that produces a right value the
+    *    original box never had. Its `flatMapRight` twin is widened the same way
     *  - Returns `Either<TLeft, TRight>`
     *
     * _Notes:_
@@ -748,7 +756,7 @@ final class Either {
     * $parse = function(string $error): string { throw new \Exception("could not parse: {$error}"); };
     *
     * $either = Either::right('{bad json}')->mapRightSafely($parse);
-    * echo get_class($either->rightOr(new \Exception('x'))), "\n"; // "Exception"
+    * echo $either->isRight() ? "right\n" : "left\n";  // "right", holding the Exception
     *
     * echo (string) Either::left(1)->mapRightSafely($parse), "\n"; // Left(1), $parse never runs
     * ```
@@ -785,25 +793,30 @@ final class Either {
     *
     * $person = Either::fromArray($leftPerson, 'name', 'name was missing');
     *
-    *   $name = $person->andThen(function($person) {
-    *      $fullName = $person['first'] . $person['last'];
-    *      try {
-    *         $thing = SomeComplexThing::doWork($fullName);
-    *      } catch (\Exception $e) {
-    *         return Either::right('SomeComplexThing had an error!');
-    *      }
-    *      return Either::left($thing);
-    *  });
+    * $name = $person->andThen(function(array $person): Either {
+    *    return Either::left($person['first'] . $person['last']);
+    * });
+    *
+    * echo (string) $name, "\n"; // Left(FirstLast)
     * ```
     *
     * _Notes:_
     *
-    *  - `$mapFunc` must follow this interface `callable(TLeft):Either<ULeft, TRight>`
+    *  - `$mapFunc` must follow this interface `callable(TLeft):Either<ULeft, URight>`
+    *  - When your callback returns a `Either::left` on one branch and a
+    *    `Either::right` on another, psalm infers a union of two Either types
+    *    and cannot bind it to the templates. Give the callback an explicit
+    *    `@psalm-return Either<L, R>`, or use a named function with a declared
+    *    return type, and it binds
+    *  - The callback may change the right type as well. Deciding a value is
+    *    bad is the point of this method, and that produces a right value the
+    *    original box never had. Its `flatMapRight` twin is widened the same way
     *  - Returns `Either<TLeft, TRight>`
     *
     * @template ULeft
-    * @psalm-param callable(TLeft):Either<ULeft, TRight> $mapFunc
-    * @psalm-return (TRight is never ? Either<ULeft, TRight> : Either<TLeft, TRight>)
+    * @template URight
+    * @psalm-param callable(TLeft):Either<ULeft, URight> $mapFunc
+    * @psalm-return Either<TLeft, TRight>|Either<ULeft, URight>
     **/
     public function andThen(callable $mapFunc): self {
       return $this->flatMapLeft($mapFunc);
@@ -826,8 +839,9 @@ final class Either {
     *  - Returns `Either<ULeft, TRight>`
     *
     * @template ULeft
-    * @psalm-param callable(TLeft):Either<ULeft, TRight> $mapFunc
-    * @psalm-return (TRight is never ? Either<ULeft, TRight> : Either<TLeft, TRight>)
+    * @template URight
+    * @psalm-param callable(TLeft):Either<ULeft, URight> $mapFunc
+    * @psalm-return Either<TLeft, TRight>|Either<ULeft, URight>
     **/
    public function flatMapLeft(callable $mapFunc): self {
       return $this->isLeft
@@ -842,13 +856,12 @@ final class Either {
     * decide it is not an error after all.
     *
     * ```php
-    * $recover = function(string $error) {
-    *    return $error === 'not found' ? Either::left('default') : Either::right($error);
-    * };
+    * $useDefault = function(string $_error): Either { return Either::left('default'); };
+    * $keep = function(string $error): Either { return Either::right("still {$error}"); };
     *
-    * echo (string) Either::right('not found')->flatMapRight($recover), "\n"; // Left(default)
-    * echo (string) Either::right('on fire')->flatMapRight($recover), "\n";   // Right(on fire)
-    * echo (string) Either::left(1)->flatMapRight($recover), "\n";            // Left(1), untouched
+    * echo (string) Either::right('not found')->flatMapRight($useDefault), "\n"; // Left(default)
+    * echo (string) Either::right('on fire')->flatMapRight($keep), "\n";         // Right(still on fire)
+    * echo (string) Either::left(1)->flatMapRight($useDefault), "\n";            // Left(1), untouched
     * ```
     *
     * _Notes:_

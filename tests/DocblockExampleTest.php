@@ -24,37 +24,13 @@ use Throwable;
  * better in the documentation anyway.
  */
 final class DocblockExampleTest extends TestCase {
-   private const SOURCE_FILES = [
-      'src/Option.php',
-      'src/Either.php',
-      'src/Exceptions/MissingValueException.php',
-      'README.md',
-   ];
-
-   /**
-    * Names the examples may use, injected into each example's scope.
-    */
-   private const PRELUDE = <<<'PHP'
-      use Optional\Either;
-      use Optional\Option;
-      use Optional\Tests\Fixtures\NewObject;
-      use Optional\Tests\Fixtures\SomeComplexThing;
-      use Optional\Tests\Fixtures\SomeObject;
-      PHP;
-
    /**
     * @return iterable<string, array{string, string}>
     */
    public static function docblockExampleProvider(): iterable {
-      $root = dirname(__DIR__);
-
-      foreach (self::SOURCE_FILES as $relativePath) {
-         $source = (string) file_get_contents("{$root}/{$relativePath}");
-
-         foreach (self::extractExamples($source) as $index => $example) {
-            $label = sprintf('%s #%d %s()', $relativePath, $index + 1, $example['symbol']);
-            yield $label => [$example['code'], $label];
-         }
+      foreach (ExampleSource::all() as $example) {
+         $label = sprintf('%s #%d %s()', $example['file'], $example['index'], $example['symbol']);
+         yield $label => [$example['code'], $label];
       }
    }
 
@@ -104,51 +80,12 @@ final class DocblockExampleTest extends TestCase {
 
       foreach ($imported as $class) {
          $this->assertTrue(class_exists($class), "{$class} is imported by PRELUDE but does not exist");
-         $this->assertStringContainsString($class, self::PRELUDE, "PRELUDE no longer imports {$class}");
+         $this->assertStringContainsString($class, ExampleSource::PRELUDE, "PRELUDE no longer imports {$class}");
       }
 
       $this->assertSame('work', SomeComplexThing::doWork('work'));
       $this->expectException(\Exception::class);
       SomeComplexThing::doWork('work', 'boom');
-   }
-
-   /**
-    * @return list<array{symbol: string, code: string}>
-    */
-   private static function extractExamples(string $source): array {
-      $examples = [];
-      $offset = 0;
-      $open = "```php\n";
-
-      while (($start = strpos($source, $open, $offset)) !== false) {
-         $bodyAt = $start + strlen($open);
-         $end = strpos($source, '```', $bodyAt);
-         if ($end === false) {
-            break;
-         }
-
-         $code = trim(implode("\n", array_map(
-            static fn(string $line): string => (string) preg_replace('/^\s*\*\s?/', '', $line),
-            explode("\n", substr($source, $bodyAt, $end - $bodyAt))
-         )));
-
-         if ($code !== '') {
-            $examples[] = ['symbol' => self::symbolAfter($source, $end), 'code' => $code];
-         }
-
-         $offset = $end + 3;
-      }
-
-      return $examples;
-   }
-
-   /**
-    * Names the method the example documents, so a failure says which one.
-    */
-   private static function symbolAfter(string $source, int $offset): string {
-      $tail = substr($source, $offset, 4000);
-
-      return preg_match('/function\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(/', $tail, $m) === 1 ? $m[1] : 'unknown';
    }
 
    /**
@@ -170,7 +107,7 @@ final class DocblockExampleTest extends TestCase {
       ob_start();
 
       try {
-         eval(self::PRELUDE . "\n" . $code);
+         eval(ExampleSource::PRELUDE . "\n" . $code);
       } finally {
          ob_end_clean();
          ini_set('error_log', $previousLog === false ? '' : $previousLog);

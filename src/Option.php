@@ -501,18 +501,22 @@ final class Option {
     *
     * $person = Option::fromArray($somePerson, 'name');
     *
-    *   $name = $person->flatMap(function($person) {
-    *      $fullName = $person['first'] . $person['last'];
-    *      try {
-    *         $thing = SomeComplexThing::doWork($fullName, "Forcing some exception");
-    *      } catch (\Exception $e) {
-    *         return Option::none();
-    *      }
-    *      return Option::some($thing);
-    *  });
+    * $name = $person->flatMap(function(array $person): Option {
+    *    return Option::someNotFalsy($person['first'] . $person['last']);
+    * });
+    *
+    * echo (string) $name, "\n"; // Some(FirstLast)
     * ```
     *
-    * Note: `$mapFunc` must follow this interface `function mapFunc(mixed $value): Option`
+    * _Notes:_
+    *
+    *  - `$mapFunc` must follow this interface `callable(T):Option<U>`
+    *  - When your callback returns a `Option::some` on one branch and a
+    *    `Option::none` on another, psalm infers a union of two Option types
+    *    and cannot bind it to `U`. Give the callback an explicit
+    *    `@psalm-return Option<YourType>`, or use a named function with a
+    *    declared return type, and it binds
+    *
     * @template U
     * @psalm-param callable(T):Option<U> $mapFunc
     * @psalm-return Option<U>
@@ -537,18 +541,21 @@ final class Option {
     *
     * $person = Option::fromArray($somePerson, 'name');
     *
-    *   $name = $person->andThen(function($person) {
-    *      $fullName = $person['first'] . $person['last'];
-    *      try {
-    *         $thing = SomeComplexThing::doWork($fullName);
-    *      } catch (\Exception $e) {
-    *         return Option::none();
-    *      }
-    *      return Option::some($thing);
-    *  });
+    * $name = $person->andThen(function(array $person): Option {
+    *    return Option::someNotFalsy($person['first'] . $person['last']);
+    * });
+    *
+    * echo (string) $name, "\n"; // Some(FirstLast)
     * ```
     *
-    * Note: `$mapFunc` must follow this interface `function mapFunc(mixed $value): Option`
+    * _Notes:_
+    *
+    *  - `$mapFunc` must follow this interface `callable(T):Option<U>`
+    *  - When your callback returns a `Option::some` on one branch and a
+    *    `Option::none` on another, psalm infers a union of two Option types
+    *    and cannot bind it to `U`. Give the callback an explicit
+    *    `@psalm-return Option<YourType>`, or use a named function with a
+    *    declared return type, and it binds
     *
     * @template U
     * @psalm-param callable(T):Option<U> $mapFunc
