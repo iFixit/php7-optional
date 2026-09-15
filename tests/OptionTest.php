@@ -464,6 +464,23 @@ final class OptionTest extends TestCase {
       $this->assertTrue($stillSome->hasValue(), 'a returned null is still a Some, use notNull to collapse it');
    }
 
+   /**
+    * mapSafely deliberately catches Exception and not Throwable. A mutation
+    * sweep found nothing pinned that, so the two boxes could be made to agree
+    * in exactly the way AGENTS.md says not to, with CI staying green.
+    */
+   public function testMapSafelyCatchesExceptionAndDropsIt(): void {
+      $none = Option::some(1)->mapSafely(function(int $_x): int { throw new \Exception("boom"); });
+
+      $this->assertFalse($none->hasValue(), 'a thrown Exception becomes a None');
+   }
+
+   public function testMapSafelyLetsErrorsThrough(): void {
+      $this->expectException(\TypeError::class);
+
+      Option::some(1)->mapSafely(function(int $_x): int { throw new \TypeError("not an exception"); });
+   }
+
    public function testFromCallableLetsErrorsThrough(): void {
       $this->expectException(\TypeError::class);
       Option::fromCallable(function(): int { throw new \TypeError("not an exception"); });

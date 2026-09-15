@@ -742,6 +742,41 @@ final class EitherTest extends TestCase
       $this->assertFalse(Either::right('err')->toOptionFromLeft()->hasValue());
    }
 
+   /**
+    * The counterpart to OptionTest::testMapSafelyLetsErrorsThrough. Nothing
+    * pinned either half before, so the asymmetry the docs insist on was
+    * free to drift.
+    */
+   public function testMapLeftSafelyCatchesThrowableAndKeepsIt(): void {
+      $fromException = Either::left(1)->mapLeftSafely(function(int $_x): int { throw new \Exception("boom"); });
+
+      $this->assertTrue($fromException->isRight());
+      $this->assertSame("boom", $fromException->rightOr(new \Exception('x'))->getMessage());
+
+      $fromError = Either::left(1)->mapLeftSafely(function(int $_x): int { throw new \TypeError("not an exception"); });
+
+      $this->assertTrue($fromError->isRight(), 'an Error lands on the right rather than escaping');
+      $this->assertInstanceOf(\TypeError::class, $fromError->rightOr(new \Exception('x')));
+   }
+
+   /**
+    * fromArray with no $rightValue fabricates its own Exception. Both the
+    * docblock and AGENTS.md describe this, and nothing tested it, so the whole
+    * branch could be deleted with CI green.
+    */
+   public function testFromArrayFabricatesAnExceptionWhenNoRightIsGiven(): void {
+      foreach ([Either::fromArray(['k' => 'v'], 'nope'), Either::fromArray(['k' => 'v'], 'nope', null)] as $either) {
+         $this->assertTrue($either->isRight());
+
+         $right = $either->rightOr('not an exception');
+         $this->assertInstanceOf(\Exception::class, $right);
+         $this->assertSame('Either got null for rightValue', $right->getMessage());
+      }
+
+      $explicit = Either::fromArray(['k' => 'v'], 'nope', 'my own message');
+      $this->assertSame('my own message', $explicit->rightOr('x'), 'an explicit right value is kept as given');
+   }
+
    public function testToOptionFromRight(): void {
       $this->assertSame("boom", Either::right("boom")->toOptionFromRight()->valueOr("x"));
       $this->assertFalse(Either::left(1)->toOptionFromRight()->hasValue());

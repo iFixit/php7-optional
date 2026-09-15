@@ -414,7 +414,7 @@ final class Option {
     *
     * @template U
     * @psalm-param callable(T):U $mapFunc
-    * @psalm-return Option<U>
+    * @psalm-return (T is never ? Option<never> : Option<U>)
     **/
    public function map(callable $mapFunc): self {
       return $this->hasValue
@@ -550,7 +550,7 @@ final class Option {
     *
     * @psalm-mutation-free
     * @psalm-param bool $condition
-    * @psalm-return self<T>
+    * @psalm-return ($condition is true ? self<T> : self<never>)
     */
    public function filter(bool $condition): self {
       return $this->hasValue && !$condition
@@ -881,11 +881,21 @@ final class Option {
     * @param TArray $array
     * @param array-key $key
     *
-    * @psalm-return ($key is key-of<TArray> ? self<value-of<TArray>>|self<mixed> : self<never>)
+    * _Notes:_
+    *
+    *  - Returns `Option<value-of<TArray>>`. psalm does not resolve a
+    *    `$key is key-of<TArray>` conditional here, taking the true branch even
+    *    for a key it can see is absent, so there is no point writing one. This
+    *    type is still sound, because the miss returns `Option<never>`
+    *
+    * @psalm-return self<value-of<TArray>>
     */
    public static function fromArray(array $array, $key): self {
       if (array_key_exists($key, $array)) {
-         return self::some($array[$key]);
+         /** @psalm-var value-of<TArray> $value psalm does not narrow $array[$key] on its own */
+         $value = $array[$key];
+
+         return self::some($value);
       }
 
       return self::none();

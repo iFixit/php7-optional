@@ -668,7 +668,7 @@ final class Either {
     *
     * @template ULeft
     * @psalm-param callable(TLeft):ULeft $mapFunc
-    * @psalm-return Either<ULeft, TRight>
+    * @psalm-return (TLeft is never ? Either<never, TRight> : Either<ULeft, TRight>)
     **/
    public function mapLeft(callable $mapFunc): self {
       return $this->isLeft
@@ -1394,11 +1394,20 @@ final class Either {
     * @param TArray $array
     * @param array-key $key
     * @psalm-param TTRight $rightValue
-    * @psalm-return ($key is key-of<TArray> ? self<value-of<TArray>, never>|self<mixed, never> : (TTRight is null ? self<never, Exception> : self<never, TTRight>))
+    * _Notes:_
+    *
+    *  - psalm does not resolve a `$key is key-of<TArray>` conditional here,
+    *    taking the true branch even for a key it can see is absent, so the
+    *    return is the union of the three real outcomes instead
+    *
+    * @psalm-return self<value-of<TArray>, never>|self<never, TTRight>|self<never, Exception>
     **/
     public static function fromArray(array $array, $key, $rightValue = null): self {
       if (array_key_exists($key, $array)) {
-         return self::left($array[$key]);
+         /** @psalm-var value-of<TArray> $value psalm does not narrow $array[$key] on its own */
+         $value = $array[$key];
+
+         return self::left($value);
       }
 
       if (is_null($rightValue)) {
