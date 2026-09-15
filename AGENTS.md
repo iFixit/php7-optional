@@ -29,8 +29,9 @@ git show 3.0:src/Option.php | grep "public function value()"
 
 ```bash
 composer install
-vendor/bin/phpunit                    # 132 tests
-vendor/bin/psalm                      # must exit 0, errorLevel 1, no baseline
+composer check                        # what CI runs: phpunit then psalm
+composer test                         # phpunit alone
+composer psalm                        # psalm alone, errorLevel 1, no baseline
 php examples/optionExampleAfter.php
 ```
 
@@ -71,6 +72,11 @@ Consequences when you add or edit an example:
 
 `tests/ExampleScriptTest.php` does the same job for `examples/`, running each
 script in a subprocess and failing on any Fatal, Warning, Notice or Deprecated.
+
+`tests/DocumentedApiTest.php` closes the loop from the other end. It walks both
+classes with reflection and fails any public method whose docblock carries no
+```php block. So a new public method needs an example, and the example has to
+run. `__toString` is the one exemption.
 
 The docblocks are the only API documentation. There is no generated site:
 `php7-optional.surge.sh` is still served but unowned and years stale, still
