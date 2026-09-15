@@ -1063,7 +1063,6 @@ final class Either {
     *
     *  - Returns `Either<TTLeft, mixed>`
     *
-    * @psalm-mutation-free
     * @psalm-pure
     * @template TTLeft
     * @psalm-param TTLeft $leftValue
@@ -1085,7 +1084,6 @@ final class Either {
     *
     *  - Returns `Either<TTLeft, TTRight>`
     *
-    * @psalm-mutation-free
     * @psalm-pure
     * @template TTRight
     * @psalm-param TTRight $rightValue
@@ -1165,7 +1163,6 @@ final class Either {
     *
     * - Returns `Either<TTLeft, TTRight>`
     *
-    * @psalm-mutation-free
     * @psalm-pure
     * @template TTLeft
     * @template TTRight

@@ -691,7 +691,6 @@ final class Option {
     * - Returns `Option<TT>`
     *
     *
-    * @psalm-mutation-free
     * @psalm-pure
     * @template TT
     * @psalm-param TT $someValue
@@ -712,7 +711,6 @@ final class Option {
     *
     * - Returns `Option<never>`
     *
-    * @psalm-mutation-free
     * @psalm-pure
     * @psalm-return Option<never>
     **/

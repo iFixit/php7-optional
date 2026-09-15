@@ -81,26 +81,24 @@ final class EitherTest extends TestCase
    }
 
    public function testGetLeftAndGetRightThrowWhenMissing(): void {
-      $left = Either::left(1);
-      $this->assertSame($left->getLeft(), 1);
+      $this->assertSame(Either::left(1)->getLeft(), 1);
+      $this->assertSame(Either::right("e")->getRight(), "e");
+   }
 
-      try {
-         /** @psalm-suppress UnusedMethodCall since php unit is catching the throw */
-         $left->getRight();
-      } catch(Exception $e) {
-         $this->assertTrue($e instanceof MissingValueException);
-         $this->assertSame("Right value is missing.", $e->getMessage());
-      }
+   public function testGetRightThrowsMissingValueExceptionOnLeft(): void {
+      $this->expectException(MissingValueException::class);
+      $this->expectExceptionMessage("Right value is missing.");
 
-      $right = Either::right(1);
+      /** @psalm-suppress UnusedMethodCall the throw is the assertion */
+      Either::left(1)->getRight();
+   }
 
-      try {
-         /** @psalm-suppress UnusedMethodCall since php unit is catching the throw */
-         $right->getLeft();
-      } catch(Exception $e) {
-         $this->assertTrue($e instanceof MissingValueException);
-         $this->assertSame("Left value is missing.", $e->getMessage());
-      }
+   public function testGetLeftThrowsMissingValueExceptionOnRight(): void {
+      $this->expectException(MissingValueException::class);
+      $this->expectExceptionMessage("Left value is missing.");
+
+      /** @psalm-suppress UnusedMethodCall the throw is the assertion */
+      Either::right(1)->getLeft();
    }
 
    public function testGettingValue(): void {
