@@ -72,6 +72,12 @@ Consequences when you add or edit an example:
 `tests/ExampleScriptTest.php` does the same job for `examples/`, running each
 script in a subprocess and failing on any Fatal, Warning, Notice or Deprecated.
 
+The docblocks are the only API documentation. There is no generated site:
+`php7-optional.surge.sh` is still served but unowned and years stale, still
+returning 200 for `Optional/Result.html` and `Optional/SimpleResult.html`,
+classes deleted in `b892422`. Rebuilding it needs a deploy credential nobody
+has written down, so treat the docblocks as the product.
+
 ## Behavior that surprises people
 
 Each verified by execution on PHP 8.4, not read off the annotations.

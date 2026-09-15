@@ -238,8 +238,14 @@ trace it by.
 `rightNotNull` `leftNotFalsy` `rightNotFalsy` `leftContains` `rightContains`
 `existsLeft` `existsRight` `toOptionFromLeft` `toOptionFromRight`
 
-Every one carries a worked example in its docblock. Read them in the source or
-at [php7-optional.surge.sh](https://php7-optional.surge.sh/).
+Every one carries a worked example in its docblock, and every one of those
+examples is executed by the test suite. Read them in `src/Option.php` and
+`src/Either.php`.
+
+There is no generated API site. The old one at `php7-optional.surge.sh` is
+still up but nothing has rebuilt it in years: it still serves pages for
+`Optional\Result` and `Optional\SimpleResult`, which were deleted in
+`b892422`.
 
 ## Licence
 
