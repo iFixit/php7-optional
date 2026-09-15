@@ -55,6 +55,12 @@ Naming the sides, because left and right do not say which one went well:
 * `Either::success()`, `failure()`, `isSuccess()`, `isFailure()`,
   `mapSuccess()`, `mapFailure()`, `successOr()`, `successOrThrow()`
 
+Shorthands for shapes callers otherwise spell out by hand:
+
+* `Option::first()`, for `if (count($x)) { return Option::some($x[0]); }`
+* `Option::toNullable()`, for a chain ending in `->valueOr(null)` at a
+  boundary whose signature is `?T`
+
 Completing the left and right mirror, which was 17 pairs out of 21:
 
 * `Either::flatMapRight()`, `mapRightSafely()`, `notNullRight()`,
@@ -90,6 +96,13 @@ existed on master but were never in a tagged release.
   not a throwable.
 * **`Either::leftNotFalsy` documented itself with `leftNotNull`'s example.**
 
+### Changed
+
+* `filter`, `filterLeft` and `filterRight` take `bool|callable` rather than
+  `bool`, so the short, guessable name has the lazy option. Passing a bool is
+  unchanged. The three lose `@psalm-mutation-free`, because a method that may
+  call code you supplied is not mutation-free.
+
 ### Removed
 
 * `psalm-baseline.xml`. Every entry in it was already unused, and `src/` and
@@ -110,6 +123,12 @@ existed on master but were never in a tagged release.
   gate was verified by reintroducing the bug it catches.
 * Coverage is measured in CI and fails below a floor, rather than being printed
   into a log nobody reads.
+* `TypeInferenceTest` asserts what psalm infers for 27 expressions, so an
+  annotation that stops carrying information fails a test. Every type defect
+  fixed in this release is among them.
+* Mutation testing runs in CI. Three behaviors in this release had a docblock,
+  a line in AGENTS.md, and no test that would fail if they were deleted.
+* `bin/benchmark.php` measures what the box costs. The README publishes it.
 * CI is four jobs: the test matrix, coverage, psalm, and
   `composer validate --strict`. Static analysis and coverage are out of the
   matrix, because pinning psalm to the oldest PHP in it is what froze the
