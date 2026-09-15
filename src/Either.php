@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace Optional;
 
 use Optional\Exceptions\MissingValueException;
+use Throwable;
 
 /**
  * A box holding exactly one of two values: `Either::left()` or `Either::right()`.
@@ -132,6 +133,134 @@ final class Either {
       }
 
       return $this->rightValue;
+   }
+
+   /**
+    * Returns the left value, or throws the `Throwable` that `$exceptionFactory` builds
+    *
+    * `getLeft()` throws a fixed "Left value is missing." Use this when the
+    * caller needs to say what failed, which is almost always. The factory is
+    * handed the right value, so an error stored there can become the cause.
+    *
+    * ```php
+    * $left = Either::left(1);
+    * $right = Either::right(new \Exception("the api said no"));
+    *
+    * $myVar = $left->getLeftOrThrow(function($rightValue) { return new \Exception("No build id"); }); // 1
+    *
+    * try {
+    *    $right->getLeftOrThrow(function(\Throwable $cause) {
+    *       return new \Exception("No build id", 0, $cause);
+    *    });
+    * } catch (\Exception $e) {
+    *    echo $e->getPrevious()->getMessage(); // "the api said no"
+    * }
+    * ```
+    *
+    * _Notes:_
+    *
+    *  - `$exceptionFactory` must follow this interface `callable(TRight):Throwable`
+    *  - It is called lazily, so building the exception costs nothing on a `Either::left`
+    *
+    * @psalm-param callable(TRight):Throwable $exceptionFactory
+    * @psalm-return (TLeft is never ? never : TLeft)
+    **/
+   public function getLeftOrThrow(callable $exceptionFactory) {
+      if (!$this->isLeft) {
+         throw $exceptionFactory($this->rightValue);
+      }
+
+      return $this->leftValue;
+   }
+
+   /**
+    * Returns the right value, or throws the `Throwable` that `$exceptionFactory` builds
+    *
+    * The mirror of `getLeftOrThrow`. The factory is handed the left value.
+    *
+    * ```php
+    * $right = Either::right("nope");
+    * $left = Either::left(1);
+    *
+    * $myVar = $right->getRightOrThrow(function($leftValue) { return new \Exception("Expected an error"); }); // "nope"
+    *
+    * try {
+    *    $left->getRightOrThrow(function($leftValue) { return new \Exception("Expected an error, got {$leftValue}"); });
+    * } catch (\Exception $e) {
+    *    echo $e->getMessage(); // "Expected an error, got 1"
+    * }
+    * ```
+    *
+    * _Notes:_
+    *
+    *  - `$exceptionFactory` must follow this interface `callable(TLeft):Throwable`
+    *
+    * @psalm-param callable(TLeft):Throwable $exceptionFactory
+    * @psalm-return (TRight is never ? never : TRight)
+    **/
+   public function getRightOrThrow(callable $exceptionFactory) {
+      if ($this->isLeft) {
+         throw $exceptionFactory($this->leftValue);
+      }
+
+      return $this->rightValue;
+   }
+
+   /**
+    * Runs `$sideEffect` on the left value iff the either is `Either::left`, then returns the original either
+    *
+    * `matchLeft` returns void, so a side effect ends a chain. This keeps it going.
+    *
+    * ```php
+    * $logged = Either::left(5)
+    *    ->tapLeft(function($x) { error_log("about to double {$x}"); })
+    *    ->mapLeft(function($x) { return $x * 2; }); // Left(10), and the log line ran
+    *
+    * Either::right("no")->tapLeft(function($x) { error_log("never runs"); }); // Right("no")
+    * ```
+    *
+    * _Notes:_
+    *
+    *  - `$sideEffect` must follow this interface `callable(TLeft):void`
+    *  - Returns `Either<TLeft, TRight>`, always the original one
+    *
+    * @psalm-param callable(TLeft):void $sideEffect
+    * @psalm-return self<TLeft, TRight>
+    **/
+   public function tapLeft(callable $sideEffect): self {
+      if ($this->isLeft) {
+         $sideEffect($this->leftValue);
+      }
+
+      return $this;
+   }
+
+   /**
+    * Runs `$sideEffect` on the right value iff the either is `Either::right`, then returns the original either
+    *
+    * The mirror of `tapLeft`, for logging a failure without handling it.
+    *
+    * ```php
+    * $either = Either::right("the api said no")
+    *    ->tapRight(function($error) { error_log("request failed: {$error}"); }); // Right, and the log line ran
+    *
+    * Either::left(5)->tapRight(function($error) { error_log("never runs"); }); // Left(5)
+    * ```
+    *
+    * _Notes:_
+    *
+    *  - `$sideEffect` must follow this interface `callable(TRight):void`
+    *  - Returns `Either<TLeft, TRight>`, always the original one
+    *
+    * @psalm-param callable(TRight):void $sideEffect
+    * @psalm-return self<TLeft, TRight>
+    **/
+   public function tapRight(callable $sideEffect): self {
+      if (!$this->isLeft) {
+         $sideEffect($this->rightValue);
+      }
+
+      return $this;
    }
 
    /**
@@ -927,6 +1056,30 @@ final class Either {
       return $this->match($leftFunc, $rightFunc);
    }
 
+   /**
+    * Turns the right side into an `Option`, discarding the left
+    *
+    * The mirror of `toOptionFromLeft`, for when the error is what you want to
+    * look at.
+    *
+    * ```php
+    * $some = Either::right("Some Error Message")->toOptionFromRight(); // Option::some("Some Error Message")
+    * $none = Either::left(10)->toOptionFromRight();                    // Option::none()
+    * ```
+    *
+    * _Notes:_
+    *
+    *  - Returns `Option<TRight>`
+    *
+    * @psalm-mutation-free
+    * @psalm-return Option<TRight>
+    **/
+   public function toOptionFromRight(): Option {
+      return $this->isLeft
+         ? Option::none()
+         : Option::some($this->rightValue);
+   }
+
    //////////////////////////////
    // STATIC FACTORY FUNCTIONS //
    //////////////////////////////
@@ -1060,6 +1213,79 @@ final class Either {
     public static function notNullLeft($leftValue, $rightValue): self {
       return self::left($leftValue)->leftNotNull($rightValue);
     }
+
+   /**
+    * Take a value, turn it a `Either::left($leftValue)` iff `(bool) $leftValue`, otherwise `Either::right($rightValue)`
+    *
+    * The falsy counterpart to `Either::notNullLeft`. Reach for it when PHP hands
+    * you the usual "nothing found" value rather than null.
+    *
+    * ```php
+    * $right = Either::notFalsyLeft(false, "row not found"); // Right("row not found")
+    * $right = Either::notFalsyLeft('', "row not found");    // Right("row not found")
+    * $left = Either::notFalsyLeft(10, "row not found");     // Left(10)
+    * ```
+    *
+    * _Notes:_
+    *
+    * - Returns `Either<TTLeft, TTRight>`
+    * - PHP's falsy set, so `'0'` is a Right but `'0.0'` is a Left. See `leftNotFalsy()`
+    *
+    * @template TTLeft
+    * @template TTRight
+    * @psalm-param TTLeft $leftValue
+    * @psalm-param TTRight $rightValue
+    * @psalm-return (
+    *   TTLeft is null                ? self<never, TTRight> : (
+    *   TTLeft is false               ? self<never, TTRight> : (
+    *   TTLeft is array<never, never> ? self<never, TTRight> : (
+    *   TTLeft is 0                   ? self<never, TTRight> : (
+    *   TTLeft is 0.0                 ? self<never, TTRight> : (
+    *   TTLeft is ''                  ? self<never, TTRight> : (
+    *   TTLeft is '0'                 ? self<never, TTRight> :
+    *   self<TTLeft, never>
+    * )))))))
+    **/
+   public static function notFalsyLeft($leftValue, $rightValue): self {
+      return self::left($leftValue)->leftNotFalsy($rightValue);
+   }
+
+   /**
+    * Runs `$valueFactory`, boxing what it returns as a Left, or whatever it threw as a Right
+    *
+    * This is how a chain starts from code that signals failure by throwing, and
+    * it is the piece that lets the failure keep travelling with the value.
+    *
+    * ```php
+    * $left = Either::fromCallable(function() { return 7; });                     // Left(7)
+    * $right = Either::fromCallable(function() { throw new \Exception("boom"); }); // Right(Exception("boom"))
+    *
+    * $message = $right
+    *    ->mapRight(function(\Throwable $e) { return $e->getMessage(); })
+    *    ->rightOr("no error"); // "boom"
+    * ```
+    *
+    * _Notes:_
+    *
+    *  - `$valueFactory` must follow this interface `callable():TTLeft`
+    *  - Catches `Throwable`, so a `TypeError` from a bad callable signature lands
+    *    on the right rather than escaping. That is safe here and not in
+    *    `Option::fromCallable`, because this box keeps what it caught
+    *  - Returns `Either<TTLeft, Throwable>`
+    *
+    * @template TTLeft
+    *
+    * @psalm-param callable():TTLeft $valueFactory
+    *
+    * @psalm-return self<TTLeft, Throwable>
+    */
+   public static function fromCallable(callable $valueFactory): self {
+      try {
+         return self::left($valueFactory());
+      } catch (Throwable $e) {
+         return self::right($e);
+      }
+   }
 
    /**
     * Creates a either if the `$key` exists in `$array`

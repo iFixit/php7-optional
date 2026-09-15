@@ -6,6 +6,7 @@ namespace Optional;
 
 use Exception;
 use Optional\Exceptions\MissingValueException;
+use Throwable;
 
 /**
  * A box that optionally holds a value: `Option::some($value)` or `Option::none()`.
@@ -103,6 +104,70 @@ final class Option {
          throw new MissingValueException("Value is missing.");
       }
       return $this->value;
+   }
+
+   /**
+    * Returns the options value, or throws the `Throwable` that `$exceptionFactory` builds
+    *
+    * `value()` throws a fixed "Value is missing." Use this when the caller needs
+    * to say what was missing, which is almost always.
+    *
+    * ```php
+    * $some = Option::some(1);
+    * $none = Option::none();
+    *
+    * $myVar = $some->valueOrThrow(function() { return new \Exception("No id for this device"); }); // 1
+    *
+    * try {
+    *    $none->valueOrThrow(function() { return new \Exception("No id for this device"); });
+    * } catch (\Exception $e) {
+    *    echo $e->getMessage(); // "No id for this device"
+    * }
+    * ```
+    *
+    * _Notes:_
+    *
+    *  - `$exceptionFactory` must follow this interface `callable():Throwable`
+    *  - It is called lazily, so building the exception costs nothing on a `Option::some`
+    *
+    * @psalm-param callable():Throwable $exceptionFactory
+    * @psalm-return (T is never ? never : T)
+    **/
+   public function valueOrThrow(callable $exceptionFactory) {
+      if (!$this->hasValue) {
+         throw $exceptionFactory();
+      }
+
+      return $this->value;
+   }
+
+   /**
+    * Runs `$sideEffect` on the value iff the option is `Option::some`, then returns the original option
+    *
+    * `matchSome` returns void, so a side effect ends a chain. This keeps it going.
+    *
+    * ```php
+    * $logged = Option::some(5)
+    *    ->tap(function($x) { error_log("about to double {$x}"); })
+    *    ->map(function($x) { return $x * 2; }); // Some(10), and the log line ran
+    *
+    * Option::none()->tap(function($x) { error_log("never runs"); }); // None
+    * ```
+    *
+    * _Notes:_
+    *
+    *  - `$sideEffect` must follow this interface `callable(T):void`
+    *  - Returns `Option<T>`, always the original one
+    *
+    * @psalm-param callable(T):void $sideEffect
+    * @psalm-return self<T>
+    **/
+   public function tap(callable $sideEffect): self {
+      if ($this->hasValue) {
+         $sideEffect($this->value);
+      }
+
+      return $this;
    }
 
    /**
@@ -715,6 +780,68 @@ final class Option {
     */
    public static function someNotNull($someValue): self {
       return self::some($someValue)->notNull();
+   }
+
+   /**
+    * Take a value, turn it a `Option::some($value)` iff `(bool) $value`, otherwise returns `Option::none()`
+    *
+    * The falsy counterpart to `Option::someNotNull`. Reach for it when PHP hands
+    * you the usual "nothing found" value rather than null: `false` from a db
+    * row fetch, `''` from a lookup, `[]` from a filter.
+    *
+    * ```php
+    * $none = Option::someNotFalsy(false); // None, e.g. a row fetch that found nothing
+    * $none = Option::someNotFalsy('');    // None
+    * $none = Option::someNotFalsy([]);    // None
+    * $some = Option::someNotFalsy('0.0'); // Some('0.0'), which is truthy in PHP
+    * ```
+    *
+    * _Notes:_
+    *
+    * - Returns `Option<TT>`
+    * - PHP's falsy set, so `'0'` is a None but `'0.0'` is a Some. See `notFalsy()`
+    *
+    * @template TT
+    *
+    * @psalm-param TT $someValue
+    *
+    * @psalm-return self<TT>
+    */
+   public static function someNotFalsy($someValue): self {
+      return self::some($someValue)->notFalsy();
+   }
+
+   /**
+    * Runs `$valueFactory`, boxing what it returns, or returning `Option::none()` if it throws
+    *
+    * This is how a chain starts from code that signals failure by throwing.
+    *
+    * ```php
+    * $some = Option::fromCallable(function() { return 7; });                       // Some(7)
+    * $none = Option::fromCallable(function() { throw new \Exception("boom"); });   // None
+    * ```
+    *
+    * _Notes:_
+    *
+    *  - `$valueFactory` must follow this interface `callable():TT`
+    *  - Catches `Exception`, not `Throwable`. An `Error` is a bug in your code,
+    *    and this box discards what it caught, so swallowing one would erase the
+    *    bug with nothing left to find it by. Use `Either::fromCallable` when you
+    *    need the failure itself, which does catch `Throwable` because it keeps it.
+    *  - A factory returning null still gives you `Some(null)`. Chain `notNull()`
+    *
+    * @template TT
+    *
+    * @psalm-param callable():TT $valueFactory
+    *
+    * @psalm-return self<TT>
+    */
+   public static function fromCallable(callable $valueFactory): self {
+      try {
+         return self::some($valueFactory());
+      } catch (Exception $_e) {
+         return self::none();
+      }
    }
 
    /**

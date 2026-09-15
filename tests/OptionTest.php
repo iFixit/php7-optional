@@ -35,7 +35,7 @@ final class OptionTest extends TestCase {
       $this->assertTrue($some->hasValue());
    }
 
-   public function testValueOrThrow(): void {
+   public function testValueThrowsWhenMissing(): void {
       $some = Option::some(1);
       $this->assertSame($some->value(), 1);
 
@@ -407,6 +407,70 @@ final class OptionTest extends TestCase {
 
       $this->assertEquals("None", (string)Option::none());
    }
+
+   public function testValueOrThrowUsesTheSuppliedException(): void {
+      $some = Option::some(1);
+      $this->assertSame(1, $some->valueOrThrow(function(): \Exception {
+         throw new \LogicException('factory must not be called on a Some');
+      }));
+
+      $this->expectException(\RuntimeException::class);
+      $this->expectExceptionMessage("no device id");
+
+      Option::none()->valueOrThrow(function(): \Exception { return new \RuntimeException("no device id"); });
+   }
+
+   public function testTap(): void {
+      $seen = null;
+      $some = Option::some(5);
+      $returned = $some->tap(function(int $x) use (&$seen): void { $seen = $x; });
+
+      $this->assertSame(5, $seen, 'tap runs its callback on a Some');
+      $this->assertSame($some, $returned, 'tap returns the original option so a chain continues');
+
+      $ran = false;
+      $none = Option::none();
+      $returnedNone = $none->tap(function() use (&$ran): void { $ran = true; });
+
+      $this->assertFalse($ran, 'tap must not run its callback on a None');
+      $this->assertSame($none, $returnedNone);
+
+      $doubled = Option::some(5)
+         ->tap(function() use (&$ran): void { $ran = true; })
+         ->map(function(int $x): int { return $x * 2; });
+
+      $this->assertSame(10, $doubled->valueOr(-1), 'tap does not break the chain');
+   }
+
+   public function testSomeNotFalsy(): void {
+      $this->assertFalse(Option::someNotFalsy(0)->hasValue());
+      $this->assertFalse(Option::someNotFalsy('')->hasValue());
+      $this->assertFalse(Option::someNotFalsy([])->hasValue());
+      $this->assertFalse(Option::someNotFalsy(null)->hasValue());
+      $this->assertFalse(Option::someNotFalsy(false)->hasValue());
+      $this->assertFalse(Option::someNotFalsy('0')->hasValue());
+
+      $this->assertTrue(Option::someNotFalsy('0.0')->hasValue());
+      $this->assertTrue(Option::someNotFalsy(-1)->hasValue());
+      $this->assertSame([1], Option::someNotFalsy([1])->valueOr([]));
+   }
+
+   public function testFromCallable(): void {
+      $some = Option::fromCallable(function(): int { return 7; });
+      $this->assertSame(7, $some->valueOr(-1));
+
+      $none = Option::fromCallable(function(): int { throw new \Exception("boom"); });
+      $this->assertFalse($none->hasValue(), 'a thrown Exception becomes a None');
+
+      $stillSome = Option::fromCallable(function() { return null; });
+      $this->assertTrue($stillSome->hasValue(), 'a returned null is still a Some, use notNull to collapse it');
+   }
+
+   public function testFromCallableLetsErrorsThrough(): void {
+      $this->expectException(\TypeError::class);
+      Option::fromCallable(function(): int { throw new \TypeError("not an exception"); });
+   }
+
 }
 
 final class SomeObject {}

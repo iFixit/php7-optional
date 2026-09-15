@@ -40,6 +40,8 @@ final class ExampleScriptTest extends TestCase {
       $output = [];
       $status = 0;
       exec($command, $output, $status);
+
+      /** @var list<string> $output exec() fills this with one line per entry */
       $text = implode("\n", $output);
 
       $this->assertSame(0, $status, sprintf("%s exited %d:\n%s", basename($path), $status, $text));

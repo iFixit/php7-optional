@@ -80,7 +80,7 @@ final class EitherTest extends TestCase
       $this->assertSame($rightThing4->rightOr(-5), 100);
    }
 
-   public function testValueOrThrow(): void {
+   public function testGetLeftAndGetRightThrowWhenMissing(): void {
       $left = Either::left(1);
       $this->assertSame($left->getLeft(), 1);
 
@@ -597,5 +597,123 @@ final class EitherTest extends TestCase
 
       $this->assertEquals("Right(null)", (string)Either::right(null));
       $this->assertEquals("Right(10)", (string)Either::right(10));
+   }
+
+   public function testGetLeftOrThrow(): void {
+      $left = Either::left(1);
+      $this->assertSame(1, $left->getLeftOrThrow(function(): \Exception {
+         throw new \LogicException('factory must not be called on a Left');
+      }));
+
+      $this->expectException(\RuntimeException::class);
+      $this->expectExceptionMessage("no build id");
+
+      Either::right(new \Exception("the api said no"))
+         ->getLeftOrThrow(function(\Throwable $c): \Exception {
+            return new \RuntimeException("no build id", 0, $c);
+         });
+   }
+
+   /**
+    * The factory is handed the other side's value, which is what lets a caller
+    * keep the original failure as the cause. Built through fromCallable so the
+    * either's side is not a compile-time constant, which is the realistic shape
+    * and keeps both branches live.
+    */
+   public function testGetLeftOrThrowPassesTheRightValueToTheFactory(): void {
+      $cause = new \Exception("the api said no");
+      $either = Either::fromCallable(function() use ($cause): int { throw $cause; });
+
+      try {
+         $either->getLeftOrThrow(function(\Throwable $c): \Exception {
+            return new \RuntimeException("no build id", 0, $c);
+         });
+      } catch (\RuntimeException $e) {
+         $caught = $e;
+      }
+
+      $this->assertInstanceOf(\RuntimeException::class, $caught, 'getLeftOrThrow must throw on a Right');
+      $this->assertSame($cause, $caught->getPrevious(), 'the factory receives the right value as the cause');
+   }
+
+   public function testGetRightOrThrow(): void {
+      $right = Either::right("nope");
+      $this->assertSame("nope", $right->getRightOrThrow(function(): \Exception {
+         throw new \LogicException('factory must not be called on a Right');
+      }));
+
+      $this->expectException(\RuntimeException::class);
+      $this->expectExceptionMessage("expected an error, got 1");
+
+      Either::left(1)->getRightOrThrow(function($leftValue): \Exception {
+         return new \RuntimeException("expected an error, got {$leftValue}");
+      });
+   }
+
+   public function testTapLeftAndTapRight(): void {
+      $seen = null;
+      $left = Either::left(5);
+      $returned = $left->tapLeft(function(int $x) use (&$seen): void { $seen = $x; });
+
+      $this->assertSame(5, $seen);
+      $this->assertSame($left, $returned, 'tapLeft returns the original either');
+
+      $ran = false;
+      $left->tapRight(function() use (&$ran): void { $ran = true; });
+      $this->assertFalse($ran, 'tapRight must not run on a Left');
+
+      $seenRight = null;
+      $right = Either::right("boom");
+      $right->tapRight(function(string $e) use (&$seenRight): void { $seenRight = $e; });
+      $this->assertSame("boom", $seenRight);
+
+      $ranLeft = false;
+      $right->tapLeft(function() use (&$ranLeft): void { $ranLeft = true; });
+      $this->assertFalse($ranLeft, 'tapLeft must not run on a Right');
+
+      $doubled = Either::left(5)
+         ->tapLeft(function(): void {})
+         ->mapLeft(function(int $x): int { return $x * 2; });
+      $this->assertSame(10, $doubled->leftOr(-1), 'tapLeft does not break the chain');
+   }
+
+   public function testNotFalsyLeft(): void {
+      $this->assertTrue(Either::notFalsyLeft(0, "was falsy")->isRight());
+      $this->assertTrue(Either::notFalsyLeft('', "was falsy")->isRight());
+      $this->assertTrue(Either::notFalsyLeft(null, "was falsy")->isRight());
+      $this->assertSame("was falsy", Either::notFalsyLeft([], "was falsy")->rightOr("x"));
+
+      $kept = Either::notFalsyLeft(10, "was falsy");
+      $this->assertTrue($kept->isLeft());
+      $this->assertSame(10, $kept->leftOr(-1));
+   }
+
+   public function testFromCallable(): void {
+      $left = Either::fromCallable(function(): int { return 7; });
+      $this->assertTrue($left->isLeft());
+      $this->assertSame(7, $left->leftOr(-1));
+
+      $right = Either::fromCallable(function(): int { throw new \Exception("boom"); });
+      $this->assertTrue($right->isRight(), 'a thrown Exception becomes a Right holding it');
+      $this->assertSame("boom", $right->getRightOrThrow(function(): \Exception {
+         return new \LogicException('unreachable');
+      })->getMessage());
+   }
+
+   /**
+    * The counterpart to OptionTest::testFromCallableLetsErrorsThrough. Either
+    * keeps what it caught, so catching Throwable loses nothing; Option discards
+    * it, so Option::fromCallable deliberately catches only Exception.
+    */
+   public function testFromCallableCatchesErrorsToo(): void {
+      $either = Either::fromCallable(function(): int { throw new \TypeError("not an exception"); });
+
+      $this->assertTrue($either->isRight(), 'an Error lands on the right rather than escaping');
+      $this->assertInstanceOf(\TypeError::class, $either->rightOr(new \Exception('x')));
+   }
+
+   public function testToOptionFromRight(): void {
+      $this->assertSame("boom", Either::right("boom")->toOptionFromRight()->valueOr("x"));
+      $this->assertFalse(Either::left(1)->toOptionFromRight()->hasValue());
    }
 }
