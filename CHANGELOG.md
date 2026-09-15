@@ -11,10 +11,10 @@ still resolves to 3.0.
 ### Breaking
 
 * **PHP 8.4 is required.** 3.x claimed `^7.2` while CI had tested nothing below
-  7.4 since 2021, and the toolchain had rotted with it: psalm was pinned to
-  5.2.0 from December 2022, and no release in the 5.x line runs on a PHP newer
-  than 8.3. The level-1 badge described a check nobody could reproduce. If you
-  are on PHP 7, stay on 3.x.
+  7.4 since 2021. The toolchain had rotted with it. psalm was pinned to 5.2.0
+  from December 2022, and no release in the 5.x line runs on a PHP newer than
+  8.3. So the level-1 badge described a check nobody could reproduce.
+  If you are on PHP 7, stay on 3.x.
 * **`Either::fromArray` uses `array_key_exists` rather than `isset`.** A key
   holding `null` is now `Left(null)` where it used to be a Right.
   `Option::fromArray` always behaved this way, so the two classes disagreed
@@ -23,8 +23,8 @@ still resolves to 3.0.
   `Error` that used to escape and crash now lands on the right and travels down
   the chain. This is the riskier of the two behavior changes here, because the
   failure is silent rather than loud. `Option::mapSafely` is unchanged and
-  still catches `Exception` only, on purpose: `Either` keeps what it caught, so
-  catching more loses nothing, while `Option` discards it, and swallowing an
+  still catches `Exception` only, on purpose. `Either` keeps what it caught,
+  so catching more loses nothing. `Option` discards it, and swallowing an
   `Error` there would erase a real bug with nothing left to trace it by.
 * **`Option`, `Either` and `MissingValueException` are `final`.** Extending the
   two boxes never worked: the static factories build with `new self`, so a
