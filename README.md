@@ -254,9 +254,10 @@ trace it by.
 ## Full method list
 
 `Option` factories: `some` `none` `someWhen` `noneWhen` `someNotNull`
-`someNotFalsy` `fromCallable` `fromArray`
+`someNotFalsy` `fromCallable` `fromArray` `first`
 
 `Option` methods: `hasValue` `valueOr` `value` `valueOrThrow` `valueOrCreate`
+`toNullable`
 `or` `orCreate` `else` `elseCreate` `match` `matchSome` `matchNone` `map`
 `mapSafely` `flatMap` `andThen` `tap` `tapNone` `filter` `filterIf` `notNull`
 `notFalsy` `contains` `exists`

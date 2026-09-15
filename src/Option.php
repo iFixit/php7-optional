@@ -83,6 +83,37 @@ final class Option {
    }
 
    /**
+    * Returns the value, or `null` when there is none
+    *
+    * The same result as `valueOr(null)`, with a name that says what it is for:
+    * leaving the box at a boundary whose signature is `?T`. `valueOr(null)`
+    * reads as "fall back to null", which is a different intention, and it does
+    * not stand out when you go looking for every place the box is unwrapped.
+    *
+    * ```php
+    * $name = Option::some('Ada')->toNullable();
+    * echo $name === null ? "nobody\n" : "{$name}\n"; // "Ada"
+    *
+    * $missing = Option::none()->toNullable();
+    * echo $missing === null ? "nobody\n" : "{$missing}\n"; // "nobody"
+    * ```
+    *
+    * _Notes:_
+    *
+    *  - `Option::some(null)->toNullable()` is `null`, so a boundary cannot tell
+    *    a stored null from an empty box. That is the cost of a `?T` signature,
+    *    not of this method
+    *
+    * @psalm-mutation-free
+    * @psalm-return (T is never ? null : T|null)
+    **/
+   public function toNullable() {
+      return $this->hasValue
+         ? $this->value
+         : null;
+   }
+
+   /**
     * Returns the options value or throws
     *
     * ```php
@@ -897,6 +928,41 @@ final class Option {
       } catch (Exception $_e) {
          return self::none();
       }
+   }
+
+   /**
+    * Boxes the first value of `$values`, or `Option::none()` when it is empty
+    *
+    * The "did I find anything" shape, without the count check. Works on any
+    * iterable, so a generator stops after the first value rather than being
+    * drained into an array first.
+    *
+    * ```php
+    * echo (string) Option::first(['a', 'b']), "\n"; // Some(a)
+    * echo (string) Option::first([]), "\n";         // None
+    *
+    * // keys are ignored, it is the first value in iteration order
+    * echo (string) Option::first(['x' => 'a']), "\n"; // Some(a)
+    * ```
+    *
+    * _Notes:_
+    *
+    *  - A first value of `null` gives you `Some(null)`, like every other
+    *    factory here. Chain `notNull()` to collapse it
+    *  - Returns `Option<TT>`
+    *
+    * @template TT
+    *
+    * @psalm-param iterable<array-key, TT> $values
+    *
+    * @psalm-return self<TT>
+    */
+   public static function first(iterable $values): self {
+      foreach ($values as $value) {
+         return self::some($value);
+      }
+
+      return self::none();
    }
 
    /**

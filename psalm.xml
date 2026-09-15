@@ -43,6 +43,9 @@
         arithmetic on never. NoValue and InvalidArrayOffset are the same shape:
         an example that shows a miss uses a key psalm can see is absent, and one
         that shows both branches has a branch psalm has proved unreachable.
+        DocblockTypeContradiction is that same shape once more: an annotation
+        good enough to prove the outcome makes the example demonstrating it look
+        redundant.
 
         Everything that catches a real defect stays on, which is
         UndefinedClass, UndefinedMethod, InvalidArgument, TooFewArguments and
@@ -97,5 +100,8 @@
         <MixedArgument>
             <errorLevel type="suppress"><file name="tests/generated/DocblockExamples.php"/></errorLevel>
         </MixedArgument>
+        <DocblockTypeContradiction>
+            <errorLevel type="suppress"><file name="tests/generated/DocblockExamples.php"/></errorLevel>
+        </DocblockTypeContradiction>
     </issueHandlers>
 </psalm>

@@ -460,6 +460,41 @@ final class OptionTest extends TestCase {
       $this->assertSame('from source', $recovered->valueOr('x'), 'tapNone does not break the chain');
    }
 
+   public function testFirst(): void {
+      $this->assertSame('a', Option::first(['a', 'b'])->valueOr('x'));
+      $this->assertFalse(Option::first([])->hasValue());
+      $this->assertSame('a', Option::first(['k' => 'a'])->valueOr('x'), 'keys are ignored');
+      $this->assertTrue(Option::first([null])->hasValue(), 'a first value of null is still a Some');
+   }
+
+   /**
+    * The point of taking an iterable rather than an array: a generator should
+    * stop after the first value instead of being drained.
+    */
+   public function testFirstDoesNotDrainAGenerator(): void {
+      $drained = false;
+
+      $values = (function() use (&$drained) {
+         yield 'first';
+         $drained = true;
+         yield 'second';
+      })();
+
+      $this->assertSame('first', Option::first($values)->valueOr('x'));
+      $this->assertFalse($drained, 'first() pulled more than one value from the generator');
+   }
+
+   public function testToNullable(): void {
+      $this->assertSame('Ada', Option::some('Ada')->toNullable());
+      $this->assertNull(Option::none()->toNullable());
+      $this->assertNull(Option::some(null)->toNullable(), 'a stored null and an empty box look the same at a ?T boundary');
+      $this->assertSame(
+         Option::some('Ada')->valueOr(null),
+         Option::some('Ada')->toNullable(),
+         'toNullable is valueOr(null) with a name that says why'
+      );
+   }
+
    public function testSomeNotFalsy(): void {
       $this->assertFalse(Option::someNotFalsy(0)->hasValue());
       $this->assertFalse(Option::someNotFalsy('')->hasValue());
