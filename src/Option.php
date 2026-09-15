@@ -176,6 +176,36 @@ final class Option {
    }
 
    /**
+    * Runs `$sideEffect` iff the option is `Option::none`, then returns the original option
+    *
+    * The counterpart to `tap`. `matchNone` returns void, so noting an empty
+    * result ends a chain. This keeps it going.
+    *
+    * ```php
+    * $recovered = Option::none()
+    *    ->tapNone(function() { error_log("cache miss"); })
+    *    ->orCreate(function() { return 'from source'; }); // Some('from source'), and the log line ran
+    *
+    * Option::some(1)->tapNone(function() { error_log("never runs"); }); // Some(1)
+    * ```
+    *
+    * _Notes:_
+    *
+    *  - `$sideEffect` takes no argument, because a `Option::none` holds nothing
+    *  - Returns `Option<T>`, always the original one
+    *
+    * @psalm-param callable():void $sideEffect
+    * @psalm-return self<T>
+    **/
+   public function tapNone(callable $sideEffect): self {
+      if (!$this->hasValue) {
+         $sideEffect();
+      }
+
+      return $this;
+   }
+
+   /**
     * Returns the options value or calls `$alternativeFactory` and returns the value of that function
     *
     * ```php
@@ -874,8 +904,6 @@ final class Option {
     * - Returns `Option<TT>`
     *
     * @psalm-pure
-    *
-    * @psalm-mutation-free
     *
     * @template TArray of array
     * @param TArray $array

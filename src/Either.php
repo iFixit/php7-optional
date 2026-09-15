@@ -1319,6 +1319,7 @@ final class Either {
     * - Returns `Either<TTLeft, TTRight>`
     * - PHP's falsy set, so `'0'` is a Right but `'0.0'` is a Left. See `leftNotFalsy()`
     *
+    * @psalm-pure
     * @template TTLeft
     * @template TTRight
     * @psalm-param TTLeft $leftValue

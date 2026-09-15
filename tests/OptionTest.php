@@ -440,6 +440,26 @@ final class OptionTest extends TestCase {
       $this->assertSame(10, $doubled->valueOr(-1), 'tap does not break the chain');
    }
 
+   public function testTapNone(): void {
+      $ran = false;
+      $none = Option::none();
+      $returned = $none->tapNone(function() use (&$ran): void { $ran = true; });
+
+      $this->assertTrue($ran, 'tapNone runs its callback on a None');
+      $this->assertSame($none, $returned, 'tapNone returns the original option so a chain continues');
+
+      $ranOnSome = false;
+      $some = Option::some(1);
+      $this->assertSame($some, $some->tapNone(function() use (&$ranOnSome): void { $ranOnSome = true; }));
+      $this->assertFalse($ranOnSome, 'tapNone must not run its callback on a Some');
+
+      $recovered = Option::none()
+         ->tapNone(function(): void {})
+         ->orCreate(function(): string { return 'from source'; });
+
+      $this->assertSame('from source', $recovered->valueOr('x'), 'tapNone does not break the chain');
+   }
+
    public function testSomeNotFalsy(): void {
       $this->assertFalse(Option::someNotFalsy(0)->hasValue());
       $this->assertFalse(Option::someNotFalsy('')->hasValue());
