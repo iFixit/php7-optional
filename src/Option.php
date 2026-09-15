@@ -412,19 +412,9 @@ final class Option {
     * @psalm-return Option<U>
     **/
    public function map(callable $mapFunc): self {
-      /** @psalm-var callable(T):Option<U> **/
-      $someFunc =
-      /** @psalm-param T $value **/
-      function($value) use ($mapFunc): self {
-         return self::some($mapFunc($value));
-      };
-
-      /** @psalm-var callable():Option<U> **/
-      $noneFunc = function(): self {
-         return self::none();
-      };
-
-      return $this->match($someFunc, $noneFunc);
+      return $this->hasValue
+         ? self::some($mapFunc($this->value))
+         : self::none();
    }
 
    /**
@@ -459,7 +449,7 @@ final class Option {
       try {
          return $this->map($mapFunc);
       } catch (Exception $_e) {
-         return Option::none();
+         return self::none();
       }
    }
 
@@ -493,12 +483,9 @@ final class Option {
     * @psalm-return Option<U>
     **/
    public function flatMap(callable $mapFunc): self {
-      /** @psalm-var callable():Option<U> **/
-      $noneFunc = function(): self {
-         return self::none();
-      };
-
-      return $this->match($mapFunc, $noneFunc);
+      return $this->hasValue
+         ? $mapFunc($this->value)
+         : self::none();
    }
 
    /**

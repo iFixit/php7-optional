@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace Optional;
 
+use Exception;
 use Optional\Exceptions\MissingValueException;
 use Throwable;
 
@@ -604,21 +605,9 @@ final class Either {
     * @psalm-return Either<ULeft, TRight>
     **/
    public function mapLeft(callable $mapFunc): self {
-      /** @psalm-var callable(TLeft):Either<ULeft, TRight> **/
-      $leftFunc =
-      /** @psalm-param TLeft $value */
-      function($value) use ($mapFunc): Either {
-         return self::left($mapFunc($value));
-      };
-
-      /** @psalm-var callable(TRight):Either<ULeft, TRight> **/
-      $rightFunc =
-      /** @psalm-param TRight $rightValue */
-      function($rightValue): Either {
-         return self::right($rightValue);
-      };
-
-      return $this->match($leftFunc, $rightFunc);
+      return $this->isLeft
+         ? self::left($mapFunc($this->leftValue))
+         : self::right($this->rightValue);
    }
 
    /**
@@ -636,22 +625,10 @@ final class Either {
     * @psalm-param callable(TRight):URight $mapFunc
     * @psalm-return (TLeft is never ? Either<TLeft, URight> : Either<TLeft, TRight>)
     **/
-    public function mapRight(callable $mapFunc): self {
-      /** @psalm-var callable(TLeft):Either<TLeft, URight> **/
-      $leftFunc =
-      /** @psalm-param TLeft $value */
-      function($value): Either {
-         return self::left($value);
-      };
-
-      /** @psalm-var callable(TRight):Either<TLeft, URight> **/
-      $rightFunc =
-      /** @psalm-param TRight $rightValue */
-      function($rightValue) use ($mapFunc): Either {
-         return self::right($mapFunc($rightValue));
-      };
-
-      return $this->match($leftFunc, $rightFunc);
+   public function mapRight(callable $mapFunc): self {
+      return $this->isLeft
+         ? self::left($this->leftValue)
+         : self::right($mapFunc($this->rightValue));
    }
 
 
@@ -687,7 +664,7 @@ final class Either {
       try {
          return $this->mapLeft($mapFunc);
       } catch (Throwable $e) {
-         return Either::right($e);
+         return self::right($e);
       }
    }
 
@@ -750,14 +727,9 @@ final class Either {
     * @psalm-return (TRight is never ? Either<ULeft, TRight> : Either<TLeft, TRight>)
     **/
    public function flatMapLeft(callable $mapFunc): self {
-      /** @psalm-var callable(TRight):Either<ULeft, TRight> **/
-      $rightFunc =
-      /** @psalm-param TRight $rightValue */
-      function($rightValue): self {
-         return self::right($rightValue);
-      };
-
-      return $this->match($mapFunc, $rightFunc);
+      return $this->isLeft
+         ? $mapFunc($this->leftValue)
+         : self::right($this->rightValue);
    }
 
    /**
@@ -1297,7 +1269,7 @@ final class Either {
     * @param TArray $array
     * @param array-key $key
     * @psalm-param TTRight $rightValue
-    * @psalm-return ($key is key-of<TArray> ? self<value-of<TArray>, never>|self<mixed, never> : (TTRight is null ? self<never, \Exception> : self<never, TTRight>))
+    * @psalm-return ($key is key-of<TArray> ? self<value-of<TArray>, never>|self<mixed, never> : (TTRight is null ? self<never, Exception> : self<never, TTRight>))
     **/
     public static function fromArray(array $array, $key, $rightValue = null): self {
       if (array_key_exists($key, $array)) {
@@ -1305,7 +1277,7 @@ final class Either {
       }
 
       if (is_null($rightValue)) {
-         return self::right(new \Exception("Either got null for rightValue"));
+         return self::right(new Exception("Either got null for rightValue"));
       }
 
       return self::right($rightValue);
