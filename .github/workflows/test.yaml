@@ -33,10 +33,27 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php-versions }}
+          coverage: none
+          tools: composer:v2
+      - uses: ramsey/composer-install@v3
+      - run: vendor/bin/phpunit
+
+  coverage:
+    runs-on: ubuntu-latest
+    name: Coverage
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
           coverage: xdebug
           tools: composer:v2
       - uses: ramsey/composer-install@v3
       - run: vendor/bin/phpunit --coverage-text --coverage-clover=clover.xml
+      - run: php bin/check-coverage.php clover.xml 90
 
   static-analysis:
     runs-on: ubuntu-latest

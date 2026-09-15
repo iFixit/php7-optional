@@ -36,6 +36,10 @@
    "scripts": {
       "test": "phpunit",
       "psalm": "psalm --no-cache",
+      "coverage": [
+         "phpunit --coverage-text --coverage-clover=clover.xml",
+         "php bin/check-coverage.php clover.xml 90"
+      ],
       "check": [
          "@test",
          "@psalm"
@@ -44,6 +48,7 @@
    "scripts-descriptions": {
       "test": "Run the test suite, which also executes every docblock and README example",
       "psalm": "Run psalm at errorLevel 1; it must exit 0, there is no baseline",
+      "coverage": "Measure line coverage and fail below the floor; needs xdebug or pcov",
       "check": "Run everything CI runs"
    }
 }

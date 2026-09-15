@@ -43,10 +43,20 @@ this repo's history once already.
 There is no `psalm-baseline.xml` and there should not be one. `src/` and
 `tests/` are both clean at errorLevel 1. Fix the type rather than baselining it.
 
-`.github/workflows/test.yaml` runs three jobs: phpunit across the PHP versions
-in the matrix, psalm once on 8.4, and `composer validate --strict`. Static
-analysis is deliberately out of the test matrix, because pinning psalm to the
-oldest PHP in the matrix is what kept this repo on a 2022 psalm for years.
+`composer coverage` needs xdebug or pcov, which CI has and a plain PHP install
+does not. It writes `clover.xml` and then runs `bin/check-coverage.php`, which
+fails below the floor. That script exits 2, not 0, when the report is missing
+or unparseable, because a coverage step that passes because nothing was
+measured is worse than no step at all. `tests/CoverageGateTest.php` covers all
+five of its outcomes.
+
+`.github/workflows/test.yaml` runs four jobs: phpunit across the PHP versions
+in the matrix, coverage once on 8.4, psalm once on 8.4, and
+`composer validate --strict`. Static analysis is deliberately out of the test
+matrix, because pinning psalm to the oldest PHP in the matrix is what kept this
+repo on a 2022 psalm for years. Coverage is out of it for a duller reason:
+xdebug roughly triples the run time and there is nothing to learn from
+measuring the same lines once per PHP version.
 
 ## The docs are tested, and that is the point
 
