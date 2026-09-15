@@ -777,6 +777,90 @@ final class EitherTest extends TestCase
       $this->assertSame('my own message', $explicit->rightOr('x'), 'an explicit right value is kept as given');
    }
 
+   /**
+    * Four left-side methods had no right-side twin, which makes the API
+    * unguessable at exactly the point where every other pair mirrors.
+    */
+   public function testFlatMapRight(): void {
+      $recovered = Either::right('not found')->flatMapRight(function(string $_error): Either {
+         return Either::left('default');
+      });
+
+      $this->assertTrue($recovered->isLeft(), 'flatMapRight can turn an error into a success');
+      $this->assertSame('default', $recovered->leftOr('x'));
+
+      $rethrown = Either::right('on fire')->flatMapRight(function(string $error): Either {
+         return Either::right("still {$error}");
+      });
+
+      $this->assertTrue($rethrown->isRight());
+      $this->assertSame('still on fire', $rethrown->rightOr('x'));
+
+      $ran = false;
+      $untouched = Either::left(1)->flatMapRight(function() use (&$ran): Either {
+         $ran = true;
+         return Either::right('never');
+      });
+
+      $this->assertFalse($ran, 'flatMapRight must not run its callback on a Left');
+      $this->assertSame(1, $untouched->leftOr(-1));
+   }
+
+   public function testMapRightSafely(): void {
+      $thrower = function(string $error): string { throw new \Exception("could not parse: {$error}"); };
+
+      $caught = Either::right('{bad json}')->mapRightSafely($thrower);
+      $thrown = $caught->rightOr('x');
+      $this->assertInstanceOf(\Exception::class, $thrown);
+      $this->assertSame('could not parse: {bad json}', $thrown->getMessage());
+
+      $fromError = Either::right('x')->mapRightSafely(function(): string { throw new \TypeError("boom"); });
+      $this->assertInstanceOf(\TypeError::class, $fromError->rightOr('x'), 'catches Throwable like mapLeftSafely');
+
+      $ran = false;
+      $left = Either::left(1)->mapRightSafely(function() use (&$ran): string { $ran = true; return 'never'; });
+      $this->assertFalse($ran, 'mapRightSafely must not run its callback on a Left');
+      $this->assertSame(1, $left->leftOr(-1));
+
+      $mapped = Either::right('ab')->mapRightSafely(function(string $e): string { return strtoupper($e); });
+      $this->assertSame('AB', $mapped->rightOr('x'));
+   }
+
+   public function testNotNullRightAndNotFalsyRight(): void {
+      $this->assertTrue(Either::notNullRight(null, 'no error')->isLeft());
+      $this->assertSame('no error', Either::notNullRight(null, 'no error')->leftOr('x'));
+      $this->assertSame('boom', Either::notNullRight('boom', 'no error')->rightOr('x'));
+
+      $this->assertTrue(Either::notFalsyRight('', 'no error')->isLeft());
+      $this->assertTrue(Either::notFalsyRight(0, 'no error')->isLeft());
+      $this->assertSame('boom', Either::notFalsyRight('boom', 'no error')->rightOr('x'));
+      $this->assertSame('0.0', Either::notFalsyRight('0.0', 'no error')->rightOr('x'), "'0.0' is truthy in PHP");
+   }
+
+   public function testEveryLeftMethodHasARightTwin(): void {
+      $reflection = new \ReflectionClass(Either::class);
+      $names = [];
+
+      foreach ($reflection->getMethods(\ReflectionMethod::IS_PUBLIC) as $method) {
+         if ($method->getDeclaringClass()->getName() === Either::class) {
+            $names[] = $method->getName();
+         }
+      }
+
+      $unmirrored = [];
+
+      foreach ($names as $name) {
+         $twin = str_contains($name, 'Left') ? str_replace('Left', 'Right', $name)
+            : (str_contains($name, 'left') ? str_replace('left', 'right', $name) : null);
+
+         if ($twin !== null && !in_array($twin, $names, true)) {
+            $unmirrored[] = "{$name} has no {$twin}";
+         }
+      }
+
+      $this->assertSame([], $unmirrored, 'Either is a symmetric box; a method on one side needs its twin');
+   }
+
    public function testToOptionFromRight(): void {
       $this->assertSame("boom", Either::right("boom")->toOptionFromRight()->valueOr("x"));
       $this->assertFalse(Either::left(1)->toOptionFromRight()->hasValue());

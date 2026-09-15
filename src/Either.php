@@ -742,6 +742,36 @@ final class Either {
    }
 
    /**
+    * `mapRight`, but if the map function throws, the `Throwable` becomes the new right
+    *
+    * ```php
+    * $parse = function(string $error): string { throw new \Exception("could not parse: {$error}"); };
+    *
+    * $either = Either::right('{bad json}')->mapRightSafely($parse);
+    * echo get_class($either->rightOr(new \Exception('x'))), "\n"; // "Exception"
+    *
+    * echo (string) Either::left(1)->mapRightSafely($parse), "\n"; // Left(1), $parse never runs
+    * ```
+    *
+    * _Notes:_
+    *
+    *  - Catches `Throwable`, like `mapLeftSafely`, because the box keeps what it caught
+    *  - The thrown value replaces the original right. If you need both, map to a
+    *    type that holds them
+    *
+    * @template URight
+    * @psalm-param callable(TRight):URight $mapFunc
+    * @psalm-return Either<TLeft, TRight>|Either<TLeft, URight>|Either<never, Throwable>
+    **/
+   public function mapRightSafely(callable $mapFunc): self {
+      try {
+         return $this->mapRight($mapFunc);
+      } catch (Throwable $e) {
+         return self::right($e);
+      }
+   }
+
+   /**
     * A passthrough for FlatMap.
     * A nicer name through
     *
@@ -803,6 +833,40 @@ final class Either {
       return $this->isLeft
          ? $mapFunc($this->leftValue)
          : self::right($this->rightValue);
+   }
+
+   /**
+    * Allows a function to map over the internal right value, the function returns an Either
+    *
+    * The mirror of `flatMapLeft`, for a step that transforms an error and may
+    * decide it is not an error after all.
+    *
+    * ```php
+    * $recover = function(string $error) {
+    *    return $error === 'not found' ? Either::left('default') : Either::right($error);
+    * };
+    *
+    * echo (string) Either::right('not found')->flatMapRight($recover), "\n"; // Left(default)
+    * echo (string) Either::right('on fire')->flatMapRight($recover), "\n";   // Right(on fire)
+    * echo (string) Either::left(1)->flatMapRight($recover), "\n";            // Left(1), untouched
+    * ```
+    *
+    * _Notes:_
+    *
+    *  - `$mapFunc` must follow this interface `callable(TRight):Either<ULeft, URight>`
+    *  - Unlike `flatMapLeft`, the callback may change the left type as well.
+    *    Recovering from an error is the point of this method, and a recovery
+    *    produces a left value the original box never had
+    *
+    * @template ULeft
+    * @template URight
+    * @psalm-param callable(TRight):Either<ULeft, URight> $mapFunc
+    * @psalm-return Either<TLeft, TRight>|Either<ULeft, URight>
+    **/
+   public function flatMapRight(callable $mapFunc): self {
+      return $this->isLeft
+         ? self::left($this->leftValue)
+         : $mapFunc($this->rightValue);
    }
 
    /**
@@ -1304,6 +1368,27 @@ final class Either {
     }
 
    /**
+    * Take a value, turn it a `Either::right($rightValue)` iff `!is_null($rightValue)`, otherwise `Either::left($leftValue)`
+    *
+    * The mirror of `notNullLeft`. The value being checked comes first in both.
+    *
+    * ```php
+    * echo (string) Either::notNullRight(null, 'no error'), "\n";   // Left(no error)
+    * echo (string) Either::notNullRight('boom', 'no error'), "\n"; // Right(boom)
+    * ```
+    *
+    * @psalm-pure
+    * @template TTLeft
+    * @template TTRight
+    * @psalm-param TTRight $rightValue
+    * @psalm-param TTLeft $leftValue
+    * @psalm-return (TTRight is null ? self<TTLeft, never> : self<never, TTRight>)
+    **/
+   public static function notNullRight($rightValue, $leftValue): self {
+      return self::right($rightValue)->rightNotNull($leftValue);
+   }
+
+   /**
     * Take a value, turn it a `Either::left($leftValue)` iff `(bool) $leftValue`, otherwise `Either::right($rightValue)`
     *
     * The falsy counterpart to `Either::notNullLeft`. Reach for it when PHP hands
@@ -1338,6 +1423,27 @@ final class Either {
     **/
    public static function notFalsyLeft($leftValue, $rightValue): self {
       return self::left($leftValue)->leftNotFalsy($rightValue);
+   }
+
+   /**
+    * Take a value, turn it a `Either::right($rightValue)` iff `(bool) $rightValue`, otherwise `Either::left($leftValue)`
+    *
+    * The mirror of `notFalsyLeft`. The value being checked comes first in both.
+    *
+    * ```php
+    * echo (string) Either::notFalsyRight('', 'no error'), "\n";     // Left(no error)
+    * echo (string) Either::notFalsyRight('boom', 'no error'), "\n"; // Right(boom)
+    * ```
+    *
+    * @psalm-pure
+    * @template TTLeft
+    * @template TTRight
+    * @psalm-param TTRight $rightValue
+    * @psalm-param TTLeft $leftValue
+    * @psalm-return self<TTLeft, never>|self<never, TTRight>
+    **/
+   public static function notFalsyRight($rightValue, $leftValue): self {
+      return self::right($rightValue)->rightNotFalsy($leftValue);
    }
 
    /**

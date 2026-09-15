@@ -232,13 +232,14 @@ trace it by.
 `notFalsy` `contains` `exists`
 
 `Either` factories: `left` `right` `leftWhen` `rightWhen` `notNullLeft`
-`notFalsyLeft` `fromCallable` `fromArray`
+`notNullRight` `notFalsyLeft` `notFalsyRight` `fromCallable` `fromArray`
 
 `Either` methods: `isLeft` `isRight` `leftOr` `rightOr` `getLeft` `getRight`
 `getLeftOrThrow` `getRightOrThrow` `leftOrCreate` `rightOrCreate` `orLeft`
 `orRight` `orCreateLeft` `orCreateRight` `elseLeft` `elseRight`
 `elseCreateLeft` `elseCreateRight` `match` `matchLeft` `matchRight` `mapLeft`
-`mapRight` `mapLeftSafely` `flatMapLeft` `andThen` `tapLeft` `tapRight`
+`mapRight` `mapLeftSafely` `mapRightSafely` `flatMapLeft` `flatMapRight`
+`andThen` `tapLeft` `tapRight`
 `filterLeft` `filterRight` `filterLeftIf` `filterRightIf` `leftNotNull`
 `rightNotNull` `leftNotFalsy` `rightNotFalsy` `leftContains` `rightContains`
 `existsLeft` `existsRight` `toOptionFromLeft` `toOptionFromRight`
