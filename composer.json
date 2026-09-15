@@ -1,29 +1,49 @@
 {
-    "name": "ifixit/php7-optional",
-    "description": "Option and Either types for PHP: an alternative to null and to throwing",
-    "license": "MIT",
-    "authors": [
-        {
-            "name": "Jarred Stelfox",
-            "email": "jarred@ifixit.com"
-        }
-    ],
-    "require": {
+   "name": "ifixit/php7-optional",
+   "description": "Option and Either types for PHP: an alternative to null and to throwing",
+   "license": "MIT",
+   "keywords": ["option", "either", "maybe", "null", "optional"],
+   "authors": [
+      {
+         "name": "Jarred Stelfox",
+         "email": "jarred@ifixit.com"
+      }
+   ],
+   "require": {
       "php": "^8.4"
-    },
-    "autoload": {
+   },
+   "require-dev": {
+      "phpunit/phpunit": "^11.5",
+      "psalm/plugin-phpunit": "^0.19",
+      "vimeo/psalm": "^6.0"
+   },
+   "autoload": {
       "psr-4": {
          "Optional\\": "src/"
       }
-    },
-    "autoload-dev": {
+   },
+   "autoload-dev": {
       "psr-4": {
-        "Optional\\Tests\\": "tests/"
+         "Optional\\Tests\\": "tests/"
       }
-    },
-    "require-dev": {
-        "phpunit/phpunit": "^11.5",
-        "vimeo/psalm": "^6.0",
-        "psalm/plugin-phpunit": "^0.19"
-    }
+   },
+   "config": {
+      "sort-packages": true,
+      "allow-plugins": {
+         "psalm/plugin-phpunit": true
+      }
+   },
+   "scripts": {
+      "test": "phpunit",
+      "psalm": "psalm --no-cache",
+      "check": [
+         "@test",
+         "@psalm"
+      ]
+   },
+   "scripts-descriptions": {
+      "test": "Run the test suite, which also executes every docblock and README example",
+      "psalm": "Run psalm at errorLevel 1; it must exit 0, there is no baseline",
+      "check": "Run everything CI runs"
+   }
 }
