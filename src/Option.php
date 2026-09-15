@@ -610,20 +610,35 @@ final class Option {
     *
     * _Notes:_
     *
-    *  - `$condition` is a `bool`, not a callable, so PHP evaluates it at the
-    *    call site before this method runs. An expensive or throwing expression
-    *    happens even on a `Option::none`. Use `filterIf()` when you want the
-    *    check to be lazy
+    *  - Pass a `bool` and PHP evaluates it at the call site, before this method
+    *    runs, so an expensive or throwing expression happens even on a
+    *    `Option::none`. Pass the callable instead and it only runs on a
+    *    `Option::some`. `filterIf()` is the same thing, spelled explicitly
+    *  - This method is not `@psalm-mutation-free`, because it may call code you
+    *    supplied. That is the cost of taking a callable at all
     *  - Returns `Option<T>`
     *
-    * @psalm-mutation-free
-    * @psalm-param bool $condition
-    * @psalm-return ($condition is true ? self<T> : self<never>)
+    * ```php
+    * $calls = 0;
+    * $check = function() use (&$calls) { $calls++; return true; };
+    *
+    * Option::none()->filter($check()); // $check ran: PHP evaluated the argument
+    * Option::none()->filter($check);   // $check did not run
+    *
+    * echo $calls, "\n"; // 1
+    * ```
+    *
+    * @psalm-param bool|callable(T):bool $condition
+    * @psalm-return ($condition is false ? self<never> : self<T>)
     */
-   public function filter(bool $condition): self {
-      return $this->hasValue && !$condition
-         ? self::none()
-         : $this;
+   public function filter(bool|callable $condition): self {
+      if (!$this->hasValue) {
+         return $this;
+      }
+
+      $keep = is_callable($condition) ? $condition($this->value) : $condition;
+
+      return $keep === true ? $this : self::none();
    }
 
    /**

@@ -894,13 +894,13 @@ final class Either {
     *
     * _Notes:_
     *
-    *  - `$condition` is a `bool`, not a callable, so PHP evaluates it at the
-    *    call site before this method runs. An expensive or throwing expression
-    *    happens even on the side this cannot affect. Use `filterLeftIf()` when you
-    *    want the check to be lazy
+    *  - Pass a `bool` and PHP evaluates it at the call site, before this method
+    *    runs, so an expensive or throwing expression happens even on the side
+    *    this cannot affect. Pass the callable instead and it only runs on the
+    *    side it can. `filterLeftIf()` is the same thing, spelled explicitly
+    *  - No longer `@psalm-mutation-free`, because it may call code you supplied
     *
-    * @psalm-mutation-free
-    * @psalm-param bool $condition
+    * @psalm-param bool|callable(TLeft):bool $condition
     * @template TTRight
     * @psalm-param TTRight $rightValue
     * @psalm-return (
@@ -909,10 +909,14 @@ final class Either {
     *   Either<TLeft, TRight>
     * ))
     **/
-   public function filterLeft(bool $condition, $rightValue): self {
-      return $this->isLeft && !$condition
-         ? self::right($rightValue)
-         : $this;
+   public function filterLeft(bool|callable $condition, $rightValue): self {
+      if (!$this->isLeft) {
+         return $this;
+      }
+
+      $keep = is_callable($condition) ? $condition($this->leftValue) : $condition;
+
+      return $keep === true ? $this : self::right($rightValue);
    }
 
    /**
@@ -923,13 +927,13 @@ final class Either {
     *
     * _Notes:_
     *
-    *  - `$condition` is a `bool`, not a callable, so PHP evaluates it at the
-    *    call site before this method runs. An expensive or throwing expression
-    *    happens even on the side this cannot affect. Use `filterRightIf()` when you
-    *    want the check to be lazy
+    *  - Pass a `bool` and PHP evaluates it at the call site, before this method
+    *    runs, so an expensive or throwing expression happens even on the side
+    *    this cannot affect. Pass the callable instead and it only runs on the
+    *    side it can. `filterRightIf()` is the same thing, spelled explicitly
+    *  - No longer `@psalm-mutation-free`, because it may call code you supplied
     *
-    * @psalm-mutation-free
-    * @psalm-param bool $condition
+    * @psalm-param bool|callable(TRight):bool $condition
     * @template TTLeft
     * @psalm-param TTLeft $leftValue
     * @psalm-return (
@@ -938,10 +942,14 @@ final class Either {
     *   Either<TLeft, TRight>
     * ))
     **/
-   public function filterRight(bool $condition, $leftValue): self {
-      return !$this->isLeft && !$condition
-         ? self::left($leftValue)
-         : $this;
+   public function filterRight(bool|callable $condition, $leftValue): self {
+      if ($this->isLeft) {
+         return $this;
+      }
+
+      $keep = is_callable($condition) ? $condition($this->rightValue) : $condition;
+
+      return $keep === true ? $this : self::left($leftValue);
    }
 
    /**

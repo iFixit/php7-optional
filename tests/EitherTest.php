@@ -785,6 +785,27 @@ final class EitherTest extends TestCase
     * so a right-only method would have gone unnoticed, and the right side is
     * where new methods get added because that is where errors live.
     */
+   public function testFilterLeftAndFilterRightTakeEitherSpelling(): void {
+      $this->assertSame(10, Either::left(10)->filterLeft(true, 'too small')->leftOr(-1));
+      $this->assertSame('too small', Either::left(10)->filterLeft(false, 'too small')->rightOr('x'));
+
+      $big = function(int $n): bool { return $n > 5; };
+      $this->assertSame(10, Either::left(10)->filterLeft($big, 'too small')->leftOr(-1));
+      $this->assertSame('too small', Either::left(4)->filterLeft($big, 'too small')->rightOr('x'));
+
+      $longEnough = function(string $s): bool { return strlen($s) > 1; };
+      $this->assertSame('err', Either::right('err')->filterRight($longEnough, 0)->rightOr('x'));
+      $this->assertSame(0, Either::right('e')->filterRight($longEnough, 0)->leftOr(-1));
+
+      $ranOnRight = false;
+      Either::right('e')->filterLeft(function() use (&$ranOnRight): bool { $ranOnRight = true; return true; }, 'x');
+      $this->assertFalse($ranOnRight, 'filterLeft must not run its callable on a Right');
+
+      $ranOnLeft = false;
+      Either::left(1)->filterRight(function() use (&$ranOnLeft): bool { $ranOnLeft = true; return true; }, 'x');
+      $this->assertFalse($ranOnLeft, 'filterRight must not run its callable on a Left');
+   }
+
    public function testFlatMapRight(): void {
       $recovered = Either::right('not found')->flatMapRight(function(string $_error): Either {
          return Either::left('default');

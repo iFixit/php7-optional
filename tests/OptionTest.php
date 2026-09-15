@@ -460,6 +460,28 @@ final class OptionTest extends TestCase {
       $this->assertSame('from source', $recovered->valueOr('x'), 'tapNone does not break the chain');
    }
 
+   /**
+    * filter takes a bool or a callable now. The short, guessable name used to
+    * be the eager one, so the cheapest thing to write was the one that costs.
+    */
+   public function testFilterTakesEitherSpelling(): void {
+      $this->assertSame(5, Option::some(5)->filter(true)->valueOr(-1));
+      $this->assertFalse(Option::some(5)->filter(false)->hasValue());
+
+      $this->assertSame(5, Option::some(5)->filter(function(int $n): bool { return $n > 3; })->valueOr(-1));
+      $this->assertFalse(Option::some(5)->filter(function(int $n): bool { return $n > 9; })->hasValue());
+
+      $ran = false;
+      Option::none()->filter(function() use (&$ran): bool { $ran = true; return true; });
+      $this->assertFalse($ran, 'the callable must not run on a None');
+
+      $this->assertSame(
+         (string) Option::some(5)->filterIf(function(int $n): bool { return $n > 3; }),
+         (string) Option::some(5)->filter(function(int $n): bool { return $n > 3; }),
+         'filter with a callable and filterIf are the same operation'
+      );
+   }
+
    public function testFirst(): void {
       $this->assertSame('a', Option::first(['a', 'b'])->valueOr('x'));
       $this->assertFalse(Option::first([])->hasValue());
