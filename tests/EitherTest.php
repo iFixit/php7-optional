@@ -712,6 +712,38 @@ final class EitherTest extends TestCase
       $this->assertInstanceOf(\TypeError::class, $either->rightOr(new \Exception('x')));
    }
 
+   /**
+    * Either::fromArray used isset() while Option::fromArray used
+    * array_key_exists(), so the two disagreed about a key holding null. They
+    * agree now: present means present, and null is collapsed explicitly.
+    */
+   public function testFromArrayTreatsAPresentNullAsPresent(): void {
+      $either = Either::fromArray(['k' => null], 'k', 'missing');
+
+      $this->assertTrue($either->isLeft(), 'a key holding null is still a key that exists');
+      $this->assertNull($either->leftOr('fallback'));
+
+      $option = Option::fromArray(['k' => null], 'k');
+      $this->assertSame(
+         $option->hasValue(),
+         $either->isLeft(),
+         'Option::fromArray and Either::fromArray must agree about a present null'
+      );
+
+      $collapsed = Either::fromArray(['k' => null], 'k', 'missing')->leftNotNull('was null');
+      $this->assertTrue($collapsed->isRight(), 'leftNotNull is how you opt into treating null as missing');
+      $this->assertSame('was null', $collapsed->rightOr('x'));
+
+      $absent = Either::fromArray(['k' => null], 'nope', 'missing');
+      $this->assertTrue($absent->isRight());
+      $this->assertSame('missing', $absent->rightOr('x'));
+   }
+
+   public function testToOptionFromLeftKeepsTheLeftValue(): void {
+      $this->assertSame(10, Either::left(10)->toOptionFromLeft()->valueOr(-1));
+      $this->assertFalse(Either::right('err')->toOptionFromLeft()->hasValue());
+   }
+
    public function testToOptionFromRight(): void {
       $this->assertSame("boom", Either::right("boom")->toOptionFromRight()->valueOr("x"));
       $this->assertFalse(Either::left(1)->toOptionFromRight()->hasValue());

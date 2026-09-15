@@ -342,7 +342,7 @@ final class Either {
     * @psalm-mutation-free
     * @template TTRight
     * @psalm-param TTRight $alternative
-    * @psalm-return (TLeft is never ? Either<never, TTRight> : Either<TLeft, TRight>)
+    * @psalm-return (TLeft is never ? Either<TLeft, TRight> : Either<never, TTRight>)
     **/
    public function orRight($alternative): self {
       return !$this->isLeft
@@ -1032,28 +1032,15 @@ final class Either {
     *
     * _Notes:_
     *
-    *  - Returns `Option<U>`
+    *  - Returns `Option<TLeft>`
     *
-    * @template U
-    * @psalm-return Option<U>
+    * @psalm-mutation-free
+    * @psalm-return Option<TLeft>
     **/
    public function toOptionFromLeft(): Option {
-
-      /** @psalm-var callable(TLeft):Option<U> **/
-      $leftFunc =
-      /** @psalm-param TLeft $value **/
-      function($value): Option {
-         return Option::some($value);
-      };
-
-      /** @psalm-var callable(TRight):Option<U> **/
-      $rightFunc =
-      /** @psalm-param TRight $_rightValue **/
-      function($_rightValue): Option {
-         return Option::none();
-      };
-
-      return $this->match($leftFunc, $rightFunc);
+      return $this->isLeft
+         ? Option::some($this->leftValue)
+         : Option::none();
    }
 
    /**
@@ -1101,7 +1088,6 @@ final class Either {
     * @psalm-mutation-free
     * @psalm-pure
     * @template TTLeft
-    * @template TTRight
     * @psalm-param TTLeft $leftValue
     * @psalm-return Either<TTLeft, never>
     **/
@@ -1123,7 +1109,6 @@ final class Either {
     *
     * @psalm-mutation-free
     * @psalm-pure
-    * @template TTLeft
     * @template TTRight
     * @psalm-param TTRight $rightValue
     * @psalm-return Either<never, TTRight>
@@ -1301,19 +1286,15 @@ final class Either {
     * - Returns `Either<TTLeft, TTRight>`
     *
     * @psalm-mutation-free
-    * @template TTLeft
     * @template TTRight
-    * @psalm-param array<array-key, mixed> $array
-    * @psalm-param array-key $key The key of the array
-    * @psalm-param TTRight $rightValue
-
     * @template TArray of array
     * @param TArray $array
     * @param array-key $key
-    * @psalm-return ($key is key-of<TArray> ? self<value-of<TArray>, never>|self<mixed, never> :(TTRight is null ? self<never, \Exception> : self<never, TTRight>))
+    * @psalm-param TTRight $rightValue
+    * @psalm-return ($key is key-of<TArray> ? self<value-of<TArray>, never>|self<mixed, never> : (TTRight is null ? self<never, \Exception> : self<never, TTRight>))
     **/
     public static function fromArray(array $array, $key, $rightValue = null): self {
-      if (isset($array[$key])) {
+      if (array_key_exists($key, $array)) {
          return self::left($array[$key]);
       }
 

@@ -151,19 +151,32 @@ final class DocblockExampleTest extends TestCase {
    }
 
    /**
-    * Several examples echo or var_dump to show a result. That output is part of
-    * the documentation, not of the test, so swallow it rather than letting
-    * beStrictAboutOutputDuringTests mark every one of them risky.
+    * Several examples echo or var_dump to show a result, and the tap() examples
+    * call error_log, which goes to stderr in CLI and so slips past output
+    * buffering. Both are documentation, not test output: swallow stdout, and
+    * point the error log at a temp file for the duration.
     *
     * @psalm-suppress ForbiddenCode running the examples is the entire point
     */
    private static function evaluate(string $code): void {
+      $previousLog = ini_get('error_log');
+      $sink = tempnam(sys_get_temp_dir(), 'docblock-example-');
+
+      if ($sink !== false) {
+         ini_set('error_log', $sink);
+      }
+
       ob_start();
 
       try {
          eval(self::PRELUDE . "\n" . $code);
       } finally {
          ob_end_clean();
+         ini_set('error_log', $previousLog === false ? '' : $previousLog);
+
+         if ($sink !== false) {
+            unlink($sink);
+         }
       }
    }
 }
