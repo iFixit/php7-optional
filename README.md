@@ -14,8 +14,8 @@ isn't one.
 * `Optional\Either` is Left or Right. Use it when the failure has something to
   say for itself.
 
-Both are immutable. Every method returns a new box rather than changing the one
-you called it on.
+Both are immutable. Nothing you call can change a box you already hold, so a
+method either hands you a new one or hands back the one you gave it.
 
 Every example in this file runs as part of the test suite, so if one of them is
 wrong the build goes red.
@@ -209,9 +209,14 @@ trace it by.
   holding `null` is now a `Left(null)` instead of a Right. `Option::fromArray`
   always behaved this way and the two now agree. Chain `leftNotNull()` for the
   old behavior.
-* `Option` and `Either` are `final`. Extending them never worked: the static
-  factories build with `new self`, so a subclass came back as a plain `Option`
-  or `Either` on the first `map`.
+* `Either::mapLeftSafely` catches `Throwable` where 3.x caught `Exception`. An
+  `Error` that used to escape and crash now lands on the right and travels down
+  the chain, so a caller relying on it crashing needs to check the right side.
+  `Option::mapSafely` is unchanged and still catches `Exception` only.
+* `Option` and `Either` are `final`, and so is `MissingValueException`.
+  Extending the two boxes never worked: the static factories build with
+  `new self`, so a subclass came back as a plain `Option` or `Either` on the
+  first `map`.
 * `Optional\Result` and `Optional\UnsafeResult` do not exist and have not since
   the 2.x line. Earlier versions of this README documented them by mistake. Use
   `Either`, whose left side is the success.
@@ -223,8 +228,8 @@ trace it by.
 
 `Option` methods: `hasValue` `valueOr` `value` `valueOrThrow` `valueOrCreate`
 `or` `orCreate` `else` `elseCreate` `match` `matchSome` `matchNone` `map`
-`mapSafely` `flatMap` `andThen` `tap` `filter` `filterIf` `notNull` `notFalsy`
-`contains` `exists`
+`mapSafely` `flatMap` `andThen` `tap` `tapNone` `filter` `filterIf` `notNull`
+`notFalsy` `contains` `exists`
 
 `Either` factories: `left` `right` `leftWhen` `rightWhen` `notNullLeft`
 `notFalsyLeft` `fromCallable` `fromArray`

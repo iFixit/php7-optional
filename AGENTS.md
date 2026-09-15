@@ -51,8 +51,8 @@ oldest PHP in the matrix is what kept this repo on a 2022 psalm for years.
 ## The docs are tested, and that is the point
 
 `tests/DocblockExampleTest.php` pulls every ```php fence out of `src/` and
-`README.md` and executes it. Fifty-odd examples, one test case each, named for
-the method they document.
+`README.md` and executes it, one test case each, named for the method it
+documents.
 
 This exists because eight docblock examples had been uncallable for years.
 They called methods that never existed, invoked factories with too few

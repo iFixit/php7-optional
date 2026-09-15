@@ -60,6 +60,23 @@ final class DocumentedApiTest extends TestCase {
       );
    }
 
+   /**
+    * README.md carries a hand-written list of every method. A list like that
+    * rots the first time someone adds one, and the rot is invisible: nothing
+    * breaks, the list is just quietly wrong.
+    */
+   #[DataProvider('publicMethodProvider')]
+   public function testPublicMethodIsListedInTheReadme(string $label): void {
+      $readme = (string) file_get_contents(dirname(__DIR__) . '/README.md');
+      $method = substr($label, (int) strpos($label, '::') + 2, -2);
+
+      $this->assertStringContainsString(
+         "`{$method}`",
+         $readme,
+         "{$label} is missing from the method list in README.md"
+      );
+   }
+
    public function testProviderSeesTheWholeApi(): void {
       $labels = array_keys(iterator_to_array(self::publicMethodProvider()));
 
