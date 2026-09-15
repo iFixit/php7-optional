@@ -74,9 +74,21 @@ Consequences when you add or edit an example:
 script in a subprocess and failing on any Fatal, Warning, Notice or Deprecated.
 
 `tests/DocumentedApiTest.php` closes the loop from the other end. It walks both
-classes with reflection and fails any public method whose docblock carries no
-```php block. So a new public method needs an example, and the example has to
-run. `__toString` is the one exemption.
+classes with reflection and asks three things of every public method:
+
+1. its docblock carries a ```php block,
+2. that block actually calls the method it sits above, which is what caught
+   `leftNotFalsy` documenting itself with `leftNotNull`'s example,
+3. the method appears in README.md's hand-written list.
+
+`__toString` is the one exemption. Between these and DocblockExampleTest, a new
+public method needs an example, the example has to be about that method, it has
+to run, and the method has to be listed.
+
+The one thing none of them check is whether an example prints what its trailing
+comment claims. Only 16 of the 93 examples carry a machine-readable claim, so
+that gate was judged not worth a parser. If you change what an example returns,
+change its comment by hand.
 
 The docblocks are the only API documentation. There is no generated site:
 `php7-optional.surge.sh` is still served but unowned and years stale, still
