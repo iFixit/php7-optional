@@ -232,6 +232,29 @@ on the right, where you can still find it. `Option::fromCallable` and
 caught, and swallowing an `Error` would erase a real bug with nothing left to
 trace it by.
 
+## What it costs
+
+A library that asks you to allocate an object where you used to write `??`
+should say what that buys and what it costs. `php bin/benchmark.php` measures
+it, and on PHP 8.4 with no opcache it reports:
+
+| | plain PHP | boxed | overhead |
+|---|---|---|---|
+| read a key that is present | 23 ns | 123 ns | 5.4x |
+| read a key that is absent | 20 ns | 108 ns | 5.5x |
+| two step chain | 63 ns | 328 ns | 5.2x |
+
+So the box costs roughly 100 ns per call. Read the ratio and the absolute
+number together: 5.4x sounds alarming and 100 ns usually is not, because the
+work it wraps is almost always larger by orders of magnitude.
+
+Where it does matter is a tight loop over a large array. Boxing a million
+elements adds about a tenth of a second. Reach for plain PHP there and keep
+the box for the boundaries.
+
+Run it on your own machine rather than trusting this table; the numbers move
+with the PHP version and the opcache.
+
 ## Upgrading from 3.x
 
 * PHP 8.4 or later is required.
