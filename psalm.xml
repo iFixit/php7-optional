@@ -14,6 +14,12 @@
         <directory name="bin"/>
         <ignoreFiles>
             <directory name="vendor"/>
+            <!--
+                @psalm-trace reports as an issue, so the type-assertion fixture
+                cannot be in the main run. TypeInferenceTest analyses it on its
+                own and compares the traces against recorded types.
+            -->
+            <directory name="tests/TypeInference"/>
         </ignoreFiles>
     </projectFiles>
 

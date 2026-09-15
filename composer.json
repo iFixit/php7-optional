@@ -36,6 +36,7 @@
    "scripts": {
       "test": "phpunit",
       "psalm": "psalm --no-cache",
+      "types": "phpunit --filter TypeInferenceTest",
       "coverage": [
          "phpunit --coverage-text --coverage-clover=clover.xml",
          "php bin/check-coverage.php clover.xml 90"
@@ -48,6 +49,7 @@
    "scripts-descriptions": {
       "test": "Run the test suite, which also executes every docblock and README example",
       "psalm": "Run psalm at errorLevel 1; it must exit 0, there is no baseline",
+      "types": "Assert what psalm infers for the expressions in tests/TypeInference",
       "coverage": "Measure line coverage and fail below the floor; needs xdebug or pcov",
       "check": "Run everything CI runs"
    }

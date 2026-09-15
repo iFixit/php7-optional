@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<!--
+    Config for the type-assertion fixture only.
+
+    TypeInferenceTest runs psalm with this config over tests/TypeInference and
+    compares each @psalm-trace against a type it records. The fixture needs its
+    own config for two reasons: @psalm-trace reports as an issue, so it cannot
+    be in the run that has to exit 0, and findUnusedCode would report every
+    function in it as unused.
+
+    errorLevel matches psalm.xml, because the point is to assert what a caller
+    at errorLevel 1 actually sees.
+-->
+<psalm
+    errorLevel="1"
+    resolveFromConfigFile="true"
+    findUnusedCode="false"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns="https://getpsalm.org/schema/config"
+    xsi:schemaLocation="https://getpsalm.org/schema/config vendor/vimeo/psalm/config.xsd"
+>
+    <projectFiles>
+        <directory name="tests/TypeInference"/>
+        <ignoreFiles>
+            <directory name="vendor"/>
+        </ignoreFiles>
+    </projectFiles>
+</psalm>
