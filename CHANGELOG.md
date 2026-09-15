@@ -83,10 +83,11 @@ existed on master but were never in a tagged release.
   traced `mixed` and now traces `'world'|'x'`.
 * **`Option::filter` had no docblock at all**, so psalm gave it no template and
   the mapped type was lost through it.
-* **Fifteen docblock examples did not run.** Calls to methods that never
-  existed (`->or()` on Either, `->toOption()`, `safeMap()`), factories invoked
-  with too few arguments, and variables used but never defined. Two more ran
-  but stated the wrong result, because a PHP 8 warning is not a throwable.
+* **Eight docblock examples did not run**, plus three in the README. Calls to
+  methods that never existed (`->or()` on Either, `->toOption()`, `safeMap()`),
+  factories invoked with too few arguments, and variables used but never
+  defined. Two more ran but stated the wrong result, because a PHP 8 warning is
+  not a throwable.
 * **`Either::leftNotFalsy` documented itself with `leftNotNull`'s example.**
 
 ### Removed
@@ -102,17 +103,20 @@ existed on master but were never in a tagged release.
 
 ### Infrastructure
 
-* Every ```php example in `src/` and `README.md` runs as a test. Every public
-  method must carry one, the example must call the method it documents, and the
-  method must appear in the README's list. Three gates, each verified by
-  reintroducing the bug it catches.
+* Every ```php example in `src/` and `README.md` runs as a test, and psalm
+  analyses all of them through a generated file. Every public method must carry
+  one, the example must call the method it documents rather than mention it in
+  a comment or a string, and the method must appear in the README's list. Each
+  gate was verified by reintroducing the bug it catches.
 * Coverage is measured in CI and fails below a floor, rather than being printed
   into a log nobody reads.
 * CI is four jobs: the test matrix, coverage, psalm, and
   `composer validate --strict`. Static analysis and coverage are out of the
   matrix, because pinning psalm to the oldest PHP in it is what froze the
   toolchain for years.
-* 466 tests and 887 assertions, from 35 test methods.
+* The suite went from 35 test methods to 81, and from 246 assertions to over a
+  thousand. Most of the case count is data providers: every example is its own
+  case.
 
 ## [3.0]
 

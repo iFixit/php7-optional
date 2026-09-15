@@ -42,15 +42,18 @@ success for both. That mistake put a psalm failure into this branch once.
 There is no `psalm-baseline.xml` and there should not be one. `src/` and
 `tests/` are clean at errorLevel 1. Fix the type rather than baselining it.
 
-`bin/check-coverage.php` exits 2, not 0, when the clover report is missing or
-unparseable. A coverage step that passes because nothing was measured is worse
-than no step. `tests/CoverageGateTest.php` covers all five of its outcomes.
+`composer coverage` writes `clover.xml`, runs `bin/check-coverage.php` and fails
+below the floor. That script exits 2, not 0, when the report is missing or
+unparseable, when the counts are impossible, or when the floor is not a number. A coverage step that passes because nothing was measured is worse
+than no step. `tests/CoverageGateTest.php` covers every one of its outcomes, including a
+floor that arrives as an empty shell variable.
 
 `.github/workflows/test.yaml` is four jobs: the phpunit matrix, then coverage,
 psalm and `composer validate --strict` once each on 8.4. Static analysis is out
 of the matrix because pinning psalm to the oldest PHP in it is what kept this
 repo on a 2022 psalm for years. Coverage is out for a duller reason: xdebug
-roughly triples the run and the same lines measured five times teach nothing.
+roughly triples the run and measuring the same lines once per PHP version in
+the matrix teaches nothing.
 
 ## The docs are tested, and that is the point
 
@@ -81,9 +84,10 @@ Four things to know when you touch an example:
   `tests/Fixtures/`. Add to those rather than teaching the runner to skip one.
 - stdout is buffered and `error_log` redirected, so an example may print.
 
-Nothing checks that an example prints what its trailing comment claims. Only 16
-of the 93 carry a machine-readable claim, so that gate was not worth a parser.
-Change the comment by hand when you change what an example returns.
+Nothing checks that an example prints what its trailing comment claims. Fewer
+than a fifth carry a claim a machine could read, so that gate was judged not
+worth a parser. Change the comment by hand when you change what an example
+returns.
 
 There is no generated API site. `php7-optional.surge.sh` is still served but
 unowned and years stale, returning 200 for `Optional/Result.html` and
@@ -145,9 +149,9 @@ it.
 
 **Every left method needs a right twin.** `Either` is a symmetric box, and
 `testEveryLeftMethodHasARightTwin` walks the class with reflection and fails on
-any name containing `left` or `Left` whose counterpart is missing. It found four
-that were absent. Seventeen mirrored pairs out of twenty-one is worse than none,
-because a reader learns the rule and then guesses a method that is not there.
+any one-sided name whose counterpart is missing, in both directions. It found
+four that were absent. A mirror with a few gaps is worse than none, because a
+reader learns the rule and then guesses a method that is not there.
 
 One method breaks the mirror on purpose. `flatMapLeft` pins the right side, so
 the mirror-exact `flatMapRight` would pin the left, and recovering from an error
