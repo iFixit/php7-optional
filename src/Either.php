@@ -970,12 +970,13 @@ final class Either {
    }
 
    /**
-    * Turn an `Either::left(null)` into an `Either::right($rightValue)` iff `!$value == true`
+    * Turn an `Either::left($value)` into an `Either::right($rightValue)` iff `!$value == true`
     *
     * ```php
-    * $myVar = null;
-    * $leftThing = Either::left($myVar); // Valid
-    * $rightThing = $leftThing->leftNotNull("The var was null"); // Turn null into an Either::right($rightValue)
+    * echo (string) Either::left('')->leftNotFalsy("was falsy"), "\n";   // Right(was falsy)
+    * echo (string) Either::left(0)->leftNotFalsy("was falsy"), "\n";    // Right(was falsy)
+    * echo (string) Either::left('0.0')->leftNotFalsy("was falsy"), "\n"; // Left(0.0), truthy in PHP
+    * echo (string) Either::right('e')->leftNotFalsy("was falsy"), "\n";  // Right(e), untouched
     * ```
     *
     * _Notes:_

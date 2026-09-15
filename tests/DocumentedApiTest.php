@@ -61,6 +61,27 @@ final class DocumentedApiTest extends TestCase {
    }
 
    /**
+    * An example that never calls the method it documents is a copy of the
+    * neighbour's. It runs, so DocblockExampleTest passes it, and it carries a
+    * ```php block, so the check above passes it too. Either::leftNotFalsy
+    * shipped for years with leftNotNull's example.
+    */
+   #[DataProvider('publicMethodProvider')]
+   public function testExampleCallsTheMethodItDocuments(string $label, string $docblock): void {
+      $method = substr($label, (int) strpos($label, '::') + 2, -2);
+
+      if (preg_match('/```php\n(.*?)```/s', $docblock, $m) !== 1) {
+         $this->markTestSkipped("{$label} has no example; the check above reports that");
+      }
+
+      $this->assertMatchesRegularExpression(
+         '/(?:->|::)' . preg_quote($method, '/') . '\s*\(/',
+         $m[1],
+         "{$label}'s example never calls it, so it is documenting some other method"
+      );
+   }
+
+   /**
     * README.md carries a hand-written list of every method. A list like that
     * rots the first time someone adds one, and the rot is invisible: nothing
     * breaks, the list is just quietly wrong.
