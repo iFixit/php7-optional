@@ -13,6 +13,7 @@
       "php": "^8.4"
    },
    "require-dev": {
+      "infection/infection": "^0.35",
       "phpunit/phpunit": "^11.5",
       "psalm/plugin-phpunit": "^0.19",
       "vimeo/psalm": "^6.0"
@@ -30,6 +31,7 @@
    "config": {
       "sort-packages": true,
       "allow-plugins": {
+         "infection/extension-installer": true,
          "psalm/plugin-phpunit": true
       }
    },
@@ -38,6 +40,7 @@
       "psalm": "psalm --no-cache",
       "types": "phpunit --filter TypeInferenceTest",
       "benchmark": "@php bin/benchmark.php",
+      "mutation": "infection --threads=max",
       "coverage": [
          "phpunit --coverage-text --coverage-clover=clover.xml",
          "php bin/check-coverage.php clover.xml 90"
@@ -52,6 +55,7 @@
       "psalm": "Run psalm at errorLevel 1; it must exit 0, there is no baseline",
       "types": "Assert what psalm infers for the expressions in tests/TypeInference",
       "benchmark": "Measure what the box costs against the plain PHP it replaces",
+      "mutation": "Break the source on purpose and check a test notices; needs xdebug or pcov",
       "coverage": "Measure line coverage and fail below the floor; needs xdebug or pcov",
       "check": "Run everything CI runs"
    }

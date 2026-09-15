@@ -1,0 +1,43 @@
+{
+    // Mutation testing: break the source on purpose and check a test notices.
+    //
+    // This is here because two adversarial reviews found untested behavior by
+    // mutating by hand, and found it three times: both mapSafely catch types
+    // and Either::fromArray's fabricated Exception. Each had a docblock and a
+    // line in AGENTS.md describing it, and nothing that would fail if it were
+    // deleted. A green suite said nothing about any of them.
+    //
+    // Needs xdebug or pcov, which CI has and a plain PHP install does not.
+    //
+    //     composer mutation
+    //
+    // The two thresholds are estimates. Nobody has run this yet, because the
+    // machine it was written on has no coverage driver and installing one needs
+    // root. The first CI run prints the real numbers; set them just under those
+    // and raise them as the suite improves. A threshold below the real score is
+    // decoration.
+    "$schema": "vendor/infection/infection/resources/schema.json",
+    "source": {
+        "directories": [
+            "src"
+        ]
+    },
+    "logs": {
+        "text": "php://stdout"
+    },
+    "mutators": {
+        "@default": true,
+        // __toString is a debugging convenience. Mutating its string literals
+        // produces mutants no behavioral test should be written to catch.
+        "CastString": {
+            "ignore": [
+                "Optional\\Option::__toString",
+                "Optional\\Either::__toString"
+            ]
+        }
+    },
+    "minMsi": 80,
+    "minCoveredMsi": 85,
+    "testFramework": "phpunit",
+    "testFrameworkOptions": "--testsuite='PHP Optional Test Suite'"
+}

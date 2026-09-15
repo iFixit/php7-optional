@@ -48,8 +48,18 @@ unparseable, when the counts are impossible, or when the floor is not a number. 
 than no step. `tests/CoverageGateTest.php` covers every one of its outcomes, including a
 floor that arrives as an empty shell variable.
 
-`.github/workflows/test.yaml` is four jobs: the phpunit matrix, then coverage,
-psalm and `composer validate --strict` once each on 8.4. Static analysis is out
+`composer mutation` breaks the source on purpose and checks a test notices. It
+is in the coverage job, because it needs the same driver. Two adversarial
+reviews found untested behavior by doing this by hand, three times: both
+`mapSafely` catch types and `Either::fromArray`'s fabricated Exception. Each had
+a docblock and a line in this file describing it, and nothing that would fail if
+it were deleted.
+
+`composer benchmark` measures what the box costs against the plain PHP it
+replaces. The README carries the numbers.
+
+`.github/workflows/test.yaml` is four jobs: the phpunit matrix, then coverage
+plus mutation testing, psalm, and `composer validate --strict` once each on 8.4. Static analysis is out
 of the matrix because pinning psalm to the oldest PHP in it is what kept this
 repo on a 2022 psalm for years. Coverage is out for a duller reason: xdebug
 roughly triples the run and measuring the same lines once per PHP version in

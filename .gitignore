@@ -3,3 +3,6 @@ vendor/
 clover.xml
 .phpunit.cache/
 .phpunit.result.cache
+infection.log
+coverage-xml/
+junit.xml

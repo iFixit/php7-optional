@@ -52,8 +52,10 @@ jobs:
           coverage: xdebug
           tools: composer:v2
       - uses: ramsey/composer-install@v3
-      - run: vendor/bin/phpunit --coverage-text --coverage-clover=clover.xml
+      - run: vendor/bin/phpunit --coverage-text --coverage-clover=clover.xml --coverage-xml=coverage-xml --log-junit=junit.xml
       - run: php bin/check-coverage.php clover.xml 90
+      - name: Mutation testing
+        run: vendor/bin/infection --threads=max --no-progress --coverage=. --skip-initial-tests
 
   static-analysis:
     runs-on: ubuntu-latest
