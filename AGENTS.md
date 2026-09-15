@@ -7,18 +7,17 @@ install it with composer, so nothing you change here reaches any of them until
 someone cuts a tag.
 
 The whole library is three source files (`src/Option.php`, `src/Either.php`,
-`src/Exceptions/MissingValueException.php`) and two test files. Read them
-directly. This document covers only what reading them will not tell you, or
-will tell you wrong.
+`src/Exceptions/MissingValueException.php`). Read them directly. This document
+covers only what reading them will not tell you, or will tell you wrong.
 
 ## master is not what consumers get
 
-The released package and the code in front of you are different APIs.
-`value()`, `getLeft()`, `getRight()`, and the whole `MissingValueException`
-class were added **after** tag `3.0` (commits `b0d860f` and `9dbef9e`). Tag
-`3.0` has none of them, and `3.0` is what a consumer on `^3.0` resolves to.
+The released package and the code in front of you are different APIs, and the
+gap is now a whole major version. Tag `3.0` is PHP 7 compatible, has no
+`value()`, `getLeft()`, `getRight()`, `tap()`, `fromCallable()` or
+`valueOrThrow()`, and it is what a consumer on `^3.0` resolves to.
 
-Before you tell anyone a method is available, or write code elsewhere that
+Before telling anyone a method is available, or writing code elsewhere that
 calls one:
 
 ```bash
@@ -26,195 +25,156 @@ git describe --tags          # how far master is past the last release
 git show 3.0:src/Option.php | grep "public function value()"
 ```
 
-Until a new tag is cut and picked up, `->value()` does not exist for a
-consumer, no matter what `src/Option.php` says here.
-
 ## Commands
 
 ```bash
 composer install
-vendor/bin/phpunit                    # what CI runs, plus --coverage-text
-vendor/bin/psalm                      # must be clean at errorLevel 1
-vendor/bin/psalm --set-baseline=psalm-baseline.xml   # only with a reason
-php examples/optionExampleAfter.php   # examples require src/ directly, no autoloader needed
+vendor/bin/phpunit                    # 132 tests
+vendor/bin/psalm                      # must exit 0, errorLevel 1, no baseline
+php examples/optionExampleAfter.php
 ```
 
-`.github/workflows/test.yaml` is the only workflow. It runs phpunit and
-`psalm --shepherd` across PHP 7.4, 8.0, and 8.1 on push to master and on PRs
-targeting master.
+**Check psalm's exit code, not its output.** `vendor/bin/psalm ... | grep error`
+matches neither "No errors found!" nor a clean run's silence, so a grep like
+that reports success for both outcomes. That mistake put a psalm failure into
+this repo's history once already.
 
-## PHP 7.4 is the floor, and composer.json disagrees
+There is no `psalm-baseline.xml` and there should not be one. `src/` and
+`tests/` are both clean at errorLevel 1. Fix the type rather than baselining it.
 
-`composer.json` requires `^7.2 || ^8.0`, but CI dropped 7.2 and 7.3 (commits
-`f2f41ce`, `2a5c8f4`) and tests 7.4 upward. Write for 7.4: no constructor
-promotion, no named arguments, no `match`, no enums, no nullsafe operator, no
-union types in signatures. Nothing in the repo stops you from writing PHP 8
-syntax, the 7.4 job in CI does.
+`.github/workflows/test.yaml` runs three jobs: phpunit across the PHP versions
+in the matrix, psalm once on 8.4, and `composer validate --strict`. Static
+analysis is deliberately out of the test matrix, because pinning psalm to the
+oldest PHP in the matrix is what kept this repo on a 2022 psalm for years.
 
-If you deliberately want to drop 7.4, that is a `composer.json` change and a
-major tag, not a quiet syntax upgrade.
+## The docs are tested, and that is the point
+
+`tests/DocblockExampleTest.php` pulls every ```php fence out of `src/` and
+`README.md` and executes it. Fifty-odd examples, one test case each, named for
+the method they document.
+
+This exists because eight docblock examples had been uncallable for years.
+They called methods that never existed, invoked factories with too few
+arguments, and in two cases stated a result that is wrong on PHP 8. Nothing
+executed them, so nothing caught it.
+
+Consequences when you add or edit an example:
+
+- It has to run. An example that means to show a throw must catch it itself.
+- `eval` does not inherit `use` aliases from the calling file, which is why the
+  runner prepends its own import list as a `PRELUDE` string.
+- Illustrative class names (`SomeObject`, `NewObject`, `SomeComplexThing`) are
+  real fixtures in `tests/Fixtures/`. Add to those rather than teaching the
+  runner to skip an example.
+- stdout is buffered and `error_log` is redirected for the duration, so an
+  example may print or log without making the test risky.
+
+`tests/ExampleScriptTest.php` does the same job for `examples/`, running each
+script in a subprocess and failing on any Fatal, Warning, Notice or Deprecated.
 
 ## Behavior that surprises people
 
-Each of these is verified against the source on PHP 8.4, not inferred from the
-docblocks.
+Each verified by execution on PHP 8.4, not read off the annotations.
 
 ### The filter family is eager, the filterIf family is lazy
 
-`Option::filter()`, `Either::filterLeft()`, and `Either::filterRight()` take a
+`Option::filter()`, `Either::filterLeft()` and `Either::filterRight()` take a
 **`bool`**, not a callable. PHP evaluates the argument at the call site, before
 the method runs, so an expensive or throwing expression runs even when the box
-is a None or the wrong side:
+is empty:
 
 ```php
 Option::none()->filter($expensive());   // $expensive() still runs
 Option::none()->filterIf($expensive);   // callback never runs
 ```
 
-`Option::filter()` is also the only public method in either class with no
-docblock, so it is missing from the generated API docs entirely.
+The discoverable spelling is the costly one across the whole API: `valueOr`,
+`or`, `else` and `filter` are eager, while `valueOrCreate`, `orCreate`,
+`elseCreate` and `filterIf` are lazy.
 
-### `mapSafely` and `mapLeftSafely` disagree about the exception
+### Exception or Throwable, and why they differ
 
-Both catch `\Exception`. They do opposite things with it:
+| Call | Catches | Because |
+|---|---|---|
+| `Option::fromCallable`, `Option::mapSafely` | `Exception` | the box discards it, so swallowing an `Error` erases a bug |
+| `Either::fromCallable`, `Either::mapLeftSafely` | `Throwable` | the box keeps it, so nothing is lost |
 
-| Call | On a thrown `\Exception` |
-|---|---|
-| `Option::mapSafely()` | returns `Option::none()`, exception discarded |
-| `Either::mapLeftSafely()` | returns `Either::right($e)`, exception preserved |
+This asymmetry is deliberate and both halves have a test. Do not "fix" it by
+making them agree.
 
-Reach for `Either` when the failure reason matters. `Option::mapSafely` gives
-you no way to find out what went wrong.
-
-Neither catches `\Throwable`, so anything extending `\Error` goes straight
-through: a `TypeError` from a bad callable signature escapes `mapSafely`
-uncaught. A PHP 8 warning is not an exception either, which makes the
-library's own `mapSafely` docblock example wrong. It claims a missing array
-key yields a None; on PHP 8 it yields `Some(null)`.
-
-### The two `fromArray` methods use different key checks
-
-`Option::fromArray` uses `array_key_exists`, `Either::fromArray` uses `isset`.
-On a key that exists holding `null` they disagree:
-
-```php
-Option::fromArray(['k' => null], 'k');          // Some(null)
-Either::fromArray(['k' => null], 'k', 'miss');  // Right('miss')
-```
-
-`Either::fromArray` also fabricates a right value when you omit one:
-`new \Exception("Either got null for rightValue")`. Passing an explicit
-`null` gets you the same fabricated exception, so there is no way to build a
-`Right(null)` through `fromArray`. `Either::right(null)` does work.
+A PHP 8 warning is not a throwable either, so a missing array key inside a
+`mapSafely` callback yields `Some(null)`, not a None.
 
 ### `Option::some(null)` is a real Some
 
-`hasValue()` returns `true` for it. That is deliberate, it is what makes the
-box honest about a stored null. `notNull()`, `notFalsy()`, and
-`Option::someNotNull()` are how you collapse it to a None.
+`hasValue()` returns `true`. That is what makes the box honest about a stored
+null. `notNull()`, `notFalsy()`, `someNotNull()` and `someNotFalsy()` collapse
+it.
 
 ### Smaller ones
 
-- `contains()` compares with `==`, not `===`. `Option::some(1)->contains('1')`
-  is `true`.
-- `andThen()` is a plain alias: `Option::andThen` calls `flatMap`,
-  `Either::andThen` calls `flatMapLeft`. Same behavior, nicer name at a call
-  site.
+- `contains()` compares with `==`. `Option::some(1)->contains('1')` is `true`.
+- `andThen()` is an alias: `Option::andThen` calls `flatMap`,
+  `Either::andThen` calls `flatMapLeft`.
 - `__toString()` interpolates the boxed value, so a non-stringable value gives
-  you a PHP warning and `"Some(Array)"` rather than a throw. The
-  `@psalm-suppress InvalidCast` on it is intentional and points at
-  vimeo/psalm#1982. Null is special-cased to `"Some(null)"` and `"Left(null)"`.
-- `Option::none()` builds a new object every call. Compare with `==`, never
-  `===`.
-- `Either::toOptionFromLeft()` is the only bridge between the two classes.
-  There is no `Option`-to-`Either` direction and no `toOption()`, despite that
-  method's own docblock example calling `$either->toOption()`.
+  a PHP warning and `"Some(Array)"` rather than a throw. The
+  `@psalm-suppress InvalidCast` is intentional (vimeo/psalm#1982).
+- `Option::none()` builds a new object every call. Compare with `==`.
+- `Either::fromArray` with no `$rightValue` fabricates
+  `new Exception("Either got null for rightValue")`, so there is no way to
+  build a `Right(null)` through it. `Either::right(null)` works.
 
-## The README documents classes that do not exist
+## Two traps in the tooling itself
 
-`README.md` has a section on `Optional\Result` and `Optional\UnsafeResult`,
-including a worked example using `SimpleResult::okay()`. None of those classes
-are in `src/`. `Result` was deleted in commit `b892422` ("Result: Drop in
-favor of either") and the README was never updated.
+**PHPUnit cannot see a compile-time deprecation.** `failOnDeprecation` is set,
+but a deprecation raised while a file is being compiled fires before PHPUnit
+has a handler attached to a test. That is how an implicitly nullable parameter
+(`string $ex = null`, deprecated in 8.4) sat in the test suite unnoticed. The
+only thing that catches those is running the file in a subprocess, which is
+what `ExampleScriptTest` does.
 
-Do not write code against `Result`, and do not treat its absence as a bug to
-fix. If someone asks for `Result` back, that is a design conversation about
-reversing `b892422`, not a missing file.
+**psalm proves the throws, so code after one is unreachable.** The conditional
+return types (`(T is never ? never : T)`) let psalm prove that `value()` on a
+`None` cannot return. Anything written after such a call is reported as
+`UnevaluatedCode`, and a `$threw` flag read afterwards as `RedundantCondition`.
+Use one `expectException` per test rather than fighting it. One throw per test
+is what makes that safe. `expectException` ends a test at the first throw,
+which is why `5abacf7` had to abandon it when a single test asserted two.
 
-The published docs at <https://php7-optional.surge.sh/> have the same problem
-from the other direction. Nothing in CI builds or deploys them, and
-`sami-config.php` is the only build config. That site shows whatever was true
-when somebody last published it by hand.
+## Psalm annotations
 
-## Psalm is the real gate
+`psalm.xml` sets `errorLevel="1"` over `src/` and `tests/`, with
+`findUnusedCode` on. The `psalm/plugin-phpunit` plugin is what stops psalm
+reporting the test classes themselves as unused.
 
-`psalm.xml` sets `errorLevel="1"`, the strictest level, over both `src/` and
-`tests/`. The baseline holds exactly four entries, all `PropertyNotSetInConstructor`
-on the two test classes. Keep it that way. Fix the type instead of baselining
-it: a baseline entry added to land a change is how a level-1 project stops
-being one. The level badge in the README is generated from `--shepherd` output
-on every master build.
-
-Writing annotations here, three things to copy carefully:
-
-- **Do not use `map()` or `mapSafely()` as your docblock template.** Both write
-  `@psalm-param $mapFunc callable(T):U`, with the variable before the type.
-  The other 82 `@psalm-param` lines in `src/` use the correct
-  `@psalm-param <type> $var` order.
-- `mapSafely()` declares `@psalm-return self<T>` while actually returning
-  `Option<U>` from `map()`. Do not propagate that either.
-- `@psalm-mutation-free` and `@psalm-pure` are not interchangeable here. A
-  method that invokes a user callable is not pure, because the callable can do
-  anything. Static factories that only box a value carry both. Match the
-  existing split rather than re-deriving it. It was settled over three commits:
-  - `fbb87f8` "Remove pure in favor of external mutation free"
-  - `7597c0c` "Drop pure for methods which touch exception"
-  - `cb8755e` "Allow some impurity"
-
-## Testing
-
-`tests/` mirrors `src/`: one test class per source class, grouped by behavior
-rather than one test per method, so `testCreateAndCheckExistence` covers
-several factories at once. Add cases to the matching test rather than creating
-a file per method.
-
-**Do not use `expectException` to assert more than one throw in a test.**
-PHPUnit ends the test at the first one, so every assertion after it silently
-never runs. Commit `5abacf7` ("Tests: Actually run them") fixed exactly that.
-Use an explicit try/catch per throw, asserting on both the class and the
-message:
-
-```php
-try {
-   /** @psalm-suppress UnusedMethodCall since php unit is catching the throw */
-   $none->value();
-} catch (\Exception $e) {
-   $this->assertTrue($e instanceof MissingValueException);
-   $this->assertSame("Value is missing.", $e->getMessage());
-}
-```
-
-`phpunit.xml` turns notices, warnings, and deprecations into exceptions and
-sets `failOnRisky`, so a test that asserts nothing fails the build.
+- `@psalm-param` is `<type> $var`. Two methods once had it reversed, and the
+  effect was invisible: psalm silently failed to bind the template, so `map()`
+  reported `Option<never>` for a box holding a string. Check a change to a
+  conditional return type with `@psalm-trace`, and compare it against what the
+  code actually returns.
+- `@psalm-pure` already implies `@psalm-mutation-free`. Do not write both.
+- The classes carry `@api`, which is what keeps psalm from reporting a public
+  method as unused just because its callers live in another repository.
+- `@psalm-param` beats a plain `@param` for the same variable. A docblock
+  carrying both silently drops the `@param`, which is how `Either::fromArray`
+  ended up with a `key-of<TArray>` conditional that could never bind.
 
 ## Style
 
-- **Three spaces** for code indentation, with docblock `*` lines sitting one
-  space further in. There is no `.editorconfig` and no phpcs in this repo, so
-  nothing will correct you.
-- `declare(strict_types = 1);` with spaces around the `=`, directly under the
-  opening tag in every file.
-- `iff` in the docblocks means "if and only if". It is not a typo, leave it.
-- Docblock code fences are the public API documentation. A new public method
-  needs a worked `php` example showing both states of the box, not just a type
-  signature. Match the surrounding order: description, fenced example,
-  `_Notes:_`, then the psalm annotations.
+- **Three spaces** for code indentation, with docblock `*` lines one further
+  in. There is no `.editorconfig` and no phpcs, so nothing corrects you.
+- `declare(strict_types = 1);` with spaces around the `=`.
+- `iff` in the docblocks means "if and only if". Leave it.
+- A new public method needs a worked `php` example showing both states of the
+  box. Match the surrounding order: description, fenced example, `_Notes:_`,
+  then the psalm annotations. The example will be executed.
 
 ## Releasing
 
-Tags are plain versions with no `v` prefix (`1.0` through `3.0`). Packagist
-picks them up from the GitHub repository. A release is a tag on master, after
-which a consumer picks it up with `composer update ifixit/php7-optional`.
-Breaking the `Option` or `Either` surface means a major tag, because a
-consumer's `^3.0` constraint will not pick it up otherwise, which is the
-behavior you want.
+Tags are plain versions with no `v` prefix. Packagist picks them up from
+GitHub. A release is a tag on master, after which a consumer picks it up with
+`composer update ifixit/php7-optional`.
+
+The package keeps the name `ifixit/php7-optional` even though it now requires
+PHP 8.4. Renaming a published Packagist package costs every consumer an edit,
+which is not worth it to fix an inaccurate number.
