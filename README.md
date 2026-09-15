@@ -1,13 +1,24 @@
 # php7-optional
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Tests](https://github.com/iFixit/php7-optional/actions/workflows/test.yaml/badge.svg?branch=master)](https://github.com/iFixit/php7-optional/actions/workflows/test.yaml)
 [![Stable Version](https://img.shields.io/packagist/v/ifixit/php7-optional.svg)](https://packagist.org/packages/ifixit/php7-optional)
 [![Downloads](https://img.shields.io/packagist/dm/ifixit/php7-optional.svg)](https://packagist.org/packages/ifixit/php7-optional)
-[![codecov](https://codecov.io/gh/iFixit/php7-optional/branch/master/graph/badge.svg)](https://codecov.io/gh/iFixit/php7-optional)
 [![psalm](https://shepherd.dev/github/ifixit/php7-optional/level.svg)](https://shepherd.dev/github/ifixit/php7-optional)
-[![psalm](https://shepherd.dev/github/ifixit/php7-optional/coverage.svg)](https://shepherd.dev/github/ifixit/php7-optional)
-[![Pull Requests](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?longCache=true)](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?longCache=true)
+[![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/iFixit/php7-optional/pulls)
 
+Two boxes that hold a value so a caller cannot forget the case where there
+isn't one.
+
+* `Optional\Option` is Some or None. Use it instead of returning `null`.
+* `Optional\Either` is Left or Right. Use it when the failure has something to
+  say for itself.
+
+Both are immutable. Every method returns a new box rather than changing the one
+you called it on.
+
+Every example in this file runs as part of the test suite, so if one of them is
+wrong the build goes red.
 
 ## Installation
 
@@ -15,202 +26,226 @@
 composer require ifixit/php7-optional
 ```
 
-## Usage
+Requires PHP 8.4. For PHP 7, stay on the 3.x line.
 
-There are 3 main classes:
+## The shortest useful example
 
-* [Optional\Option](https://php7-optional.surge.sh/Optional/Option.html)
-   * Conceptually: Some or None. This is a box that optionally holds a value. Use this to replace null.
-* [Optional\Either](https://php7-optional.surge.sh/Optional/Either.html)
-   * Conceptually: Left or Right. This is a box that is bi-state. Can be Left, or Right. Not Both, not none. You can apply the same transformations to the left side as you can to the right.
-* [Optional\Result](https://php7-optional.surge.sh/Optional/Result.html)
-   * Conceptually: Okay or Error. This is a box that is bi-state, but leans towards okay state. The error state is limited as we want to make this object easy to deal with mapping or dump error.
-   * All callables have `Throwable` auto wrapped and thrown at the end of the chain.
-* [Optional\UnsafeResult](https://php7-optional.surge.sh/Optional/UnsafeResult.html)
-   * Conceptually: Okay or Error. This is a box that is bi-state, but leans towards okay state. The error state is limited as we want to make this object easy to deal with mapping or dump error.
-   * All callables do not have `Throwable` auto wrapped. Thus, an Exception will be thrown immediately.
-
-## [Read the full docs](https://php7-optional.surge.sh/)
-
-## Using Option
-
-To use Optional, simply import the following namespace:
+Without the box, the null check leaks into every caller:
 
 ```php
-use Optional\Option;
+$people = ['a1' => ['name' => 'Ada']];
+
+$person = $people['nope'] ?? null;
+$name = $person === null ? null : ($person['name'] ?? null);
+
+echo $name === null ? "no name\n" : strtoupper($name) . "\n";
 ```
 
-## Creating optional values
-
-There are examples under `examples`.
-
-Here is one of them which will show how fluently you can describe the chnage you want to apply.
+With it, the caller says what it wants and the empty case takes care of itself:
 
 ```php
-use Optional\Result;
+$people = ['a1' => ['name' => 'Ada']];
 
-class Curl {
-   public static function request(string $url): array {
-      return [
-         'code' => 200,
-         'url' => $url,
-         'data' =>
-            '{
-               "environment_config": {
-                 "app": {
-                   "name": "Sample App",
-                   "url": "http://10.0.0.120:8080/app/"
-                 },
-                 "database": {
-                   "name": "mysql database",
-                   "host": "10.0.0.120",
-                   "port": 3128,
-                   "username": "root",
-                   "password": "toor"
-                 },
-                 "rest_api": "http://10.0.0.120:8080/v2/api/"
-               }
-             }'
-      ];
-   }
-}
+$name = Option::fromArray($people, 'nope')
+   ->andThen(function(array $person) { return Option::fromArray($person, 'name'); })
+   ->map('strtoupper')
+   ->valueOr('no name');
 
-$responseToResult = function (array $response): Result {
-   $wasGood = $response['code'] == 200;
+echo $name . "\n"; // "no name"
+```
 
-   if ($wasGood) {
-      return SimpleResult::okay($response);
-   } else {
-      $url = $response['url'];
-      $code = $response['code'];
-      return SimpleResult::error("The request to $url failed with code $code!");
-   }
-};
+## Starting a chain
 
-$response = Curl::request('http:://www.github.com');
+PHP says something is missing in two ways: it returns something falsy, or it
+throws. There is a factory for each.
 
-$result = $responseToResult($response);
+```php
+// A falsy return, the shape a row fetch or a lookup gives you
+$none = Option::someNotFalsy(false); // None
+$some = Option::someNotFalsy('Ada'); // Some('Ada')
 
-$dbConnectionStr = $result
-   ->map(function ($result) {
-      return json_decode($result['data'], true);
-   })
-   ->notFalsy("Json failed to decode!")
-   ->map(function(array $json) {
-      $dbData = $json['environment_config']['database'];
+// A throwing call
+$ok = Option::fromCallable(function() { return 7; });                      // Some(7)
+$failed = Option::fromCallable(function() { throw new Exception("no"); }); // None
 
-      $host = $dbData['host'];
-      $port = $dbData['port'];
-      $username = $dbData['username'];
-      $password = $dbData['password'];
+echo $none->valueOr('-') . " " . $some->valueOr('-') . " "
+   . $ok->valueOr(0) . " " . $failed->valueOr(0) . "\n"; // "- Ada 7 0"
+```
 
-      return "Server=$host;Port=$port;Uid=$username;Pwd=$password;";
-   })
-   ->dataOrThrow();
+`Either` has the same two, and keeps the failure instead of dropping it:
 
-echo "Connection str: $dbConnectionStr \n";
+```php
+$right = Either::notFalsyLeft(false, 'row not found');
+echo $right->rightOr('') . "\n"; // "row not found"
 
+$kept = Either::fromCallable(function() { throw new Exception("the api said no"); });
+echo $kept->mapRight(function(Throwable $e) { return $e->getMessage(); })->rightOr('') . "\n";
+// "the api said no"
+```
 
-$dbConnectionResult = $result
-   ->map(function ($result) {
-      return false;
-   })
-   ->notFalsy("Json failed to decode!")
-   ->map(function(array $json) {
-      $dbData = $json['environment_config']['database'];
+There is also `Option::some`, `Option::none`, `Option::someNotNull`,
+`Option::someWhen`, `Option::fromArray`, and the matching `Either::left`,
+`Either::right`, `Either::notNullLeft`, `Either::leftWhen`, `Either::fromArray`.
 
-      $host = $dbData['host'];
-      $port = $dbData['port'];
-      $username = $dbData['username'];
-      $password = $dbData['password'];
+## The middle of a chain
 
-      return "Server=$host;Port=$port;Uid=$username;Pwd=$password;";
+`map` transforms the value. `andThen` (also spelled `flatMap`) is for a step
+that hands back a box of its own. `filterIf` drops a value that fails a test.
+`tap` runs a side effect without ending the chain.
+
+```php
+$total = Option::some(['price' => 5, 'qty' => 3])
+   ->filterIf(function(array $line) { return $line['qty'] > 0; })
+   ->tap(function(array $line) { error_log("pricing {$line['qty']} items"); })
+   ->map(function(array $line) { return $line['price'] * $line['qty']; })
+   ->valueOr(0);
+
+echo $total . "\n"; // 15
+```
+
+Nothing after an empty box runs:
+
+```php
+$ran = false;
+
+$total = Option::none()
+   ->map(function() use (&$ran) { $ran = true; return 1; })
+   ->valueOr(0);
+
+echo $total . "\n";                  // 0
+echo $ran ? "ran\n" : "never ran\n"; // "never ran"
+```
+
+## Ending a chain
+
+Four ways out, in rough order of how often you want them.
+
+```php
+$some = Option::some(41);
+
+// 1. Supply a fallback
+echo $some->valueOr(0) . "\n"; // 41
+
+// 2. Handle both cases
+echo $some->match(
+   function(int $n) { return "got {$n}"; },
+   function() { return "got nothing"; }
+) . "\n"; // "got 41"
+
+// 3. Throw, saying what was missing
+echo $some->valueOrThrow(function() { return new RuntimeException("no id"); }) . "\n"; // 41
+
+// 4. Ask
+echo $some->hasValue() ? "yes\n" : "no\n"; // "yes"
+```
+
+`valueOrThrow` takes a factory rather than a built exception, so nothing is
+constructed on the happy path. On `Either` these are `getLeftOrThrow` and
+`getRightOrThrow`, and the factory is handed the other side's value, which is
+how you keep the original failure as the cause:
+
+```php
+$failed = Either::fromCallable(function(): int { throw new Exception("the api said no"); });
+
+try {
+   $failed->getLeftOrThrow(function(Throwable $cause) {
+      return new RuntimeException("could not load the build", 0, $cause);
    });
-
-   try {
-      $dbConnectionResult->dataOrThrow();
-   } catch (Throwable $ex) {
-      // Don't want to kill the example
-      echo "Example of a wrapped exception: {$ex->getMessage()}\n";
-   }
-
-   $defaultValue = $dbConnectionResult
-   ->orSetDataTo('Server=myServerAddress;Port=1234;Database=myDataBase;Uid=myUsername;Pwd=myPassword;')
-   ->dataOrThrow();
-
-   echo "Example of setting to a default: $defaultValue\n";
+} catch (RuntimeException $e) {
+   echo $e->getMessage() . ": " . $e->getPrevious()->getMessage() . "\n";
+   // "could not load the build: the api said no"
+}
 ```
 
-## Using Either
+## Option or Either
 
-To use Either, simply import the following namespace:
+Use `Option` when "there isn't one" is the whole story. Use `Either` when the
+caller needs to know why. You can cross between them:
 
 ```php
-use Optional\Either;
+$value = Either::left(10)->toOptionFromLeft();          // Some(10), drops the error
+$error = Either::right('bad id')->toOptionFromRight();  // Some('bad id')
+
+echo $value->valueOr(-1) . " " . $error->valueOr('none') . "\n"; // "10 bad id"
 ```
 
-## Using Result
+## Two things that catch people out
 
-To use Result, simply import the following namespace:
+**`filter` takes a bool, `filterIf` takes a callable.** PHP evaluates an
+argument at the call site, so `filter(expensive())` runs `expensive()` even on
+a None. Reach for `filterIf` unless you already have the bool in hand.
 
 ```php
-use Optional\Result;
+$calls = 0;
+$check = function() use (&$calls) { $calls++; return true; };
+
+Option::none()->filter($check()); // $check ran
+Option::none()->filterIf($check); // $check did not
+
+echo $calls . "\n"; // 1
 ```
 
-### Result Methods
+**`some(null)` is a real Some.** The box is honest about a stored null.
+Collapse it when you want to.
 
-#### Creation (Boxing)
----
-- static okay($data): Result
-- static error(Throwable $errorData): Result
-- static okayWhen($data, Throwable $errorValue, callable $filterFunc): Result
-- static errorWhen($data, Throwable $errorValue, callable $filterFunc): Result
-- static okayNotNull($data, Throwable $errorValue): Result
-- static fromArray(array $array, $key, Throwable $rightValue = null): Result
+```php
+echo Option::some(null)->hasValue() ? "some\n" : "none\n";            // "some"
+echo Option::some(null)->notNull()->hasValue() ? "some\n" : "none\n"; // "none"
+```
 
-### Flipping
----
-- toError($errorValue): Result
-- toOkay($dataValue): Result
+## What each box catches
 
-### Unboxing
----
-- dataOrThrow()
+`Either::fromCallable` and `Either::mapLeftSafely` catch `Throwable`, because
+the box keeps what it caught: a `TypeError` from a bad callable signature lands
+on the right, where you can still find it. `Option::fromCallable` and
+`Option::mapSafely` catch `Exception` only, because those discard what they
+caught, and swallowing an `Error` would erase a real bug with nothing left to
+trace it by.
 
-### State
----
-- isOkay(): bool
-- isError(): bool
-- contains($value): bool
-- errorContains($value): bool
-- exists(callable $existsFunc): bool
+## Upgrading from 3.x
 
+* PHP 8.4 or later is required.
+* `Either::fromArray` uses `array_key_exists` rather than `isset`, so a key
+  holding `null` is now a `Left(null)` instead of a Right. `Option::fromArray`
+  always behaved this way and the two now agree. Chain `leftNotNull()` for the
+  old behavior.
+* `Option` and `Either` are `final`. Extending them never worked: the static
+  factories build with `new self`, so a subclass came back as a plain `Option`
+  or `Either` on the first `map`.
+* `Optional\Result` and `Optional\UnsafeResult` do not exist and have not since
+  the 2.x line. Earlier versions of this README documented them by mistake. Use
+  `Either`, whose left side is the success.
 
+## Full method list
 
-### Transformation
----
-- orSetDataTo($data): Result
-- orCreateResultWithData(callable $alternativeFactory): Result
-- okayOr(self $alternativeResult): Result
-- createIfError(callable $alternativeResultFactory): Result
-- map(callable $mapFunc): Result
-- mapError(callable $mapFunc): Result
-- andThen(callable $mapFunc): Result
-- flatMap(callable $mapFunc): Result
-- toErrorIf(callable $filterFunc, Throwable $errorValue): Result
-- toOkayIf(callable $filterFunc, $data): Result
-- notNull(Throwable $errorValue): Result
-- notFalsy(Throwable $errorValue): Result
+`Option` factories: `some` `none` `someWhen` `noneWhen` `someNotNull`
+`someNotFalsy` `fromCallable` `fromArray`
 
-### Side Effect
-- run(callable $dataFunc, callable $errorFunc)
-- runOnOkay(callable $dataFunc): void
-- runOnError(callable $errorFunc): void
+`Option` methods: `hasValue` `valueOr` `value` `valueOrThrow` `valueOrCreate`
+`or` `orCreate` `else` `elseCreate` `match` `matchSome` `matchNone` `map`
+`mapSafely` `flatMap` `andThen` `tap` `filter` `filterIf` `notNull` `notFalsy`
+`contains` `exists`
 
+`Either` factories: `left` `right` `leftWhen` `rightWhen` `notNullLeft`
+`notFalsyLeft` `fromCallable` `fromArray`
 
-# Licence
- MIT
+`Either` methods: `isLeft` `isRight` `leftOr` `rightOr` `getLeft` `getRight`
+`getLeftOrThrow` `getRightOrThrow` `leftOrCreate` `rightOrCreate` `orLeft`
+`orRight` `orCreateLeft` `orCreateRight` `elseLeft` `elseRight`
+`elseCreateLeft` `elseCreateRight` `match` `matchLeft` `matchRight` `mapLeft`
+`mapRight` `mapLeftSafely` `flatMapLeft` `andThen` `tapLeft` `tapRight`
+`filterLeft` `filterRight` `filterLeftIf` `filterRightIf` `leftNotNull`
+`rightNotNull` `leftNotFalsy` `rightNotFalsy` `leftContains` `rightContains`
+`existsLeft` `existsRight` `toOptionFromLeft` `toOptionFromRight`
 
+Every one carries a worked example in its docblock. Read them in the source or
+at [php7-optional.surge.sh](https://php7-optional.surge.sh/).
 
-# Special Thanks
-Heavily inspired by https://github.com/nlkl/Optional. In fact this is essentially a port of this library.
+## Licence
+
+MIT.
+
+## Special thanks
+
+Heavily inspired by [nlkl/Optional](https://github.com/nlkl/Optional). This
+started as a port of it.

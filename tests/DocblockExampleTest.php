@@ -12,7 +12,7 @@ use PHPUnit\Framework\TestCase;
 use Throwable;
 
 /**
- * Runs every ```php example in the library's docblocks.
+ * Runs every ```php example in the library's docblocks and in README.md.
  *
  * Those docblocks are the published API documentation, so a broken example is
  * a broken product. Eight of them had been uncallable for years because
@@ -28,6 +28,7 @@ final class DocblockExampleTest extends TestCase {
       'src/Option.php',
       'src/Either.php',
       'src/Exceptions/MissingValueException.php',
+      'README.md',
    ];
 
    /**
@@ -85,7 +86,7 @@ final class DocblockExampleTest extends TestCase {
 
       $this->assertGreaterThanOrEqual(20, count($labels), 'Too few examples extracted from src/');
 
-      foreach (['src/Option.php', 'src/Either.php'] as $relativePath) {
+      foreach (['src/Option.php', 'src/Either.php', 'README.md'] as $relativePath) {
          $fromFile = array_filter($labels, static fn(string $l): bool => str_starts_with($l, $relativePath));
          $this->assertNotEmpty($fromFile, "No docblock examples extracted from {$relativePath}");
       }
