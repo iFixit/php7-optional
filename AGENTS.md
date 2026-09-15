@@ -29,82 +29,65 @@ git show 3.0:src/Option.php | grep "public function value()"
 
 ```bash
 composer install
-composer check                        # what CI runs: phpunit then psalm
-composer test                         # phpunit alone
-composer psalm                        # psalm alone, errorLevel 1, no baseline
-php examples/optionExampleAfter.php
+composer check       # what CI runs: phpunit then psalm
+composer test        # phpunit alone
+composer psalm       # psalm alone, errorLevel 1, no baseline
+composer coverage    # needs xdebug or pcov, which a plain PHP install lacks
 ```
 
-**Check psalm's exit code, not its output.** `vendor/bin/psalm ... | grep error`
-matches neither "No errors found!" nor a clean run's silence, so a grep like
-that reports success for both outcomes. That mistake put a psalm failure into
-this repo's history once already.
+**Check psalm's exit code, not its output.** `vendor/bin/psalm | grep error`
+matches neither "No errors found!" nor a clean run's silence, so it reports
+success for both. That mistake put a psalm failure into this branch once.
 
 There is no `psalm-baseline.xml` and there should not be one. `src/` and
-`tests/` are both clean at errorLevel 1. Fix the type rather than baselining it.
+`tests/` are clean at errorLevel 1. Fix the type rather than baselining it.
 
-`composer coverage` needs xdebug or pcov, which CI has and a plain PHP install
-does not. It writes `clover.xml` and then runs `bin/check-coverage.php`, which
-fails below the floor. That script exits 2, not 0, when the report is missing
-or unparseable, because a coverage step that passes because nothing was
-measured is worse than no step at all. `tests/CoverageGateTest.php` covers all
-five of its outcomes.
+`bin/check-coverage.php` exits 2, not 0, when the clover report is missing or
+unparseable. A coverage step that passes because nothing was measured is worse
+than no step. `tests/CoverageGateTest.php` covers all five of its outcomes.
 
-`.github/workflows/test.yaml` runs four jobs: phpunit across the PHP versions
-in the matrix, coverage once on 8.4, psalm once on 8.4, and
-`composer validate --strict`. Static analysis is deliberately out of the test
-matrix, because pinning psalm to the oldest PHP in the matrix is what kept this
-repo on a 2022 psalm for years. Coverage is out of it for a duller reason:
-xdebug roughly triples the run time and there is nothing to learn from
-measuring the same lines once per PHP version.
+`.github/workflows/test.yaml` is four jobs: the phpunit matrix, then coverage,
+psalm and `composer validate --strict` once each on 8.4. Static analysis is out
+of the matrix because pinning psalm to the oldest PHP in it is what kept this
+repo on a 2022 psalm for years. Coverage is out for a duller reason: xdebug
+roughly triples the run and the same lines measured five times teach nothing.
 
 ## The docs are tested, and that is the point
 
-`tests/DocblockExampleTest.php` pulls every ```php fence out of `src/` and
-`README.md` and executes it, one test case each, named for the method it
-documents.
+The docblocks are the only API documentation, and three suites hold them to it.
 
-This exists because eight docblock examples had been uncallable for years.
-They called methods that never existed, invoked factories with too few
-arguments, and in two cases stated a result that is wrong on PHP 8. Nothing
-executed them, so nothing caught it.
+- `DocblockExampleTest` executes every ```php fence in `src/` and `README.md`,
+  one test case each, named for the method it documents.
+- `ExampleScriptTest` runs each script in `examples/` in a subprocess, failing
+  on any Fatal, Warning, Notice or Deprecated.
+- `DocumentedApiTest` walks both classes with reflection and requires that every
+  public method has a fence, that the fence calls the method it sits above, and
+  that the method appears in README.md's list. `__toString` is exempt.
 
-Consequences when you add or edit an example:
+Together: a new public method needs an example, the example has to be about
+that method, it has to run, and the method has to be listed.
 
-- It has to run. An example that means to show a throw must catch it itself.
-- `eval` does not inherit `use` aliases from the calling file, which is why the
-  runner prepends its own import list as a `PRELUDE` string.
-- Illustrative class names (`SomeObject`, `NewObject`, `SomeComplexThing`) are
-  real fixtures in `tests/Fixtures/`. Add to those rather than teaching the
-  runner to skip an example.
-- stdout is buffered and `error_log` is redirected for the duration, so an
-  example may print or log without making the test risky.
+This exists because eight docblock examples had been uncallable for years. They
+called methods that never existed, invoked factories with too few arguments,
+and in two cases stated a result that is wrong on PHP 8. A ninth documented
+`leftNotFalsy` with `leftNotNull`'s example. Nothing executed them.
 
-`tests/ExampleScriptTest.php` does the same job for `examples/`, running each
-script in a subprocess and failing on any Fatal, Warning, Notice or Deprecated.
+Four things to know when you touch an example:
 
-`tests/DocumentedApiTest.php` closes the loop from the other end. It walks both
-classes with reflection and asks three things of every public method:
+- It has to run. One that means to show a throw must catch it itself.
+- `eval` does not inherit `use` aliases, which is why the runner prepends its
+  own imports as a `PRELUDE` string.
+- `SomeObject`, `NewObject` and `SomeComplexThing` are real fixtures in
+  `tests/Fixtures/`. Add to those rather than teaching the runner to skip one.
+- stdout is buffered and `error_log` redirected, so an example may print.
 
-1. its docblock carries a ```php block,
-2. that block actually calls the method it sits above, which is what caught
-   `leftNotFalsy` documenting itself with `leftNotNull`'s example,
-3. the method appears in README.md's hand-written list.
+Nothing checks that an example prints what its trailing comment claims. Only 16
+of the 93 carry a machine-readable claim, so that gate was not worth a parser.
+Change the comment by hand when you change what an example returns.
 
-`__toString` is the one exemption. Between these and DocblockExampleTest, a new
-public method needs an example, the example has to be about that method, it has
-to run, and the method has to be listed.
-
-The one thing none of them check is whether an example prints what its trailing
-comment claims. Only 16 of the 93 examples carry a machine-readable claim, so
-that gate was judged not worth a parser. If you change what an example returns,
-change its comment by hand.
-
-The docblocks are the only API documentation. There is no generated site:
-`php7-optional.surge.sh` is still served but unowned and years stale, still
-returning 200 for `Optional/Result.html` and `Optional/SimpleResult.html`,
-classes deleted in `b892422`. Rebuilding it needs a deploy credential nobody
-has written down, so treat the docblocks as the product.
+There is no generated API site. `php7-optional.surge.sh` is still served but
+unowned and years stale, returning 200 for `Optional/Result.html` and
+`Optional/SimpleResult.html`, classes deleted in `b892422`.
 
 ## Behavior that surprises people
 
@@ -157,6 +140,31 @@ it.
 - `Either::fromArray` with no `$rightValue` fabricates
   `new Exception("Either got null for rightValue")`, so there is no way to
   build a `Right(null)` through it. `Either::right(null)` works.
+
+## Two conventions the tests enforce
+
+**Every left method needs a right twin.** `Either` is a symmetric box, and
+`testEveryLeftMethodHasARightTwin` walks the class with reflection and fails on
+any name containing `left` or `Left` whose counterpart is missing. It found four
+that were absent. Seventeen mirrored pairs out of twenty-one is worse than none,
+because a reader learns the rule and then guesses a method that is not there.
+
+One method breaks the mirror on purpose. `flatMapLeft` pins the right side, so
+the mirror-exact `flatMapRight` would pin the left, and recovering from an error
+is the whole reason to call it. It takes both templates and says so in its
+notes.
+
+**Left is the success side.** `andThen` is `flatMapLeft`, `fromCallable` puts
+the return value on the left and the `Throwable` on the right, and
+`toOptionFromLeft` shipped years before its twin. `success`, `failure`,
+`isSuccess`, `isFailure`, `mapSuccess`, `mapFailure`, `successOr` and
+`successOrThrow` are pure delegation to the left-and-right methods, and
+`testSuccessAndFailureNamesDelegate` asserts each agrees with its target so the
+two spellings cannot drift.
+
+Do not extend the alias set method by method. It is eight names covering create,
+ask, transform each side, and two ways out. Mirroring all 63 of Either's methods
+into a second vocabulary is how a class gets to 126.
 
 ## Two traps in the tooling itself
 
