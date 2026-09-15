@@ -922,9 +922,17 @@ function example83_successOr(): void {
 }
 
 /**
- * src/Either.php #52, successOrThrow()
+ * src/Either.php #52, failureOr()
  */
-function example84_successOrThrow(): void {
+function example84_failureOr(): void {
+   echo Either::failure("timeout")->failureOr('no error'), "\n"; // "timeout"
+   echo Either::success(42)->failureOr('no error'), "\n";        // "no error"
+}
+
+/**
+ * src/Either.php #53, successOrThrow()
+ */
+function example85_successOrThrow(): void {
    echo Either::success(42)->successOrThrow(function($error) { return new \RuntimeException("no id"); }), "\n"; // 42
 
    try {
@@ -937,9 +945,9 @@ function example84_successOrThrow(): void {
 }
 
 /**
- * src/Either.php #53, left()
+ * src/Either.php #54, left()
  */
-function example85_left(): void {
+function example86_left(): void {
    $leftThing = Either::left(1);
    $leftClass = Either::left(new SomeObject());
 
@@ -947,66 +955,66 @@ function example85_left(): void {
 }
 
 /**
- * src/Either.php #54, right()
+ * src/Either.php #55, right()
  */
-function example86_right(): void {
+function example87_right(): void {
    $right = Either::right("This is left string to show on no value");
 }
 
 /**
- * src/Either.php #55, leftWhen()
+ * src/Either.php #56, leftWhen()
  */
-function example87_leftWhen(): void {
+function example88_leftWhen(): void {
    $positiveOne = Either::leftWhen(1, -1, function($x) { return $x > 0; });
    $negativeOne = Either::leftWhen(1, -1, function($x) { return $x < 0; });
 }
 
 /**
- * src/Either.php #56, rightWhen()
+ * src/Either.php #57, rightWhen()
  */
-function example88_rightWhen(): void {
+function example89_rightWhen(): void {
    $positiveOne = Either::rightWhen(1, -1, function($x) { return $x < 0; });
    $negativeOne = Either::rightWhen(1, -1, function($x) { return $x > 0; });
 }
 
 /**
- * src/Either.php #57, notNullLeft()
+ * src/Either.php #58, notNullLeft()
  */
-function example89_notNullLeft(): void {
+function example90_notNullLeft(): void {
    $left = Either::left(null); // Valid, returns left(null)
    $right = Either::notNullLeft(null, "was null"); // Right("was null")
    $left = Either::notNullLeft(10, "was null");    // Left(10)
 }
 
 /**
- * src/Either.php #58, notNullRight()
+ * src/Either.php #59, notNullRight()
  */
-function example90_notNullRight(): void {
+function example91_notNullRight(): void {
    echo (string) Either::notNullRight(null, 'no error'), "\n";   // Left(no error)
    echo (string) Either::notNullRight('boom', 'no error'), "\n"; // Right(boom)
 }
 
 /**
- * src/Either.php #59, notFalsyLeft()
+ * src/Either.php #60, notFalsyLeft()
  */
-function example91_notFalsyLeft(): void {
+function example92_notFalsyLeft(): void {
    $right = Either::notFalsyLeft(false, "row not found"); // Right("row not found")
    $right = Either::notFalsyLeft('', "row not found");    // Right("row not found")
    $left = Either::notFalsyLeft(10, "row not found");     // Left(10)
 }
 
 /**
- * src/Either.php #60, notFalsyRight()
+ * src/Either.php #61, notFalsyRight()
  */
-function example92_notFalsyRight(): void {
+function example93_notFalsyRight(): void {
    echo (string) Either::notFalsyRight('', 'no error'), "\n";     // Left(no error)
    echo (string) Either::notFalsyRight('boom', 'no error'), "\n"; // Right(boom)
 }
 
 /**
- * src/Either.php #61, fromCallable()
+ * src/Either.php #62, fromCallable()
  */
-function example93_fromCallable(): void {
+function example94_fromCallable(): void {
    $left = Either::fromCallable(function() { return 7; });                     // Left(7)
    $right = Either::fromCallable(function() { throw new \Exception("boom"); }); // Right(Exception("boom"))
 
@@ -1016,9 +1024,9 @@ function example93_fromCallable(): void {
 }
 
 /**
- * src/Either.php #62, fromArray()
+ * src/Either.php #63, fromArray()
  */
-function example94_fromArray(): void {
+function example95_fromArray(): void {
    $left = Either::fromArray(['hello' => 'world'], 'hello', 'oh no'); // left('world')
    $right = Either::fromArray(['hello' => 'world'], 'nope', 'oh no'); //  Right('oh no')
    $right = Either::fromArray(['hello' => 'world'], 'nope'); //  Right(Exception("Either got null for rightValue"))
@@ -1028,7 +1036,7 @@ function example94_fromArray(): void {
 /**
  * README.md #1, unknown()
  */
-function example95_unknown(): void {
+function example96_unknown(): void {
    $people = ['a1' => ['name' => 'Ada']];
 
    $person = $people['nope'] ?? null;
@@ -1040,7 +1048,7 @@ function example95_unknown(): void {
 /**
  * README.md #2, unknown()
  */
-function example96_unknown(): void {
+function example97_unknown(): void {
    $people = ['a1' => ['name' => 'Ada']];
 
    $name = Option::fromArray($people, 'nope')
@@ -1054,7 +1062,7 @@ function example96_unknown(): void {
 /**
  * README.md #3, unknown()
  */
-function example97_unknown(): void {
+function example98_unknown(): void {
    // A falsy return, the shape a row fetch or a lookup gives you
    $none = Option::someNotFalsy(false); // None
    $some = Option::someNotFalsy('Ada'); // Some('Ada')
@@ -1070,7 +1078,7 @@ function example97_unknown(): void {
 /**
  * README.md #4, unknown()
  */
-function example98_unknown(): void {
+function example99_unknown(): void {
    $right = Either::notFalsyLeft(false, 'row not found');
    echo $right->rightOr('') . "\n"; // "row not found"
 
@@ -1082,7 +1090,7 @@ function example98_unknown(): void {
 /**
  * README.md #5, unknown()
  */
-function example99_unknown(): void {
+function example100_unknown(): void {
    $total = Option::some(['price' => 5, 'qty' => 3])
       ->filterIf(function(array $line) { return $line['qty'] > 0; })
       ->tap(function(array $line) { error_log("pricing {$line['qty']} items"); })
@@ -1095,7 +1103,7 @@ function example99_unknown(): void {
 /**
  * README.md #6, unknown()
  */
-function example100_unknown(): void {
+function example101_unknown(): void {
    $ran = false;
 
    $total = Option::none()
@@ -1109,7 +1117,7 @@ function example100_unknown(): void {
 /**
  * README.md #7, unknown()
  */
-function example101_unknown(): void {
+function example102_unknown(): void {
    $some = Option::some(41);
 
    // 1. Supply a fallback
@@ -1131,7 +1139,7 @@ function example101_unknown(): void {
 /**
  * README.md #8, unknown()
  */
-function example102_unknown(): void {
+function example103_unknown(): void {
    $failed = Either::fromCallable(function(): int { throw new Exception("the api said no"); });
 
    try {
@@ -1147,7 +1155,7 @@ function example102_unknown(): void {
 /**
  * README.md #9, unknown()
  */
-function example103_unknown(): void {
+function example104_unknown(): void {
    $result = Either::fromCallable(function(): int { throw new Exception("the api said no"); });
 
    echo $result->isFailure() ? "failed\n" : "ok\n"; // "failed"
@@ -1163,7 +1171,7 @@ function example103_unknown(): void {
 /**
  * README.md #10, unknown()
  */
-function example104_unknown(): void {
+function example105_unknown(): void {
    $value = Either::left(10)->toOptionFromLeft();          // Some(10), drops the error
    $error = Either::right('bad id')->toOptionFromRight();  // Some('bad id')
 
@@ -1173,7 +1181,7 @@ function example104_unknown(): void {
 /**
  * README.md #11, unknown()
  */
-function example105_unknown(): void {
+function example106_unknown(): void {
    $calls = 0;
    $check = function() use (&$calls) { $calls++; return true; };
 
@@ -1186,7 +1194,7 @@ function example105_unknown(): void {
 /**
  * README.md #12, unknown()
  */
-function example106_unknown(): void {
+function example107_unknown(): void {
    echo Option::some(null)->hasValue() ? "some\n" : "none\n";            // "some"
    echo Option::some(null)->notNull()->hasValue() ? "some\n" : "none\n"; // "none"
 }

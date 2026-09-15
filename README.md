@@ -181,8 +181,11 @@ echo $message . "\n"; // "no value"
 ```
 
 `success` and `failure` build them, `isSuccess` and `isFailure` ask, `mapSuccess`
-and `mapFailure` transform, and `successOr` and `successOrThrow` get you out.
-Everything else is spelled left and right.
+and `mapFailure` transform, and `successOr`, `failureOr` and `successOrThrow` get
+you out. Everything else is spelled left and right.
+
+`match()` keeps its `left:` and `right:` parameter names. Renaming them would
+break every caller passing them as named arguments.
 
 ## Option or Either
 
@@ -263,7 +266,8 @@ trace it by.
 `fromArray`
 
 `Either` methods: `isLeft` `isRight` `isSuccess` `isFailure` `mapSuccess`
-`mapFailure` `successOr` `successOrThrow` `leftOr` `rightOr` `getLeft` `getRight`
+`mapFailure` `successOr` `failureOr` `successOrThrow` `leftOr` `rightOr` `getLeft`
+`getRight`
 `getLeftOrThrow` `getRightOrThrow` `leftOrCreate` `rightOrCreate` `orLeft`
 `orRight` `orCreateLeft` `orCreateRight` `elseLeft` `elseRight`
 `elseCreateLeft` `elseCreateRight` `match` `matchLeft` `matchRight` `mapLeft`

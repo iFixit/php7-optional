@@ -766,6 +766,10 @@ final class Either {
     *  - Catches `Throwable`, like `mapLeftSafely`, because the box keeps what it caught
     *  - The thrown value replaces the original right. If you need both, map to a
     *    type that holds them
+    *  - The return is a three-way union where `mapLeftSafely`'s is two. That is
+    *    not sloppiness: `mapRight` returns `Either<TLeft, TRight>` untouched for
+    *    a Left, and that case does not fold into the mapped member the way
+    *    `mapLeft`'s does. Narrowing it to two makes psalm reject the body
     *
     * @template URight
     * @psalm-param callable(TRight):URight $mapFunc
@@ -1266,6 +1270,10 @@ final class Either {
     * because left and right do not tell a reader which side went well. The
     * symptom is a caller passing `left:` and `right:` to match() as named
     * arguments, purely to keep the two straight while reading.
+    *
+    * Note that match() itself gets no alias. Its parameter names are public API
+    * for any caller that passes them by name, so renaming them would break
+    * that caller. The aliases help everywhere except in match() itself.
     */
 
    /**
@@ -1277,7 +1285,6 @@ final class Either {
     * echo (string) $ok, "\n";                     // Left(200)
     * ```
     *
-    * @psalm-mutation-free
     * @psalm-pure
     * @template TTLeft
     * @psalm-param TTLeft $value
@@ -1296,7 +1303,6 @@ final class Either {
     * echo (string) $failed, "\n";                     // Right(the api said no)
     * ```
     *
-    * @psalm-mutation-free
     * @psalm-pure
     * @template TTRight
     * @psalm-param TTRight $error
@@ -1385,6 +1391,23 @@ final class Either {
     **/
    public function successOr($alternative) {
       return $this->leftOr($alternative);
+   }
+
+   /**
+    * Returns the error of a failure or `$alternative`, the same as `rightOr`
+    *
+    * ```php
+    * echo Either::failure("timeout")->failureOr('no error'), "\n"; // "timeout"
+    * echo Either::success(42)->failureOr('no error'), "\n";        // "no error"
+    * ```
+    *
+    * @psalm-mutation-free
+    * @template TTRight
+    * @psalm-param TTRight $alternative
+    * @psalm-return (TRight is never ? TTRight : TRight)
+    **/
+   public function failureOr($alternative) {
+      return $this->rightOr($alternative);
    }
 
    /**
@@ -1613,7 +1636,16 @@ final class Either {
     * @template TTRight
     * @psalm-param TTRight $rightValue
     * @psalm-param TTLeft $leftValue
-    * @psalm-return self<TTLeft, never>|self<never, TTRight>
+    * @psalm-return (
+    *   TTRight is null                ? self<TTLeft, never> : (
+    *   TTRight is false               ? self<TTLeft, never> : (
+    *   TTRight is array<never, never> ? self<TTLeft, never> : (
+    *   TTRight is 0                   ? self<TTLeft, never> : (
+    *   TTRight is 0.0                 ? self<TTLeft, never> : (
+    *   TTRight is ''                  ? self<TTLeft, never> : (
+    *   TTRight is '0'                 ? self<TTLeft, never> :
+    *   self<never, TTRight>
+    * )))))))
     **/
    public static function notFalsyRight($rightValue, $leftValue): self {
       return self::right($rightValue)->rightNotFalsy($leftValue);

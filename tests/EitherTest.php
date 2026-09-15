@@ -780,6 +780,10 @@ final class EitherTest extends TestCase
    /**
     * Four left-side methods had no right-side twin, which makes the API
     * unguessable at exactly the point where every other pair mirrors.
+    *
+    * Checked in both directions. The first version only walked left to right,
+    * so a right-only method would have gone unnoticed, and the right side is
+    * where new methods get added because that is where errors live.
     */
    public function testFlatMapRight(): void {
       $recovered = Either::right('not found')->flatMapRight(function(string $_error): Either {
@@ -837,7 +841,7 @@ final class EitherTest extends TestCase
       $this->assertSame('0.0', Either::notFalsyRight('0.0', 'no error')->rightOr('x'), "'0.0' is truthy in PHP");
    }
 
-   public function testEveryLeftMethodHasARightTwin(): void {
+   public function testEveryOneSidedMethodHasItsTwin(): void {
       $reflection = new \ReflectionClass(Either::class);
       $names = [];
 
@@ -850,11 +854,16 @@ final class EitherTest extends TestCase
       $unmirrored = [];
 
       foreach ($names as $name) {
-         $twin = str_contains($name, 'Left') ? str_replace('Left', 'Right', $name)
-            : (str_contains($name, 'left') ? str_replace('left', 'right', $name) : null);
+         foreach ([['Left', 'Right'], ['left', 'right'], ['Right', 'Left'], ['right', 'left']] as [$from, $to]) {
+            if (!str_contains($name, $from)) {
+               continue;
+            }
 
-         if ($twin !== null && !in_array($twin, $names, true)) {
-            $unmirrored[] = "{$name} has no {$twin}";
+            $twin = str_replace($from, $to, $name);
+
+            if (!in_array($twin, $names, true)) {
+               $unmirrored[] = "{$name} has no {$twin}";
+            }
          }
       }
 
@@ -889,6 +898,63 @@ final class EitherTest extends TestCase
       $this->assertSame(42, $ok->successOrThrow(function(): \Exception {
          throw new \LogicException('factory must not run on a success');
       }));
+   }
+
+   /**
+    * The aliases carry their own copy of the target's psalm annotations, because
+    * dropping them loses every type: psalm reports a bare `Optional\Either` for
+    * mapSuccess and `mixed` for successOr when it has to infer from the
+    * delegated call. Hand-copied annotations drift, and a runtime test cannot
+    * see it, so compare the annotations themselves.
+    */
+   public function testAliasAnnotationsMatchTheirTargets(): void {
+      $pairs = [
+         'success' => 'left',
+         'failure' => 'right',
+         'isSuccess' => 'isLeft',
+         'isFailure' => 'isRight',
+         'mapSuccess' => 'mapLeft',
+         'mapFailure' => 'mapRight',
+         'successOr' => 'leftOr',
+         'failureOr' => 'rightOr',
+         'successOrThrow' => 'getLeftOrThrow',
+      ];
+
+      $reflection = new \ReflectionClass(Either::class);
+
+      /**
+       * Parameter names differ on purpose ($value reads better than $leftValue
+       * on a method called success), so compare the types and drop the names.
+       *
+       * @return list<string>
+       */
+      $annotations = static function (string $method) use ($reflection): array {
+         $doc = (string) $reflection->getMethod($method)->getDocComment();
+         preg_match_all('/@psalm-(?:return|param|pure|mutation-free)[^\n]*/', $doc, $found);
+
+         return array_map(
+            static fn(string $line): string => trim((string) preg_replace('/\s+\$\w+\s*$/', '', trim($line))),
+            $found[0]
+         );
+      };
+
+      foreach ($pairs as $alias => $target) {
+         $this->assertSame(
+            $annotations($target),
+            $annotations($alias),
+            "Either::{$alias}() and Either::{$target}() have drifted apart. The alias delegates, "
+            . "so its psalm annotations have to say the same thing as the method it calls."
+         );
+      }
+   }
+
+   public function testFailureOr(): void {
+      $this->assertSame('timeout', Either::failure('timeout')->failureOr('no error'));
+      $this->assertSame('no error', Either::success(42)->failureOr('no error'));
+      $this->assertSame(
+         Either::failure('timeout')->rightOr('no error'),
+         Either::failure('timeout')->failureOr('no error')
+      );
    }
 
    public function testSuccessOrThrowReceivesTheError(): void {
