@@ -240,7 +240,7 @@ final class OptionTest extends TestCase {
       $some = Option::some("a");
       $someNull = Option::some(null);
 
-      $noneUpper = $none->map(function(string $x) { return strtoupper($x); });
+      $noneUpper = $none->map(function() { return 'UNREACHABLE'; });
       $someUpper = $some->map(function(string $x) { return strtoupper($x); });
 
       $this->assertFalse($noneUpper->hasValue());

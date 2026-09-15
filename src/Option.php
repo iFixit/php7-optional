@@ -186,7 +186,7 @@ final class Option {
     * ```
     * _Notes:_
     *
-    *  - `$alternativeFactory` must follow this interface `callable():T`
+    *  - `$alternativeFactory` must follow this interface `callable():TT`
     *
     * @template TT
     * @psalm-param callable():TT $alternativeFactory
@@ -235,7 +235,7 @@ final class Option {
     *
     * _Notes:_
     *
-    *  - `$alternativeFactory` must follow this interface `callable():T`
+    *  - `$alternativeFactory` must follow this interface `callable():TT`
     *  - Returns `Option<T>`
     *
     * @template TT
@@ -286,7 +286,7 @@ final class Option {
     *
     * _Notes:_
     *
-    *  - `$alternativeOptionFactory` must follow this interface `callable():Option<T>`
+    *  - `$alternativeOptionFactory` must follow this interface `callable():Option<TT>`
     *  - Returns `Option<T>`
     *
     * @template TT
@@ -408,7 +408,7 @@ final class Option {
     *  - Returns `Option<U>`
     *
     * @template U
-    * @psalm-param $mapFunc callable(T):U
+    * @psalm-param callable(T):U $mapFunc
     * @psalm-return Option<U>
     **/
    public function map(callable $mapFunc): self {
@@ -444,12 +444,16 @@ final class Option {
     *
     *  - `$mapFunc` must follow this interface `callable(T):U`
     *  - Returns `Option<U>`
+    *  - Catches `Exception`, not `Throwable`. An `Error` is a bug in your code,
+    *    and this box discards what it caught, so swallowing one would erase the
+    *    bug with nothing left to find it by. `Either::mapLeftSafely` does catch
+    *    `Throwable`, because it keeps it
     *
     * @template U
     *
-    * @psalm-param $mapFunc callable(T):U
+    * @psalm-param callable(T):U $mapFunc
     *
-    * @psalm-return self<T>
+    * @psalm-return self<U>
     */
    public function mapSafely(callable $mapFunc): self {
       try {
@@ -532,6 +536,30 @@ final class Option {
       return $this->flatMap($mapFunc);
     }
 
+   /**
+    * Change the `Option::some($value)` into `Option::none()` iff `$condition` is false,
+    * otherwise propigate the `Option::none()`
+    *
+    * ```php
+    * $some = Option::some(10);
+    * $stillSome = $some->filter(true);
+    * $none = $some->filter(false);
+    *
+    * $stillNone = Option::none()->filter(true);
+    * ```
+    *
+    * _Notes:_
+    *
+    *  - `$condition` is a `bool`, not a callable, so PHP evaluates it at the
+    *    call site before this method runs. An expensive or throwing expression
+    *    happens even on a `Option::none`. Use `filterIf()` when you want the
+    *    check to be lazy
+    *  - Returns `Option<T>`
+    *
+    * @psalm-mutation-free
+    * @psalm-param bool $condition
+    * @psalm-return self<T>
+    */
    public function filter(bool $condition): self {
       return $this->hasValue && !$condition
          ? self::none()

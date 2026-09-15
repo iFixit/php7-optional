@@ -673,14 +673,20 @@ final class Either {
     *  - `$mapFunc` must follow this interface `callable(TLeft):Either<ULeft, TRight>`
     *  - Returns `Either<TLeft, TRight>`
     *
+    * _Notes:_
+    *
+    *  - Catches `Throwable`, so a `TypeError` from a bad callable signature lands
+    *    on the right rather than escaping. That is safe here and not in
+    *    `Option::mapSafely`, because this box keeps what it caught
+    *
     * @template ULeft
     * @psalm-param callable(TLeft):ULeft $mapFunc
-    * @psalm-return Either<ULeft, TRight>|Either<never, \Exception>
+    * @psalm-return Either<ULeft, TRight>|Either<never, Throwable>
     **/
    public function mapLeftSafely(callable $mapFunc): self {
       try {
          return $this->mapLeft($mapFunc);
-      } catch (\Exception $e) {
+      } catch (Throwable $e) {
          return Either::right($e);
       }
    }
