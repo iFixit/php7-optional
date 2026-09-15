@@ -52,6 +52,11 @@ final class Either {
 
    /**
     * Returns true iff the either is `Either::left`
+    * ```php
+    * echo Either::left(1)->isLeft() ? "left\n" : "right\n";      // "left"
+    * echo Either::right("e")->isLeft() ? "left\n" : "right\n";   // "right"
+    * ```
+    *
     * @psalm-mutation-free
     **/
    public function isLeft(): bool {
@@ -60,6 +65,11 @@ final class Either {
 
    /**
     * Returns true iff the either is `Either::right`
+    * ```php
+    * echo Either::right("e")->isRight() ? "right\n" : "left\n";  // "right"
+    * echo Either::left(1)->isRight() ? "right\n" : "left\n";     // "left"
+    * ```
+    *
     * @psalm-mutation-free
     **/
     public function isRight(): bool {
@@ -97,6 +107,16 @@ final class Either {
    /**
     * Returns the either value or throws
     *
+    * ```php
+    * echo Either::left(1)->getLeft(), "\n"; // 1
+    *
+    * try {
+    *    Either::right("e")->getLeft();
+    * } catch (\Optional\Exceptions\MissingValueException $e) {
+    *    echo $e->getMessage(), "\n"; // "Left value is missing."
+    * }
+    * ```
+    *
     * @psalm-mutation-free
     * @psalm-return (TLeft is never ? never : TLeft)
     **/
@@ -111,6 +131,11 @@ final class Either {
    /**
     * Returns the either value or returns `$alternative`
     *
+    * ```php
+    * echo Either::right("e")->rightOr("fallback"), "\n"; // "e"
+    * echo Either::left(1)->rightOr("fallback"), "\n";    // "fallback"
+    * ```
+    *
     * @psalm-mutation-free
     * @template TTRight
     * @psalm-param TTRight $alternative
@@ -124,6 +149,16 @@ final class Either {
 
    /**
     * Returns the either value or throws
+    *
+    * ```php
+    * echo Either::right("e")->getRight(), "\n"; // "e"
+    *
+    * try {
+    *    Either::left(1)->getRight();
+    * } catch (\Optional\Exceptions\MissingValueException $e) {
+    *    echo $e->getMessage(), "\n"; // "Right value is missing."
+    * }
+    * ```
     *
     * @psalm-mutation-free
     * @psalm-return (TRight is never ? never : TRight)
@@ -300,6 +335,13 @@ final class Either {
     *
     *  - `$valueFactoryFunc` must follow this interface `callable(TRight):TLeft`
     *
+    * ```php
+    * $describe = function($leftValue) { return "no error, got {$leftValue}"; };
+    *
+    * echo Either::right("e")->rightOrCreate($describe), "\n"; // "e"
+    * echo Either::left(1)->rightOrCreate($describe), "\n";    // "no error, got 1"
+    * ```
+    *
     * @template TTRight
     * @psalm-param callable(TLeft):TTRight $alternativeFactory
     * @psalm-return (TLeft is never ? TRight : TTRight)
@@ -339,6 +381,11 @@ final class Either {
     * _Notes:_
     *
     *  - Returns `Either<TLeft, TRight>`
+    *
+    * ```php
+    * echo (string) Either::left(1)->orRight("e"), "\n";        // Right(e)
+    * echo (string) Either::right("keep")->orRight("e"), "\n";  // Right(keep)
+    * ```
     *
     * @psalm-mutation-free
     * @template TTRight
@@ -386,6 +433,13 @@ final class Either {
     *  - `$alternativeFactory` must follow this interface `callable(TRight):TLeft`
     *  - Returns `Either<TLeft, TRight>`
     *
+    * ```php
+    * $build = function($leftValue) { return "built from {$leftValue}"; };
+    *
+    * echo (string) Either::left(1)->orCreateRight($build), "\n";       // Right(built from 1)
+    * echo (string) Either::right("keep")->orCreateRight($build), "\n"; // Right(keep)
+    * ```
+    *
     * @template TTRight
     * @psalm-param callable(TLeft):TTRight $alternativeFactory
     * @psalm-return (TLeft is never ? Either<TLeft, TRight> : self<never, TTRight>)
@@ -429,6 +483,11 @@ final class Either {
     *
     *  - `$alternativeEither` must be of type `Either<TLeft, TRight>`
     *  - Returns `Either<TLeft, TRight>`
+    *
+    * ```php
+    * echo (string) Either::left(1)->elseRight(Either::right("e")), "\n";       // Right(e)
+    * echo (string) Either::right("keep")->elseRight(Either::right("e")), "\n"; // Right(keep)
+    * ```
     *
     * @psalm-mutation-free
     * @template TLeftOther
@@ -476,6 +535,13 @@ final class Either {
     *
     *  - `$alternativeEither` must be of type `callable(TLeft):Either<TLeft, TRight> `
     *  - Returns `Either<TLeft, TRight>`
+    *
+    * ```php
+    * $build = function($leftValue) { return Either::right("built from {$leftValue}"); };
+    *
+    * echo (string) Either::left(1)->elseCreateRight($build), "\n";       // Right(built from 1)
+    * echo (string) Either::right("keep")->elseCreateRight($build), "\n"; // Right(keep)
+    * ```
     *
     * @template TLeftOther
     * @template TRightOther
@@ -621,6 +687,13 @@ final class Either {
     *  - `$mapFunc` must follow this interface `callable(TRight):URight`
     *  - Returns `Either<TLeft, URight>`
     *
+    * ```php
+    * $shout = function(string $error) { return strtoupper($error); };
+    *
+    * echo (string) Either::right("nope")->mapRight($shout), "\n"; // Right(NOPE)
+    * echo (string) Either::left(1)->mapRight($shout), "\n";       // Left(1), $shout never runs
+    * ```
+    *
     * @template URight
     * @psalm-param callable(TRight):URight $mapFunc
     * @psalm-return (TLeft is never ? Either<TLeft, URight> : Either<TLeft, TRight>)
@@ -733,6 +806,18 @@ final class Either {
    }
 
    /**
+    * ```php
+    * echo (string) Either::left(10)->filterLeft(true, "too small"), "\n";  // Left(10)
+    * echo (string) Either::left(10)->filterLeft(false, "too small"), "\n"; // Right(too small)
+    * ```
+    *
+    * _Notes:_
+    *
+    *  - `$condition` is a `bool`, not a callable, so PHP evaluates it at the
+    *    call site before this method runs. An expensive or throwing expression
+    *    happens even on the side this cannot affect. Use `filterLeftIf()` when you
+    *    want the check to be lazy
+    *
     * @psalm-mutation-free
     * @psalm-param bool $condition
     * @template TTRight
@@ -750,6 +835,18 @@ final class Either {
    }
 
    /**
+    * ```php
+    * echo (string) Either::right("e")->filterRight(true, 0), "\n";  // Right(e)
+    * echo (string) Either::right("e")->filterRight(false, 0), "\n"; // Left(0)
+    * ```
+    *
+    * _Notes:_
+    *
+    *  - `$condition` is a `bool`, not a callable, so PHP evaluates it at the
+    *    call site before this method runs. An expensive or throwing expression
+    *    happens even on the side this cannot affect. Use `filterRightIf()` when you
+    *    want the check to be lazy
+    *
     * @psalm-mutation-free
     * @psalm-param bool $condition
     * @template TTLeft
@@ -806,6 +903,13 @@ final class Either {
     *  - `$filterFunc` must follow this interface `callable(TRight):bool`
     *  - Returns `Either<TLeft, TRight>`
     *
+    * ```php
+    * $isReal = function(string $error) { return $error !== ""; };
+    *
+    * echo (string) Either::right("e")->filterRightIf($isReal, 0), "\n"; // Right(e)
+    * echo (string) Either::right("")->filterRightIf($isReal, 0), "\n";  // Left(0)
+    * ```
+    *
     * @template TTLeft
     * @psalm-param callable(TRight):bool $filterFunc
     * @psalm-param TTLeft $leftValue
@@ -848,6 +952,11 @@ final class Either {
     * _Notes:_
     *
     *  - Returns `Either<TLeft, TRight>`
+    *
+    * ```php
+    * echo (string) Either::right(null)->rightNotNull("was null"), "\n"; // Left(was null)
+    * echo (string) Either::right("e")->rightNotNull("was null"), "\n";  // Right(e)
+    * ```
     *
     * @psalm-mutation-free
     * @template TTLeft
@@ -900,6 +1009,11 @@ final class Either {
     *
     *  - Returns `Either<TLeft, TRight>`
     *
+    * ```php
+    * echo (string) Either::right("")->rightNotFalsy("was falsy"), "\n";  // Left(was falsy)
+    * echo (string) Either::right("e")->rightNotFalsy("was falsy"), "\n"; // Right(e)
+    * ```
+    *
     * @psalm-mutation-free
     * @template TTLeft
     * @psalm-param TTLeft $leftValue
@@ -946,6 +1060,12 @@ final class Either {
    /**
     * Returns true if the either's value == `$value`, otherwise false.
     *
+    * ```php
+    * echo Either::right("e")->rightContains("e") ? "yes\n" : "no\n"; // "yes"
+    * echo Either::right("e")->rightContains("x") ? "yes\n" : "no\n"; // "no"
+    * echo Either::left(1)->rightContains(1) ? "yes\n" : "no\n";      // "no", it has no right side
+    * ```
+    *
     * @psalm-mutation-free
     * @psalm-param mixed $value
     **/
@@ -989,6 +1109,14 @@ final class Either {
     * _Notes:_
     *
     *  - `$filterFunc` must follow this interface `callable(TRight):bool`
+    *
+    * ```php
+    * $isLong = function(string $error) { return strlen($error) > 3; };
+    *
+    * echo Either::right("nope")->existsRight($isLong) ? "yes\n" : "no\n"; // "yes"
+    * echo Either::right("no")->existsRight($isLong) ? "yes\n" : "no\n";   // "no"
+    * echo Either::left(1)->existsRight($isLong) ? "yes\n" : "no\n";       // "no"
+    * ```
     *
     * @psalm-param callable(TRight):bool $existsFunc
     **/

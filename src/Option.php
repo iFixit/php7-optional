@@ -43,6 +43,11 @@ final class Option {
 
    /**
     * Returns true iff the option is `Option::some`
+    * ```php
+    * echo Option::some(1)->hasValue() ? "some\n" : "none\n"; // "some"
+    * echo Option::none()->hasValue() ? "some\n" : "none\n";  // "none"
+    * ```
+    *
     * @psalm-mutation-free
     **/
    public function hasValue(): bool {
