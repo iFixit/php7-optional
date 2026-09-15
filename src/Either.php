@@ -1238,6 +1238,166 @@ final class Either {
          : Option::some($this->rightValue);
    }
 
+   //////////////////////////////////////
+   // SUCCESS AND FAILURE, THE SAME BOX //
+   //////////////////////////////////////
+
+   /*
+    * Either is symmetric: left and right are just the two slots, and plenty of
+    * uses have nothing to do with success. But this library already leans left
+    * for the success case. andThen is flatMapLeft, fromCallable puts the return
+    * value on the left and the Throwable on the right, and toOptionFromLeft
+    * came before its twin.
+    *
+    * These names say that out loud. They delegate, add no behavior, and exist
+    * because left and right do not tell a reader which side went well. The
+    * symptom is a caller passing `left:` and `right:` to match() as named
+    * arguments, purely to keep the two straight while reading.
+    */
+
+   /**
+    * Creates a successful `Either`, the same box as `Either::left`
+    *
+    * ```php
+    * $ok = Either::success(200);
+    * echo $ok->isSuccess() ? "ok\n" : "failed\n"; // "ok"
+    * echo (string) $ok, "\n";                     // Left(200)
+    * ```
+    *
+    * @psalm-mutation-free
+    * @psalm-pure
+    * @template TTLeft
+    * @psalm-param TTLeft $value
+    * @psalm-return Either<TTLeft, never>
+    **/
+   public static function success($value): self {
+      return self::left($value);
+   }
+
+   /**
+    * Creates a failed `Either`, the same box as `Either::right`
+    *
+    * ```php
+    * $failed = Either::failure("the api said no");
+    * echo $failed->isFailure() ? "failed\n" : "ok\n"; // "failed"
+    * echo (string) $failed, "\n";                     // Right(the api said no)
+    * ```
+    *
+    * @psalm-mutation-free
+    * @psalm-pure
+    * @template TTRight
+    * @psalm-param TTRight $error
+    * @psalm-return Either<never, TTRight>
+    **/
+   public static function failure($error): self {
+      return self::right($error);
+   }
+
+   /**
+    * Returns true iff this is a success, the same question as `isLeft`
+    *
+    * ```php
+    * echo Either::success(1)->isSuccess() ? "ok\n" : "failed\n";      // "ok"
+    * echo Either::failure("no")->isSuccess() ? "ok\n" : "failed\n";   // "failed"
+    * ```
+    *
+    * @psalm-mutation-free
+    **/
+   public function isSuccess(): bool {
+      return $this->isLeft();
+   }
+
+   /**
+    * Returns true iff this is a failure, the same question as `isRight`
+    *
+    * ```php
+    * echo Either::failure("no")->isFailure() ? "failed\n" : "ok\n"; // "failed"
+    * echo Either::success(1)->isFailure() ? "failed\n" : "ok\n";    // "ok"
+    * ```
+    *
+    * @psalm-mutation-free
+    **/
+   public function isFailure(): bool {
+      return $this->isRight();
+   }
+
+   /**
+    * Transforms the value of a success, the same as `mapLeft`
+    *
+    * ```php
+    * $doubled = Either::success(21)->mapSuccess(function(int $n) { return $n * 2; });
+    * echo (string) $doubled, "\n"; // Left(42)
+    *
+    * echo (string) Either::failure("no")->mapSuccess(function(int $n) { return $n * 2; }), "\n"; // Right(no)
+    * ```
+    *
+    * @template ULeft
+    * @psalm-param callable(TLeft):ULeft $mapFunc
+    * @psalm-return (TLeft is never ? Either<never, TRight> : Either<ULeft, TRight>)
+    **/
+   public function mapSuccess(callable $mapFunc): self {
+      return $this->mapLeft($mapFunc);
+   }
+
+   /**
+    * Transforms the error of a failure, the same as `mapRight`
+    *
+    * ```php
+    * $described = Either::failure("timeout")->mapFailure(function(string $e) { return "request {$e}"; });
+    * echo (string) $described, "\n"; // Right(request timeout)
+    *
+    * echo (string) Either::success(1)->mapFailure(function(string $e) { return "x"; }), "\n"; // Left(1)
+    * ```
+    *
+    * @template URight
+    * @psalm-param callable(TRight):URight $mapFunc
+    * @psalm-return (TLeft is never ? Either<TLeft, URight> : Either<TLeft, TRight>)
+    **/
+   public function mapFailure(callable $mapFunc): self {
+      return $this->mapRight($mapFunc);
+   }
+
+   /**
+    * Returns the success value or `$alternative`, the same as `leftOr`
+    *
+    * ```php
+    * echo Either::success(42)->successOr(0), "\n";    // 42
+    * echo Either::failure("no")->successOr(0), "\n";  // 0
+    * ```
+    *
+    * @psalm-mutation-free
+    * @template TTLeft
+    * @psalm-param TTLeft $alternative
+    * @psalm-return (TLeft is never ? TTLeft : TLeft)
+    **/
+   public function successOr($alternative) {
+      return $this->leftOr($alternative);
+   }
+
+   /**
+    * Returns the success value, or throws what `$exceptionFactory` builds, the same as `getLeftOrThrow`
+    *
+    * The factory is handed the error, so it can become the cause.
+    *
+    * ```php
+    * echo Either::success(42)->successOrThrow(function($error) { return new \RuntimeException("no id"); }), "\n"; // 42
+    *
+    * try {
+    *    Either::failure("the api said no")->successOrThrow(function(string $error) {
+    *       return new \RuntimeException("could not load: {$error}");
+    *    });
+    * } catch (\RuntimeException $e) {
+    *    echo $e->getMessage(), "\n"; // "could not load: the api said no"
+    * }
+    * ```
+    *
+    * @psalm-param callable(TRight):Throwable $exceptionFactory
+    * @psalm-return (TLeft is never ? never : TLeft)
+    **/
+   public function successOrThrow(callable $exceptionFactory) {
+      return $this->getLeftOrThrow($exceptionFactory);
+   }
+
    //////////////////////////////
    // STATIC FACTORY FUNCTIONS //
    //////////////////////////////

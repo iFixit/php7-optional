@@ -861,6 +861,45 @@ final class EitherTest extends TestCase
       $this->assertSame([], $unmirrored, 'Either is a symmetric box; a method on one side needs its twin');
    }
 
+   /**
+    * The success/failure names are delegation, not a second implementation.
+    * Asserting they agree with their targets is what stops the two drifting.
+    */
+   public function testSuccessAndFailureNamesDelegate(): void {
+      $ok = Either::success(42);
+      $failed = Either::failure('the api said no');
+
+      $this->assertSame((string) Either::left(42), (string) $ok);
+      $this->assertSame((string) Either::right('the api said no'), (string) $failed);
+
+      $this->assertSame($ok->isLeft(), $ok->isSuccess());
+      $this->assertSame($ok->isRight(), $ok->isFailure());
+      $this->assertSame($failed->isLeft(), $failed->isSuccess());
+      $this->assertSame($failed->isRight(), $failed->isFailure());
+
+      $double = function(int $n): int { return $n * 2; };
+      $describe = function(string $error): string { return "request {$error}"; };
+
+      $this->assertSame((string) $ok->mapLeft($double), (string) $ok->mapSuccess($double));
+      $this->assertSame((string) $failed->mapRight($describe), (string) $failed->mapFailure($describe));
+
+      $this->assertSame($ok->leftOr(0), $ok->successOr(0));
+      $this->assertSame($failed->leftOr(0), $failed->successOr(0));
+
+      $this->assertSame(42, $ok->successOrThrow(function(): \Exception {
+         throw new \LogicException('factory must not run on a success');
+      }));
+   }
+
+   public function testSuccessOrThrowReceivesTheError(): void {
+      $this->expectException(\RuntimeException::class);
+      $this->expectExceptionMessage('could not load: the api said no');
+
+      Either::failure('the api said no')->successOrThrow(function(string $error): \Exception {
+         return new \RuntimeException("could not load: {$error}");
+      });
+   }
+
    public function testToOptionFromRight(): void {
       $this->assertSame("boom", Either::right("boom")->toOptionFromRight()->valueOr("x"));
       $this->assertFalse(Either::left(1)->toOptionFromRight()->hasValue());

@@ -157,6 +157,33 @@ try {
 }
 ```
 
+## Naming the sides
+
+`Either` is symmetric, and plenty of uses have nothing to do with success. But
+this library already leans left for the success case: `andThen` is
+`flatMapLeft`, and `fromCallable` puts the return value on the left with the
+`Throwable` on the right.
+
+When you are modelling success and failure, say so. These are the same box with
+clearer names, and they add no behavior:
+
+```php
+$result = Either::fromCallable(function(): int { throw new Exception("the api said no"); });
+
+echo $result->isFailure() ? "failed\n" : "ok\n"; // "failed"
+
+$message = $result
+   ->mapFailure(function(Throwable $e) { return $e->getMessage(); })
+   ->mapSuccess(function(int $n) { return "got {$n}"; })
+   ->successOr('no value');
+
+echo $message . "\n"; // "no value"
+```
+
+`success` and `failure` build them, `isSuccess` and `isFailure` ask, `mapSuccess`
+and `mapFailure` transform, and `successOr` and `successOrThrow` get you out.
+Everything else is spelled left and right.
+
 ## Option or Either
 
 Use `Option` when "there isn't one" is the whole story. Use `Either` when the
@@ -231,10 +258,12 @@ trace it by.
 `mapSafely` `flatMap` `andThen` `tap` `tapNone` `filter` `filterIf` `notNull`
 `notFalsy` `contains` `exists`
 
-`Either` factories: `left` `right` `leftWhen` `rightWhen` `notNullLeft`
-`notNullRight` `notFalsyLeft` `notFalsyRight` `fromCallable` `fromArray`
+`Either` factories: `left` `right` `success` `failure` `leftWhen` `rightWhen`
+`notNullLeft` `notNullRight` `notFalsyLeft` `notFalsyRight` `fromCallable`
+`fromArray`
 
-`Either` methods: `isLeft` `isRight` `leftOr` `rightOr` `getLeft` `getRight`
+`Either` methods: `isLeft` `isRight` `isSuccess` `isFailure` `mapSuccess`
+`mapFailure` `successOr` `successOrThrow` `leftOr` `rightOr` `getLeft` `getRight`
 `getLeftOrThrow` `getRightOrThrow` `leftOrCreate` `rightOrCreate` `orLeft`
 `orRight` `orCreateLeft` `orCreateRight` `elseLeft` `elseRight`
 `elseCreateLeft` `elseCreateRight` `match` `matchLeft` `matchRight` `mapLeft`
