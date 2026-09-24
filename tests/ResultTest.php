@@ -16,26 +16,37 @@ final class ResultTest extends TestCase {
     * learned one box can guess the other. else, elseCreate and match are left
     * out on purpose: their parameters name the box or the side they take.
     */
-   public function testSharesOptionsMethodAndParameterNames(): void {
-      $shared = [
-         'map', 'mapSafely', 'flatMap', 'filter', 'valueOr', 'valueOrCreate', 'valueOrThrow', 'toNullable',
-         'contains', 'exists', 'or', 'orCreate', 'tap', 'fromCallable',
-      ];
+   /**
+    * Every method the two boxes share takes Option's parameters, by the same
+    * names and in order, so a named argument works on either box. match() is
+    * the one exception: its arguments are named after each box's two cases.
+    */
+   public function testSharesOptionsParameterNames(): void {
+      $names = fn(\ReflectionMethod $method): array => array_map(
+         fn(\ReflectionParameter $parameter): string => $parameter->getName(),
+         $method->getParameters()
+      );
+      $result = new \ReflectionClass(Result::class);
+      $shared = 0;
 
-      foreach ($shared as $name) {
-         $names = fn(\ReflectionMethod $method): array => array_map(
-            fn(\ReflectionParameter $parameter): string => $parameter->getName(),
-            $method->getParameters()
-         );
-         $option = $names(new \ReflectionMethod(Option::class, $name));
-         $result = $names(new \ReflectionMethod(Result::class, $name));
+      foreach ((new \ReflectionClass(Option::class))->getMethods(\ReflectionMethod::IS_PUBLIC) as $method) {
+         $name = $method->getName();
+
+         if ($name === 'match' || !$result->hasMethod($name)) {
+            continue;
+         }
+
+         $shared++;
+         $option = $names($method);
 
          $this->assertSame(
             $option,
-            array_slice($result, 0, count($option)),
+            array_slice($names($result->getMethod($name)), 0, count($option)),
             "Result::{$name}() has to take Option::{$name}()'s parameters, in order, before any of its own"
          );
       }
+
+      $this->assertGreaterThan(15, $shared, 'the boxes share suspiciously few methods');
    }
 
    public function testOkAndErr(): void {

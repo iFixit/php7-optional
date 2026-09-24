@@ -383,7 +383,7 @@ final readonly class Option {
    }
 
    /**
-    * Returns `$alternativeOption` iff this option is `Option::none`, otherwise this one
+    * Returns `$alternative` iff this option is `Option::none`, otherwise this one
     *
     * ```php
     * $fromDisk = Option::some('settings from disk');
@@ -398,20 +398,20 @@ final readonly class Option {
     *
     * @psalm-mutation-free
     * @template TT
-    * @psalm-param Option<TT> $alternativeOption
+    * @psalm-param Option<TT> $alternative
     * @psalm-return Option<T|TT>
     **/
    #[\NoDiscard(self::DISCARDED)]
-   public function else(self $alternativeOption): self {
+   public function else(self $alternative): self {
       return $this->hasValue
          ? $this
-         : $alternativeOption;
+         : $alternative;
    }
 
    /**
-    * Returns the option `$alternativeOptionFactory` builds iff this one is `Option::none`, otherwise this one
+    * Returns the option `$alternativeFactory` builds iff this one is `Option::none`, otherwise this one
     *
-    * `$alternativeOptionFactory` runs only on a `Option::none`.
+    * `$alternativeFactory` runs only on a `Option::none`.
     *
     * ```php
     * $retry = fn() => Option::some('second try');
@@ -422,18 +422,18 @@ final readonly class Option {
     *
     * _Notes:_
     *
-    *  - `$alternativeOptionFactory` must follow this interface `callable():Option<TT>`
+    *  - `$alternativeFactory` must follow this interface `callable():Option<TT>`
     *  - Returns `Option<T|TT>`
     *
     * @template TT
-    * @psalm-param callable():Option<TT> $alternativeOptionFactory
+    * @psalm-param callable():Option<TT> $alternativeFactory
     * @psalm-return Option<T|TT>
     **/
    #[\NoDiscard(self::DISCARDED)]
-   public function elseCreate(callable $alternativeOptionFactory): self {
+   public function elseCreate(callable $alternativeFactory): self {
       return $this->hasValue
          ? $this
-         : $alternativeOptionFactory();
+         : $alternativeFactory();
    }
 
    /**
@@ -1087,14 +1087,14 @@ final readonly class Option {
     *
     * @template K
     * @template TT
-    * @psalm-param iterable<K, Option<TT>> $options
+    * @psalm-param iterable<K, Option<TT>> $boxes
     * @psalm-return Option<array<K, TT>>
     */
    #[\NoDiscard(self::UNREAD)]
-   public static function all(iterable $options): self {
+   public static function all(iterable $boxes): self {
       $values = [];
 
-      foreach ($options as $key => $option) {
+      foreach ($boxes as $key => $option) {
          self::checkItem('Option::all()', $key, $option);
 
          if (!$option->hasValue) {

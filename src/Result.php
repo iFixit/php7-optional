@@ -649,7 +649,7 @@ final readonly class Result {
    }
 
    /**
-    * Returns `$alternativeResult` iff this result is `Result::err`, otherwise this one
+    * Returns `$alternative` iff this result is `Result::err`, otherwise this one
     *
     * ```php
     * $fromDisk = Result::ok('settings from disk');
@@ -665,19 +665,19 @@ final readonly class Result {
     * @psalm-mutation-free
     * @template U
     * @template F
-    * @psalm-param Result<U, F> $alternativeResult
+    * @psalm-param Result<U, F> $alternative
     * @psalm-return Result<T|U, F>
     */
    #[\NoDiscard(self::DISCARDED)]
-   public function else(self $alternativeResult): self {
+   public function else(self $alternative): self {
       /** @var Result<T|U, F> an Ok never holds an error, which psalm cannot see */
       return $this->isOk
          ? $this
-         : $alternativeResult;
+         : $alternative;
    }
 
    /**
-    * Returns the result `$alternativeResultFactory` builds from the error iff this one is `Result::err`, otherwise this one
+    * Returns the result `$alternativeFactory` builds from the error iff this one is `Result::err`, otherwise this one
     *
     * This is how a chain recovers from a failure it knows how to handle.
     *
@@ -690,22 +690,22 @@ final readonly class Result {
     *
     * _Notes:_
     *
-    *  - `$alternativeResultFactory` must follow this interface `callable(E):Result<U, F>`
+    *  - `$alternativeFactory` must follow this interface `callable(E):Result<U, F>`
     *  - Returns `Result<T|U, F>`
     *
     * @template U
     * @template F
-    * @psalm-param callable(E):Result<U, F> $alternativeResultFactory
+    * @psalm-param callable(E):Result<U, F> $alternativeFactory
     * @psalm-return Result<T|U, F>
     */
    #[\NoDiscard(self::DISCARDED)]
-   public function elseCreate(callable $alternativeResultFactory): self {
+   public function elseCreate(callable $alternativeFactory): self {
       $error = $this->error;
 
       /** @var Result<T|U, F> an Ok never holds an error, which psalm cannot see */
       return $this->isOk
          ? $this
-         : $alternativeResultFactory($error);
+         : $alternativeFactory($error);
    }
 
    /**
@@ -950,14 +950,14 @@ final readonly class Result {
     * @template K
     * @template TT
     * @template TE
-    * @psalm-param iterable<K, Result<TT, TE>> $results
+    * @psalm-param iterable<K, Result<TT, TE>> $boxes
     * @psalm-return Result<array<K, TT>, TE>
     */
    #[\NoDiscard(self::UNREAD)]
-   public static function all(iterable $results): self {
+   public static function all(iterable $boxes): self {
       $values = [];
 
-      foreach ($results as $key => $result) {
+      foreach ($boxes as $key => $result) {
          self::checkItem('Result::all()', $key, $result);
 
          if (!$result->isOk) {
@@ -1001,14 +1001,14 @@ final readonly class Result {
     * @template K
     * @template TT
     * @template TE
-    * @psalm-param iterable<K, Result<TT, TE>> $results
+    * @psalm-param iterable<K, Result<TT, TE>> $boxes
     * @psalm-return array{0: array<K, TT>, 1: array<K, TE>}
     */
-   public static function partition(iterable $results): array {
+   public static function partition(iterable $boxes): array {
       $values = [];
       $errors = [];
 
-      foreach ($results as $key => $result) {
+      foreach ($boxes as $key => $result) {
          self::checkItem('Result::partition()', $key, $result);
 
          if ($result->isOk) {

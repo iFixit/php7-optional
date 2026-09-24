@@ -266,12 +266,13 @@ reports `ImpureMethodCall`.
 **`Result` takes `Option`'s names.** Wherever the idea is the same, the method
 has the same name and the same parameter names on both boxes. On `Result` it
 acts on the success: `map`, `mapSafely`, `flatMap`, `filter`, `valueOr`,
-`valueOrCreate`, `valueOrThrow`, `toNullable`, `contains`, `exists`, `or`,
-`orCreate`, `else`, `elseCreate`, `tap`, `fromCallable`. What reaches the error
-is spelled with `Err`: `mapErr`, `errOr`, `tapErr`, `isErr`.
-`testSharesOptionsMethodAndParameterNames` fails when a shared method's
-parameters drift. A new method on either box should take the other's name if
-the other has the idea.
+`valueOrCreate`, `valueOrThrow`, `valueOrReturn`, `toNullable`, `contains`,
+`exists`, `or`, `orCreate`, `else`, `elseCreate`, `tap`, `fromCallable`, `do`,
+`all`. What reaches the error is spelled with `Err`: `mapErr`, `errOr`,
+`tapErr`, `isErr`. `testSharesOptionsParameterNames` finds every method the two
+share by reflection and fails when one's parameters differ. `match()` is the
+one exception, since its arguments are named after each box's cases. A new
+method on either box should take the other's name if the other has the idea.
 
 There is also one name per operation. `Either` reached 66 methods by spelling
 every operation twice, left and right, and then adding success and failure
