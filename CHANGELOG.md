@@ -172,6 +172,10 @@ Completing the left and right mirror, which was 17 pairs out of 21:
   one, the example must call the method it documents rather than mention it in
   a comment or a string, and the method must appear in the README's list. Each
   gate was verified by reintroducing the bug it catches.
+* `SerializationTest` holds boxes serialized by tag 3.0 and checks they read
+  back unchanged, and that this version writes the same bytes. The payload
+  names every private property, so renaming one would have turned every cached
+  Some into a None after a deploy, with a deprecation notice as the only sign.
 * Coverage is measured in CI and fails below a floor, rather than being printed
   into a log nobody reads.
 * `TypeInferenceTest` asserts what psalm infers for 27 expressions, so an

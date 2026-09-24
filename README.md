@@ -292,6 +292,9 @@ with the PHP version and the opcache.
   `Error` that used to escape and crash now lands on the right and travels down
   the chain, so a caller relying on it crashing needs to check the right side.
   `Option::mapSafely` is unchanged and still catches `Exception` only.
+* Boxes you cached with `serialize()` under 3.x read back unchanged, and 4.0
+  writes the same bytes, so a rollback can read them too. A test holds
+  payloads written by 3.0 to keep it that way.
 * `Option` and `Either` are `final`, and so is `MissingValueException`.
   Extending the two boxes never worked: the static factories build with
   `new self`, so a subclass came back as a plain `Option` or `Either` on the

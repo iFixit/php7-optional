@@ -167,6 +167,16 @@ it.
   `new Exception("Either got null for rightValue")`, so there is no way to
   build a `Right(null)` through it. `Either::right(null)` works.
 
+## The serialized form is API
+
+Boxes get cached with `serialize()`, and the payload names the class and
+every private property: `Optional\Option` with `hasValue` and `value`,
+`Optional\Either` with `isLeft`, `leftValue` and `rightValue`. Renaming one, or
+splitting a class into `Some` and `None` subclasses, breaks every box cached
+before the deploy, and quietly: a cached Some reads back as a None, with a
+deprecation notice as the only sign. `SerializationTest` holds payloads written
+by tag 3.0 and fails on either direction of that drift.
+
 ## Two conventions the tests enforce
 
 **Every left method needs a right twin.** `Either` is a symmetric box, and
