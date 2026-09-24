@@ -214,6 +214,7 @@ final readonly class Option {
     *  - psalm and PHPStan type the result as `T`, so the code after it has the
     *    value
     *
+    * @psalm-mutation-free
     * @psalm-return T
     */
    public function valueOrReturn(): mixed {
@@ -859,6 +860,7 @@ final readonly class Option {
     *
     * - Returns `Option<TT>`
     *
+    * @psalm-pure
     * @template TT
     *
     * @psalm-param TT|null $someValue
@@ -867,8 +869,7 @@ final readonly class Option {
     */
    #[\NoDiscard(self::UNREAD)]
    public static function someNotNull(mixed $someValue): self {
-      /** @var self<TT> */
-      return self::some($someValue)->notNull();
+      return $someValue === null ? self::none() : self::some($someValue);
    }
 
    /**
@@ -890,6 +891,7 @@ final readonly class Option {
     * - Returns `Option<TT>`
     * - PHP's falsy set, so `'0'` is a None but `'0.0'` is a Some. See `notFalsy()`
     *
+    * @psalm-pure
     * @template TT
     *
     * @psalm-param TT|null|false $someValue
@@ -898,8 +900,8 @@ final readonly class Option {
     */
    #[\NoDiscard(self::UNREAD)]
    public static function someNotFalsy(mixed $someValue): self {
-      /** @var self<TT> a falsy value never survives notFalsy() */
-      return self::some($someValue)->notFalsy();
+      /** @var self<TT> a falsy value never gets a box */
+      return (bool) $someValue ? self::some($someValue) : self::none();
    }
 
    /**
@@ -922,6 +924,7 @@ final readonly class Option {
     *  - Returns `Option<TT>`: psalm drops `false`, so an `int|false` goes in and
     *    an `Option<int>` comes out
     *
+    * @psalm-pure
     * @template TT
     *
     * @psalm-param TT|false $someValue
@@ -930,8 +933,7 @@ final readonly class Option {
     */
    #[\NoDiscard(self::UNREAD)]
    public static function someNotFalse(mixed $someValue): self {
-      /** @var self<TT> a false value never survives notFalse() */
-      return self::some($someValue)->notFalse();
+      return $someValue === false ? self::none() : self::some($someValue);
    }
 
    /**

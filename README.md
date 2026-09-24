@@ -451,6 +451,10 @@ with the PHP version and the opcache.
 * `Option`, `Result` and `MissingValueException` are `final`. Extending a box
   never worked: the static factories build with `new self`, so a subclass came
   back as a plain box on the first `map`.
+* psalm lets a `@psalm-pure` function or a `@psalm-immutable` class call only
+  the methods that run none of your code, so `map()`, `flatMap()`, `match()`
+  and the other callback methods report `ImpureMethodCall` there. 3.0 allowed
+  them.
 * This `Optional\Result` is new in 4.0. It is not the 2.x class of the same
   name, which earlier versions of this README documented by mistake.
 

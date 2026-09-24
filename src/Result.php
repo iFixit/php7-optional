@@ -251,6 +251,7 @@ final readonly class Result {
     *  - psalm and PHPStan type the result as `T`, so the code after it has the
     *    value
     *
+    * @psalm-mutation-free
     * @psalm-return T
     */
    public function valueOrReturn(): mixed {

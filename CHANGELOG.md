@@ -96,6 +96,15 @@ change below that breaks a caller says what to write instead.
 * **`Option`, `Result` and `MissingValueException` are `final`.** Extending a
   box never worked: the static factories build with `new self`, so a subclass
   came back as a plain box on the first `map`.
+* **psalm's pure code can call only the methods that run none of your code.**
+  3.0 marked each box `@psalm-immutable`, which told psalm that every method,
+  `map()` included, was safe to call from a `@psalm-pure` function or a
+  `@psalm-immutable` class. A method that runs your callback cannot promise
+  that, since the callback may have side effects. 4.0 marks only the others:
+  the factories, `valueOr()`, `or()`, `notNull()`, `contains()`,
+  `valueOrReturn()` and the rest. `map()`, `flatMap()`, `match()`, `filter()`
+  and the other callback methods now report `ImpureMethodCall` from pure
+  code. Run the chain before the pure function and pass it the value.
 
 ### Added
 
