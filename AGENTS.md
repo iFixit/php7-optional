@@ -208,9 +208,10 @@ it.
   failure, `someNotFalse()` and `notFalse()` are the right entrance.
 - There is no `value()`, on purpose. The no-argument `valueOrThrow()` replaces
   it, so the throw is in the name. Do not add it back.
-- `Result::valueOrThrow()` with no factory rethrows the error itself when the
-  error is a `Throwable`, so the trace still points where the failure
-  happened. Any other error becomes a `MissingValueException` naming it.
+- `Result::valueOrThrow()` with no argument rethrows the error itself when
+  the error is a `Throwable`, so the trace still points where the failure
+  happened. With a message, or with any other error, it throws a
+  `MissingValueException` that names the error and keeps it as `$error`.
 - `__toString()` never warns or throws, and never shows two different scalars
   the same way. Both boxes go through `Internal\DescribesValues`. Strings are
   quoted with control characters escaped, and floats keep their point. An enum

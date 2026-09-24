@@ -203,6 +203,12 @@ final readonly class Result {
     *  - `$orThrow` is a message, or a closure that follows the interface
     *    `callable(E):Throwable`. It takes a closure rather than any callable,
     *    because a string naming a function is also a message
+    *  - The `MissingValueException` keeps the error as `$error`, so a catch can
+    *    still read an error that is an enum or an array
+    *  - A message that names an exception class, such as
+    *    `DomainException::class`, throws an `InvalidArgumentException` on a
+    *    `Result::err`, since you meant to throw that class. Pass
+    *    `fn($error) => new \DomainException(...)` instead
     *  - The closure runs only on a `Result::err`, so building the exception
     *    costs nothing on a success
     *
@@ -225,8 +231,9 @@ final readonly class Result {
       }
 
       throw new MissingValueException(
-         ($orThrow ?? 'Result is an Err') . ': ' . self::describe($error),
-         previous: $error instanceof Throwable ? $error : null,
+         self::missingMessage($orThrow, 'Result is an Err') . ': ' . self::describe($error),
+         $error,
+         $error instanceof Throwable ? $error : null,
       );
    }
 

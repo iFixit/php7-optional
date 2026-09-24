@@ -173,6 +173,10 @@ final readonly class Option {
     *  - `$orThrow` is a message, or a closure that follows the interface
     *    `callable():Throwable`. It takes a closure rather than any callable,
     *    because a string naming a function is also a message
+    *  - A message that names an exception class, such as
+    *    `DomainException::class`, throws an `InvalidArgumentException` on a
+    *    `Option::none`, since you meant to throw that class. Pass
+    *    `fn() => new \DomainException(...)` instead
     *  - The closure runs only on a `Option::none`, so building the exception
     *    costs nothing when there is a value
     *  - There is no `value()`. A name that short hides the throw, and an
@@ -185,7 +189,7 @@ final readonly class Option {
       if (!$this->hasValue) {
          throw $orThrow instanceof Closure
             ? $orThrow()
-            : new MissingValueException($orThrow ?? 'Value is missing.');
+            : new MissingValueException(self::missingMessage($orThrow, 'Value is missing.'));
       }
 
       return $this->value;

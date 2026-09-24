@@ -194,8 +194,9 @@ side, so nothing is built on the happy path. There is no bare `value()`: a name
 that short hides the throw.
 
 On a `Result`, a message also names the error, and a closure is handed the
-error, which is how you keep the original failure as the cause. With no factory, a `Result` rethrows an
-exception it caught, so its trace still points where the failure happened:
+error, which is how you keep the original failure as the cause. Called with no
+argument, a `Result` rethrows an exception it caught, so its trace still points
+where the failure happened:
 
 ```php
 $failed = Result::fromCallable(fn(): int => throw new Exception("the api said no"));

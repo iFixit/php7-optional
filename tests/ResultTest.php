@@ -119,6 +119,25 @@ final class ResultTest extends TestCase {
       Result::err('timeout')->valueOrThrow(fn(string $error) => new \RuntimeException("could not load: {$error}"));
    }
 
+   public function testValueOrThrowKeepsAnErrorThatIsNotAnException(): void {
+      try {
+         self::failure(ResultTestWhy::Timeout)->valueOrThrow('load');
+         $this->fail('an Err must throw');
+      } catch (MissingValueException $e) {
+         $this->assertSame('load: Optional\\Tests\\ResultTestWhy::Timeout', $e->getMessage());
+         $this->assertSame(ResultTestWhy::Timeout, $e->error, 'a catch can still read the enum');
+      }
+   }
+
+   public function testValueOrThrowRejectsAnExceptionClassAsTheMessage(): void {
+      $this->assertSame(1, Result::ok(1)->valueOrThrow(\RuntimeException::class));
+
+      $this->expectException(\InvalidArgumentException::class);
+      $this->expectExceptionMessage('valueOrThrow() takes a message, and RuntimeException is an exception class');
+
+      self::failure('timeout')->valueOrThrow(\RuntimeException::class);
+   }
+
    public function testValueOrThrowWithNoFactoryNamesAPlainError(): void {
       $this->expectException(MissingValueException::class);
       $this->expectExceptionMessage("Result is an Err: 'timeout'");
@@ -520,4 +539,8 @@ final class ResultTest extends TestCase {
    private static function failure(mixed $error): Result {
       return Result::err($error);
    }
+}
+
+enum ResultTestWhy {
+   case Timeout;
 }

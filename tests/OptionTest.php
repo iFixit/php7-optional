@@ -581,6 +581,30 @@ final class OptionTest extends TestCase {
       Option::none()->valueOrThrow('strtoupper');
    }
 
+   /**
+    * A class name meant as the exception to throw used to become the message.
+    * Only the empty path checks, so a value costs no autoload.
+    */
+   public function testValueOrThrowRejectsAnExceptionClassAsTheMessage(): void {
+      $this->assertSame(1, Option::some(1)->valueOrThrow(\DomainException::class));
+
+      /** @var Option<int> $none typed as a caller would hold it, so psalm sees the fail() after it */
+      $none = Option::none();
+
+      try {
+         $none->valueOrThrow('stdClass');
+         $this->fail('a None must throw');
+      } catch (MissingValueException $e) {
+         $this->assertSame('stdClass', $e->getMessage(), 'a class that is not an exception is still a message');
+         $this->assertNull($e->error, 'an Option has no error');
+      }
+
+      $this->expectException(\InvalidArgumentException::class);
+      $this->expectExceptionMessage('valueOrThrow() takes a message, and DomainException is an exception class');
+
+      Option::none()->valueOrThrow(\DomainException::class);
+   }
+
    public function testValueOrThrowUsesTheSuppliedException(): void {
       $some = Option::some(1);
       $this->assertSame(1, $some->valueOrThrow(function(): \Exception {

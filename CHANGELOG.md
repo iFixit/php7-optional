@@ -125,7 +125,10 @@ Getting out of one, throwing if the value is missing:
 * `Option::valueOrThrow()`. Pass a message and it throws a
   `MissingValueException` saying it, or a closure that builds your own
   exception. `Result::valueOrThrow()` takes the same, adds the error's
-  description to a message, and keeps a `Throwable` error as the cause
+  description to a message, keeps a `Throwable` error as the cause, and keeps
+  any error as the exception's `$error`, so a catch can still read an enum.
+  A message that names an exception class, such as `DomainException::class`,
+  throws an `InvalidArgumentException` instead of becoming the message
 
 Catching only the failure you expect, the way a `catch` clause names its
 class:

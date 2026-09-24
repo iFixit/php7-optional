@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace Optional\Internal;
 
+use InvalidArgumentException;
 use Optional\Exceptions\EarlyReturn;
 use Stringable;
 use Throwable;
@@ -46,6 +47,25 @@ trait DescribesValues {
       $escaped = preg_match('//u', $text) === 1 ? "\0..\37'\\\177" : "\0..\37'\\\177..\377";
 
       return "'" . addcslashes($text, $escaped) . "'";
+   }
+
+   /**
+    * The message `valueOrThrow()` puts on its `MissingValueException`
+    *
+    * A class name there is almost always meant as the exception to throw, and
+    * would silently become the message, so it throws instead. Only a string
+    * with no space can be a class name, so a message never reaches an
+    * autoloader.
+    */
+   private static function missingMessage(?string $message, string $otherwise): string {
+      if ($message !== null && !str_contains($message, ' ') && is_a($message, Throwable::class, true)) {
+         throw new InvalidArgumentException(
+            "valueOrThrow() takes a message, and {$message} is an exception class. "
+            . 'To throw one, pass a closure that builds it'
+         );
+      }
+
+      return $message ?? $otherwise;
    }
 
    /**
