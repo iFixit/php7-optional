@@ -22,8 +22,6 @@ final class ExampleSource {
    public const PRELUDE = <<<'PHP'
       use Optional\Option;
       use Optional\Result;
-      use Optional\Tests\Fixtures\NewObject;
-      use Optional\Tests\Fixtures\SomeObject;
       PHP;
 
    /**

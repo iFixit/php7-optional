@@ -10,8 +10,6 @@ declare(strict_types = 1);
 
 use Optional\Option;
 use Optional\Result;
-use Optional\Tests\Fixtures\NewObject;
-use Optional\Tests\Fixtures\SomeObject;
 
 /**
  * src/Option.php #1, hasValue()
@@ -25,17 +23,11 @@ function example1_hasValue(): void {
  * src/Option.php #2, valueOr()
  */
 function example2_valueOr(): void {
-   $someThing = Option::some(1);
-   $someClass = Option::some(new SomeObject());
+   echo Option::some(1)->valueOr(0), "\n"; // 1
+   echo Option::none()->valueOr(0), "\n";  // 0
 
-   $none = Option::none();
-
-   $myVar = $someThing->valueOr("Some other value!"); // 1
-   $myVar = $someClass->valueOr("Some other value!"); // instance of SomeObject
-
-   $myVar = $none->valueOr("Some other value!"); // "Some other value!"
-
-   $none = Option::some(null)->valueOr("Some other value!"); // null, See option->notNull()
+   // a stored null is a value like any other; see notNull()
+   echo var_export(Option::some(null)->valueOr('fallback'), true), "\n"; // NULL
 }
 
 /**
@@ -72,71 +64,72 @@ function example4_valueOrThrow(): void {
  * src/Option.php #5, tap()
  */
 function example5_tap(): void {
-   $logged = Option::some(5)
-      ->tap(fn($x) => error_log("about to double {$x}"))
-      ->map(fn($x) => $x * 2); // Some(10), and the log line ran
+   echo (string) Option::some(5)
+      ->tap(fn(int $x) => error_log("about to double {$x}"))
+      ->map(fn(int $x) => $x * 2), "\n"; // Some(10), and the log line ran
 
-   Option::none()->tap(fn($x) => error_log("never runs")); // None
+   echo (string) Option::none()->tap(fn($x) => error_log("never runs")), "\n"; // None
 }
 
 /**
  * src/Option.php #6, tapNone()
  */
 function example6_tapNone(): void {
-   $recovered = Option::none()
+   echo (string) Option::none()
       ->tapNone(fn() => error_log("cache miss"))
-      ->orCreate(fn() => 'from source'); // Some('from source'), and the log line ran
+      ->orCreate(fn() => 'from source'), "\n"; // Some('from source'), and the log line ran
 
-   Option::some(1)->tapNone(fn() => error_log("never runs")); // Some(1)
+   echo (string) Option::some(1)->tapNone(fn() => error_log("never runs")), "\n"; // Some(1)
 }
 
 /**
  * src/Option.php #7, valueOrCreate()
  */
 function example7_valueOrCreate(): void {
-   $someThing = Option::some(1);
-   $someClass = Option::some(new SomeObject());
+   $calls = 0;
+   $lookUp = function() use (&$calls) { $calls++; return 42; };
 
-   $none = Option::none();
-
-   $myVar = $someThing->valueOrCreate(fn() => new NewObject()); // 1
-   $myVar = $someClass->valueOrCreate(fn() => new NewObject()); // instance of SomeObject
-
-   $myVar = $none->valueOrCreate(fn() => new NewObject()); // instance of NewObject
+   echo Option::some(1)->valueOrCreate($lookUp), "\n"; // 1
+   echo Option::none()->valueOrCreate($lookUp), "\n";  // 42
+   echo $calls, "\n";                                  // 1, it ran for the None only
 }
 
 /**
  * src/Option.php #8, or()
  */
 function example8_or(): void {
-   $none = Option::none();
-   $myVar = $none->or(10); // A some instance, with value 10
+   echo (string) Option::none()->or(10), "\n"; // Some(10)
+   echo (string) Option::some(5)->or(10), "\n"; // Some(5)
 }
 
 /**
  * src/Option.php #9, orCreate()
  */
 function example9_orCreate(): void {
-   $none = Option::none();
-   $myVar = $none->orCreate(fn() => 10); // A some instance, with value 10, but lazy
+   $fromSource = fn() => 'from source';
+
+   echo (string) Option::none()->orCreate($fromSource), "\n";         // Some('from source')
+   echo (string) Option::some('cached')->orCreate($fromSource), "\n"; // Some('cached'), $fromSource never ran
 }
 
 /**
  * src/Option.php #10, else()
  */
 function example10_else(): void {
-   $none = Option::none();
-   $myVar = $none->else(Option::some(10)); // A some instance, with value 10
-   $myVar = $none->else(Option::none()); // A new none instance
+   $fromDisk = Option::some('settings from disk');
+
+   echo (string) Option::none()->else($fromDisk), "\n";                     // Some('settings from disk')
+   echo (string) Option::some('settings from cache')->else($fromDisk), "\n"; // Some('settings from cache')
 }
 
 /**
  * src/Option.php #11, elseCreate()
  */
 function example11_elseCreate(): void {
-   $none = Option::none();
+   $retry = fn() => Option::some('second try');
 
-   $myVar = $none->elseCreate(fn() => Option::some(10)); // A some instance, with value 10, but lazy
+   echo (string) Option::none()->elseCreate($retry), "\n";            // Some('second try')
+   echo (string) Option::some('first try')->elseCreate($retry), "\n"; // Some('first try'), $retry never ran
 }
 
 /**
@@ -160,19 +153,18 @@ function example12_match(): void {
  * src/Option.php #13, map()
  */
 function example13_map(): void {
-   $none = Option::none();
-   $stillNone = $none->map(fn($x) => $x * $x);
+   $square = fn(int $x) => $x * $x;
 
-   $some = Option::some(5);
-   $someSquared = $some->map(fn($x) => $x * $x);
+   echo (string) Option::some(5)->map($square), "\n"; // Some(25)
+   echo (string) Option::none()->map($square), "\n";  // None, $square never ran
 }
 
 /**
  * src/Option.php #14, mapSafely()
  */
 function example14_mapSafely(): void {
-   $some = Option::some(['key' => 'value']);
-   $none = $some->mapSafely(fn(array $array) => throw new \Exception("boom")); // None
+   $boom = fn(array $row) => throw new \Exception("boom");
+   echo (string) Option::some(['key' => 'value'])->mapSafely($boom), "\n"; // None
 
    // Name the class you expect, and anything else still throws
    $parsed = Option::some('{bad')->mapSafely(
@@ -204,11 +196,11 @@ function example15_flatMap(): void {
  * src/Option.php #16, filter()
  */
 function example16_filter(): void {
-   $some = Option::some(10);
-   $stillSome = $some->filter(true);
-   $none = $some->filter(false);
+   $big = fn(int $x) => $x > 5;
 
-   $stillNone = Option::none()->filter(true);
+   echo (string) Option::some(10)->filter($big), "\n"; // Some(10)
+   echo (string) Option::some(3)->filter($big), "\n";  // None
+   echo (string) Option::some(3)->filter(true), "\n";  // Some(3), a bool works too
 }
 
 /**
@@ -228,8 +220,8 @@ function example17_filter(): void {
  * src/Option.php #18, notNull()
  */
 function example18_notNull(): void {
-   $someThing = Option::some(null); // Valid
-   $noneThing = $someThing->notNull(); // None: a stored null becomes an empty box
+   echo (string) Option::some(null)->notNull(), "\n"; // None, a stored null becomes an empty box
+   echo (string) Option::some(0)->notNull(), "\n";    // Some(0)
 }
 
 /**
@@ -285,35 +277,33 @@ function example23_toResult(): void {
  * src/Option.php #24, some()
  */
 function example24_some(): void {
-   $someThing = Option::some(1);
-   $someClass = Option::some(new SomeObject());
-
-   $someNullThing = Option::some(null); // Valid
+   echo (string) Option::some(1), "\n";    // Some(1)
+   echo (string) Option::some(null), "\n"; // Some(null), a stored null is still a value
 }
 
 /**
  * src/Option.php #25, none()
  */
 function example25_none(): void {
-   $none = Option::none();
+   echo (string) Option::none(), "\n"; // None
 }
 
 /**
  * src/Option.php #26, someNotNull()
  */
 function example26_someNotNull(): void {
-   $some = Option::some(null); // Valid, returns Some(null)
-   $none = Option::someNotNull(null); // Valid, returns None()
+   echo (string) Option::someNotNull('Ada'), "\n"; // Some('Ada')
+   echo (string) Option::someNotNull(null), "\n";  // None
 }
 
 /**
  * src/Option.php #27, someNotFalsy()
  */
 function example27_someNotFalsy(): void {
-   $none = Option::someNotFalsy(false); // None, e.g. a row fetch that found nothing
-   $none = Option::someNotFalsy('');    // None
-   $none = Option::someNotFalsy([]);    // None
-   $some = Option::someNotFalsy('0.0'); // Some('0.0'), which is truthy in PHP
+   echo (string) Option::someNotFalsy(false), "\n"; // None, e.g. a row fetch that found nothing
+   echo (string) Option::someNotFalsy(''), "\n";    // None
+   echo (string) Option::someNotFalsy([]), "\n";    // None
+   echo (string) Option::someNotFalsy('0.0'), "\n"; // Some('0.0'), which is truthy in PHP
 }
 
 /**
@@ -330,8 +320,8 @@ function example28_someNotFalse(): void {
  * src/Option.php #29, fromCallable()
  */
 function example29_fromCallable(): void {
-   $some = Option::fromCallable(fn() => 7);                            // Some(7)
-   $none = Option::fromCallable(fn() => throw new \Exception("boom")); // None
+   echo (string) Option::fromCallable(fn() => 7), "\n";                            // Some(7)
+   echo (string) Option::fromCallable(fn() => throw new \Exception("boom")), "\n"; // None
 
    // A missing record means None. Any other failure is a real error.
    $missing = Option::fromCallable(
@@ -369,8 +359,11 @@ function example30_first(): void {
  * src/Option.php #31, fromArray()
  */
 function example31_fromArray(): void {
-   $some = Option::fromArray(['hello' => ' world'], 'hello');
-   $none = Option::fromArray(['hello' => ' world'], 'nope');
+   $row = ['name' => 'Ada', 'email' => null];
+
+   echo (string) Option::fromArray($row, 'name'), "\n";  // Some('Ada')
+   echo (string) Option::fromArray($row, 'email'), "\n"; // Some(null), the key exists
+   echo (string) Option::fromArray($row, 'phone'), "\n"; // None
 }
 
 /**
@@ -602,21 +595,21 @@ function example52_elseCreate(): void {
  * src/Result.php #21, tap()
  */
 function example53_tap(): void {
-   $doubled = Result::ok(5)
+   echo (string) Result::ok(5)
       ->tap(fn(int $x) => error_log("about to double {$x}"))
-      ->map(fn(int $x) => $x * 2); // Ok(10), and the log line ran
+      ->map(fn(int $x) => $x * 2), "\n"; // Ok(10), and the log line ran
 
-   $untouched = Result::err('no')->tap(fn(int $x) => error_log("never runs")); // Err('no')
+   echo (string) Result::err('no')->tap(fn(int $x) => error_log("never runs")), "\n"; // Err('no')
 }
 
 /**
  * src/Result.php #22, tapErr()
  */
 function example54_tapErr(): void {
-   $failed = Result::err('timeout')
-      ->tapErr(fn(string $error) => error_log("request failed: {$error}")); // Err('timeout'), and the log line ran
+   echo (string) Result::err('timeout')
+      ->tapErr(fn(string $error) => error_log("request failed: {$error}")), "\n"; // Err('timeout'), and the log line ran
 
-   $fine = Result::ok(5)->tapErr(fn(string $error) => error_log("never runs")); // Ok(5)
+   echo (string) Result::ok(5)->tapErr(fn(string $error) => error_log("never runs")), "\n"; // Ok(5)
 }
 
 /**
@@ -637,8 +630,10 @@ function example56_err(): void {
  * src/Result.php #25, fromCallable()
  */
 function example57_fromCallable(): void {
-   $ok = Result::fromCallable(fn() => 7);                                // Ok(7)
-   $failed = Result::fromCallable(fn() => throw new \Exception("boom")); // Err(Exception: boom)
+   echo (string) Result::fromCallable(fn() => 7), "\n"; // Ok(7)
+
+   $failed = Result::fromCallable(fn() => throw new \Exception("boom"));
+   echo (string) $failed, "\n"; // Err(Exception: boom)
 
    echo $failed->mapErr(fn(\Throwable $e) => $e->getMessage())->errOr(''), "\n"; // "boom"
 
@@ -718,15 +713,12 @@ function example62_unknown(): void {
  */
 function example63_unknown(): void {
    // A falsy return, the shape a row fetch gives you
-   $none = Option::someNotFalsy(false); // None
-   $some = Option::someNotFalsy('Ada'); // Some('Ada')
+   echo Option::someNotFalsy(false), "\n"; // None
+   echo Option::someNotFalsy('Ada'), "\n"; // Some('Ada')
 
    // A throwing call
-   $ok = Option::fromCallable(fn() => 7);                             // Some(7)
-   $failed = Option::fromCallable(fn() => throw new Exception("no")); // None
-
-   echo $none->valueOr('-') . " " . $some->valueOr('-') . " "
-      . $ok->valueOr(0) . " " . $failed->valueOr(0) . "\n"; // "- Ada 7 0"
+   echo Option::fromCallable(fn() => 7), "\n";                             // Some(7)
+   echo Option::fromCallable(fn() => throw new Exception("no")), "\n";     // None
 }
 
 /**
@@ -816,10 +808,8 @@ function example69_unknown(): void {
  * README.md #12, unknown()
  */
 function example70_unknown(): void {
-   $value = Result::ok(10)->toOption();          // Some(10), drops any error
-   $error = Option::none()->toResult('no id');   // Err('no id'), gains a reason
-
-   echo $value->valueOr(-1) . " " . $error->errOr('') . "\n"; // "10 no id"
+   echo Result::ok(10)->toOption(), "\n";        // Some(10), drops any error
+   echo Option::none()->toResult('no id'), "\n"; // Err('no id'), gains a reason
 }
 
 /**

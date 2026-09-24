@@ -103,15 +103,12 @@ throws. There is a factory for each.
 
 ```php
 // A falsy return, the shape a row fetch gives you
-$none = Option::someNotFalsy(false); // None
-$some = Option::someNotFalsy('Ada'); // Some('Ada')
+echo Option::someNotFalsy(false), "\n"; // None
+echo Option::someNotFalsy('Ada'), "\n"; // Some('Ada')
 
 // A throwing call
-$ok = Option::fromCallable(fn() => 7);                             // Some(7)
-$failed = Option::fromCallable(fn() => throw new Exception("no")); // None
-
-echo $none->valueOr('-') . " " . $some->valueOr('-') . " "
-   . $ok->valueOr(0) . " " . $failed->valueOr(0) . "\n"; // "- Ada 7 0"
+echo Option::fromCallable(fn() => 7), "\n";                             // Some(7)
+echo Option::fromCallable(fn() => throw new Exception("no")), "\n";     // None
 ```
 
 PHP's own lookups are the exception. `strpos` and `array_search` return `0`
@@ -218,10 +215,8 @@ caller needs to know why. They share their method names wherever the idea is
 the same, and you can cross between them:
 
 ```php
-$value = Result::ok(10)->toOption();          // Some(10), drops any error
-$error = Option::none()->toResult('no id');   // Err('no id'), gains a reason
-
-echo $value->valueOr(-1) . " " . $error->errOr('') . "\n"; // "10 no id"
+echo Result::ok(10)->toOption(), "\n";        // Some(10), drops any error
+echo Option::none()->toResult('no id'), "\n"; // Err('no id'), gains a reason
 ```
 
 ## Two things that catch people out

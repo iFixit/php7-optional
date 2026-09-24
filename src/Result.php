@@ -641,11 +641,11 @@ final readonly class Result {
     * Runs `$sideEffect` on the value iff the result is `Result::ok`, then returns this result
     *
     * ```php
-    * $doubled = Result::ok(5)
+    * echo (string) Result::ok(5)
     *    ->tap(fn(int $x) => error_log("about to double {$x}"))
-    *    ->map(fn(int $x) => $x * 2); // Ok(10), and the log line ran
+    *    ->map(fn(int $x) => $x * 2), "\n"; // Ok(10), and the log line ran
     *
-    * $untouched = Result::err('no')->tap(fn(int $x) => error_log("never runs")); // Err('no')
+    * echo (string) Result::err('no')->tap(fn(int $x) => error_log("never runs")), "\n"; // Err('no')
     * ```
     *
     * _Notes:_
@@ -673,10 +673,10 @@ final readonly class Result {
     * For logging a failure without handling it.
     *
     * ```php
-    * $failed = Result::err('timeout')
-    *    ->tapErr(fn(string $error) => error_log("request failed: {$error}")); // Err('timeout'), and the log line ran
+    * echo (string) Result::err('timeout')
+    *    ->tapErr(fn(string $error) => error_log("request failed: {$error}")), "\n"; // Err('timeout'), and the log line ran
     *
-    * $fine = Result::ok(5)->tapErr(fn(string $error) => error_log("never runs")); // Ok(5)
+    * echo (string) Result::ok(5)->tapErr(fn(string $error) => error_log("never runs")), "\n"; // Ok(5)
     * ```
     *
     * _Notes:_
@@ -750,8 +750,10 @@ final readonly class Result {
     * error is typed as that class.
     *
     * ```php
-    * $ok = Result::fromCallable(fn() => 7);                                // Ok(7)
-    * $failed = Result::fromCallable(fn() => throw new \Exception("boom")); // Err(Exception: boom)
+    * echo (string) Result::fromCallable(fn() => 7), "\n"; // Ok(7)
+    *
+    * $failed = Result::fromCallable(fn() => throw new \Exception("boom"));
+    * echo (string) $failed, "\n"; // Err(Exception: boom)
     *
     * echo $failed->mapErr(fn(\Throwable $e) => $e->getMessage())->errOr(''), "\n"; // "boom"
     *

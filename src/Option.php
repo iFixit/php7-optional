@@ -78,21 +78,20 @@ final readonly class Option {
    }
 
    /**
-    * Returns the options value or returns `$alternative`
+    * Returns the value, or `$alternative` for a `Option::none`
     *
     * ```php
-    * $someThing = Option::some(1);
-    * $someClass = Option::some(new SomeObject());
+    * echo Option::some(1)->valueOr(0), "\n"; // 1
+    * echo Option::none()->valueOr(0), "\n";  // 0
     *
-    * $none = Option::none();
-    *
-    * $myVar = $someThing->valueOr("Some other value!"); // 1
-    * $myVar = $someClass->valueOr("Some other value!"); // instance of SomeObject
-    *
-    * $myVar = $none->valueOr("Some other value!"); // "Some other value!"
-    *
-    * $none = Option::some(null)->valueOr("Some other value!"); // null, See option->notNull()
+    * // a stored null is a value like any other; see notNull()
+    * echo var_export(Option::some(null)->valueOr('fallback'), true), "\n"; // NULL
     * ```
+    *
+    * _Notes:_
+    *
+    *  - `$alternative` is evaluated at the call site, whether or not it is used.
+    *    For a default that is expensive to build, use `valueOrCreate()`
     *
     * @psalm-mutation-free
     * @template TT
@@ -186,11 +185,11 @@ final readonly class Option {
     * on with the same box.
     *
     * ```php
-    * $logged = Option::some(5)
-    *    ->tap(fn($x) => error_log("about to double {$x}"))
-    *    ->map(fn($x) => $x * 2); // Some(10), and the log line ran
+    * echo (string) Option::some(5)
+    *    ->tap(fn(int $x) => error_log("about to double {$x}"))
+    *    ->map(fn(int $x) => $x * 2), "\n"; // Some(10), and the log line ran
     *
-    * Option::none()->tap(fn($x) => error_log("never runs")); // None
+    * echo (string) Option::none()->tap(fn($x) => error_log("never runs")), "\n"; // None
     * ```
     *
     * _Notes:_
@@ -219,11 +218,11 @@ final readonly class Option {
     * chain.
     *
     * ```php
-    * $recovered = Option::none()
+    * echo (string) Option::none()
     *    ->tapNone(fn() => error_log("cache miss"))
-    *    ->orCreate(fn() => 'from source'); // Some('from source'), and the log line ran
+    *    ->orCreate(fn() => 'from source'), "\n"; // Some('from source'), and the log line ran
     *
-    * Option::some(1)->tapNone(fn() => error_log("never runs")); // Some(1)
+    * echo (string) Option::some(1)->tapNone(fn() => error_log("never runs")), "\n"; // Some(1)
     * ```
     *
     * _Notes:_
@@ -244,19 +243,20 @@ final readonly class Option {
    }
 
    /**
-    * Returns the options value or calls `$alternativeFactory` and returns the value of that function
+    * Returns the value, or what `$alternativeFactory` builds for a `Option::none`
+    *
+    * The factory runs only on a `Option::none`, so an expensive default costs
+    * nothing when there is a value.
     *
     * ```php
-    * $someThing = Option::some(1);
-    * $someClass = Option::some(new SomeObject());
+    * $calls = 0;
+    * $lookUp = function() use (&$calls) { $calls++; return 42; };
     *
-    * $none = Option::none();
-    *
-    * $myVar = $someThing->valueOrCreate(fn() => new NewObject()); // 1
-    * $myVar = $someClass->valueOrCreate(fn() => new NewObject()); // instance of SomeObject
-    *
-    * $myVar = $none->valueOrCreate(fn() => new NewObject()); // instance of NewObject
+    * echo Option::some(1)->valueOrCreate($lookUp), "\n"; // 1
+    * echo Option::none()->valueOrCreate($lookUp), "\n";  // 42
+    * echo $calls, "\n";                                  // 1, it ran for the None only
     * ```
+    *
     * _Notes:_
     *
     *  - `$alternativeFactory` must follow this interface `callable():TT`
@@ -275,13 +275,15 @@ final readonly class Option {
     * Returns `Option::some($alternative)` iff the option is `Option::none`, otherwise this one
     *
     * ```php
-    * $none = Option::none();
-    * $myVar = $none->or(10); // A some instance, with value 10
+    * echo (string) Option::none()->or(10), "\n"; // Some(10)
+    * echo (string) Option::some(5)->or(10), "\n"; // Some(5)
     * ```
     *
     * _Notes:_
     *
     *  - Returns `Option<T|TT>`
+    *  - `$alternative` is evaluated at the call site, whether or not it is used.
+    *    For one that is expensive to build, use `orCreate()`
     *
     * @psalm-mutation-free
     *
@@ -300,11 +302,14 @@ final readonly class Option {
    /**
     * Returns `Option::some()` of what `$alternativeFactory` returns iff the option is `Option::none`, otherwise this one
     *
-    * `$alternativeFactory` runs only iff the option is `Option::none`, so an expensive default costs nothing when there is a value
+    * `$alternativeFactory` runs only on a `Option::none`, so an expensive default
+    * costs nothing when there is a value.
     *
     * ```php
-    * $none = Option::none();
-    * $myVar = $none->orCreate(fn() => 10); // A some instance, with value 10, but lazy
+    * $fromSource = fn() => 'from source';
+    *
+    * echo (string) Option::none()->orCreate($fromSource), "\n";         // Some('from source')
+    * echo (string) Option::some('cached')->orCreate($fromSource), "\n"; // Some('cached'), $fromSource never ran
     * ```
     *
     * _Notes:_
@@ -328,9 +333,10 @@ final readonly class Option {
     * Returns `$alternativeOption` iff this option is `Option::none`, otherwise this one
     *
     * ```php
-    * $none = Option::none();
-    * $myVar = $none->else(Option::some(10)); // A some instance, with value 10
-    * $myVar = $none->else(Option::none()); // A new none instance
+    * $fromDisk = Option::some('settings from disk');
+    *
+    * echo (string) Option::none()->else($fromDisk), "\n";                     // Some('settings from disk')
+    * echo (string) Option::some('settings from cache')->else($fromDisk), "\n"; // Some('settings from cache')
     * ```
     *
     * _Notes:_
@@ -352,12 +358,13 @@ final readonly class Option {
    /**
     * Returns the option `$alternativeOptionFactory` builds iff this one is `Option::none`, otherwise this one
     *
-    * `$alternativeOptionFactory` is run lazily
+    * `$alternativeOptionFactory` runs only on a `Option::none`.
     *
     * ```php
-    * $none = Option::none();
+    * $retry = fn() => Option::some('second try');
     *
-    * $myVar = $none->elseCreate(fn() => Option::some(10)); // A some instance, with value 10, but lazy
+    * echo (string) Option::none()->elseCreate($retry), "\n";            // Some('second try')
+    * echo (string) Option::some('first try')->elseCreate($retry), "\n"; // Some('first try'), $retry never ran
     * ```
     *
     * _Notes:_
@@ -415,16 +422,15 @@ final readonly class Option {
    }
 
    /**
-    * Maps the `$value` of a `Option::some($value)`
+    * Transforms the value, and passes a `Option::none` through
     *
-    * `$mapFunc` runs only iff the option is `Option::some`. A `Option::none` passes through.
+    * `$mapFunc` runs only iff the option is `Option::some`.
     *
     * ```php
-    * $none = Option::none();
-    * $stillNone = $none->map(fn($x) => $x * $x);
+    * $square = fn(int $x) => $x * $x;
     *
-    * $some = Option::some(5);
-    * $someSquared = $some->map(fn($x) => $x * $x);
+    * echo (string) Option::some(5)->map($square), "\n"; // Some(25)
+    * echo (string) Option::none()->map($square), "\n";  // None, $square never ran
     * ```
     *
     * _Notes:_
@@ -448,12 +454,11 @@ final readonly class Option {
    /**
     * `map`, but a throw from `$mapFunc` gives you `Option::none()` instead of escaping
     *
-    * The map function runs iff the option is a `Option::some`. Otherwise the
-    * `Option::none` is propagated.
+    * `$mapFunc` runs only on a `Option::some`, and a `Option::none` passes through.
     *
     * ```php
-    * $some = Option::some(['key' => 'value']);
-    * $none = $some->mapSafely(fn(array $array) => throw new \Exception("boom")); // None
+    * $boom = fn(array $row) => throw new \Exception("boom");
+    * echo (string) Option::some(['key' => 'value'])->mapSafely($boom), "\n"; // None
     *
     * // Name the class you expect, and anything else still throws
     * $parsed = Option::some('{bad')->mapSafely(
@@ -495,7 +500,7 @@ final readonly class Option {
    }
 
    /**
-    * Allows a function to map over the internal value, the function returns an option
+    * Runs a step that can itself come up empty on the value, and returns that step's option
     *
     * ```php
     * $somePerson = [
@@ -534,11 +539,11 @@ final readonly class Option {
     * or a callable that returns false for the value. A `Option::none` stays one.
     *
     * ```php
-    * $some = Option::some(10);
-    * $stillSome = $some->filter(true);
-    * $none = $some->filter(false);
+    * $big = fn(int $x) => $x > 5;
     *
-    * $stillNone = Option::none()->filter(true);
+    * echo (string) Option::some(10)->filter($big), "\n"; // Some(10)
+    * echo (string) Option::some(3)->filter($big), "\n";  // None
+    * echo (string) Option::some(3)->filter(true), "\n";  // Some(3), a bool works too
     * ```
     *
     * _Notes:_
@@ -582,12 +587,13 @@ final readonly class Option {
    }
 
    /**
-    * Turn a `Option::some(null)` into an `Option::none()` iff `is_null($value)`
+    * Turns `Option::some(null)` into `Option::none()`, and keeps every other value
     *
     * ```php
-    * $someThing = Option::some(null); // Valid
-    * $noneThing = $someThing->notNull(); // None: a stored null becomes an empty box
+    * echo (string) Option::some(null)->notNull(), "\n"; // None, a stored null becomes an empty box
+    * echo (string) Option::some(0)->notNull(), "\n";    // Some(0)
     * ```
+    *
     * @psalm-mutation-free
     * @template TNotNull
     * @psalm-if-this-is Option<TNotNull|null>
@@ -748,15 +754,13 @@ final readonly class Option {
     * Creates an option holding `$someValue`
     *
     * ```php
-    * $someThing = Option::some(1);
-    * $someClass = Option::some(new SomeObject());
-    *
-    * $someNullThing = Option::some(null); // Valid
+    * echo (string) Option::some(1), "\n";    // Some(1)
+    * echo (string) Option::some(null), "\n"; // Some(null), a stored null is still a value
     * ```
+    *
     * _Notes:_
     *
     * - Returns `Option<TT>`
-    *
     *
     * @psalm-pure
     * @template TT
@@ -772,12 +776,12 @@ final readonly class Option {
     * Creates an empty option
     *
     * ```php
-    * $none = Option::none();
+    * echo (string) Option::none(), "\n"; // None
     * ```
     *
     * _Notes:_
     *
-    * - Returns `Option<never>`
+    * - Returns `Option<never>`, which fits any declared `Option<T>`
     *
     * @psalm-pure
     * @psalm-return Option<never>
@@ -792,9 +796,10 @@ final readonly class Option {
     * Boxes `$someValue` unless it is `null`, otherwise `Option::none()`
     *
     * ```php
-    * $some = Option::some(null); // Valid, returns Some(null)
-    * $none = Option::someNotNull(null); // Valid, returns None()
+    * echo (string) Option::someNotNull('Ada'), "\n"; // Some('Ada')
+    * echo (string) Option::someNotNull(null), "\n";  // None
     * ```
+    *
     * _Notes:_
     *
     * - Returns `Option<TT>`
@@ -819,10 +824,10 @@ final readonly class Option {
     * row fetch, `''` from a lookup, `[]` from a filter.
     *
     * ```php
-    * $none = Option::someNotFalsy(false); // None, e.g. a row fetch that found nothing
-    * $none = Option::someNotFalsy('');    // None
-    * $none = Option::someNotFalsy([]);    // None
-    * $some = Option::someNotFalsy('0.0'); // Some('0.0'), which is truthy in PHP
+    * echo (string) Option::someNotFalsy(false), "\n"; // None, e.g. a row fetch that found nothing
+    * echo (string) Option::someNotFalsy(''), "\n";    // None
+    * echo (string) Option::someNotFalsy([]), "\n";    // None
+    * echo (string) Option::someNotFalsy('0.0'), "\n"; // Some('0.0'), which is truthy in PHP
     * ```
     *
     * _Notes:_
@@ -882,8 +887,8 @@ final readonly class Option {
     * clause would, and let every other failure propagate.
     *
     * ```php
-    * $some = Option::fromCallable(fn() => 7);                            // Some(7)
-    * $none = Option::fromCallable(fn() => throw new \Exception("boom")); // None
+    * echo (string) Option::fromCallable(fn() => 7), "\n";                            // Some(7)
+    * echo (string) Option::fromCallable(fn() => throw new \Exception("boom")), "\n"; // None
     *
     * // A missing record means None. Any other failure is a real error.
     * $missing = Option::fromCallable(
@@ -986,8 +991,11 @@ final readonly class Option {
     * Boxes `$array[$key]` iff the key exists, even when it holds `null`, otherwise `Option::none()`
     *
     * ```php
-    * $some = Option::fromArray(['hello' => ' world'], 'hello');
-    * $none = Option::fromArray(['hello' => ' world'], 'nope');
+    * $row = ['name' => 'Ada', 'email' => null];
+    *
+    * echo (string) Option::fromArray($row, 'name'), "\n";  // Some('Ada')
+    * echo (string) Option::fromArray($row, 'email'), "\n"; // Some(null), the key exists
+    * echo (string) Option::fromArray($row, 'phone'), "\n"; // None
     * ```
     *
     * _Notes:_

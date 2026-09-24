@@ -4,8 +4,6 @@ declare(strict_types = 1);
 
 namespace Optional\Tests;
 
-use Optional\Tests\Fixtures\NewObject;
-use Optional\Tests\Fixtures\SomeObject;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Throwable;
@@ -139,22 +137,6 @@ final class DocblockExampleTest extends TestCase {
       foreach (['src/Option.php', 'src/Result.php', 'README.md'] as $relativePath) {
          $fromFile = array_filter($labels, static fn(string $l): bool => str_starts_with($l, $relativePath));
          $this->assertNotEmpty($fromFile, "No docblock examples extracted from {$relativePath}");
-      }
-   }
-
-   /**
-    * The fixtures are only ever named inside PRELUDE, which is a string, so
-    * nothing else in the project references them and a rename would go
-    * unnoticed until an example failed for a confusing reason. Naming them
-    * here keeps the import list honest and keeps psalm from reporting them
-    * as unused classes.
-    */
-   public function testPreludeImportsResolve(): void {
-      $imported = [SomeObject::class, NewObject::class];
-
-      foreach ($imported as $class) {
-         $this->assertTrue(class_exists($class), "{$class} is imported by PRELUDE but does not exist");
-         $this->assertStringContainsString($class, ExampleSource::PRELUDE, "PRELUDE no longer imports {$class}");
       }
    }
 }

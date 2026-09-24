@@ -97,8 +97,9 @@ Four things to know when you touch an example:
 - It has to run. One that means to show a throw must catch it itself.
 - `eval` does not inherit `use` aliases, which is why the runner prepends its
   own imports as a `PRELUDE` string.
-- `SomeObject` and `NewObject` are real fixtures in `tests/Fixtures/`. Add
-  to those rather than teaching the runner to skip one.
+- An example uses only the library and PHP's own classes. One that needs a
+  class of its own gets a real one under `tests/Fixtures/`, imported in
+  `PRELUDE`, rather than a runner taught to skip it.
 - stdout is buffered and `error_log` redirected, so an example may print.
 
 An example that prints says what it prints in the comment on each `echo`,
