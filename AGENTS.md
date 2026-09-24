@@ -184,12 +184,19 @@ it.
   error is a `Throwable`, so the trace still points where the failure
   happened. Any other error becomes a `MissingValueException` naming it.
 - `__toString()` never warns or throws, and never shows two different values
-  the same way. Both boxes go through `Internal\DescribesValues`: strings are
-  quoted with control characters escaped, floats keep their point, an enum
+  the same way. Both boxes go through `Internal\DescribesValues`. Strings are
+  quoted with control characters escaped, and floats keep their point. An enum
   case shows as `Class::Case`, an exception as its class and message, and
   anything else with no string form as its type. Before 4.0 it interpolated
   the value, so an array warned and an object with no `__toString` threw.
-- `Option::none()` builds a new object every call. Compare with `==`.
+- Compare boxes with `hasValue()` and `contains()`, not `==`. `==` compares
+  the held values loosely, so `Option::some(1) == Option::some('1')` is true.
+  `Option::none()` builds a new object each call, so two Nones are `==` but
+  not `===`.
+- Callbacks run under this library's `strict_types`, whatever the caller's
+  file declares, so `->map(fn(int $id) => ...)` on a database's `'7'` throws.
+  The README says so; do not "fix" it by dropping `strict_types`, which would
+  only move the surprise to the strict callers.
 
 ## The serialized form is API
 

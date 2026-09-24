@@ -5,8 +5,9 @@ require_once dirname(__DIR__) . '/vendor/autoload.php';
 
 use Optional\Option;
 
-// optionExampleBefore.php with the box. The missing key and the throw are
-// handled by the chain, so there is no null to check and no try to write.
+// optionExampleBefore.php with the box. The missing key, a stored null and
+// the throw are all handled by the chain, so there is no null to check and no
+// try to write.
 
 final class SomeComplexThing {
    public static function doWork(string $thing): string {
@@ -26,6 +27,7 @@ $somePerson = [
 ];
 
 echo Option::fromArray($somePerson, 'name')
+   ->notNull()
    ->mapSafely(fn(array $person) => SomeComplexThing::doWork("{$person['first']} {$person['last']}"))
    ->map(fn(string $name) => new User($name))
    ->match(

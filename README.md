@@ -26,7 +26,7 @@ is built, so this call only made a new one
 ```
 
 Every example in this file runs as part of the test suite, and every line it
-prints is checked against the comment beside it, so if one of them is wrong the
+prints is checked against the comment beside it. If one of them is wrong, the
 build goes red.
 
 ## Installation
@@ -219,7 +219,7 @@ echo Result::ok(10)->toOption(), "\n";        // Some(10), drops any error
 echo Option::none()->toResult('no id'), "\n"; // Err('no id'), gains a reason
 ```
 
-## Two things that catch people out
+## Three things that catch people out
 
 **Pass `filter` the callable, not its result.** `filter` takes a bool or a
 callable. PHP evaluates an argument at the call site, so `filter(expensive())`
@@ -243,6 +243,13 @@ Collapse it when you want to.
 echo Option::some(null)->hasValue() ? "some\n" : "none\n";            // "some"
 echo Option::some(null)->notNull()->hasValue() ? "some\n" : "none\n"; // "none"
 ```
+
+**Your callbacks are called under strict types.** This library declares
+`strict_types=1`, and PHP applies the calling file's mode, so a callback runs
+strictly even when your own file does not. A database hands back `'7'` for an
+integer column, and `->map(fn(int $id) => ...)` then throws a `TypeError` that
+calling the same closure directly would not. Convert first, with
+`->map(intval(...))`, or type the parameter as what arrives.
 
 ## What each box catches
 
@@ -281,6 +288,13 @@ each call, and the entrances drop what they exist to drop:
 * `$option->map($f)->map($g)` is an `Option` of whatever `$g` returns
 * a box is covariant, so a function declared `Option<Animal>` can return
   `Option::some(new Dog())`, and `Option::none()` fits any `Option`
+
+One shape psalm cannot follow: a box built with a ternary,
+`$flag ? Option::some($user) : Option::none()`, stays a union of two boxes
+(`Option<User>|Option<never>`), and the next typed callback reports
+`ReservedWord`. Declare the variable (`/** @var Option<User> $x */`), build it
+in a function declared `Option<User>`, or write `Option::some($user)->filter($flag)`,
+which is one box.
 
 `tests/TypeInference` records what psalm infers for expressions like these,
 including 18 two-call chains, and fails when one changes. PHPStan was

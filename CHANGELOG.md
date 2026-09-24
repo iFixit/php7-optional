@@ -57,7 +57,7 @@ change below that breaks a caller says what to write instead.
   | 3.x `Either` | 4.0 |
   |---|---|
   | `rightOrCreate($f)` | `match(ok: $f, err: fn($e) => $e)` |
-  | `rightContains($x)` | `$r->isErr() && $r->errOr(null) === $x` |
+  | `rightContains($x)` | `$r->isErr() && $r->errOr(null) === $x`, compared with `===` where 3.x used `==` |
   | `existsRight($f)` | `match(ok: fn() => false, err: $f)` |
   | `orRight($e)` | `flatMap(fn() => Result::err($e))` |
   | `orCreateRight($f)` | `flatMap(fn($v) => Result::err($f($v)))` |
