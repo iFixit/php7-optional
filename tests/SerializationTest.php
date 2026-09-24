@@ -15,9 +15,9 @@ use PHPUnit\Framework\TestCase;
  * payload, and boxes get cached that way. A lookup that found nothing is worth
  * caching as Option::none(), because a cache that answers a miss with null
  * cannot also store a null and tell the two apart. Rename a private property
- * and every box cached before the deploy comes back wrong until it expires,
- * and not loudly: a cached Some whose flag has no property left to land in
- * reads as a None, with only a deprecation notice to say so.
+ * and every box cached before the deploy breaks until it expires: the classes
+ * are readonly, so reading one back throws "Cannot create dynamic property" on
+ * every cache hit.
  *
  * The payloads below are pinned byte for byte. Option's have not changed since
  * tag 3.0 wrote them.

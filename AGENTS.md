@@ -14,10 +14,10 @@ covers only what reading them will not tell you, or will tell you wrong.
 ## master is not what consumers get
 
 The released package and the code in front of you are different APIs, and the
-gap is now a whole major version. Tag `3.0` is PHP 7 compatible, has `Either`
-where master has `Result`, has no `tap()`, `fromCallable()`, `valueOrThrow()`
-or `first()`, still has the six `Option` aliases master removed, and it is
-what a consumer on `^3.0` resolves to.
+gap is now a whole major version. Tag `3.0` is what a consumer on `^3.0`
+resolves to. It is PHP 7 compatible and has `Either` where master has
+`Result`. It has no `tap()`, `fromCallable()`, `valueOrThrow()` or `first()`,
+and it still has the six `Option` aliases master removed.
 
 Before telling anyone a method is available, or writing code elsewhere that
 calls one:
@@ -51,8 +51,8 @@ There is no `psalm-baseline.xml` and there should not be one. `src/` and
 `composer coverage` writes `clover.xml`, runs `bin/check-coverage.php` and
 fails below the floor. That script exits 2, not 0, when the report is missing
 or unparseable, when the counts are impossible, or when the floor is not a
-number, because a coverage step that passes when nothing was measured is worse
-than no step. `tests/CoverageGateTest.php` covers every one of its outcomes.
+number. A coverage step that passes when nothing was measured is worse than no
+step. `tests/CoverageGateTest.php` covers every one of its outcomes.
 
 `composer mutation` breaks the source on purpose and checks a test notices. It
 runs in the coverage job, because it needs the same driver. It exists because
@@ -173,9 +173,10 @@ it.
   error is a `Throwable`, so the trace still points where the failure
   happened. Any other error becomes a `MissingValueException` naming it.
 - `__toString()` never warns or throws. Both boxes show what they hold through
-  `Internal\DescribesValues`: an array or object with no string form by its
-  type, an exception by its class and message. 3.x interpolated the value, so
-  an array warned and an object with no `__toString` threw.
+  `Internal\DescribesValues`. An array, or an object with no string form,
+  shows as its type, and an exception as its class and message. Before 4.0 it
+  interpolated the value, so an array warned and an object with no
+  `__toString` threw.
 - `Option::none()` builds a new object every call. Compare with `==`.
 
 ## The serialized form is API
@@ -184,9 +185,11 @@ Boxes get cached with `serialize()`, and the payload names the class and
 every private property: `Optional\Option` with `hasValue` and `value`,
 `Optional\Result` with `isOk`, `value` and `error`. Renaming one, or splitting a
 class into `Some` and `None` subclasses, breaks every box cached before the
-deploy, and quietly: a cached Some reads back as a None, with a deprecation
-notice as the only sign. `SerializationTest` pins the bytes (Option's are
-unchanged since tag 3.0) and fails on either direction of that drift.
+deploy. Because the classes are `readonly`, reading one back throws
+`Error: Cannot create dynamic property Optional\Option::$hasValue` on every
+cache hit until the entries expire. `SerializationTest` pins the bytes
+(Option's are unchanged since tag 3.0) and fails on either direction of that
+drift.
 
 ## Two conventions the tests enforce
 
@@ -195,14 +198,14 @@ except the tap family.** `$box->map($f);` alone on a line does nothing, psalm
 cannot see it (a method that runs a callback is never mutation-free), and PHP
 8.5 warns for it. `NoDiscardTest` fails when a box-returning method lacks the
 attribute or anything else has it. PHP 8.4 ignores the attribute, so a dropped
-result only shows up in the 8.5 run: a test that calls a method just to see it
-throw or not run a callback has to use the result, or assign it to `$_`, which
-psalm treats as deliberately unused. Do not reach for a `(void)` cast; that is
+result only shows up in the 8.5 run. A test that calls a method just to see it
+throw, or to see a callback not run, still has to use the result. Assigning it
+to `$_` counts, and psalm treats that as deliberately unused. Do not reach for a `(void)` cast; that is
 PHP 8.5 syntax and a parse error on 8.4.
 
 **`Result` takes `Option`'s names.** Wherever the idea is the same, the method
-has the same name and the same parameter names on both boxes, and on `Result`
-it acts on the success: `map`, `mapSafely`, `flatMap`, `filter`, `valueOr`,
+has the same name and the same parameter names on both boxes. On `Result` it
+acts on the success: `map`, `mapSafely`, `flatMap`, `filter`, `valueOr`,
 `valueOrCreate`, `valueOrThrow`, `toNullable`, `contains`, `exists`, `or`,
 `orCreate`, `else`, `elseCreate`, `tap`, `fromCallable`. What reaches the error
 is spelled with `Err`: `mapErr`, `errOr`, `tapErr`, `isErr`.

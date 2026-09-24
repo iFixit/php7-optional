@@ -339,8 +339,9 @@ with the PHP version and the opcache.
   `Result::ok()`, `mapLeft()` is `map()`, `mapRight()` is `mapErr()`, and the
   CHANGELOG maps every other 3.x `Either` method to its `Result` spelling.
 * An `Option` you cached with `serialize()` under 3.x reads back unchanged,
-  and 4.0 writes the same bytes. A cached `Either` does not, since the class is
-  gone.
+  and 4.0 writes the same bytes. A cached `Either` comes back as
+  `__PHP_Incomplete_Class` and throws on the first method call, so clear those
+  cache entries when you deploy 4.0.
 * `Option` keeps one name per operation, so six 3.x spellings are gone:
 
   | 3.x | 4.0 |

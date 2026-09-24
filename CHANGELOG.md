@@ -71,8 +71,9 @@ change below that breaks a caller says what to write instead.
   </details>
 
   `(string)` shows `Ok(...)` and `Err(...)` rather than `Left(...)` and
-  `Right(...)`. A cached `Either` no longer unserializes, since the class is
-  gone.
+  `Right(...)`. A cached `Either` unserializes as `__PHP_Incomplete_Class`,
+  since the class is gone, and throws an `Error` on the first method call.
+  Clear those cache entries when you deploy 4.0.
 * **`Option` has one name per operation.** Six 3.x methods repeated another
   method under a second name, and are gone. Each replacement was checked
   against 3.0:
@@ -230,8 +231,8 @@ Shorthands for shapes callers otherwise spell out by hand:
 * `SerializationTest` pins the serialized bytes of both boxes, in both
   directions: pinned payloads read back unchanged, and this version writes
   them byte for byte. `Option`'s are the bytes tag 3.0 writes. The payload
-  names every private property, so renaming one would have turned every cached
-  Some into a None after a deploy, with a deprecation notice as the only sign.
+  names every private property, so renaming one would make every box cached
+  before a deploy throw an `Error` when it is read back.
 * Coverage is measured in CI and fails below a floor, rather than being printed
   into a log nobody reads.
 * `TypeInferenceTest` asserts what psalm infers for every traced expression,
