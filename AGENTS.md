@@ -84,7 +84,9 @@ The docblocks are the only API documentation, and four suites hold them to it.
 
 - `DocblockExampleTest` executes every ```php fence in `src/` and `README.md`,
   one test case each, named for the method it documents, and checks every
-  line an example prints against the comment on its `echo`.
+  line an example prints against the comment on its `echo`. Every `echo`
+  needs one, after its `;` on the same line, and has to print exactly one
+  line.
 - psalm analyses every one of those examples as well, through
   `tests/generated/DocblockExamples.php`. Regenerate it with
   `php bin/generate-example-checks.php` after editing an example;

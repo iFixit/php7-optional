@@ -25,9 +25,10 @@ or intentionally ignored by casting it as (void), a box never changes after it
 is built, so this call only made a new one
 ```
 
-Every example in this file runs as part of the test suite, and every line it
-prints is checked against the comment beside it. If one of them is wrong, the
-build goes red.
+Every example in this file runs as part of the test suite, and every line one
+prints is checked against the comment on its `echo`. If one of them is wrong,
+the build goes red. The two exceptions are shown as plain text: a fragment
+that shows a bug, and one in PHP 8.5 syntax.
 
 ## Installation
 
@@ -126,8 +127,7 @@ gives the missing value a reason:
 
 ```php
 $kept = Result::fromCallable(fn() => throw new Exception("the api said no"));
-echo $kept->mapErr(fn(Throwable $e) => $e->getMessage())->errOr('') . "\n";
-// "the api said no"
+echo $kept->mapErr(fn(Throwable $e) => $e->getMessage())->errOr('') . "\n"; // "the api said no"
 
 $row = false; // what a row fetch hands back when it finds nothing
 echo (string) Option::someNotFalsy($row)->toResult('row not found') . "\n"; // "Err('row not found')"
@@ -204,8 +204,7 @@ $failed = Result::fromCallable(fn(): int => throw new Exception("the api said no
 try {
    $failed->valueOrThrow(fn(Throwable $cause) => new RuntimeException("could not load the build", 0, $cause));
 } catch (RuntimeException $e) {
-   echo $e->getMessage() . ": " . $e->getPrevious()?->getMessage() . "\n";
-   // "could not load the build: the api said no"
+   echo $e->getMessage() . ": " . $e->getPrevious()?->getMessage() . "\n"; // "could not load the build: the api said no"
 }
 ```
 
@@ -399,8 +398,8 @@ echo $id
    |> (fn(Option $name) => $name->map(strtoupper(...))->valueOr('nobody'));
 ```
 
-That one is PHP 8.5 syntax, so it is the only example here the test suite
-does not run: it also runs on 8.4, which cannot parse `|>`.
+That one is PHP 8.5 syntax, and the test suite also runs on 8.4, which cannot
+parse `|>`, so the suite does not run it.
 
 ## What it costs
 

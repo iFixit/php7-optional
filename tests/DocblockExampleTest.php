@@ -71,6 +71,15 @@ final class DocblockExampleTest extends TestCase {
    #[DataProvider('printingExampleProvider')]
    public function testExamplePrintsWhatItsCommentsSay(string $code, string $label): void {
       $stated = ExampleSource::statedOutput($code);
+
+      foreach ($stated as $position => $line) {
+         $this->assertNotNull($line, sprintf(
+            '%s: echo #%d has no comment saying what it prints. Put one after its ";", on the same line.',
+            $label,
+            $position + 1
+         ));
+      }
+
       $printed = explode("\n", rtrim(ExampleSource::run($code), "\n"));
 
       $this->assertCount(
@@ -86,15 +95,13 @@ final class DocblockExampleTest extends TestCase {
       );
 
       foreach ($stated as $position => $line) {
-         if ($line !== null) {
-            $this->assertSame($line, $printed[$position], sprintf(
-               '%s: the comment on echo #%d says it prints [%s], but it printed [%s]',
-               $label,
-               $position + 1,
-               $line,
-               $printed[$position]
-            ));
-         }
+         $this->assertSame($line, $printed[$position], sprintf(
+            '%s: the comment on echo #%d says it prints [%s], but it printed [%s]',
+            $label,
+            $position + 1,
+            (string) $line,
+            $printed[$position]
+         ));
       }
    }
 
@@ -106,9 +113,18 @@ final class DocblockExampleTest extends TestCase {
          echo $noComment, "\n";
          echo $long
             ->chained() . "\n"; // Ok(both [lines, joined])
+         echo Option::do(function() {
+            $inner = 1; // not this one
+            return "{$inner}; {$inner}";
+         }), "\n"; // Some('1; 1')
+         echo $onTheNextLine, "\n";
+         // "this comment could be about the next line"
          PHP;
 
-      $this->assertSame(['3', 'Some(3)', 'a, b', null, 'Ok(both [lines, joined])'], ExampleSource::statedOutput($code));
+      $this->assertSame(
+         ['3', 'Some(3)', 'a, b', null, 'Ok(both [lines, joined])', "Some('1; 1')", null],
+         ExampleSource::statedOutput($code)
+      );
    }
 
    /**

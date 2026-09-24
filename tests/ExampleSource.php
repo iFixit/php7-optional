@@ -117,30 +117,67 @@ final class ExampleSource {
    /**
     * What an example says it prints, from the comment after each `echo`
     *
-    * `// "text"` states the line inside the quotes; anything after the closing
-    * quote is commentary. `// text` states everything up to the first ", "
-    * outside brackets, so `// Some(3), after the retry` states `Some(3)`. An
-    * echo with no comment is null: it is not checked, but it still prints a
-    * line, so the ones after it stay in step.
+    * The comment has to be on the line where the echo's statement ends, right
+    * after its `;`. The echo is found with PHP's own tokenizer, so a closure
+    * inside it, with `;`s of its own, does not end it early. `// "text"`
+    * states the line inside the quotes; anything after the closing quote is
+    * commentary. `// text` states everything up to the first ", " outside
+    * brackets, so `// Some(3), after the retry` states `Some(3)`. An echo with
+    * no such comment is null, which the tests reject.
     *
     * @return list<string|null>
     */
    public static function statedOutput(string $code): array {
+      $tokens = token_get_all("<?php\n{$code}");
       $stated = [];
-      $inEcho = false;
 
-      foreach (explode("\n", $code) as $line) {
-         if (str_starts_with(ltrim($line), 'echo ')) {
-            $inEcho = true;
+      for ($i = 0, $count = count($tokens); $i < $count; $i++) {
+         if (!is_array($tokens[$i]) || $tokens[$i][0] !== T_ECHO) {
+            continue;
          }
 
-         if ($inEcho && preg_match('~;\s*(?://(.*))?$~', $line, $match) === 1) {
-            $stated[] = isset($match[1]) ? self::statement(trim($match[1])) : null;
-            $inEcho = false;
+         $end = self::statementEnd($tokens, $i);
+         $after = $tokens[$end + 1] ?? null;
+
+         if (is_array($after) && $after[0] === T_WHITESPACE && !str_contains($after[1], "\n")) {
+            $after = $tokens[$end + 2] ?? null;
          }
+
+         $stated[] = is_array($after) && $after[0] === T_COMMENT && str_starts_with($after[1], '//')
+            ? self::statement(trim(substr($after[1], 2)))
+            : null;
+         $i = $end;
       }
 
       return $stated;
+   }
+
+   /**
+    * The position of the `;` that ends the statement starting at `$start`,
+    * skipping any inside brackets, braces or a string's `{$...}`
+    *
+    * @param list<string|array{0: int, 1: string, 2: int}> $tokens
+    */
+   private static function statementEnd(array $tokens, int $start): int {
+      $depth = 0;
+
+      for ($i = $start + 1, $count = count($tokens); $i < $count; $i++) {
+         $token = $tokens[$i];
+
+         if (is_array($token)) {
+            $depth += in_array($token[0], [T_CURLY_OPEN, T_DOLLAR_OPEN_CURLY_BRACES], true) ? 1 : 0;
+         } elseif ($token === ';' && $depth === 0) {
+            return $i;
+         } else {
+            $depth += match ($token) {
+               '(', '[', '{' => 1,
+               ')', ']', '}' => -1,
+               default => 0,
+            };
+         }
+      }
+
+      return $count - 1;
    }
 
    private static function statement(string $comment): string {

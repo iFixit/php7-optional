@@ -867,8 +867,7 @@ function example72_unknown(): void {
  */
 function example73_unknown(): void {
    $kept = Result::fromCallable(fn() => throw new Exception("the api said no"));
-   echo $kept->mapErr(fn(Throwable $e) => $e->getMessage())->errOr('') . "\n";
-   // "the api said no"
+   echo $kept->mapErr(fn(Throwable $e) => $e->getMessage())->errOr('') . "\n"; // "the api said no"
 
    $row = false; // what a row fetch hands back when it finds nothing
    echo (string) Option::someNotFalsy($row)->toResult('row not found') . "\n"; // "Err('row not found')"
@@ -932,8 +931,7 @@ function example77_unknown(): void {
    try {
       $failed->valueOrThrow(fn(Throwable $cause) => new RuntimeException("could not load the build", 0, $cause));
    } catch (RuntimeException $e) {
-      echo $e->getMessage() . ": " . $e->getPrevious()?->getMessage() . "\n";
-      // "could not load the build: the api said no"
+      echo $e->getMessage() . ": " . $e->getPrevious()?->getMessage() . "\n"; // "could not load the build: the api said no"
    }
 }
 
