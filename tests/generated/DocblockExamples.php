@@ -702,7 +702,7 @@ function example61_fromCallable(): void {
    echo (string) Result::fromCallable(fn() => 7), "\n"; // Ok(7)
 
    $failed = Result::fromCallable(fn() => throw new \Exception("boom"));
-   echo (string) $failed, "\n"; // Err(Exception: boom)
+   echo (string) $failed, "\n"; // Err(Exception('boom'))
 
    echo $failed->mapErr(fn(\Throwable $e) => $e->getMessage())->errOr(''), "\n"; // "boom"
 
@@ -765,7 +765,7 @@ function example64_partition(): void {
  */
 function example65___toString(): void {
    echo (string) Result::ok([1, 2]), "\n";                         // Ok(array)
-   echo (string) Result::err(new \RuntimeException('boom')), "\n"; // Err(RuntimeException: boom)
+   echo (string) Result::err(new \RuntimeException('boom')), "\n"; // Err(RuntimeException('boom'))
 }
 
 /**

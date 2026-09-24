@@ -503,13 +503,15 @@ final class OptionTest extends TestCase {
       $this->assertSame('Some(false)', (string) Option::some(false));
       $this->assertSame('Some(array)', (string) Option::some([1, 2]), 'an array is shown by its type');
       $this->assertSame('Some(stdClass)', (string) Option::some(new \stdClass()), 'an object with no string form is shown by its class');
-      $this->assertSame('Some(RuntimeException: boom)', (string) Option::some(new \RuntimeException('boom')), 'an exception by its class and message, not its trace');
+      $this->assertSame("Some(RuntimeException('boom'))", (string) Option::some(new \RuntimeException('boom')), 'an exception by its class and message, not its trace');
    }
 
    /**
-    * Two different values never print the same way. Before strings were
-    * quoted, Some('null') printed as Some(null), and Some('1'), Some(1) and
-    * Some(1.0) all printed as Some(1).
+    * Two different scalars, strings or objects with a string form never print
+    * the same way. Before strings were quoted, Some('null') printed as
+    * Some(null), and Some('1'), Some(1) and Some(1.0) all printed as Some(1).
+    * Before a Stringable showed its class, Some(new SplFileInfo('5')) printed
+    * as Some(5).
     */
    public function testToStringTellsDifferentValuesApart(): void {
       $shown = [
@@ -523,6 +525,12 @@ final class OptionTest extends TestCase {
          'false' => Option::some(false),
          "'it\\'s'" => Option::some("it's"),
          "'two\\nlines'" => Option::some("two\nlines"),
+         "'a\\177b'" => Option::some("a\x7fb"),
+         "'caf\\351'" => Option::some("caf\xe9"),
+         "'café'" => Option::some('café'),
+         "SplFileInfo('5')" => Option::some(new \SplFileInfo('5')),
+         "SplFileInfo('null')" => Option::some(new \SplFileInfo('null')),
+         "RuntimeException('two\\nlines')" => Option::some(new \RuntimeException("two\nlines")),
          'NAN' => Option::some(NAN),
          'INF' => Option::some(INF),
          'Optional\\Tests\\OptionTestSuit::Hearts' => Option::some(OptionTestSuit::Hearts),
@@ -542,7 +550,7 @@ final class OptionTest extends TestCase {
          }
       };
 
-      $this->assertSame('Some(order-42)', (string) Option::some($id));
+      $this->assertSame("Some(Stringable@anonymous('order-42'))", (string) Option::some($id));
    }
 
    public function testToStringNeverThrowsForAValueThatDoes(): void {
@@ -554,7 +562,7 @@ final class OptionTest extends TestCase {
       };
 
       $this->assertSame('Some(Stringable@anonymous)', (string) Option::some($throws));
-      $this->assertSame('Some(RuntimeException@anonymous: disk full)', (string) Option::some(new class('disk full') extends \RuntimeException {}));
+      $this->assertSame("Some(RuntimeException@anonymous('disk full'))", (string) Option::some(new class('disk full') extends \RuntimeException {}));
    }
 
    /**

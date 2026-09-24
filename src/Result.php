@@ -817,7 +817,7 @@ final readonly class Result {
     * echo (string) Result::fromCallable(fn() => 7), "\n"; // Ok(7)
     *
     * $failed = Result::fromCallable(fn() => throw new \Exception("boom"));
-    * echo (string) $failed, "\n"; // Err(Exception: boom)
+    * echo (string) $failed, "\n"; // Err(Exception('boom'))
     *
     * echo $failed->mapErr(fn(\Throwable $e) => $e->getMessage())->errOr(''), "\n"; // "boom"
     *
@@ -1022,7 +1022,7 @@ final readonly class Result {
     *
     * ```php
     * echo (string) Result::ok([1, 2]), "\n";                         // Ok(array)
-    * echo (string) Result::err(new \RuntimeException('boom')), "\n"; // Err(RuntimeException: boom)
+    * echo (string) Result::err(new \RuntimeException('boom')), "\n"; // Err(RuntimeException('boom'))
     * ```
     */
    public function __toString(): string {

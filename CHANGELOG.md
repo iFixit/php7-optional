@@ -248,13 +248,16 @@ Shorthands for shapes callers otherwise spell out by hand:
 
 ### Changed
 
-* `(string)` on a box never shows two different values the same way. Strings
-  are quoted, so `Some('Ada')` rather than 3.x's `Some(Ada)`, and `'null'`
-  and `null` differ. Floats keep their point (`Some(1.0)`, not `Some(1)`),
-  and booleans print as `true` and `false` rather than `1` and nothing. A
-  string's control characters are escaped, so the result stays on one line.
-  `MissingValueException` messages use the same form: `Result is an Err:
-  'timeout'`
+* `(string)` on a box never shows two different scalars the same way.
+  Strings are quoted, so `Some('Ada')` rather than 3.x's `Some(Ada)`, and
+  `'null'` and `null` differ. Floats keep their point (`Some(1.0)`, not
+  `Some(1)`), and booleans print as `true` and `false` rather than `1` and
+  nothing. An object with a string form shows its class too, so
+  `Some(SplFileInfo('5'))` is not `Some(5)`, and an exception shows as
+  `RuntimeException('boom')`. A string's control characters are escaped, and
+  so are its high bytes when it is not valid UTF-8, so the result is one line
+  that `json_encode()` can take. `MissingValueException` messages use the
+  same form: `Result is an Err: 'timeout'`
 
 * Every method that returns a new box has PHP 8.5's `#[\NoDiscard]`, so
   `$option->map($f);` on its own line, which does nothing, warns on 8.5. psalm

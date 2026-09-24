@@ -396,7 +396,7 @@ final class ResultTest extends TestCase {
          $_ = self::failure($cause)->valueOrThrow('could not load');
          $this->fail('valueOrThrow() on an Err must throw');
       } catch (MissingValueException $e) {
-         $this->assertSame('could not load: RuntimeException: the api said no', $e->getMessage());
+         $this->assertSame("could not load: RuntimeException('the api said no')", $e->getMessage());
          $this->assertSame($cause, $e->getPrevious(), 'a Throwable error becomes the cause');
       }
    }
@@ -484,7 +484,30 @@ final class ResultTest extends TestCase {
       $this->assertSame('Ok(false)', (string) Result::ok(false));
       $this->assertSame('Ok(array)', (string) Result::ok([1, 2]), 'an array is shown by its type');
       $this->assertSame('Ok(stdClass)', (string) Result::ok(new \stdClass()), 'an object with no string form is shown by its class');
-      $this->assertSame('Err(RuntimeException: boom)', (string) Result::err(new \RuntimeException('boom')), 'an exception by its class and message, not its trace');
+      $this->assertSame("Err(RuntimeException('boom'))", (string) Result::err(new \RuntimeException('boom')), 'an exception by its class and message, not its trace');
+   }
+
+   /**
+    * A message that spans lines, or holds bytes that are not UTF-8, used to
+    * make the exception from valueOrThrow() span lines too, or fail
+    * json_encode() in a log handler.
+    */
+   public function testValueOrThrowMessagesAreOneLineOfValidUtf8(): void {
+      $errors = [
+         new \RuntimeException("SQLSTATE[23000]\nDETAIL: key exists"),
+         "caf\xe9",
+         new \SplFileInfo("two\nlines"),
+      ];
+
+      foreach ($errors as $error) {
+         try {
+            self::failure($error)->valueOrThrow('load');
+            $this->fail('an Err must throw');
+         } catch (MissingValueException $e) {
+            $this->assertStringNotContainsString("\n", $e->getMessage());
+            $this->assertNotFalse(json_encode($e->getMessage()), $e->getMessage());
+         }
+      }
    }
 
    /**

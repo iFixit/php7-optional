@@ -106,6 +106,28 @@ final class EarlyReturnTest extends TestCase {
       $this->assertSame('None', (string) $viaOptionMapSafely);
    }
 
+   /**
+    * A box's string form catches whatever the value's own __toString() throws,
+    * so printing a box never throws. The early exit is the one thing it lets
+    * through.
+    */
+   public function testABoxStringFormLetsItThrough(): void {
+      $value = new class(self::nothing()) implements \Stringable {
+         /** @param Option<int> $port */
+         public function __construct(private Option $port) {
+         }
+
+         #[\Override]
+         public function __toString(): string {
+            return 'port ' . $this->port->valueOrReturn();
+         }
+      };
+
+      $box = Option::do(fn() => 'block result: ' . (string) Option::some($value));
+
+      $this->assertSame('None', (string) $box);
+   }
+
    public function testAnythingElseTheBlockThrowsPropagates(): void {
       $this->expectException(RuntimeException::class);
       $this->expectExceptionMessage('a real failure');

@@ -211,12 +211,15 @@ it.
 - `Result::valueOrThrow()` with no factory rethrows the error itself when the
   error is a `Throwable`, so the trace still points where the failure
   happened. Any other error becomes a `MissingValueException` naming it.
-- `__toString()` never warns or throws, and never shows two different values
+- `__toString()` never warns or throws, and never shows two different scalars
   the same way. Both boxes go through `Internal\DescribesValues`. Strings are
   quoted with control characters escaped, and floats keep their point. An enum
-  case shows as `Class::Case`, an exception as its class and message, and
-  anything else with no string form as its type. Before 4.0 it interpolated
-  the value, so an array warned and an object with no `__toString` threw.
+  case shows as `Class::Case`, an exception as `RuntimeException('boom')`, any
+  other object with a string form as `SplFileInfo('5')`, and anything else as
+  its type, so two arrays look alike. It catches what a value's own
+  `__toString()` throws, except `EarlyReturn`, which it rethrows. Before 4.0
+  it interpolated the value, so an array warned and an object with no
+  `__toString` threw.
 - Compare boxes with `hasValue()` and `contains()`, not `==`. `==` compares
   the held values loosely, so `Option::some(1) == Option::some('1')` is true.
   `Option::none()` builds a new object each call, so two Nones are `==` but
