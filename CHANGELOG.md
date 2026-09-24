@@ -248,6 +248,9 @@ Shorthands for shapes callers otherwise spell out by hand:
   type (`Some(array)`, `Some(stdClass)`), an exception by its class and
   message, and an enum case as `Suit::Hearts`. A value whose own
   `__toString()` throws shows by its type, and `NAN` no longer warns on 8.5
+* **`someNotFalsy(NAN)` and `notFalsy()` on a `NAN` warned on PHP 8.5**,
+  which warns whenever `NAN` is turned into a bool. `NAN` is truthy, so the
+  box keeps it, and now without the warning
 
 ### Changed
 
@@ -276,7 +279,8 @@ Shorthands for shapes callers otherwise spell out by hand:
   immutability the docblocks only promised. Setting a property on a box, even
   a new dynamic one, is now an `Error` rather than a deprecation notice. A
   callback that takes its argument by reference, such as `map(end(...))`,
-  still works as it did in 3.x: it gets a copy of the value
+  still works as it did in 3.x: it gets a copy of the value. So does the new
+  `first()`'s predicate, so it cannot change the value it boxes
 * Every `Option` parameter and return has a native type, `mixed` where it
   holds a value, as on `Result`. Only `fromArray`'s key accepts less than it
   did (see Breaking)

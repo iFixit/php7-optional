@@ -699,9 +699,19 @@ final readonly class Option {
    #[\NoDiscard(self::DISCARDED)]
    public function notFalsy(): self {
       /** @var self<TNotFalsy> a falsy value never survives the check */
-      return $this->hasValue && !((bool) $this->value)
+      return $this->hasValue && self::isFalsy($this->value)
          ? self::none()
          : $this;
+   }
+
+   /**
+    * PHP's falsy set. `NAN` is truthy, and is checked first, because PHP 8.5
+    * warns when it is turned into a bool.
+    *
+    * @psalm-pure
+    */
+   private static function isFalsy(mixed $value): bool {
+      return !(is_float($value) && is_nan($value)) && !((bool) $value);
    }
 
    /**
@@ -907,7 +917,7 @@ final readonly class Option {
    #[\NoDiscard(self::UNREAD)]
    public static function someNotFalsy(mixed $someValue): self {
       /** @var self<TT> a falsy value never gets a box */
-      return (bool) $someValue ? self::some($someValue) : self::none();
+      return self::isFalsy($someValue) ? self::none() : self::some($someValue);
    }
 
    /**
@@ -1141,7 +1151,10 @@ final readonly class Option {
    #[\NoDiscard(self::UNREAD)]
    public static function first(iterable $values, ?callable $predicate = null): self {
       foreach ($values as $value) {
-         if ($predicate === null || $predicate($value)) {
+         // a copy, so a predicate that takes its argument by reference cannot change what is boxed
+         $candidate = $value;
+
+         if ($predicate === null || $predicate($candidate)) {
             return self::some($value);
          }
       }

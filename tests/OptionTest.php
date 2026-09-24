@@ -334,6 +334,19 @@ final class OptionTest extends TestCase {
       $_ = $box->tap(function(array &$values): void { end($values); });
 
       $this->assertSame([1, 2, 3], $box->valueOr([]), 'the callbacks changed a copy, never the box');
+
+      $sorted = Option::first([[3, 1, 2]], function(array &$values): bool { return sort($values); });
+      $this->assertSame([3, 1, 2], $sorted->valueOr([]), 'first() boxes the value, not what its predicate did to it');
+   }
+
+   /**
+    * NAN is truthy, and PHP 8.5 warns when it is turned into a bool, which
+    * this suite fails on
+    */
+   public function testNanIsTruthyWithoutAWarning(): void {
+      $this->assertSame('Some(NAN)', (string) Option::someNotFalsy(NAN));
+      $this->assertSame('Some(NAN)', (string) Option::some(NAN)->notFalsy());
+      $this->assertSame('None', (string) Option::someNotFalsy(0.0));
    }
 
    /**

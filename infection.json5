@@ -25,11 +25,11 @@
     },
     "mutators": {
         "@default": true,
-        // The (bool) in notFalsy() is for psalm, which reports ! on a mixed
+        // The (bool) in isFalsy() is for psalm, which reports ! on a mixed
         // value as RiskyTruthyFalsyComparison. Without it the expression means
         // the same, so no test can kill the mutant that removes it.
         "CastBool": {
-            "ignore": ["Optional\\Option::notFalsy"]
+            "ignore": ["Optional\\Option::isFalsy"]
         }
     },
     "minMsi": 100,
