@@ -76,7 +76,8 @@ once per PHP version teaches nothing.
 The docblocks are the only API documentation, and four suites hold them to it.
 
 - `DocblockExampleTest` executes every ```php fence in `src/` and `README.md`,
-  one test case each, named for the method it documents.
+  one test case each, named for the method it documents, and checks every
+  line an example prints against the comment on its `echo`.
 - psalm analyses every one of those examples as well, through
   `tests/generated/DocblockExamples.php`. Regenerate it with
   `php bin/generate-example-checks.php` after editing an example;
@@ -100,8 +101,17 @@ Four things to know when you touch an example:
   to those rather than teaching the runner to skip one.
 - stdout is buffered and `error_log` redirected, so an example may print.
 
-Nothing checks that an example prints what its trailing comment claims. Run it
-and change the comment by hand when you change what an example returns.
+An example that prints says what it prints in the comment on each `echo`,
+and the test holds it to that:
+
+- `// "text"` states the line inside the quotes; anything after the closing
+  quote is commentary.
+- `// text` states everything up to the first `, ` outside brackets, so
+  `// Some(3), after the retry` states `Some(3)`.
+- Each `echo` prints exactly one line, ending in `"\n"`, or the lines no
+  longer line up with the comments and the test says so.
+- A comment on a line that does not echo (`$x = ...; // Some(3)`) is not
+  checked. Prefer an `echo` that prints the box, so it is.
 
 The generated-example file has its own psalm suppressions, each listed with its
 reason in `psalm.xml`. Two of them, `ReservedWord` and `NoValue`, once hid a

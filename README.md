@@ -25,8 +25,9 @@ or intentionally ignored by casting it as (void), a box never changes after it
 is built, so this call only made a new one
 ```
 
-Every example in this file runs as part of the test suite, so if one of them is
-wrong the build goes red.
+Every example in this file runs as part of the test suite, and every line it
+prints is checked against the comment beside it, so if one of them is wrong the
+build goes red.
 
 ## Installation
 

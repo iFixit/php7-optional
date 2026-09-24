@@ -33,12 +33,25 @@ final class DocblockExampleTest extends TestCase {
       }
    }
 
+   /**
+    * Examples that print something, for checking what they print
+    *
+    * @return iterable<string, array{string, string}>
+    */
+   public static function printingExampleProvider(): iterable {
+      foreach (self::docblockExampleProvider() as $label => [$code, $name]) {
+         if (ExampleSource::statedOutput($code) !== []) {
+            yield $label => [$code, $name];
+         }
+      }
+   }
+
    #[DataProvider('docblockExampleProvider')]
    public function testExampleRuns(string $code, string $label): void {
       $threw = null;
 
       try {
-         self::evaluate($code);
+         ExampleSource::run($code);
       } catch (Throwable $e) {
          $threw = $e;
       }
@@ -50,6 +63,68 @@ final class DocblockExampleTest extends TestCase {
          $threw->getMessage(),
          $code
       ));
+   }
+
+   /**
+    * Running is not enough: an example that runs and prints the wrong thing
+    * teaches the wrong thing. Each line printed has to match the comment on
+    * its echo, the way a Rust doctest compares its output.
+    */
+   #[DataProvider('printingExampleProvider')]
+   public function testExamplePrintsWhatItsCommentsSay(string $code, string $label): void {
+      $stated = ExampleSource::statedOutput($code);
+      $printed = explode("\n", rtrim(ExampleSource::run($code), "\n"));
+
+      $this->assertCount(
+         count($stated),
+         $printed,
+         sprintf(
+            '%s has %d echo statements but printed %d lines. Each echo in an example has to print exactly one '
+            . 'line, ending in "\n", so its comment can be checked.',
+            $label,
+            count($stated),
+            count($printed)
+         )
+      );
+
+      foreach ($stated as $position => $line) {
+         if ($line !== null) {
+            $this->assertSame($line, $printed[$position], sprintf(
+               '%s: the comment on echo #%d says it prints [%s], but it printed [%s]',
+               $label,
+               $position + 1,
+               $line,
+               $printed[$position]
+            ));
+         }
+      }
+   }
+
+   public function testStatedOutputReadsTheCommentConventions(): void {
+      $code = <<<'PHP'
+         echo 1 + 2, "\n"; // 3
+         echo (string) $box, "\n"; // Some(3), after the retry
+         echo $pair, "\n"; // "a, b" with the comma kept
+         echo $noComment, "\n";
+         echo $long
+            ->chained() . "\n"; // Ok(both [lines, joined])
+         PHP;
+
+      $this->assertSame(['3', 'Some(3)', 'a, b', null, 'Ok(both [lines, joined])'], ExampleSource::statedOutput($code));
+   }
+
+   /**
+    * Guards the output check the way the next test guards the extractor: a
+    * comment convention that quietly stops matching would check nothing.
+    */
+   public function testTheOutputCheckSeesTheComments(): void {
+      $stated = 0;
+
+      foreach (ExampleSource::all() as $example) {
+         $stated += count(array_filter(ExampleSource::statedOutput($example['code']), fn(?string $line) => $line !== null));
+      }
+
+      $this->assertGreaterThan(90, $stated, 'Suspiciously few example comments state an output');
    }
 
    /**
@@ -80,36 +155,6 @@ final class DocblockExampleTest extends TestCase {
       foreach ($imported as $class) {
          $this->assertTrue(class_exists($class), "{$class} is imported by PRELUDE but does not exist");
          $this->assertStringContainsString($class, ExampleSource::PRELUDE, "PRELUDE no longer imports {$class}");
-      }
-   }
-
-   /**
-    * Several examples echo or var_dump to show a result, and the tap() examples
-    * call error_log, which goes to stderr in CLI and so slips past output
-    * buffering. Both are documentation, not test output: swallow stdout, and
-    * point the error log at a temp file for the duration.
-    *
-    * @psalm-suppress ForbiddenCode running the examples is the entire point
-    */
-   private static function evaluate(string $code): void {
-      $previousLog = ini_get('error_log');
-      $sink = tempnam(sys_get_temp_dir(), 'docblock-example-');
-
-      if ($sink !== false) {
-         ini_set('error_log', $sink);
-      }
-
-      ob_start();
-
-      try {
-         eval(ExampleSource::PRELUDE . "\n" . $code);
-      } finally {
-         ob_end_clean();
-         ini_set('error_log', $previousLog === false ? '' : $previousLog);
-
-         if ($sink !== false) {
-            unlink($sink);
-         }
       }
    }
 }

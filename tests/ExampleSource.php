@@ -78,6 +78,97 @@ final class ExampleSource {
    }
 
    /**
+    * Runs one example with PRELUDE's imports and returns what it printed
+    *
+    * Several examples call error_log(), which goes to stderr in CLI and slips
+    * past output buffering, so the error log points at a temp file meanwhile.
+    * A throw from the example propagates.
+    */
+   public static function run(string $code): string {
+      $previousLog = ini_get('error_log');
+      $sink = tempnam(sys_get_temp_dir(), 'docblock-example-');
+
+      if ($sink !== false) {
+         ini_set('error_log', $sink);
+      }
+
+      ob_start();
+
+      try {
+         self::evaluate($code);
+      } finally {
+         $printed = (string) ob_get_clean();
+         ini_set('error_log', $previousLog === false ? '' : $previousLog);
+
+         if ($sink !== false) {
+            unlink($sink);
+         }
+      }
+
+      return $printed;
+   }
+
+   /**
+    * @psalm-suppress ForbiddenCode running the examples is the entire point
+    */
+   private static function evaluate(string $code): void {
+      eval(self::PRELUDE . "\n" . $code);
+   }
+
+   /**
+    * What an example says it prints, from the comment after each `echo`
+    *
+    * `// "text"` states the line inside the quotes; anything after the closing
+    * quote is commentary. `// text` states everything up to the first ", "
+    * outside brackets, so `// Some(3), after the retry` states `Some(3)`. An
+    * echo with no comment is null: it is not checked, but it still prints a
+    * line, so the ones after it stay in step.
+    *
+    * @return list<string|null>
+    */
+   public static function statedOutput(string $code): array {
+      $stated = [];
+      $inEcho = false;
+
+      foreach (explode("\n", $code) as $line) {
+         if (str_starts_with(ltrim($line), 'echo ')) {
+            $inEcho = true;
+         }
+
+         if ($inEcho && preg_match('~;\s*(?://(.*))?$~', $line, $match) === 1) {
+            $stated[] = isset($match[1]) ? self::statement(trim($match[1])) : null;
+            $inEcho = false;
+         }
+      }
+
+      return $stated;
+   }
+
+   private static function statement(string $comment): string {
+      if (str_starts_with($comment, '"')) {
+         $close = strpos($comment, '"', 1);
+
+         return substr($comment, 1, $close === false ? null : $close - 1);
+      }
+
+      $depth = 0;
+
+      for ($i = 0, $length = strlen($comment); $i < $length; $i++) {
+         $depth += match ($comment[$i]) {
+            '(', '[' => 1,
+            ')', ']' => -1,
+            default => 0,
+         };
+
+         if ($depth === 0 && substr($comment, $i, 2) === ', ') {
+            return substr($comment, 0, $i);
+         }
+      }
+
+      return $comment;
+   }
+
+   /**
     * @return list<array{symbol: string, code: string}>
     */
    private static function extract(string $source): array {

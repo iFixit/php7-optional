@@ -248,7 +248,8 @@ Shorthands for shapes callers otherwise spell out by hand:
 
 ### Infrastructure
 
-* Every ```php example in `src/` and `README.md` runs as a test, and psalm
+* Every ```php example in `src/` and `README.md` runs as a test, every line an
+  example prints is checked against the comment on its `echo`, and psalm
   analyses all of them through a generated file. Every public method must carry
   one, the example must call the method it documents rather than mention it in
   a comment or a string, and the method must appear in the README's list. Each
