@@ -132,6 +132,13 @@ function chainsTypeCheck(?string $maybe, bool $flag, string $text, Option $opt, 
    $elseCreateWithBothBranches = $opt->elseCreate(fn() => $flag ? Option::some('fallback') : Option::none());
    /** @psalm-trace $elseCreateWithBothBranches */
 
+   // an early-return block keeps the type of each value it unwraps
+   $valueOrReturnKeepsTheType = $opt->valueOrReturn();
+   /** @psalm-trace $valueOrReturnKeepsTheType */
+
+   $optionDoBlock = Option::do(fn() => strlen($opt->valueOrReturn()));
+   /** @psalm-trace $optionDoBlock */
+
 }
 
 function resultTypes(): void {
@@ -189,6 +196,10 @@ function resultChainsTypeCheck(?string $maybe, Result $result): void {
 
    $resultElseCreateWithBothBranches = $result->elseCreate(fn(string $e) => $e === '' ? Result::ok(0) : Result::err($e));
    /** @psalm-trace $resultElseCreateWithBothBranches */
+
+   // the block's errors are not part of its type, so the error side is mixed
+   $resultDoBlock = Result::do(fn() => $result->valueOrReturn() * 2);
+   /** @psalm-trace $resultDoBlock */
 
    $resultElseThenMap = $result->else(Result::ok(0))->map(fn(int $n): int => $n + 1);
    /** @psalm-trace $resultElseThenMap */

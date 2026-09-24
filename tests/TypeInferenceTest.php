@@ -71,6 +71,8 @@ final class TypeInferenceTest extends TestCase {
          // binds, because the box is covariant
          'flatMapWithBothBranches' => 'Optional\\Option<non-empty-string>',
          'elseCreateWithBothBranches' => 'Optional\\Option<string>',
+         'valueOrReturnKeepsTheType' => 'string',
+         'optionDoBlock' => 'Optional\\Option<int<0, max>>',
 
          // Result
          'resultMapKeepsTheMappedType' => "Optional\\Result<'n5', never>",
@@ -88,6 +90,7 @@ final class TypeInferenceTest extends TestCase {
          'resultOrThenMap' => 'Optional\\Result<int, never>',
          'resultFlatMapWithBothBranches' => 'Optional\\Result<int<1, max>, string>',
          'resultElseCreateWithBothBranches' => 'Optional\\Result<int, non-empty-string>',
+         'resultDoBlock' => 'Optional\\Result<int, mixed>',
          'resultElseThenMap' => 'Optional\\Result<int, never>',
          'resultFlatMapThenMap' => 'Optional\\Result<int<1, max>, string>',
          'toResultThenMap' => "Optional\\Result<int<0, max>, 'missing'>",

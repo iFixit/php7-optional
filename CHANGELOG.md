@@ -130,6 +130,13 @@ class:
   loses nothing. `Option` throws it away, and swallowing an `Error` there
   would erase a real bug with nothing left to trace it by
 
+Leaving a block of steps early, the way Rust's `?` returns from a function:
+
+* `Option::do()` and `Result::do()`, with `valueOrReturn()` on both boxes.
+  Inside the block, `valueOrReturn()` unwraps a box, and the first empty one
+  ends the block with that None or Err. psalm types each unwrapped value
+  exactly; the block's error type is `mixed` unless you annotate it
+
 Staying in one through a side effect, which 3.x's `matchSome` and
 `matchNone` could not do, since they returned `void`:
 

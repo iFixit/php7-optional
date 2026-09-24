@@ -7,6 +7,7 @@ namespace Optional;
 use Exception;
 use Optional\Exceptions\MissingValueException;
 use Optional\Internal\DescribesValues;
+use Optional\Internal\EarlyReturn;
 use Throwable;
 
 /**
@@ -173,6 +174,41 @@ final readonly class Option {
          throw $exceptionFactory === null
             ? new MissingValueException("Value is missing.")
             : $exceptionFactory();
+      }
+
+      return $this->value;
+   }
+
+   /**
+    * Returns the value, or ends the enclosing `Option::do()` block with `Option::none()`
+    *
+    * The early exit for a block of steps that each need a value, the way
+    * Rust's `?` returns from a function. See `Option::do()`.
+    *
+    * ```php
+    * $ports = ['http' => 80];
+    *
+    * $both = Option::do(fn() => [
+    *    Option::fromArray($ports, 'http')->valueOrReturn(),
+    *    Option::fromArray($ports, 'https')->valueOrReturn(), // no such key, so the block ends here
+    * ]);
+    * echo (string) $both, "\n"; // None
+    *
+    * echo Option::some(5)->valueOrReturn(), "\n"; // 5, a value needs no block
+    * ```
+    *
+    * _Notes:_
+    *
+    *  - On a `Option::none` outside any `Option::do()`, it throws an `Error`
+    *    that says so
+    *  - psalm and PHPStan type the result as `T`, so the code after it has the
+    *    value
+    *
+    * @psalm-return T
+    */
+   public function valueOrReturn(): mixed {
+      if (!$this->hasValue) {
+         throw new EarlyReturn('Option', null);
       }
 
       return $this->value;
@@ -494,7 +530,7 @@ final readonly class Option {
       try {
          return $this->map($mapFunc);
       } catch (Throwable $e) {
-         if ($e instanceof $catch) {
+         if ($e instanceof $catch && !$e instanceof EarlyReturn) {
             return self::none();
          }
 
@@ -933,11 +969,59 @@ final readonly class Option {
       try {
          return self::some($valueFactory());
       } catch (Throwable $e) {
-         if ($e instanceof $catch) {
+         if ($e instanceof $catch && !$e instanceof EarlyReturn) {
             return self::none();
          }
 
          throw $e;
+      }
+   }
+
+   /**
+    * Runs `$block`, boxing what it returns, or `Option::none()` if a `valueOrReturn()` in it found nothing
+    *
+    * For steps that each need the one before, without a nested `flatMap` per
+    * step: write them in order, unwrap each with `valueOrReturn()`, and the
+    * first empty box ends the block.
+    *
+    * ```php
+    * $config = ['db' => ['host' => 'db1', 'port' => 5432]];
+    *
+    * $dsn = Option::do(function() use ($config) {
+    *    $db = Option::fromArray($config, 'db')->valueOrReturn();
+    *    $host = Option::fromArray($db, 'host')->valueOrReturn();
+    *    $port = Option::fromArray($db, 'port')->valueOrReturn();
+    *
+    *    return "pgsql:host={$host};port={$port}";
+    * });
+    * echo (string) $dsn, "\n"; // Some('pgsql:host=db1;port=5432')
+    *
+    * $user = Option::do(fn() => Option::fromArray($config['db'], 'user')->valueOrReturn());
+    * echo (string) $user, "\n"; // None
+    * ```
+    *
+    * _Notes:_
+    *
+    *  - `$block` must follow this interface `callable():TT`
+    *  - A `catch (Throwable)` or `catch (Error)` inside the block also catches
+    *    the early exit. A `catch (Exception)` does not
+    *  - Anything else the block throws propagates. `fromCallable()` inside the
+    *    block catches a throw, and never the early exit
+    *
+    * @template TT
+    * @psalm-param callable():TT $block
+    * @psalm-return Option<TT>
+    */
+   #[\NoDiscard(self::UNREAD)]
+   public static function do(callable $block): self {
+      try {
+         return self::some($block());
+      } catch (EarlyReturn $exit) {
+         if ($exit->box !== 'Option') {
+            throw $exit;
+         }
+
+         return self::none();
       }
    }
 

@@ -164,6 +164,23 @@ and rethrows anything that is not an instance of `$catch`, so narrowing that
 A PHP 8 warning is not a throwable either, so a missing array key inside a
 `mapSafely` callback yields `Some(null)`, not a None.
 
+### The early exit is an exception
+
+`valueOrReturn()` leaves a `do()` block by throwing `Internal\EarlyReturn`,
+and the nearest `do()` for the same kind of box catches it. Three rules keep
+that safe, and each has a test in `EarlyReturnTest`:
+
+- It extends `Error`, so a `catch (Exception)` in the block cannot swallow it.
+  A `catch (Throwable)` can, which the docblocks say.
+- `fromCallable()` and `mapSafely()` never catch it, whatever `$catch` says,
+  because it is not a failure of their callable. Any new method that catches
+  a callable's throw needs the same `!$e instanceof EarlyReturn` check.
+- An `Option` escape passes through a `Result::do()` untouched, and the other
+  way round.
+
+`valueOrReturn()` carries no `#[\NoDiscard]`: on its own line it is an
+assertion that ends the block early, which is a use.
+
 ### `Option::some(null)` is a real Some
 
 `hasValue()` returns `true`. That is what makes the box honest about a stored

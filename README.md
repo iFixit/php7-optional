@@ -208,6 +208,33 @@ try {
 }
 ```
 
+## Steps that each need the one before
+
+`flatMap` nests a closure for every step that depends on the last. `do()`
+runs the steps as plain code instead: `valueOrReturn()` unwraps a box, and the
+first empty one ends the block, the way Rust's `?` returns from a function.
+
+```php
+$findUser = fn(int $id) => $id > 0 ? Result::ok("user{$id}") : Result::err("no user {$id}");
+$findCart = fn(string $user) => $user !== 'user13' ? Result::ok(4200) : Result::err("cart for {$user} is locked");
+
+$owes = fn(int $id) => Result::do(function() use ($findUser, $findCart, $id) {
+   $user = $findUser($id)->valueOrReturn();
+   $cents = $findCart($user)->valueOrReturn();
+
+   return "{$user} owes {$cents}";
+});
+
+echo $owes(5), "\n";  // Ok('user5 owes 4200')
+echo $owes(-1), "\n"; // Err('no user -1')
+echo $owes(13), "\n"; // Err('cart for user13 is locked')
+```
+
+`Option::do()` works the same way, ending with a None. psalm types each
+unwrapped value exactly, so `$user` is a `string`, but the block's error type
+is `mixed` unless you annotate it. A `catch (Throwable)` inside the block
+catches the early exit too; a `catch (Exception)` does not.
+
 ## Option or Result
 
 Use `Option` when "there isn't one" is the whole story. Use `Result` when the
@@ -380,17 +407,17 @@ The CHANGELOG lists every change, with the rest of the `Either` table.
 ## Full method list
 
 `Option` factories: `some` `none` `someNotNull` `someNotFalsy` `someNotFalse`
-`fromCallable` `fromArray` `first`
+`fromCallable` `fromArray` `first` `do`
 
 `Option` methods: `hasValue` `valueOr` `valueOrThrow` `valueOrCreate`
-`toNullable` `toResult`
+`valueOrReturn` `toNullable` `toResult`
 `or` `orCreate` `else` `elseCreate` `match` `map` `mapSafely` `flatMap` `tap`
 `tapNone` `filter` `notNull` `notFalsy` `notFalse` `contains` `exists`
 
-`Result` factories: `ok` `err` `fromCallable`
+`Result` factories: `ok` `err` `fromCallable` `do`
 
 `Result` methods: `isOk` `isErr` `valueOr` `valueOrCreate` `valueOrThrow`
-`errOr` `toNullable` `toOption` `match` `contains` `exists` `map` `mapErr`
+`valueOrReturn` `errOr` `toNullable` `toOption` `match` `contains` `exists` `map` `mapErr`
 `mapSafely` `flatMap` `filter` `or` `orCreate` `else` `elseCreate` `tap`
 `tapErr`
 

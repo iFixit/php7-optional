@@ -132,7 +132,8 @@ final class DocumentedApiTest extends TestCase {
 
          $name = trim($ns[1]) . '\\' . $cls[1];
 
-         if (class_exists($name)) {
+         // An @internal class is how the library works, not what it offers
+         if (class_exists($name) && !str_contains((string) (new \ReflectionClass($name))->getDocComment(), '@internal')) {
             $classes[] = $name;
          }
       }

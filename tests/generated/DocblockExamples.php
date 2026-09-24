@@ -61,9 +61,24 @@ function example4_valueOrThrow(): void {
 }
 
 /**
- * src/Option.php #5, tap()
+ * src/Option.php #5, valueOrReturn()
  */
-function example5_tap(): void {
+function example5_valueOrReturn(): void {
+   $ports = ['http' => 80];
+
+   $both = Option::do(fn() => [
+      Option::fromArray($ports, 'http')->valueOrReturn(),
+      Option::fromArray($ports, 'https')->valueOrReturn(), // no such key, so the block ends here
+   ]);
+   echo (string) $both, "\n"; // None
+
+   echo Option::some(5)->valueOrReturn(), "\n"; // 5, a value needs no block
+}
+
+/**
+ * src/Option.php #6, tap()
+ */
+function example6_tap(): void {
    echo (string) Option::some(5)
       ->tap(fn(int $x) => error_log("about to double {$x}"))
       ->map(fn(int $x) => $x * 2), "\n"; // Some(10), and the log line ran
@@ -72,9 +87,9 @@ function example5_tap(): void {
 }
 
 /**
- * src/Option.php #6, tapNone()
+ * src/Option.php #7, tapNone()
  */
-function example6_tapNone(): void {
+function example7_tapNone(): void {
    echo (string) Option::none()
       ->tapNone(fn() => error_log("cache miss"))
       ->orCreate(fn() => 'from source'), "\n"; // Some('from source'), and the log line ran
@@ -83,9 +98,9 @@ function example6_tapNone(): void {
 }
 
 /**
- * src/Option.php #7, valueOrCreate()
+ * src/Option.php #8, valueOrCreate()
  */
-function example7_valueOrCreate(): void {
+function example8_valueOrCreate(): void {
    $calls = 0;
    $lookUp = function() use (&$calls) { $calls++; return 42; };
 
@@ -95,17 +110,17 @@ function example7_valueOrCreate(): void {
 }
 
 /**
- * src/Option.php #8, or()
+ * src/Option.php #9, or()
  */
-function example8_or(): void {
+function example9_or(): void {
    echo (string) Option::none()->or(10), "\n"; // Some(10)
    echo (string) Option::some(5)->or(10), "\n"; // Some(5)
 }
 
 /**
- * src/Option.php #9, orCreate()
+ * src/Option.php #10, orCreate()
  */
-function example9_orCreate(): void {
+function example10_orCreate(): void {
    $fromSource = fn() => 'from source';
 
    echo (string) Option::none()->orCreate($fromSource), "\n";         // Some('from source')
@@ -113,9 +128,9 @@ function example9_orCreate(): void {
 }
 
 /**
- * src/Option.php #10, else()
+ * src/Option.php #11, else()
  */
-function example10_else(): void {
+function example11_else(): void {
    $fromDisk = Option::some('settings from disk');
 
    echo (string) Option::none()->else($fromDisk), "\n";                     // Some('settings from disk')
@@ -123,9 +138,9 @@ function example10_else(): void {
 }
 
 /**
- * src/Option.php #11, elseCreate()
+ * src/Option.php #12, elseCreate()
  */
-function example11_elseCreate(): void {
+function example12_elseCreate(): void {
    $retry = fn() => Option::some('second try');
 
    echo (string) Option::none()->elseCreate($retry), "\n";            // Some('second try')
@@ -133,9 +148,9 @@ function example11_elseCreate(): void {
 }
 
 /**
- * src/Option.php #12, match()
+ * src/Option.php #13, match()
  */
-function example12_match(): void {
+function example13_match(): void {
    $squared = Option::some(4)->match(
       some: fn(int $x) => $x * $x,
       none: fn() => 0,
@@ -150,9 +165,9 @@ function example12_match(): void {
 }
 
 /**
- * src/Option.php #13, map()
+ * src/Option.php #14, map()
  */
-function example13_map(): void {
+function example14_map(): void {
    $square = fn(int $x) => $x * $x;
 
    echo (string) Option::some(5)->map($square), "\n"; // Some(25)
@@ -160,9 +175,9 @@ function example13_map(): void {
 }
 
 /**
- * src/Option.php #14, mapSafely()
+ * src/Option.php #15, mapSafely()
  */
-function example14_mapSafely(): void {
+function example15_mapSafely(): void {
    $boom = fn(array $row) => throw new \Exception("boom");
    echo (string) Option::some(['key' => 'value'])->mapSafely($boom), "\n"; // None
 
@@ -175,9 +190,9 @@ function example14_mapSafely(): void {
 }
 
 /**
- * src/Option.php #15, flatMap()
+ * src/Option.php #16, flatMap()
  */
-function example15_flatMap(): void {
+function example16_flatMap(): void {
    $somePerson = [
        'name' => [
           'first' => 'First',
@@ -193,9 +208,9 @@ function example15_flatMap(): void {
 }
 
 /**
- * src/Option.php #16, filter()
+ * src/Option.php #17, filter()
  */
-function example16_filter(): void {
+function example17_filter(): void {
    $big = fn(int $x) => $x > 5;
 
    echo (string) Option::some(10)->filter($big), "\n"; // Some(10)
@@ -204,9 +219,9 @@ function example16_filter(): void {
 }
 
 /**
- * src/Option.php #17, filter()
+ * src/Option.php #18, filter()
  */
-function example17_filter(): void {
+function example18_filter(): void {
    $calls = 0;
    $check = function() use (&$calls) { $calls++; return true; };
 
@@ -217,17 +232,17 @@ function example17_filter(): void {
 }
 
 /**
- * src/Option.php #18, notNull()
+ * src/Option.php #19, notNull()
  */
-function example18_notNull(): void {
+function example19_notNull(): void {
    echo (string) Option::some(null)->notNull(), "\n"; // None, a stored null becomes an empty box
    echo (string) Option::some(0)->notNull(), "\n";    // Some(0)
 }
 
 /**
- * src/Option.php #19, notFalsy()
+ * src/Option.php #20, notFalsy()
  */
-function example19_notFalsy(): void {
+function example20_notFalsy(): void {
    $row = false; // what a row fetch hands back when it finds nothing
 
    echo (string) Option::some($row)->notFalsy(), "\n";  // None
@@ -236,26 +251,26 @@ function example19_notFalsy(): void {
 }
 
 /**
- * src/Option.php #20, notFalse()
+ * src/Option.php #21, notFalse()
  */
-function example20_notFalse(): void {
+function example21_notFalse(): void {
    echo (string) Option::some(array_search('a', ['a', 'b']))->notFalse(), "\n"; // Some(0)
    echo (string) Option::some(array_search('z', ['a', 'b']))->notFalse(), "\n"; // None
 }
 
 /**
- * src/Option.php #21, contains()
+ * src/Option.php #22, contains()
  */
-function example21_contains(): void {
+function example22_contains(): void {
    echo Option::some(10)->contains(10) ? "yes\n" : "no\n";   // "yes"
    echo Option::some(10)->contains('10') ? "yes\n" : "no\n"; // "no", compared strictly
    echo Option::none()->contains(null) ? "yes\n" : "no\n";   // "no", a None holds nothing
 }
 
 /**
- * src/Option.php #22, exists()
+ * src/Option.php #23, exists()
  */
-function example22_exists(): void {
+function example23_exists(): void {
    $isAdult = fn(int $age) => $age >= 18;
 
    echo Option::some(30)->exists($isAdult) ? "yes\n" : "no\n"; // "yes"
@@ -264,9 +279,9 @@ function example22_exists(): void {
 }
 
 /**
- * src/Option.php #23, toResult()
+ * src/Option.php #24, toResult()
  */
-function example23_toResult(): void {
+function example24_toResult(): void {
    $row = ['id' => 7];
 
    echo (string) Option::fromArray($row, 'id')->toResult('no id'), "\n";       // Ok(7)
@@ -274,32 +289,32 @@ function example23_toResult(): void {
 }
 
 /**
- * src/Option.php #24, some()
+ * src/Option.php #25, some()
  */
-function example24_some(): void {
+function example25_some(): void {
    echo (string) Option::some(1), "\n";    // Some(1)
    echo (string) Option::some(null), "\n"; // Some(null), a stored null is still a value
 }
 
 /**
- * src/Option.php #25, none()
+ * src/Option.php #26, none()
  */
-function example25_none(): void {
+function example26_none(): void {
    echo (string) Option::none(), "\n"; // None
 }
 
 /**
- * src/Option.php #26, someNotNull()
+ * src/Option.php #27, someNotNull()
  */
-function example26_someNotNull(): void {
+function example27_someNotNull(): void {
    echo (string) Option::someNotNull('Ada'), "\n"; // Some('Ada')
    echo (string) Option::someNotNull(null), "\n";  // None
 }
 
 /**
- * src/Option.php #27, someNotFalsy()
+ * src/Option.php #28, someNotFalsy()
  */
-function example27_someNotFalsy(): void {
+function example28_someNotFalsy(): void {
    echo (string) Option::someNotFalsy(false), "\n"; // None, e.g. a row fetch that found nothing
    echo (string) Option::someNotFalsy(''), "\n";    // None
    echo (string) Option::someNotFalsy([]), "\n";    // None
@@ -307,9 +322,9 @@ function example27_someNotFalsy(): void {
 }
 
 /**
- * src/Option.php #28, someNotFalse()
+ * src/Option.php #29, someNotFalse()
  */
-function example28_someNotFalse(): void {
+function example29_someNotFalse(): void {
    $index = Option::someNotFalse(array_search('a', ['a', 'b']));
    echo (string) $index, "\n"; // Some(0), where someNotFalsy gives None
 
@@ -317,9 +332,9 @@ function example28_someNotFalse(): void {
 }
 
 /**
- * src/Option.php #29, fromCallable()
+ * src/Option.php #30, fromCallable()
  */
-function example29_fromCallable(): void {
+function example30_fromCallable(): void {
    echo (string) Option::fromCallable(fn() => 7), "\n";                            // Some(7)
    echo (string) Option::fromCallable(fn() => throw new \Exception("boom")), "\n"; // None
 
@@ -338,9 +353,28 @@ function example29_fromCallable(): void {
 }
 
 /**
- * src/Option.php #30, first()
+ * src/Option.php #31, do()
  */
-function example30_first(): void {
+function example31_do(): void {
+   $config = ['db' => ['host' => 'db1', 'port' => 5432]];
+
+   $dsn = Option::do(function() use ($config) {
+      $db = Option::fromArray($config, 'db')->valueOrReturn();
+      $host = Option::fromArray($db, 'host')->valueOrReturn();
+      $port = Option::fromArray($db, 'port')->valueOrReturn();
+
+      return "pgsql:host={$host};port={$port}";
+   });
+   echo (string) $dsn, "\n"; // Some('pgsql:host=db1;port=5432')
+
+   $user = Option::do(fn() => Option::fromArray($config['db'], 'user')->valueOrReturn());
+   echo (string) $user, "\n"; // None
+}
+
+/**
+ * src/Option.php #32, first()
+ */
+function example32_first(): void {
    echo (string) Option::first(['a', 'b']), "\n"; // Some('a')
    echo (string) Option::first([]), "\n";         // None
 
@@ -356,9 +390,9 @@ function example30_first(): void {
 }
 
 /**
- * src/Option.php #31, fromArray()
+ * src/Option.php #33, fromArray()
  */
-function example31_fromArray(): void {
+function example33_fromArray(): void {
    $row = ['name' => 'Ada', 'email' => null];
 
    echo (string) Option::fromArray($row, 'name'), "\n";  // Some('Ada')
@@ -367,9 +401,9 @@ function example31_fromArray(): void {
 }
 
 /**
- * src/Option.php #32, __toString()
+ * src/Option.php #34, __toString()
  */
-function example32___toString(): void {
+function example34___toString(): void {
    echo (string) Option::some(5), "\n";      // Some(5)
    echo (string) Option::some([1, 2]), "\n"; // Some(array)
    echo (string) Option::none(), "\n";       // None
@@ -378,7 +412,7 @@ function example32___toString(): void {
 /**
  * src/Result.php #1, isOk()
  */
-function example33_isOk(): void {
+function example35_isOk(): void {
    echo Result::ok(1)->isOk() ? "ok\n" : "err\n";     // "ok"
    echo Result::err('no')->isOk() ? "ok\n" : "err\n"; // "err"
 }
@@ -386,7 +420,7 @@ function example33_isOk(): void {
 /**
  * src/Result.php #2, isErr()
  */
-function example34_isErr(): void {
+function example36_isErr(): void {
    echo Result::err('no')->isErr() ? "err\n" : "ok\n"; // "err"
    echo Result::ok(1)->isErr() ? "err\n" : "ok\n";     // "ok"
 }
@@ -394,7 +428,7 @@ function example34_isErr(): void {
 /**
  * src/Result.php #3, valueOr()
  */
-function example35_valueOr(): void {
+function example37_valueOr(): void {
    echo Result::ok(5)->valueOr(0), "\n";     // 5
    echo Result::err('no')->valueOr(0), "\n"; // 0
 }
@@ -402,7 +436,7 @@ function example35_valueOr(): void {
 /**
  * src/Result.php #4, valueOrCreate()
  */
-function example36_valueOrCreate(): void {
+function example38_valueOrCreate(): void {
    $describe = fn(string $error) => "failed: {$error}";
 
    echo Result::ok('done')->valueOrCreate($describe), "\n";     // "done"
@@ -412,7 +446,7 @@ function example36_valueOrCreate(): void {
 /**
  * src/Result.php #5, valueOrThrow()
  */
-function example37_valueOrThrow(): void {
+function example39_valueOrThrow(): void {
    echo Result::ok(1)->valueOrThrow(), "\n"; // 1
 
    try {
@@ -435,17 +469,30 @@ function example37_valueOrThrow(): void {
 }
 
 /**
- * src/Result.php #6, errOr()
+ * src/Result.php #6, valueOrReturn()
  */
-function example38_errOr(): void {
+function example40_valueOrReturn(): void {
+   $parse = fn(string $input) => Option::someNotFalse(filter_var($input, FILTER_VALIDATE_INT))
+      ->toResult("not a number: {$input}");
+
+   $sum = Result::do(fn() => $parse('2')->valueOrReturn() + $parse('x')->valueOrReturn());
+   echo (string) $sum, "\n"; // Err('not a number: x')
+
+   echo Result::ok(5)->valueOrReturn(), "\n"; // 5, a value needs no block
+}
+
+/**
+ * src/Result.php #7, errOr()
+ */
+function example41_errOr(): void {
    echo Result::err('timeout')->errOr('no error'), "\n"; // "timeout"
    echo Result::ok(5)->errOr('no error'), "\n";          // "no error"
 }
 
 /**
- * src/Result.php #7, toNullable()
+ * src/Result.php #8, toNullable()
  */
-function example39_toNullable(): void {
+function example42_toNullable(): void {
    $name = Result::ok('Ada')->toNullable();
    echo $name === null ? "nobody\n" : "{$name}\n"; // "Ada"
 
@@ -454,17 +501,17 @@ function example39_toNullable(): void {
 }
 
 /**
- * src/Result.php #8, toOption()
+ * src/Result.php #9, toOption()
  */
-function example40_toOption(): void {
+function example43_toOption(): void {
    echo (string) Result::ok(10)->toOption(), "\n";        // Some(10)
    echo (string) Result::err('bad id')->toOption(), "\n"; // None
 }
 
 /**
- * src/Result.php #9, match()
+ * src/Result.php #10, match()
  */
-function example41_match(): void {
+function example44_match(): void {
    $message = Result::ok(4)->match(
       ok: fn(int $x) => "squared: " . ($x * $x),
       err: fn(string $error) => "failed: {$error}",
@@ -479,18 +526,18 @@ function example41_match(): void {
 }
 
 /**
- * src/Result.php #10, contains()
+ * src/Result.php #11, contains()
  */
-function example42_contains(): void {
+function example45_contains(): void {
    echo Result::ok(10)->contains(10) ? "yes\n" : "no\n";   // "yes"
    echo Result::ok(10)->contains('10') ? "yes\n" : "no\n"; // "no", compared strictly
    echo Result::err(10)->contains(10) ? "yes\n" : "no\n";  // "no", that 10 is the error
 }
 
 /**
- * src/Result.php #11, exists()
+ * src/Result.php #12, exists()
  */
-function example43_exists(): void {
+function example46_exists(): void {
    $isAdult = fn(int $age) => $age >= 18;
 
    echo Result::ok(30)->exists($isAdult) ? "yes\n" : "no\n";        // "yes"
@@ -499,9 +546,9 @@ function example43_exists(): void {
 }
 
 /**
- * src/Result.php #12, map()
+ * src/Result.php #13, map()
  */
-function example44_map(): void {
+function example47_map(): void {
    $square = fn(int $x) => $x * $x;
 
    echo (string) Result::ok(5)->map($square), "\n";     // Ok(25)
@@ -509,9 +556,9 @@ function example44_map(): void {
 }
 
 /**
- * src/Result.php #13, mapErr()
+ * src/Result.php #14, mapErr()
  */
-function example45_mapErr(): void {
+function example48_mapErr(): void {
    $describe = fn(string $error) => "request failed: {$error}";
 
    echo (string) Result::err('timeout')->mapErr($describe), "\n"; // Err('request failed: timeout')
@@ -519,9 +566,9 @@ function example45_mapErr(): void {
 }
 
 /**
- * src/Result.php #14, mapSafely()
+ * src/Result.php #15, mapSafely()
  */
-function example46_mapSafely(): void {
+function example49_mapSafely(): void {
    $decode = fn(string $json) => json_decode($json, flags: JSON_THROW_ON_ERROR);
 
    echo Result::ok('{"id": 7}')->mapSafely($decode)->isOk() ? "decoded\n" : "failed\n"; // "decoded"
@@ -532,9 +579,9 @@ function example46_mapSafely(): void {
 }
 
 /**
- * src/Result.php #15, flatMap()
+ * src/Result.php #16, flatMap()
  */
-function example47_flatMap(): void {
+function example50_flatMap(): void {
    $parseAge = fn(string $input) => Option::someNotFalse(filter_var($input, FILTER_VALIDATE_INT))
       ->toResult("not a number: {$input}");
 
@@ -544,9 +591,9 @@ function example47_flatMap(): void {
 }
 
 /**
- * src/Result.php #16, filter()
+ * src/Result.php #17, filter()
  */
-function example48_filter(): void {
+function example51_filter(): void {
    $adult = Result::ok(30)->filter(fn(int $age) => $age >= 18, 'too young');
    $minor = Result::ok(12)->filter(fn(int $age) => $age >= 18, 'too young');
 
@@ -554,17 +601,17 @@ function example48_filter(): void {
 }
 
 /**
- * src/Result.php #17, or()
+ * src/Result.php #18, or()
  */
-function example49_or(): void {
+function example52_or(): void {
    echo (string) Result::err('timeout')->or(0), "\n"; // Ok(0)
    echo (string) Result::ok(5)->or(0), "\n";          // Ok(5)
 }
 
 /**
- * src/Result.php #18, orCreate()
+ * src/Result.php #19, orCreate()
  */
-function example50_orCreate(): void {
+function example53_orCreate(): void {
    $fallback = fn(string $error) => "default, after {$error}";
 
    echo (string) Result::err('timeout')->orCreate($fallback), "\n"; // Ok('default, after timeout')
@@ -572,9 +619,9 @@ function example50_orCreate(): void {
 }
 
 /**
- * src/Result.php #19, else()
+ * src/Result.php #20, else()
  */
-function example51_else(): void {
+function example54_else(): void {
    $fromDisk = Result::ok('settings from disk');
 
    echo (string) Result::err('cache miss')->else($fromDisk), "\n";       // Ok('settings from disk')
@@ -582,9 +629,9 @@ function example51_else(): void {
 }
 
 /**
- * src/Result.php #20, elseCreate()
+ * src/Result.php #21, elseCreate()
  */
-function example52_elseCreate(): void {
+function example55_elseCreate(): void {
    $retry = fn(string $error) => Result::ok("second try, after {$error}");
 
    echo (string) Result::err('timeout')->elseCreate($retry), "\n"; // Ok('second try, after timeout')
@@ -592,9 +639,9 @@ function example52_elseCreate(): void {
 }
 
 /**
- * src/Result.php #21, tap()
+ * src/Result.php #22, tap()
  */
-function example53_tap(): void {
+function example56_tap(): void {
    echo (string) Result::ok(5)
       ->tap(fn(int $x) => error_log("about to double {$x}"))
       ->map(fn(int $x) => $x * 2), "\n"; // Ok(10), and the log line ran
@@ -603,9 +650,9 @@ function example53_tap(): void {
 }
 
 /**
- * src/Result.php #22, tapErr()
+ * src/Result.php #23, tapErr()
  */
-function example54_tapErr(): void {
+function example57_tapErr(): void {
    echo (string) Result::err('timeout')
       ->tapErr(fn(string $error) => error_log("request failed: {$error}")), "\n"; // Err('timeout'), and the log line ran
 
@@ -613,23 +660,23 @@ function example54_tapErr(): void {
 }
 
 /**
- * src/Result.php #23, ok()
+ * src/Result.php #24, ok()
  */
-function example55_ok(): void {
+function example58_ok(): void {
    echo (string) Result::ok(200), "\n"; // Ok(200)
 }
 
 /**
- * src/Result.php #24, err()
+ * src/Result.php #25, err()
  */
-function example56_err(): void {
+function example59_err(): void {
    echo (string) Result::err('not found'), "\n"; // Err('not found')
 }
 
 /**
- * src/Result.php #25, fromCallable()
+ * src/Result.php #26, fromCallable()
  */
-function example57_fromCallable(): void {
+function example60_fromCallable(): void {
    echo (string) Result::fromCallable(fn() => 7), "\n"; // Ok(7)
 
    $failed = Result::fromCallable(fn() => throw new \Exception("boom"));
@@ -646,9 +693,28 @@ function example57_fromCallable(): void {
 }
 
 /**
- * src/Result.php #26, __toString()
+ * src/Result.php #27, do()
  */
-function example58___toString(): void {
+function example61_do(): void {
+   $findUser = fn(int $id) => $id > 0 ? Result::ok("user{$id}") : Result::err("no user {$id}");
+   $findCart = fn(string $user) => $user !== 'user13' ? Result::ok(4200) : Result::err("cart for {$user} is locked");
+
+   $owes = fn(int $id) => Result::do(function() use ($findUser, $findCart, $id) {
+      $user = $findUser($id)->valueOrReturn();
+      $cents = $findCart($user)->valueOrReturn();
+
+      return "{$user} owes {$cents}";
+   });
+
+   echo (string) $owes(5), "\n";  // Ok('user5 owes 4200')
+   echo (string) $owes(-1), "\n"; // Err('no user -1')
+   echo (string) $owes(13), "\n"; // Err('cart for user13 is locked')
+}
+
+/**
+ * src/Result.php #28, __toString()
+ */
+function example62___toString(): void {
    echo (string) Result::ok([1, 2]), "\n";                         // Ok(array)
    echo (string) Result::err(new \RuntimeException('boom')), "\n"; // Err(RuntimeException: boom)
 }
@@ -656,7 +722,7 @@ function example58___toString(): void {
 /**
  * README.md #1, unknown()
  */
-function example59_unknown(): void {
+function example63_unknown(): void {
    /** @var array<string, array{name: string}> $people */
    $people = ['a1' => ['name' => 'Ada']];
 
@@ -666,7 +732,7 @@ function example59_unknown(): void {
 /**
  * README.md #2, unknown()
  */
-function example60_unknown(): void {
+function example64_unknown(): void {
    $config = Result::fromCallable(
       fn() => json_decode('{"debug": tru}', flags: JSON_THROW_ON_ERROR),
       JsonException::class
@@ -680,7 +746,7 @@ function example60_unknown(): void {
 /**
  * README.md #3, unknown()
  */
-function example61_unknown(): void {
+function example65_unknown(): void {
    $lookups = 0;
    /** @var Closure(): ?string $findAvatar a user with no avatar */
    $findAvatar = function() use (&$lookups): ?string { $lookups++; return null; };
@@ -696,7 +762,7 @@ function example61_unknown(): void {
 /**
  * README.md #4, unknown()
  */
-function example62_unknown(): void {
+function example66_unknown(): void {
    $lookups = 0;
    $findAvatar = function() use (&$lookups): Option { $lookups++; return Option::none(); };
 
@@ -711,7 +777,7 @@ function example62_unknown(): void {
 /**
  * README.md #5, unknown()
  */
-function example63_unknown(): void {
+function example67_unknown(): void {
    // A falsy return, the shape a row fetch gives you
    echo Option::someNotFalsy(false), "\n"; // None
    echo Option::someNotFalsy('Ada'), "\n"; // Some('Ada')
@@ -724,7 +790,7 @@ function example63_unknown(): void {
 /**
  * README.md #6, unknown()
  */
-function example64_unknown(): void {
+function example68_unknown(): void {
    echo (string) Option::someNotFalsy(array_search('a', ['a', 'b'])) . "\n"; // "None", the match is lost
    echo (string) Option::someNotFalse(array_search('a', ['a', 'b'])) . "\n"; // "Some(0)"
 }
@@ -732,7 +798,7 @@ function example64_unknown(): void {
 /**
  * README.md #7, unknown()
  */
-function example65_unknown(): void {
+function example69_unknown(): void {
    $kept = Result::fromCallable(fn() => throw new Exception("the api said no"));
    echo $kept->mapErr(fn(Throwable $e) => $e->getMessage())->errOr('') . "\n";
    // "the api said no"
@@ -744,7 +810,7 @@ function example65_unknown(): void {
 /**
  * README.md #8, unknown()
  */
-function example66_unknown(): void {
+function example70_unknown(): void {
    $total = Option::some(['price' => 5, 'qty' => 3])
       ->filter(fn(array $line) => $line['qty'] > 0)
       ->tap(fn(array $line) => error_log("pricing {$line['qty']} items"))
@@ -757,7 +823,7 @@ function example66_unknown(): void {
 /**
  * README.md #9, unknown()
  */
-function example67_unknown(): void {
+function example71_unknown(): void {
    $ran = false;
 
    $total = Option::none()
@@ -771,7 +837,7 @@ function example67_unknown(): void {
 /**
  * README.md #10, unknown()
  */
-function example68_unknown(): void {
+function example72_unknown(): void {
    $some = Option::some(41);
 
    // 1. Supply a fallback
@@ -793,7 +859,7 @@ function example68_unknown(): void {
 /**
  * README.md #11, unknown()
  */
-function example69_unknown(): void {
+function example73_unknown(): void {
    $failed = Result::fromCallable(fn(): int => throw new Exception("the api said no"));
 
    try {
@@ -807,15 +873,34 @@ function example69_unknown(): void {
 /**
  * README.md #12, unknown()
  */
-function example70_unknown(): void {
-   echo Result::ok(10)->toOption(), "\n";        // Some(10), drops any error
-   echo Option::none()->toResult('no id'), "\n"; // Err('no id'), gains a reason
+function example74_unknown(): void {
+   $findUser = fn(int $id) => $id > 0 ? Result::ok("user{$id}") : Result::err("no user {$id}");
+   $findCart = fn(string $user) => $user !== 'user13' ? Result::ok(4200) : Result::err("cart for {$user} is locked");
+
+   $owes = fn(int $id) => Result::do(function() use ($findUser, $findCart, $id) {
+      $user = $findUser($id)->valueOrReturn();
+      $cents = $findCart($user)->valueOrReturn();
+
+      return "{$user} owes {$cents}";
+   });
+
+   echo $owes(5), "\n";  // Ok('user5 owes 4200')
+   echo $owes(-1), "\n"; // Err('no user -1')
+   echo $owes(13), "\n"; // Err('cart for user13 is locked')
 }
 
 /**
  * README.md #13, unknown()
  */
-function example71_unknown(): void {
+function example75_unknown(): void {
+   echo Result::ok(10)->toOption(), "\n";        // Some(10), drops any error
+   echo Option::none()->toResult('no id'), "\n"; // Err('no id'), gains a reason
+}
+
+/**
+ * README.md #14, unknown()
+ */
+function example76_unknown(): void {
    $calls = 0;
    $check = function() use (&$calls) { $calls++; return true; };
 
@@ -826,17 +911,17 @@ function example71_unknown(): void {
 }
 
 /**
- * README.md #14, unknown()
+ * README.md #15, unknown()
  */
-function example72_unknown(): void {
+function example77_unknown(): void {
    echo Option::some(null)->hasValue() ? "some\n" : "none\n";            // "some"
    echo Option::some(null)->notNull()->hasValue() ? "some\n" : "none\n"; // "none"
 }
 
 /**
- * README.md #15, unknown()
+ * README.md #16, unknown()
  */
-function example73_unknown(): void {
+function example78_unknown(): void {
    $user = Result::fromCallable(
       fn() => throw new OutOfBoundsException("no user 5"),
       OutOfBoundsException::class

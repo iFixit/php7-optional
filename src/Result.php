@@ -6,6 +6,7 @@ namespace Optional;
 
 use Optional\Exceptions\MissingValueException;
 use Optional\Internal\DescribesValues;
+use Optional\Internal\EarlyReturn;
 use Throwable;
 
 /**
@@ -209,6 +210,39 @@ final readonly class Result {
       }
 
       throw new MissingValueException('Result is an Err: ' . self::describe($this->error));
+   }
+
+   /**
+    * Returns the success value, or ends the enclosing `Result::do()` block with this error
+    *
+    * The early exit for a block of steps that can each fail, the way Rust's `?`
+    * returns from a function. See `Result::do()`.
+    *
+    * ```php
+    * $parse = fn(string $input) => Option::someNotFalse(filter_var($input, FILTER_VALIDATE_INT))
+    *    ->toResult("not a number: {$input}");
+    *
+    * $sum = Result::do(fn() => $parse('2')->valueOrReturn() + $parse('x')->valueOrReturn());
+    * echo (string) $sum, "\n"; // Err('not a number: x')
+    *
+    * echo Result::ok(5)->valueOrReturn(), "\n"; // 5, a value needs no block
+    * ```
+    *
+    * _Notes:_
+    *
+    *  - On a `Result::err` outside any `Result::do()`, it throws an `Error`
+    *    that says so
+    *  - psalm and PHPStan type the result as `T`, so the code after it has the
+    *    value
+    *
+    * @psalm-return T
+    */
+   public function valueOrReturn(): mixed {
+      if (!$this->isOk) {
+         throw new EarlyReturn('Result', $this->error);
+      }
+
+      return $this->value;
    }
 
    /**
@@ -446,7 +480,7 @@ final readonly class Result {
       try {
          return $this->map($mapFunc);
       } catch (Throwable $e) {
-         if ($e instanceof $catch) {
+         if ($e instanceof $catch && !$e instanceof EarlyReturn) {
             return self::err($e);
          }
 
@@ -795,11 +829,63 @@ final readonly class Result {
       try {
          return self::ok($valueFactory());
       } catch (Throwable $e) {
-         if ($e instanceof $catch) {
+         if ($e instanceof $catch && !$e instanceof EarlyReturn) {
             return self::err($e);
          }
 
          throw $e;
+      }
+   }
+
+   /**
+    * Runs `$block`, boxing what it returns as `Result::ok`, or the error a `valueOrReturn()` in it met as `Result::err`
+    *
+    * For steps that can each fail and each need the one before, without a
+    * nested `flatMap` per step: write them in order, unwrap each with
+    * `valueOrReturn()`, and the first `Result::err` ends the block with its
+    * error.
+    *
+    * ```php
+    * $findUser = fn(int $id) => $id > 0 ? Result::ok("user{$id}") : Result::err("no user {$id}");
+    * $findCart = fn(string $user) => $user !== 'user13' ? Result::ok(4200) : Result::err("cart for {$user} is locked");
+    *
+    * $owes = fn(int $id) => Result::do(function() use ($findUser, $findCart, $id) {
+    *    $user = $findUser($id)->valueOrReturn();
+    *    $cents = $findCart($user)->valueOrReturn();
+    *
+    *    return "{$user} owes {$cents}";
+    * });
+    *
+    * echo (string) $owes(5), "\n";  // Ok('user5 owes 4200')
+    * echo (string) $owes(-1), "\n"; // Err('no user -1')
+    * echo (string) $owes(13), "\n"; // Err('cart for user13 is locked')
+    * ```
+    *
+    * _Notes:_
+    *
+    *  - `$block` must follow this interface `callable():TT`
+    *  - psalm types the result `Result<TT, mixed>`, because the errors that can
+    *    end the block are not part of its type. Give the variable an
+    *    `@var Result<string, string>` annotation when you want them
+    *  - A `catch (Throwable)` or `catch (Error)` inside the block also catches
+    *    the early exit. A `catch (Exception)` does not
+    *  - Anything else the block throws propagates. `Result::fromCallable()`
+    *    inside the block catches a throw, and never the early exit
+    *
+    * @template TT
+    * @psalm-param callable():TT $block
+    * @psalm-return Result<TT, mixed>
+    */
+   #[\NoDiscard(self::UNREAD)]
+   public static function do(callable $block): self {
+      try {
+         return self::ok($block());
+      } catch (EarlyReturn $exit) {
+         if ($exit->box !== 'Result') {
+            throw $exit;
+         }
+
+         return self::err($exit->error);
       }
    }
 
