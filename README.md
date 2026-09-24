@@ -148,8 +148,10 @@ echo $some->valueOrThrow(function() { return new RuntimeException("no id"); }) .
 echo $some->hasValue() ? "yes\n" : "no\n"; // "yes"
 ```
 
-`valueOrThrow` takes a factory rather than a built exception, so nothing is
-constructed on the happy path. On `Either` these are `getLeftOrThrow` and
+`valueOrThrow()` with no argument throws `MissingValueException`. With a
+factory it throws what the factory builds, and the factory runs only on the
+empty side, so nothing is constructed on the happy path. There is no bare
+`value()`: a name that short hides the throw. On `Either` these are `getLeftOrThrow` and
 `getRightOrThrow`, and the factory is handed the other side's value, which is
 how you keep the original failure as the cause:
 
@@ -302,7 +304,7 @@ with the PHP version and the opcache.
 `Option` factories: `some` `none` `someWhen` `noneWhen` `someNotNull`
 `someNotFalsy` `someNotFalse` `fromCallable` `fromArray` `first`
 
-`Option` methods: `hasValue` `valueOr` `value` `valueOrThrow` `valueOrCreate`
+`Option` methods: `hasValue` `valueOr` `valueOrThrow` `valueOrCreate`
 `toNullable`
 `or` `orCreate` `else` `elseCreate` `match` `matchSome` `matchNone` `map`
 `mapSafely` `flatMap` `andThen` `tap` `tapNone` `filter` `filterIf` `notNull`
@@ -313,8 +315,7 @@ with the PHP version and the opcache.
 `notFalseRight` `fromCallable` `fromArray`
 
 `Either` methods: `isLeft` `isRight` `isSuccess` `isFailure` `mapSuccess`
-`mapFailure` `successOr` `failureOr` `successOrThrow` `leftOr` `rightOr` `getLeft`
-`getRight`
+`mapFailure` `successOr` `failureOr` `successOrThrow` `leftOr` `rightOr`
 `getLeftOrThrow` `getRightOrThrow` `leftOrCreate` `rightOrCreate` `orLeft`
 `orRight` `orCreateLeft` `orCreateRight` `elseLeft` `elseRight`
 `elseCreateLeft` `elseCreateRight` `match` `matchLeft` `matchRight` `mapLeft`

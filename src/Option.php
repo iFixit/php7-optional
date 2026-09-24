@@ -114,50 +114,25 @@ final class Option {
    }
 
    /**
-    * Returns the options value or throws
+    * Returns the options value, or throws
+    *
+    * With no argument it throws `MissingValueException("Value is missing.")`.
+    * Pass `$exceptionFactory` to say what was missing instead, which is almost
+    * always worth it.
     *
     * ```php
-    * $someThing = Option::some(1);
-    * $someClass = Option::some(new SomeObject());
-    *
-    * $none = Option::none();
-    *
-    * $myVar = $someThing->value(); // 1
-    * $myVar = $someClass->value(); // instance of SomeObject
+    * echo Option::some(1)->valueOrThrow(), "\n"; // 1
     *
     * try {
-    *    $none->value();
-    * } catch (\Optional\Exceptions\MissingValueException $e) {
-    *    echo $e->getMessage(); // "Value is missing."
+    *    Option::none()->valueOrThrow(fn() => new \RuntimeException("No id for this device"));
+    * } catch (\RuntimeException $e) {
+    *    echo $e->getMessage(), "\n"; // "No id for this device"
     * }
-    * ```
-    *
-    * @psalm-mutation-free
-    * @psalm-return (T is never ? never : T)
-    **/
-    public function value() {
-      if(!$this->hasValue) {
-         throw new MissingValueException("Value is missing.");
-      }
-      return $this->value;
-   }
-
-   /**
-    * Returns the options value, or throws the `Throwable` that `$exceptionFactory` builds
-    *
-    * `value()` throws a fixed "Value is missing." Use this when the caller needs
-    * to say what was missing, which is almost always.
-    *
-    * ```php
-    * $some = Option::some(1);
-    * $none = Option::none();
-    *
-    * $myVar = $some->valueOrThrow(function() { return new \Exception("No id for this device"); }); // 1
     *
     * try {
-    *    $none->valueOrThrow(function() { return new \Exception("No id for this device"); });
-    * } catch (\Exception $e) {
-    *    echo $e->getMessage(); // "No id for this device"
+    *    Option::none()->valueOrThrow();
+    * } catch (\Optional\Exceptions\MissingValueException $e) {
+    *    echo $e->getMessage(), "\n"; // "Value is missing."
     * }
     * ```
     *
@@ -165,13 +140,17 @@ final class Option {
     *
     *  - `$exceptionFactory` must follow this interface `callable():Throwable`
     *  - It is called lazily, so building the exception costs nothing on a `Option::some`
+    *  - There is no `value()`. A name that short hides the throw, and an
+    *    unguarded call to it is the one mistake psalm cannot catch for you
     *
-    * @psalm-param callable():Throwable $exceptionFactory
+    * @psalm-param null|callable():Throwable $exceptionFactory
     * @psalm-return (T is never ? never : T)
     **/
-   public function valueOrThrow(callable $exceptionFactory) {
+   public function valueOrThrow(?callable $exceptionFactory = null) {
       if (!$this->hasValue) {
-         throw $exceptionFactory();
+         throw $exceptionFactory === null
+            ? new MissingValueException("Value is missing.")
+            : $exceptionFactory();
       }
 
       return $this->value;

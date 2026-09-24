@@ -105,30 +105,6 @@ final class Either {
    }
 
    /**
-    * Returns the either value or throws
-    *
-    * ```php
-    * echo Either::left(1)->getLeft(), "\n"; // 1
-    *
-    * try {
-    *    Either::right("e")->getLeft();
-    * } catch (\Optional\Exceptions\MissingValueException $e) {
-    *    echo $e->getMessage(), "\n"; // "Left value is missing."
-    * }
-    * ```
-    *
-    * @psalm-mutation-free
-    * @psalm-return (TLeft is never ? never : TLeft)
-    **/
-    public function getLeft() {
-      if (!$this->isLeft) {
-         throw new MissingValueException("Left value is missing.");
-      }
-
-      return $this->leftValue;
-   }
-
-   /**
     * Returns the either value or returns `$alternative`
     *
     * ```php
@@ -148,48 +124,27 @@ final class Either {
    }
 
    /**
-    * Returns the either value or throws
+    * Returns the left value, or throws
+    *
+    * With no argument it throws `MissingValueException("Left value is missing.")`.
+    * Pass `$exceptionFactory` to say what failed instead. The factory is handed
+    * the right value, so an error stored there can become the cause.
     *
     * ```php
-    * echo Either::right("e")->getRight(), "\n"; // "e"
+    * echo Either::left(1)->getLeftOrThrow(), "\n"; // 1
     *
     * try {
-    *    Either::left(1)->getRight();
-    * } catch (\Optional\Exceptions\MissingValueException $e) {
-    *    echo $e->getMessage(), "\n"; // "Right value is missing."
+    *    Either::right(new \Exception("the api said no"))->getLeftOrThrow(
+    *       fn(\Throwable $cause) => new \RuntimeException("No build id", 0, $cause)
+    *    );
+    * } catch (\RuntimeException $e) {
+    *    echo $e->getPrevious()?->getMessage(), "\n"; // "the api said no"
     * }
-    * ```
-    *
-    * @psalm-mutation-free
-    * @psalm-return (TRight is never ? never : TRight)
-    **/
-    public function getRight() {
-      if ($this->isLeft) {
-         throw new MissingValueException("Right value is missing.");
-      }
-
-      return $this->rightValue;
-   }
-
-   /**
-    * Returns the left value, or throws the `Throwable` that `$exceptionFactory` builds
-    *
-    * `getLeft()` throws a fixed "Left value is missing." Use this when the
-    * caller needs to say what failed, which is almost always. The factory is
-    * handed the right value, so an error stored there can become the cause.
-    *
-    * ```php
-    * $left = Either::left(1);
-    * $right = Either::right(new \Exception("the api said no"));
-    *
-    * $myVar = $left->getLeftOrThrow(function($rightValue) { return new \Exception("No build id"); }); // 1
     *
     * try {
-    *    $right->getLeftOrThrow(function(\Throwable $cause) {
-    *       return new \Exception("No build id", 0, $cause);
-    *    });
-    * } catch (\Exception $e) {
-    *    echo $e->getPrevious()?->getMessage(); // "the api said no"
+    *    Either::right("e")->getLeftOrThrow();
+    * } catch (\Optional\Exceptions\MissingValueException $e) {
+    *    echo $e->getMessage(), "\n"; // "Left value is missing."
     * }
     * ```
     *
@@ -197,33 +152,36 @@ final class Either {
     *
     *  - `$exceptionFactory` must follow this interface `callable(TRight):Throwable`
     *  - It is called lazily, so building the exception costs nothing on a `Either::left`
+    *  - There is no `getLeft()`, for the reason `Option` has no `value()`: a
+    *    name that short hides the throw
     *
-    * @psalm-param callable(TRight):Throwable $exceptionFactory
+    * @psalm-param null|callable(TRight):Throwable $exceptionFactory
     * @psalm-return (TLeft is never ? never : TLeft)
     **/
-   public function getLeftOrThrow(callable $exceptionFactory) {
+   public function getLeftOrThrow(?callable $exceptionFactory = null) {
       if (!$this->isLeft) {
-         throw $exceptionFactory($this->rightValue);
+         throw $exceptionFactory === null
+            ? new MissingValueException("Left value is missing.")
+            : $exceptionFactory($this->rightValue);
       }
 
       return $this->leftValue;
    }
 
    /**
-    * Returns the right value, or throws the `Throwable` that `$exceptionFactory` builds
+    * Returns the right value, or throws
     *
-    * The mirror of `getLeftOrThrow`. The factory is handed the left value.
+    * The mirror of `getLeftOrThrow`. With no argument it throws
+    * `MissingValueException("Right value is missing.")`, and a factory is handed
+    * the left value.
     *
     * ```php
-    * $right = Either::right("nope");
-    * $left = Either::left(1);
-    *
-    * $myVar = $right->getRightOrThrow(function($leftValue) { return new \Exception("Expected an error"); }); // "nope"
+    * echo Either::right("nope")->getRightOrThrow(), "\n"; // "nope"
     *
     * try {
-    *    $left->getRightOrThrow(function($leftValue) { return new \Exception("Expected an error, got {$leftValue}"); });
-    * } catch (\Exception $e) {
-    *    echo $e->getMessage(); // "Expected an error, got 1"
+    *    Either::left(1)->getRightOrThrow(fn(int $leftValue) => new \RuntimeException("Expected an error, got {$leftValue}"));
+    * } catch (\RuntimeException $e) {
+    *    echo $e->getMessage(), "\n"; // "Expected an error, got 1"
     * }
     * ```
     *
@@ -231,12 +189,14 @@ final class Either {
     *
     *  - `$exceptionFactory` must follow this interface `callable(TLeft):Throwable`
     *
-    * @psalm-param callable(TLeft):Throwable $exceptionFactory
+    * @psalm-param null|callable(TLeft):Throwable $exceptionFactory
     * @psalm-return (TRight is never ? never : TRight)
     **/
-   public function getRightOrThrow(callable $exceptionFactory) {
+   public function getRightOrThrow(?callable $exceptionFactory = null) {
       if ($this->isLeft) {
-         throw $exceptionFactory($this->leftValue);
+         throw $exceptionFactory === null
+            ? new MissingValueException("Right value is missing.")
+            : $exceptionFactory($this->leftValue);
       }
 
       return $this->rightValue;
@@ -1491,10 +1451,10 @@ final class Either {
     * }
     * ```
     *
-    * @psalm-param callable(TRight):Throwable $exceptionFactory
+    * @psalm-param null|callable(TRight):Throwable $exceptionFactory
     * @psalm-return (TLeft is never ? never : TLeft)
     **/
-   public function successOrThrow(callable $exceptionFactory) {
+   public function successOrThrow(?callable $exceptionFactory = null) {
       return $this->getLeftOrThrow($exceptionFactory);
    }
 

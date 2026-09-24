@@ -43,8 +43,8 @@ call:
   index `0` from `strpos` or `array_search` as missing; these only treat
   `false` that way
 
-Getting out of one with a message, which `value()`'s fixed
-`"Value is missing."` could not:
+Getting out of one, throwing if the value is missing, with a message you
+choose or `MissingValueException` when you pass nothing:
 
 * `Option::valueOrThrow()`
 * `Either::getLeftOrThrow()` and `Either::getRightOrThrow()`
@@ -85,8 +85,6 @@ Completing the left and right mirror, which was 17 pairs out of 21:
 * `Either::flatMapRight()`, `mapRightSafely()`, `notNullRight()`,
   `toOptionFromRight()`
 
-Also `Option::value()`, `Either::getLeft()` and `Either::getRight()`, which
-existed on master but were never in a tagged release.
 
 ### Fixed
 
@@ -145,6 +143,14 @@ existed on master but were never in a tagged release.
   call code you supplied is not mutation-free.
 
 ### Removed
+
+* `Option::value()`, `Either::getLeft()` and `Either::getRight()`, which were
+  on master but in no tagged release, so no 3.x caller has them. Call
+  `valueOrThrow()`, `getLeftOrThrow()` or `getRightOrThrow()` with no argument
+  instead: same result, same `MissingValueException`. A name that short hides
+  the throw, and an unguarded call to it is the one mistake psalm cannot catch.
+  Java made the same call: the documentation for `Optional.get()` names
+  `orElseThrow()` as the preferred alternative
 
 * `psalm-baseline.xml`. Every entry in it was already unused, and `src/` and
   `tests/` are clean at errorLevel 1 without it.

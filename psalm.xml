@@ -64,9 +64,6 @@
         <UnusedClosureParam>
             <errorLevel type="suppress"><file name="tests/generated/DocblockExamples.php"/></errorLevel>
         </UnusedClosureParam>
-        <UnusedMethodCall>
-            <errorLevel type="suppress"><file name="tests/generated/DocblockExamples.php"/></errorLevel>
-        </UnusedMethodCall>
         <MissingClosureReturnType>
             <errorLevel type="suppress"><file name="tests/generated/DocblockExamples.php"/></errorLevel>
         </MissingClosureReturnType>

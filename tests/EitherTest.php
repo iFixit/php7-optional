@@ -80,25 +80,24 @@ final class EitherTest extends TestCase
       $this->assertSame($rightThing4->rightOr(-5), 100);
    }
 
-   public function testGetLeftAndGetRightThrowWhenMissing(): void {
-      $this->assertSame(Either::left(1)->getLeft(), 1);
-      $this->assertSame(Either::right("e")->getRight(), "e");
+   public function testTheThrowingGettersWithNoFactoryReturnTheValue(): void {
+      $this->assertSame(1, Either::left(1)->getLeftOrThrow());
+      $this->assertSame("e", Either::right("e")->getRightOrThrow());
+      $this->assertSame(1, Either::success(1)->successOrThrow());
    }
 
-   public function testGetRightThrowsMissingValueExceptionOnLeft(): void {
+   public function testGetRightOrThrowWithNoFactoryThrowsMissingValueException(): void {
       $this->expectException(MissingValueException::class);
       $this->expectExceptionMessage("Right value is missing.");
 
-      /** @psalm-suppress UnusedMethodCall the throw is the assertion */
-      Either::left(1)->getRight();
+      Either::left(1)->getRightOrThrow();
    }
 
-   public function testGetLeftThrowsMissingValueExceptionOnRight(): void {
+   public function testGetLeftOrThrowWithNoFactoryThrowsMissingValueException(): void {
       $this->expectException(MissingValueException::class);
       $this->expectExceptionMessage("Left value is missing.");
 
-      /** @psalm-suppress UnusedMethodCall the throw is the assertion */
-      Either::right(1)->getLeft();
+      Either::right(1)->getLeftOrThrow();
    }
 
    public function testGettingValue(): void {

@@ -14,15 +14,15 @@ covers only what reading them will not tell you, or will tell you wrong.
 
 The released package and the code in front of you are different APIs, and the
 gap is now a whole major version. Tag `3.0` is PHP 7 compatible, has no
-`value()`, `getLeft()`, `getRight()`, `tap()`, `fromCallable()` or
-`valueOrThrow()`, and it is what a consumer on `^3.0` resolves to.
+`tap()`, `fromCallable()`, `valueOrThrow()` or `first()`, and it is what a
+consumer on `^3.0` resolves to.
 
 Before telling anyone a method is available, or writing code elsewhere that
 calls one:
 
 ```bash
 git describe --tags          # how far master is past the last release
-git show 3.0:src/Option.php | grep "public function value()"
+git show 3.0:src/Option.php | grep "public function valueOrThrow"
 ```
 
 ## Commands
@@ -154,6 +154,9 @@ it.
   `strpos`, `array_search` and the other functions that return `false` on
   failure, the not-false family (`someNotFalse()`, `notFalse()`,
   `notFalseLeft()`, ...) is the right entrance.
+- There is no `value()`, `getLeft()` or `getRight()`, on purpose. The
+  no-argument `valueOrThrow()`, `getLeftOrThrow()` and `getRightOrThrow()`
+  replace them, so the throw is in the name. Do not add them back.
 - `andThen()` is an alias: `Option::andThen` calls `flatMap`,
   `Either::andThen` calls `flatMapLeft`.
 - `__toString()` interpolates the boxed value, so a non-stringable value gives
@@ -199,7 +202,7 @@ only thing that catches those is running the file in a subprocess, which is
 what `ExampleScriptTest` does.
 
 **psalm proves the throws, so code after one is unreachable.** The conditional
-return types (`(T is never ? never : T)`) let psalm prove that `value()` on a
+return types (`(T is never ? never : T)`) let psalm prove that `valueOrThrow()` on a
 `None` cannot return. Anything written after such a call is reported as
 `UnevaluatedCode`, and a `$threw` flag read afterwards as `RedundantCondition`.
 Use one `expectException` per test rather than fighting it. One throw per test

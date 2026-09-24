@@ -35,6 +35,9 @@ function optionTypes(): void {
    $valueOrThrowReturnsTheValue = Option::some(41)->valueOrThrow(function(): Exception { return new RuntimeException('x'); });
    /** @psalm-trace $valueOrThrowReturnsTheValue */
 
+   $valueOrThrowWithNoFactory = Option::some(41)->valueOrThrow();
+   /** @psalm-trace $valueOrThrowWithNoFactory */
+
    $tapReturnsTheSameBox = Option::some(5)->tap(function(int $_n): void {});
    /** @psalm-trace $tapReturnsTheSameBox */
 
