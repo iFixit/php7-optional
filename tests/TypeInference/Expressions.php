@@ -28,7 +28,7 @@ function optionTypes(): void {
    $mapSafelyKeepsTheMappedType = Option::some(5)->mapSafely(function(int $n): string { return "n{$n}"; });
    /** @psalm-trace $mapSafelyKeepsTheMappedType */
 
-   // fromArray collapsed to Option<mixed> at every call site
+   // fromArray added Option<mixed> to every call site's type, as Option<'world'>|Option<mixed>
    $fromArrayKeepsTheValueType = Option::fromArray(['hello' => 'world'], 'hello');
    /** @psalm-trace $fromArrayKeepsTheValueType */
 
@@ -53,8 +53,9 @@ function optionTypes(): void {
 
 /**
  * The entrances exist to drop the missing value, so the type has to drop it
- * too. someNotNull() on a ?string used to infer Option<null|string>, which made
- * the very next ->map(fn(string $s) => ...) an InvalidArgument.
+ * too. On 3.0, someNotNull() on a ?string inferred Option<null|string>, so
+ * psalm reported strlen(Option::someNotNull($maybe)->valueOr('x')) as a
+ * PossiblyNullArgument.
  *
  * @param array{id: int}|false $row
  */
