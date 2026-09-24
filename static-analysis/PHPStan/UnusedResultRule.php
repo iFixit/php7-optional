@@ -12,16 +12,17 @@ use PHPStan\Rules\Rule;
 use PHPStan\Rules\RuleErrorBuilder;
 use PHPStan\Type\NeverType;
 use PHPStan\Type\ObjectType;
-use PHPStan\Type\TypeCombinator;
+use PHPStan\Type\UnionType;
 
 /**
  * Reports a `Result` that is returned and never looked at, as Rust's
  * `#[must_use]` does. Turn it on by including this package's extension.neon.
  *
  * Only a statement that is nothing but a call counts, so assigning the result,
- * returning it or passing it on are all uses. Assigning it to `$_`, or on PHP
- * 8.5 casting it to `(void)`, is how to drop one on purpose. A chain that ends
- * in `tapErr()` has looked at the error, so it is not reported.
+ * returning it or passing it on are all uses. Assigning it to `$_` is how to
+ * drop one on purpose. A chain that ends in `tapErr()` has looked at the error,
+ * so it is not reported. A call that can return something else as well, such
+ * as `Result|false`, is reported too, as long as it can return a `Result`.
  *
  * @implements Rule<Node\Stmt\Expression>
  */
@@ -41,12 +42,20 @@ final class UnusedResultRule implements Rule {
          return [];
       }
 
-      // a null-safe call is Result|null, and the Result half still counts
-      $type = TypeCombinator::removeNull($scope->getType($call));
+      $type = $scope->getType($call);
+      $result = new ObjectType('Optional\Result');
+      $dropsAResult = false;
 
-      // never is a subtype of every type, Result included, and PHPStan gives it
-      // to a call that returns nothing, such as parent::__construct()
-      if ($type instanceof NeverType || !(new ObjectType('Optional\Result'))->isSuperTypeOf($type)->yes()) {
+      // a null-safe call is Result|null, and the Result half still counts
+      foreach ($type instanceof UnionType ? $type->getTypes() : [$type] as $member) {
+         // never is a subtype of every type, Result included, and PHPStan gives
+         // it to a call that returns nothing, such as parent::__construct()
+         if (!$member instanceof NeverType && $result->isSuperTypeOf($member)->yes()) {
+            $dropsAResult = true;
+         }
+      }
+
+      if (!$dropsAResult) {
          return [];
       }
 

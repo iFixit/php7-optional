@@ -17,9 +17,10 @@ use Psalm\Type\Atomic\TNamedObject;
  * Finds a call whose `Result` is dropped on its own line
  *
  * Only a statement that is nothing but a call counts, so assigning the result,
- * returning it or passing it on are all uses. Assigning it to `$_`, or on PHP
- * 8.5 casting it to `(void)`, is how to drop one on purpose. A chain that ends
- * in `tapErr()` has looked at the error, so it is not reported.
+ * returning it or passing it on are all uses. Assigning it to `$_` is how to
+ * drop one on purpose. A chain that ends in `tapErr()` has looked at the error,
+ * so it is not reported. A call that can return something else as well, such
+ * as `Result|false`, is reported too, as long as it can return a `Result`.
  */
 final class UnusedResultHook implements AfterStatementAnalysisInterface {
    #[\Override]
