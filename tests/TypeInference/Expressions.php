@@ -145,6 +145,18 @@ function entrancesDropTheMissingValue(?string $maybe, array|false $row, int|fals
 
    $notFalsyRightDropsFalse = Either::notFalsyRight($row, 'no error');
    /** @psalm-trace $notFalsyRightDropsFalse */
+
+   $someNotFalseDropsFalse = Option::someNotFalse($position);
+   /** @psalm-trace $someNotFalseDropsFalse */
+
+   $notFalseDropsFalse = Option::some($position)->notFalse();
+   /** @psalm-trace $notFalseDropsFalse */
+
+   $notFalseLeftDropsFalse = Either::notFalseLeft($position, 'not found');
+   /** @psalm-trace $notFalseLeftDropsFalse */
+
+   $leftNotFalseDropsFalse = Either::left($position)->leftNotFalse('not found');
+   /** @psalm-trace $leftNotFalseDropsFalse */
 }
 
 /**

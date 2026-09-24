@@ -884,6 +884,28 @@ final class EitherTest extends TestCase
       $this->assertSame('AB', $mapped->rightOr('x'));
    }
 
+   public function testNotFalseLeftAndNotFalseRight(): void {
+      $index = Either::notFalseLeft(array_search('a', ['a', 'b']), 'not in the list');
+      $this->assertSame(0, $index->leftOr(-1), 'index 0 is found');
+
+      $missing = Either::notFalseLeft(array_search('z', ['a', 'b']), 'not in the list');
+      $this->assertSame('not in the list', $missing->rightOr('x'));
+
+      $this->assertSame('', Either::notFalseLeft('', 'was false')->leftOr('x'), 'an empty string is not false');
+      $this->assertSame('no error', Either::notFalseRight(false, 'no error')->leftOr('x'));
+      $this->assertSame('', Either::notFalseRight('', 'no error')->rightOr('x'), 'an empty string is not false');
+   }
+
+   public function testLeftNotFalseAndRightNotFalse(): void {
+      $this->assertSame('was false', Either::left(false)->leftNotFalse('was false')->rightOr('x'));
+      $this->assertSame(0, Either::left(0)->leftNotFalse('was false')->leftOr(-1));
+      $this->assertSame('e', Either::right('e')->leftNotFalse('was false')->rightOr('x'), 'a Right is untouched');
+
+      $this->assertSame('was false', Either::right(false)->rightNotFalse('was false')->leftOr('x'));
+      $this->assertSame('', Either::right('')->rightNotFalse('was false')->rightOr('x'));
+      $this->assertSame(1, Either::left(1)->rightNotFalse('was false')->leftOr(-1), 'a Left is untouched');
+   }
+
    public function testNotNullRightAndNotFalsyRight(): void {
       $this->assertTrue(Either::notNullRight(null, 'no error')->isLeft());
       $this->assertSame('no error', Either::notNullRight(null, 'no error')->leftOr('x'));

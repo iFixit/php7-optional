@@ -150,6 +150,10 @@ it.
 ### Smaller ones
 
 - `contains()` compares with `==`. `Option::some(1)->contains('1')` is `true`.
+- `someNotFalsy()` drops a match at index `0`, since `0` is falsy. For
+  `strpos`, `array_search` and the other functions that return `false` on
+  failure, the not-false family (`someNotFalse()`, `notFalse()`,
+  `notFalseLeft()`, ...) is the right entrance.
 - `andThen()` is an alias: `Option::andThen` calls `flatMap`,
   `Either::andThen` calls `flatMapLeft`.
 - `__toString()` interpolates the boxed value, so a non-stringable value gives

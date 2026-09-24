@@ -544,6 +544,24 @@ final class OptionTest extends TestCase {
       );
    }
 
+   /**
+    * someNotFalse exists for PHP's false-returning functions, where a match
+    * at index 0 is falsy but found. someNotFalsy gets that case wrong.
+    */
+   public function testSomeNotFalse(): void {
+      $this->assertSame(0, Option::someNotFalse(array_search('a', ['a', 'b']))->valueOr(-1), 'index 0 is found');
+      $this->assertFalse(Option::someNotFalsy(array_search('a', ['a', 'b']))->hasValue(), 'the falsy check drops it');
+      $this->assertFalse(Option::someNotFalse(false)->hasValue());
+      $this->assertSame('', Option::someNotFalse('')->valueOr('x'), 'an empty string is not false');
+      $this->assertNull(Option::someNotFalse(null)->valueOr('x'), 'null is not false either');
+   }
+
+   public function testNotFalse(): void {
+      $this->assertFalse(Option::some(false)->notFalse()->hasValue());
+      $this->assertSame(0, Option::some(0)->notFalse()->valueOr(-1));
+      $this->assertFalse(Option::none()->notFalse()->hasValue());
+   }
+
    public function testSomeNotFalsy(): void {
       $this->assertFalse(Option::someNotFalsy(0)->hasValue());
       $this->assertFalse(Option::someNotFalsy('')->hasValue());

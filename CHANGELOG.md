@@ -37,6 +37,11 @@ call:
 
 * `Option::fromCallable()` and `Either::fromCallable()`
 * `Option::someNotFalsy()`, `Either::notFalsyLeft()`, `Either::notFalsyRight()`
+* `Option::someNotFalse()` and `notFalse()`, `Either::notFalseLeft()`,
+  `notFalseRight()`, `leftNotFalse()` and `rightNotFalse()`, for PHP's own
+  functions that return `false` on failure. `someNotFalsy` treats a match at
+  index `0` from `strpos` or `array_search` as missing; these only treat
+  `false` that way
 
 Getting out of one with a message, which `value()`'s fixed
 `"Value is missing."` could not:

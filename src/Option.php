@@ -732,6 +732,35 @@ final class Option {
    }
 
    /**
+    * Turn a `Option::some(false)` into an `Option::none()`, and keep every other value
+    *
+    * PHP's own functions say "not found" with `false`: `strpos`, `array_search`,
+    * `file_get_contents`. Only `false` means that there. `notFalsy()` would also
+    * drop a match at index `0`, or a file that is empty.
+    *
+    * ```php
+    * echo (string) Option::some(array_search('a', ['a', 'b']))->notFalse(), "\n"; // Some(0)
+    * echo (string) Option::some(array_search('z', ['a', 'b']))->notFalse(), "\n"; // None
+    * ```
+    *
+    * _Notes:_
+    *
+    *  - psalm drops `false` from the type, so `Option<int|false>` comes out as
+    *    `Option<int>`
+    *
+    * @psalm-mutation-free
+    * @template TNotFalse
+    * @psalm-if-this-is Option<TNotFalse|false>
+    * @psalm-return self<TNotFalse>
+    */
+   public function notFalse(): self {
+      /** @var self<TNotFalse> a false value never survives the check */
+      return $this->hasValue && $this->value === false
+         ? self::none()
+         : $this;
+   }
+
+   /**
     * Returns true if the option's value == `$value`, otherwise false.
     *
     * ```php
@@ -932,6 +961,37 @@ final class Option {
    public static function someNotFalsy($someValue): self {
       /** @var self<TT> a falsy value never survives notFalsy() */
       return self::some($someValue)->notFalsy();
+   }
+
+   /**
+    * Take a value, turn it into `Option::some($value)` unless it is `false`, otherwise `Option::none()`
+    *
+    * The entrance for PHP's own functions that return `false` on failure:
+    * `strpos`, `array_search`, `file_get_contents`, `fopen`. Only `false` means
+    * "not found" there, so a match at index `0` or an empty file is still a
+    * Some, where `someNotFalsy` would make both a None.
+    *
+    * ```php
+    * $index = Option::someNotFalse(array_search('a', ['a', 'b']));
+    * echo (string) $index, "\n"; // Some(0), where someNotFalsy gives None
+    *
+    * echo (string) Option::someNotFalse(array_search('z', ['a', 'b'])), "\n"; // None
+    * ```
+    *
+    * _Notes:_
+    *
+    *  - Returns `Option<TT>`: psalm drops `false`, so an `int|false` goes in and
+    *    an `Option<int>` comes out
+    *
+    * @template TT
+    *
+    * @psalm-param TT|false $someValue
+    *
+    * @psalm-return self<TT>
+    */
+   public static function someNotFalse($someValue): self {
+      /** @var self<TT> a false value never survives notFalse() */
+      return self::some($someValue)->notFalse();
    }
 
    /**

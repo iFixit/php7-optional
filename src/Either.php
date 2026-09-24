@@ -1123,6 +1123,64 @@ final class Either {
    }
 
    /**
+    * Turn an `Either::left(false)` into an `Either::right($rightValue)`, and keep every other left
+    *
+    * For a left that came from one of PHP's functions that return `false` on
+    * failure. Only `false` means "not found" there, so a left of `0` or `''`
+    * stays a Left, where `leftNotFalsy` would turn both into a Right.
+    *
+    * ```php
+    * echo (string) Either::left(0)->leftNotFalse('was false'), "\n";     // Left(0), a match at index 0
+    * echo (string) Either::left(false)->leftNotFalse('was false'), "\n"; // Right(was false)
+    * ```
+    *
+    * _Notes:_
+    *
+    *  - Returns `Either<TLeft, TRight>`, with `false` dropped from the left type
+    *
+    * @psalm-mutation-free
+    * @template TTRight
+    * @template TNotFalse
+    * @psalm-param TTRight $rightValue
+    * @psalm-if-this-is Either<TNotFalse|false, TRight>
+    * @psalm-return Either<TNotFalse, TRight|TTRight>
+    **/
+   public function leftNotFalse($rightValue): self {
+      /** @var Either<TNotFalse, TRight|TTRight> a false left never survives the check */
+      return $this->isLeft && $this->leftValue === false
+         ? self::right($rightValue)
+         : $this;
+   }
+
+   /**
+    * Turn an `Either::right(false)` into an `Either::left($leftValue)`, and keep every other right
+    *
+    * The mirror of `leftNotFalse`.
+    *
+    * ```php
+    * echo (string) Either::right('')->rightNotFalse('was false'), "\n";    // Right(), an empty string is not false
+    * echo (string) Either::right(false)->rightNotFalse('was false'), "\n"; // Left(was false)
+    * ```
+    *
+    * _Notes:_
+    *
+    *  - Returns `Either<TLeft, TRight>`, with `false` dropped from the right type
+    *
+    * @psalm-mutation-free
+    * @template TTLeft
+    * @template TNotFalse
+    * @psalm-param TTLeft $leftValue
+    * @psalm-if-this-is Either<TLeft, TNotFalse|false>
+    * @psalm-return Either<TLeft|TTLeft, TNotFalse>
+    **/
+   public function rightNotFalse($leftValue): self {
+      /** @var Either<TLeft|TTLeft, TNotFalse> a false right never survives the check */
+      return !$this->isLeft && $this->rightValue === false
+         ? self::left($leftValue)
+         : $this;
+   }
+
+   /**
     * Returns true if the either's value == `$value`, otherwise false.
     *
     * ```php
@@ -1641,6 +1699,59 @@ final class Either {
    public static function notFalsyRight($rightValue, $leftValue): self {
       /** @var self<TTLeft, TTRight> */
       return self::right($rightValue)->rightNotFalsy($leftValue);
+   }
+
+   /**
+    * Take a value, turn it into `Either::left($leftValue)` unless it is `false`, otherwise `Either::right($rightValue)`
+    *
+    * The entrance for PHP's own functions that return `false` on failure, when
+    * the failure should say something. A match at index `0` or an empty file is
+    * still a Left, where `notFalsyLeft` would make both a Right.
+    *
+    * ```php
+    * $index = Either::notFalseLeft(array_search('a', ['a', 'b']), 'not in the list');
+    * echo (string) $index, "\n"; // Left(0)
+    *
+    * $missing = Either::notFalseLeft(array_search('z', ['a', 'b']), 'not in the list');
+    * echo (string) $missing, "\n"; // Right(not in the list)
+    * ```
+    *
+    * _Notes:_
+    *
+    * - Returns `Either<TTLeft, TTRight>`, with `false` dropped from the left type
+    *
+    * @psalm-pure
+    * @template TTLeft
+    * @template TTRight
+    * @psalm-param TTLeft|false $leftValue
+    * @psalm-param TTRight $rightValue
+    * @psalm-return self<TTLeft, TTRight>
+    **/
+   public static function notFalseLeft($leftValue, $rightValue): self {
+      /** @var self<TTLeft, TTRight> */
+      return self::left($leftValue)->leftNotFalse($rightValue);
+   }
+
+   /**
+    * Take a value, turn it into `Either::right($rightValue)` unless it is `false`, otherwise `Either::left($leftValue)`
+    *
+    * The mirror of `notFalseLeft`. The value being checked comes first in both.
+    *
+    * ```php
+    * echo (string) Either::notFalseRight(false, 'no error'), "\n"; // Left(no error)
+    * echo (string) Either::notFalseRight('', 'no error'), "\n";    // Right(), an empty string is not false
+    * ```
+    *
+    * @psalm-pure
+    * @template TTLeft
+    * @template TTRight
+    * @psalm-param TTRight|false $rightValue
+    * @psalm-param TTLeft $leftValue
+    * @psalm-return self<TTLeft, TTRight>
+    **/
+   public static function notFalseRight($rightValue, $leftValue): self {
+      /** @var self<TTLeft, TTRight> */
+      return self::right($rightValue)->rightNotFalse($leftValue);
    }
 
    /**

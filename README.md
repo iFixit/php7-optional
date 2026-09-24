@@ -72,7 +72,16 @@ echo $none->valueOr('-') . " " . $some->valueOr('-') . " "
    . $ok->valueOr(0) . " " . $failed->valueOr(0) . "\n"; // "- Ada 7 0"
 ```
 
-`Either` has the same two, and keeps the failure instead of dropping it:
+PHP's own lookups are the exception. `strpos` and `array_search` return `0`
+for a match at the start, which is falsy, so they need `someNotFalse`, which
+only treats `false` as missing:
+
+```php
+echo (string) Option::someNotFalsy(array_search('a', ['a', 'b'])) . "\n"; // "None", the match is lost
+echo (string) Option::someNotFalse(array_search('a', ['a', 'b'])) . "\n"; // "Some(0)"
+```
+
+`Either` has the same entrances, and keeps the failure instead of dropping it:
 
 ```php
 $right = Either::notFalsyLeft(false, 'row not found');
@@ -291,17 +300,17 @@ with the PHP version and the opcache.
 ## Full method list
 
 `Option` factories: `some` `none` `someWhen` `noneWhen` `someNotNull`
-`someNotFalsy` `fromCallable` `fromArray` `first`
+`someNotFalsy` `someNotFalse` `fromCallable` `fromArray` `first`
 
 `Option` methods: `hasValue` `valueOr` `value` `valueOrThrow` `valueOrCreate`
 `toNullable`
 `or` `orCreate` `else` `elseCreate` `match` `matchSome` `matchNone` `map`
 `mapSafely` `flatMap` `andThen` `tap` `tapNone` `filter` `filterIf` `notNull`
-`notFalsy` `contains` `exists`
+`notFalsy` `notFalse` `contains` `exists`
 
 `Either` factories: `left` `right` `success` `failure` `leftWhen` `rightWhen`
-`notNullLeft` `notNullRight` `notFalsyLeft` `notFalsyRight` `fromCallable`
-`fromArray`
+`notNullLeft` `notNullRight` `notFalsyLeft` `notFalsyRight` `notFalseLeft`
+`notFalseRight` `fromCallable` `fromArray`
 
 `Either` methods: `isLeft` `isRight` `isSuccess` `isFailure` `mapSuccess`
 `mapFailure` `successOr` `failureOr` `successOrThrow` `leftOr` `rightOr` `getLeft`
@@ -312,7 +321,8 @@ with the PHP version and the opcache.
 `mapRight` `mapLeftSafely` `mapRightSafely` `flatMapLeft` `flatMapRight`
 `andThen` `tapLeft` `tapRight`
 `filterLeft` `filterRight` `filterLeftIf` `filterRightIf` `leftNotNull`
-`rightNotNull` `leftNotFalsy` `rightNotFalsy` `leftContains` `rightContains`
+`rightNotNull` `leftNotFalsy` `rightNotFalsy` `leftNotFalse` `rightNotFalse`
+`leftContains` `rightContains`
 `existsLeft` `existsRight` `toOptionFromLeft` `toOptionFromRight`
 
 Every one carries a worked example in its docblock, and every one of those

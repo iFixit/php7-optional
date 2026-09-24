@@ -77,6 +77,10 @@ final class TypeInferenceTest extends TestCase {
          'notNullLeftDropsNull' => "Optional\\Either<string, 'missing'>",
          'notFalsyLeftDropsFalse' => "Optional\\Either<array{id: int}, 'not found'>",
          'notFalsyRightDropsFalse' => "Optional\\Either<'no error', array{id: int}>",
+         'someNotFalseDropsFalse' => 'Optional\\Option<int>',
+         'notFalseDropsFalse' => 'Optional\\Option<int>',
+         'notFalseLeftDropsFalse' => "Optional\\Either<int, 'not found'>",
+         'leftNotFalseDropsFalse' => "Optional\\Either<int, 'not found'>",
 
          // two calls in a row: each is one type, never a union with an empty box
          'twoMaps' => 'Optional\\Option<non-falsy-string>',
