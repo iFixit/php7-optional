@@ -938,7 +938,7 @@ final readonly class Option {
     *
     * @template TT
     *
-    * @psalm-param iterable<array-key, TT> $values
+    * @psalm-param iterable<mixed, TT> $values
     * @psalm-param null|callable(TT):bool $predicate
     *
     * @psalm-return self<TT>

@@ -95,3 +95,14 @@ function assignabilityPassesADog(): bool {
    return assignabilityTakesAnimal(Option::some(new AssignabilityDog()))
       && !assignabilityTakesAnimal(Option::none());
 }
+
+/**
+ * first() ignores keys, so any iterable goes in, not only array-keyed ones
+ *
+ * @param iterable<AssignabilityDog> $dogs
+ * @param WeakMap<AssignabilityDog, int> $ages
+ * @return Option<AssignabilityAnimal>
+ */
+function assignabilityFirstOfAnyIterable(iterable $dogs, WeakMap $ages): Option {
+   return Option::first($ages)->hasValue() ? Option::first($dogs) : Option::none();
+}

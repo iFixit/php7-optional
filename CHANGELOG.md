@@ -140,7 +140,7 @@ Shorthands for shapes callers otherwise spell out by hand:
 * `Option::first()`, for `if (count($x)) { return Option::some($x[0]); }`.
   Give it a predicate and it replaces the `foreach` that returns the first
   match, which PHP 8.4's `array_find` cannot do for a list that may hold
-  `null`
+  `null`. It takes any iterable, keys and all, including a `WeakMap`
 * `Option::toNullable()`, for a chain ending in `->valueOr(null)` at a
   boundary whose signature is `?T`
 
