@@ -14,7 +14,9 @@ use Throwable;
 
 /**
  * Option::do() and Result::do() with valueOrReturn(): a block of steps that
- * ends at the first empty box, the way Rust's `?` returns from a function.
+ * ends at the first empty box. It is like Rust's `?`, except that the early
+ * exit ends the nearest do() on the call stack, the way a throw reaches the
+ * nearest catch, rather than the function it is written in.
  */
 final class EarlyReturnTest extends TestCase {
    public function testTheBlockBoxesWhatItReturns(): void {
@@ -53,6 +55,11 @@ final class EarlyReturnTest extends TestCase {
 
       $this->assertSame($timeout, $box->errOr(null), 'the block keeps the very error it met');
       $this->assertSame(['first'], $steps);
+   }
+
+   public function testTheExitEndsTheBlockFromInsideAFunctionItCalls(): void {
+      $this->assertSame('Some(80)', (string) Option::do(fn() => self::port(['port' => 80])));
+      $this->assertSame('None', (string) Option::do(fn() => self::port([])), 'the helper has no do() of its own');
    }
 
    public function testAnInnerBlockEndsOnItsOwn(): void {
@@ -140,6 +147,15 @@ final class EarlyReturnTest extends TestCase {
       $this->expectExceptionMessage('Result::valueOrReturn() found no value, and nothing caught the early exit');
 
       $_ = self::failed('nowhere to go')->valueOrReturn();
+   }
+
+   /**
+    * A helper with no do() of its own, called from inside a block
+    *
+    * @param array<string, int> $config
+    */
+   private static function port(array $config): int {
+      return Option::fromArray($config, 'port')->valueOrReturn();
    }
 
    /**

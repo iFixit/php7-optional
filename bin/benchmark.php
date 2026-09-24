@@ -84,6 +84,36 @@ $plainEmptyChain = measure('null checks by hand', static function() use ($counts
 $boxEmptyChain = measure('->map()->map()->valueOr()', static fn(): int
    => Option::fromArray($counts, 'nope')->map($double)->map($double)->valueOr(0), $iterations);
 
+// do() leaves the block by throwing, and PHP records the whole call stack in
+// every exception it builds, so the early exit costs more the deeper it runs.
+echo "\nThree steps that each need the one before, the last key absent\n";
+/** @var array<string, array<string, string>> $config */
+$config = ['db' => ['host' => 'db1']];
+/** @var array<string, int> $ports */
+$ports = ['db2' => 5432];
+$steps = static fn(): int => Option::fromArray($config, 'db')
+   ->flatMap(static fn(array $db) => Option::fromArray($db, 'host'))
+   ->flatMap(static fn(string $host) => Option::fromArray($ports, $host))
+   ->valueOr(0);
+$block = static fn(): int => Option::do(static function() use ($config, $ports): int {
+   $db = Option::fromArray($config, 'db')->valueOrReturn();
+   $host = Option::fromArray($db, 'host')->valueOrReturn();
+
+   return Option::fromArray($ports, $host)->valueOrReturn();
+})->valueOr(0);
+/**
+ * Runs $subject $depth calls down the stack
+ *
+ * @param callable():int $subject
+ */
+function deep(int $depth, callable $subject): int {
+   return $depth === 0 ? $subject() : deep($depth - 1, $subject);
+}
+$flatMapSteps = measure('->flatMap()->flatMap()', $steps, $iterations);
+$doSteps = measure('do() with valueOrReturn()', $block, $iterations);
+$flatMapDeep = measure('->flatMap()->flatMap(), 50 calls deep', static fn(): int => deep(50, $steps), $iterations);
+$doDeep = measure('do() with valueOrReturn(), 50 calls deep', static fn(): int => deep(50, $block), $iterations);
+
 echo "\nConstruction alone\n";
 measure('Option::some(1)', static fn(): Option => Option::some(1), $iterations);
 measure('Option::none()', static fn(): Option => Option::none(), $iterations);
@@ -113,3 +143,8 @@ printf(
    $plainEmptyChain > 0.0 ? $boxEmptyChain / $plainEmptyChain : 0.0
 );
 printf("In absolute terms the box adds about %.0f ns per call.\n", $boxHit - $plainHit);
+printf(
+   "do()'s early exit costs %.0f ns more than flatMap() at the top of the stack, and %.0f ns more 50 calls down.\n",
+   $doSteps - $flatMapSteps,
+   $doDeep - $flatMapDeep
+);

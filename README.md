@@ -426,6 +426,13 @@ Where it does matter is a tight loop over a large array. Boxing a million
 elements adds about a tenth of a second. Reach for plain PHP there and keep
 the box for the boundaries.
 
+`do()` costs more when it ends early, because its early exit is an exception
+and PHP records the whole call stack in each one. Three steps with the last
+key absent take about 560 ns as a `flatMap()` chain and 1.1 µs in a `do()`
+block. Fifty calls further down the stack, the gap grows from about 0.5 µs to
+about 2 µs. A block that often ends early inside a tight loop is the place to
+write the `flatMap()` chain instead.
+
 Run it on your own machine rather than trusting this table; the numbers move
 with the PHP version and the opcache.
 

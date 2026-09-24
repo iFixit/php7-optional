@@ -902,6 +902,9 @@ final readonly class Result {
     *    rethrowing it. A `catch (Exception)` lets it through already
     *  - Return the plain value. A box returned from the block ends up inside
     *    another box, and a generator is returned without running
+    *  - The early exit is an exception, so ending early costs more than an
+    *    empty `flatMap()` chain, and more the deeper the call stack, since PHP
+    *    records the stack in every exception. `bin/benchmark.php` measures it
     *  - Anything else the block throws propagates. `Result::fromCallable()`
     *    inside the block catches a throw, and never the early exit
     *
