@@ -14,6 +14,7 @@
    },
    "require-dev": {
       "infection/infection": "^0.35",
+      "phpstan/phpstan": "^2.2",
       "phpunit/phpunit": "^11.5",
       "psalm/plugin-phpunit": "^0.19",
       "vimeo/psalm": "^6.0"
@@ -39,6 +40,7 @@
    "scripts": {
       "test": "phpunit",
       "psalm": "psalm --no-cache",
+      "phpstan": "phpstan analyse --no-progress",
       "types": "phpunit --filter TypeInferenceTest",
       "benchmark": "@php bin/benchmark.php",
       "mutation": "infection --threads=max",
@@ -48,13 +50,15 @@
       ],
       "check": [
          "@test",
-         "@psalm"
+         "@psalm",
+         "@phpstan"
       ]
    },
    "scripts-descriptions": {
       "test": "Run the test suite, which also executes every docblock and README example",
       "psalm": "Run psalm at errorLevel 1; it must exit 0, there is no baseline",
-      "types": "Assert what psalm infers for the expressions in tests/TypeInference",
+      "phpstan": "Run PHPStan at level max over src/ and the static-analysis code",
+      "types": "Assert what psalm and PHPStan infer for the expressions in tests/TypeInference",
       "benchmark": "Measure what the box costs against the plain PHP it replaces",
       "mutation": "Break the source on purpose and check a test notices; needs xdebug or pcov",
       "coverage": "Measure line coverage and fail below the floor; needs xdebug or pcov",

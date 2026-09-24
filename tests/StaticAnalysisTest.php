@@ -58,6 +58,55 @@ final class StaticAnalysisTest extends TestCase {
    }
 
    /**
+    * PHPStan's own checks also flag some of these lines, as calls to functions
+    * with no side effects. Only the rule's identifier counts here, and the line
+    * with droppedResultsWrite() is one PHPStan's own checks let through.
+    */
+   public function testThePhpstanRuleReportsExactlyTheDroppedResults(): void {
+      $root = dirname(__DIR__);
+      $command = sprintf(
+         '%s %s analyse --no-progress --error-format=json --level=max --configuration=%s --autoload-file=%s %s 2>/dev/null',
+         escapeshellarg(PHP_BINARY),
+         escapeshellarg("{$root}/vendor/bin/phpstan"),
+         escapeshellarg("{$root}/extension.neon"),
+         escapeshellarg("{$root}/vendor/autoload.php"),
+         escapeshellarg(self::FIXTURE)
+      );
+
+      $output = [];
+      exec($command, $output);
+
+      /** @var list<string> $output */
+      $printed = implode("\n", $output);
+      /** @var mixed $report */
+      $report = json_decode($printed, true);
+      $this->assertIsArray($report, "PHPStan did not report as JSON:\n{$printed}");
+      $this->assertIsArray($report['files'] ?? null, "PHPStan's report has no files:\n{$printed}");
+
+      $reported = [];
+
+      foreach ($report['files'] as $file) {
+         $this->assertIsArray($file);
+         $this->assertIsArray($file['messages'] ?? null);
+
+         /** @var mixed $message */
+         foreach ($file['messages'] as $message) {
+            $this->assertIsArray($message);
+
+            if (($message['identifier'] ?? null) === 'optional.unusedResult') {
+               /** @var mixed $line */
+               $line = $message['line'] ?? null;
+               $this->assertIsInt($line);
+               $reported[] = $line;
+            }
+         }
+      }
+
+      sort($reported);
+      $this->assertSame(self::droppedLines(), $reported);
+   }
+
+   /**
     * @return list<int>
     */
    private static function droppedLines(): array {

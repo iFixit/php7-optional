@@ -11,6 +11,31 @@ declare(strict_types = 1);
 use Optional\Option;
 use Optional\Result;
 
+/** @return Result<int, string> */
+function droppedResultsWrite(int $id): Result {
+   error_log("writing {$id}");
+
+   return Result::ok($id);
+}
+
+function droppedResultsNothing(): void {
+}
+
+function droppedResultsStop(): never {
+   throw new LogicException('stopped');
+}
+
+class DroppedResultsBase {
+   public function __construct(public readonly int $id) {
+   }
+}
+
+final class DroppedResultsChild extends DroppedResultsBase {
+   public function __construct() {
+      parent::__construct(1);
+   }
+}
+
 final class DroppedResultsRepository {
    /** @return Result<int, string> */
    public function save(int $id): Result {
@@ -36,9 +61,15 @@ function droppedResultsCallers(DroppedResultsRepository $repository, ?DroppedRes
    $repository->save(5)->map(fn(int $x): int => $x + 1); // dropped
    $repository->save(6)->tap(fn(int $x) => error_log("saved {$x}")); // dropped, tap() does not look at the error
    $repository->save(7)->tapErr(fn(string $error) => error_log($error));
+   droppedResultsWrite(12); // dropped, a function with side effects PHPStan's own checks let through
+   droppedResultsNothing();
    $kept = droppedResultsSave(8);
    $_ = droppedResultsSave(9);
    $_ = Option::some(10)->map(fn(int $x): int => $x);
 
    return $kept->valueOr(0) + droppedResultsSave(11)->valueOr(0);
+}
+
+function droppedResultsStopping(): void {
+   droppedResultsStop();
 }

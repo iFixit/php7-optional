@@ -73,6 +73,22 @@ jobs:
       - uses: ramsey/composer-install@v3
       - run: vendor/bin/psalm --shepherd --no-cache
 
+  phpstan:
+    runs-on: ubuntu-latest
+    name: PHPStan
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+          tools: composer:v2
+      - uses: ramsey/composer-install@v3
+      - run: vendor/bin/phpstan analyse --no-progress
+
   composer-validate:
     runs-on: ubuntu-latest
     name: Composer validate

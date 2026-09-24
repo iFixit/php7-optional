@@ -298,8 +298,10 @@ Shorthands for shapes callers otherwise spell out by hand:
 * `TypeInferenceTest` asserts what psalm infers for every traced expression,
   including the two-call chains and the entrances that drop `null` and
   `false`, so an annotation that stops carrying information fails a test.
-  Every type defect fixed in this release is among them. PHPStan reads the
-  same annotations; AGENTS.md has the command to check it by hand.
+  Every type defect fixed in this release is among them. It runs PHPStan
+  (level max) over the same expressions and records its types too, and
+  `tests/TypeInference/Assignability.php` returns boxes from typed functions,
+  so a variance mistake fails in either tool.
 * `NoDiscardTest` fails when a method that returns a box lacks
   `#[\NoDiscard]` or anything else has it, and on PHP 8.5 checks the warning
   fires. `ResultTest` fails when `Result` stops taking `Option`'s parameter
@@ -311,7 +313,7 @@ Shorthands for shapes callers otherwise spell out by hand:
   code, and one equivalent mutant, now skipped by name. Every mutant is killed
   now, and the threshold is 100%.
 * `bin/benchmark.php` measures what the box costs. The README publishes it.
-* CI is four jobs: the test matrix, coverage, psalm, and
+* CI is five jobs: the test matrix, coverage, psalm, PHPStan, and
   `composer validate --strict`. Static analysis and coverage are out of the
   matrix, because pinning psalm to the oldest PHP in it is what froze the
   toolchain for years.

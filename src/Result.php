@@ -423,7 +423,7 @@ final readonly class Result {
    public function map(callable $mapFunc): self {
       if (!$this->isOk) {
          /** @var Result<U, E> an Err holds no value, so it stands in for any value type */
-         return $this;
+         return $this; // @phpstan-ignore varTag.nativeType (PHPStan cannot see that an Err holds no T)
       }
 
       $value = $this->value;
@@ -455,7 +455,7 @@ final readonly class Result {
    public function mapErr(callable $mapFunc): self {
       if ($this->isOk) {
          /** @var Result<T, F> an Ok holds no error, so it stands in for any error type */
-         return $this;
+         return $this; // @phpstan-ignore varTag.nativeType (PHPStan cannot see that an Ok holds no E)
       }
 
       $error = $this->error;
@@ -532,7 +532,7 @@ final readonly class Result {
    public function flatMap(callable $mapFunc): self {
       if (!$this->isOk) {
          /** @var Result<U, E|F> an Err holds no value, so it stands in for any value type */
-         return $this;
+         return $this; // @phpstan-ignore varTag.nativeType (PHPStan cannot see that an Err holds no T)
       }
 
       $value = $this->value;

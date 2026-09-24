@@ -31,9 +31,10 @@ git show 3.0:src/Option.php | grep "public function valueOrThrow"
 
 ```bash
 composer install
-composer check       # what CI runs: phpunit then psalm
+composer check       # what CI runs: phpunit, psalm and PHPStan
 composer test        # phpunit alone
 composer psalm       # psalm alone, errorLevel 1, no baseline
+composer phpstan     # PHPStan alone, level max, no baseline
 composer coverage    # needs xdebug or pcov, which a plain PHP install lacks
 php bin/generate-example-checks.php   # after editing any example, see below
 
@@ -56,8 +57,8 @@ step. `tests/CoverageGateTest.php` covers every one of its outcomes.
 
 `composer mutation` breaks the source on purpose and checks a test notices. It
 runs in the coverage job, because it needs the same driver. Both gates are at
-100: every line of `src/` is covered, and every mutant is killed. A mutant that
-survives is a missing test or code that does nothing; `infection.json5` names
+100: every line of `src/` is covered, and every mutant is killed. A mutant left
+alive is a missing test or code that does nothing; `infection.json5` names
 the one equivalent mutant it skips, and why. It exists because
 review found behavior that a docblock and this file both described and that no
 test would notice being deleted, such as which class `Option::mapSafely`
@@ -67,9 +68,9 @@ catches.
 replaces, and against `json_decode()` and a small file read for scale. The
 README has the numbers.
 
-`.github/workflows/test.yaml` is four jobs: the phpunit matrix on 8.4 and 8.5,
-then coverage plus mutation testing, psalm, and `composer validate --strict`
-once each on 8.4. Static analysis is out of the matrix because pinning psalm to
+`.github/workflows/test.yaml` is five jobs: the phpunit matrix on 8.4 and 8.5,
+then coverage plus mutation testing, psalm, PHPStan, and
+`composer validate --strict` once each on 8.4. Static analysis is out of the matrix because pinning psalm to
 the oldest PHP in it is what kept this repo on a 2022 psalm for years. Coverage
 is out because xdebug roughly triples the run, and measuring the same lines
 once per PHP version teaches nothing.
@@ -275,13 +276,16 @@ whose `Result` is dropped on its own line. They live outside `src/` because
 they are tooling, not the library's API, and the PHPStan half names classes
 psalm cannot see inside PHPStan's phar, so `psalm.xml` skips that directory.
 
-`psalm.xml` runs the plugin over this repo too, so a test or an example that
-drops a `Result` is reported. The one test that drops one on purpose says so
+`psalm.xml` and `phpstan.neon` turn the check on for this repo too, so a test
+or an example that drops a `Result` is reported. The one test that drops one on purpose says so
 with `@psalm-suppress UnusedResult`.
 
 `tests/StaticAnalysis/dropped-results.php` marks every line the check must
-report with `// dropped`, and `StaticAnalysisTest` runs psalm over it and
-compares. Add a case there before changing what the check reports.
+report with `// dropped`, and `StaticAnalysisTest` runs psalm and PHPStan over
+it and compares. It also holds the calls that must not be reported: a `void`
+call, a `never` one, and `parent::__construct()`. PHPStan types the last two
+`never`, which is a subtype of `Result`, so the rule skips `never` by name. Add
+a case there before changing what the check reports.
 
 ## Two traps in the tooling itself
 
@@ -355,20 +359,29 @@ exception is `@psalm-if-this-is`, which is how `notNull()`, `notFalsy()` and
 psalm ignores that tag, and PHPStan merges the `Option<never>` half back into
 the other, which psalm will not do. Keep both when you touch one.
 
-Nothing in CI runs PHPStan. To check by hand with any PHPStan binary:
+PHPStan is a dev dependency, and `composer phpstan` runs it at level max over
+`src/`, `static-analysis/` and `tests/TypeInference/Assignability.php`, with
+the dropped-Result rule on. `TypeInferenceTest` also runs it over the traced
+expressions, each trace turned into a `dumpType()`, and compares every type
+with a second recorded list. PHPStan's types differ from psalm's in style: it
+widens a literal passed through a method's template, and adds refinements such
+as `lowercase-string`.
 
-```bash
-sed -E 's#/\*\* @psalm-trace (\$[A-Za-z]+) \*/#\\PHPStan\\dumpType(\1);#' \
-   tests/TypeInference/Expressions.php > /tmp/phpstan-expressions.php
-phpstan analyse --level=max --autoload-file=vendor/autoload.php \
-   --no-progress --error-format=raw /tmp/phpstan-expressions.php
-```
+The two tools disagree in three places, and `phpstan.neon` names each one with
+a count, so a new case fails:
 
-Every expression should get a type, none of them `mixed`. The one error to
-expect is PHPStan's, not ours: it widens a `false` passed to `Option::some()`
-into `bool`, so `Option::some($intOrFalse)->notFalsy()` stays
-`Option<int|true>`. The factories, `someNotFalse()` and `someNotFalsy()`,
-narrow it.
+- `notNull()`, `notFalsy()` and `notFalse()` bind a template only psalm
+  understands, so PHPStan reports the template unused and the cast in the body
+  wrong. Callers see PHPStan's own `@phpstan-return`, which the type test
+  checks.
+- The pure factories' `new self` needs the constructor marked pure for
+  PHPStan, and `@phpstan-pure` there makes psalm report the property writes.
+- On the empty path, `map()` and friends return `$this` with a `@var` cast
+  PHPStan cannot follow. Those lines carry a same-line `@phpstan-ignore` with
+  the reason.
+
+PHPStan 1.12 widened a `false` passed to `Option::some()` into `bool`; 2.x
+does not.
 
 ## Style
 

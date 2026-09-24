@@ -10,6 +10,7 @@ use PhpParser\Node\Identifier;
 use PHPStan\Analyser\Scope;
 use PHPStan\Rules\Rule;
 use PHPStan\Rules\RuleErrorBuilder;
+use PHPStan\Type\NeverType;
 use PHPStan\Type\ObjectType;
 use PHPStan\Type\TypeCombinator;
 
@@ -43,7 +44,9 @@ final class UnusedResultRule implements Rule {
       // a null-safe call is Result|null, and the Result half still counts
       $type = TypeCombinator::removeNull($scope->getType($call));
 
-      if (!(new ObjectType('Optional\Result'))->isSuperTypeOf($type)->yes()) {
+      // never is a subtype of every type, Result included, and PHPStan gives it
+      // to a call that returns nothing, such as parent::__construct()
+      if ($type instanceof NeverType || !(new ObjectType('Optional\Result'))->isSuperTypeOf($type)->yes()) {
          return [];
       }
 

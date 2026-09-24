@@ -371,12 +371,11 @@ One shape psalm cannot follow: a box built with a ternary,
 in a function declared `Option<User>`, or write `Option::some($user)->filter($flag)`,
 which is one box.
 
-`tests/TypeInference` records what psalm infers for expressions like these,
-including 18 two-call chains, and fails when one changes. PHPStan was
-checked against the same expressions at level max. Its one quirk: it widens a
-`false` passed to `Option::some()` into `bool`, so drop `false` with the
-factories (`someNotFalse()`, `someNotFalsy()`) rather than
-`some($value)->notFalse()`.
+`tests/TypeInference` records what psalm and PHPStan (level max) infer for
+expressions like these, including 18 two-call chains, and fails when either
+changes. PHPStan's types are sometimes less literal than psalm's: it widens a
+literal passed through a generic method, so `Option<5>` becomes `Option<int>`.
+Neither tool infers `mixed` anywhere the library knows the type.
 
 ## On PHP 8.5
 

@@ -492,7 +492,7 @@ final readonly class Option {
    public function map(callable $mapFunc): self {
       if (!$this->hasValue) {
          /** @var Option<U> an empty box holds no value, so it stands in for any type */
-         return $this;
+         return $this; // @phpstan-ignore varTag.nativeType (PHPStan cannot see that a None holds no T)
       }
 
       $value = $this->value;
@@ -578,7 +578,7 @@ final readonly class Option {
    public function flatMap(callable $mapFunc): self {
       if (!$this->hasValue) {
          /** @var Option<U> an empty box holds no value, so it stands in for any type */
-         return $this;
+         return $this; // @phpstan-ignore varTag.nativeType (PHPStan cannot see that a None holds no T)
       }
 
       $value = $this->value;

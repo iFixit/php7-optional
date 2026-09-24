@@ -1,0 +1,36 @@
+includes:
+    - extension.neon
+
+parameters:
+    level: max
+    paths:
+        - src
+        - static-analysis
+        - tests/TypeInference/Assignability.php
+    ignoreErrors:
+        # notNull(), notFalsy() and notFalse() narrow a box's type for psalm with
+        # @psalm-if-this-is and a template only psalm can bind, then a cast in the
+        # body. PHPStan reads the same tags but cannot bind that template, so it
+        # gets its own @phpstan-return conditional instead, which is what callers
+        # see. TypeInferenceTest checks those types in both tools.
+        -
+            identifier: method.templateTypeNotInParameter
+            path: src/Option.php
+            count: 3
+        -
+            message: '#^Method Optional\\Option::not(Null|Falsy|False)\(\) should return #'
+            identifier: return.type
+            path: src/Option.php
+            count: 3
+        # The pure factories build with new self, and PHPStan wants the private
+        # constructor marked pure. Marking it @phpstan-pure makes psalm, which
+        # reads that tag too, report ImpureVariable for the property writes. The
+        # constructor only fills in the new box, so the factories stay pure.
+        -
+            identifier: possiblyImpure.new
+            path: src/Option.php
+            count: 2
+        -
+            identifier: possiblyImpure.new
+            path: src/Result.php
+            count: 2
