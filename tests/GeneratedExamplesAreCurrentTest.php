@@ -31,7 +31,7 @@ final class GeneratedExamplesAreCurrentTest extends TestCase {
    public function testEveryExampleReachedTheGeneratedFile(): void {
       $rendered = ExampleSource::render();
 
-      $this->assertGreaterThan(80, count(ExampleSource::all()), 'Suspiciously few examples extracted');
+      $this->assertGreaterThan(50, count(ExampleSource::all()), 'Suspiciously few examples extracted');
       $this->assertSame(
          count(ExampleSource::all()),
          substr_count($rendered, "\nfunction example"),

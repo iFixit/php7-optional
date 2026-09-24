@@ -14,14 +14,12 @@ namespace Optional\Tests;
 final class ExampleSource {
    public const SOURCE_FILES = [
       'src/Option.php',
-      'src/Either.php',
       'src/Result.php',
       'src/Exceptions/MissingValueException.php',
       'README.md',
    ];
 
    public const PRELUDE = <<<'PHP'
-      use Optional\Either;
       use Optional\Option;
       use Optional\Result;
       use Optional\Tests\Fixtures\NewObject;

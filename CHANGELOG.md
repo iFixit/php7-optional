@@ -6,7 +6,8 @@ and [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 The 4.0 work. Nothing is tagged yet, so `composer require ifixit/php7-optional`
-still resolves to 3.0.
+still resolves to 3.0. 4.0 does not try to stay compatible with 3.x: every
+change below that breaks a caller says what to write instead.
 
 ### Breaking
 
@@ -15,67 +16,104 @@ still resolves to 3.0.
   from December 2022, and no release in the 5.x line runs on a PHP newer than
   8.3. So the level-1 badge described a check nobody could reproduce.
   If you are on PHP 7, stay on 3.x.
-* **`Either::fromArray` uses `array_key_exists` rather than `isset`.** A key
-  holding `null` is now `Left(null)` where it used to be a Right.
-  `Option::fromArray` always behaved this way, so the two classes disagreed
-  about the same input. Chain `leftNotNull()` for the old behavior.
-* **`Either::mapLeftSafely` catches `Throwable` rather than `Exception`.** An
-  `Error` that used to escape and crash now lands on the right and travels down
-  the chain. This is the riskier of the two behavior changes here, because the
-  failure is silent rather than loud. `Option::mapSafely` is unchanged and
-  still catches `Exception` only, on purpose. `Either` keeps what it caught,
-  so catching more loses nothing. `Option` discards it, and swallowing an
-  `Error` there would erase a real bug with nothing left to trace it by.
-* **`Option`, `Either` and `MissingValueException` are `final`.** Extending the
-  two boxes never worked: the static factories build with `new self`, so a
-  subclass came back as a plain `Option` or `Either` on the first `map`.
+* **`Either` is replaced by `Result`.** `Either` held a left or a right value
+  and never said which one meant success. The library treated left as success,
+  and callers passed `left:` and `right:` to `match()` by name to keep the two
+  straight. `Result` is `Ok` or `Err`, every method acts on the success, and it
+  takes `Option`'s method names wherever the idea is the same. It is not 2.x's
+  `Result`, which wrapped `Either` under other names (`okay()`, `dataOr()`) and
+  was dropped in 3.0. Where each 3.x `Either` method went:
+
+  | 3.x `Either` | 4.0 |
+  |---|---|
+  | `Either::left($v)`, `Either::right($e)` | `Result::ok($v)`, `Result::err($e)` |
+  | `Either::notNullLeft($v, $e)` | `Option::someNotNull($v)->toResult($e)` |
+  | `Either::fromArray($a, $k, $e)` | `Option::fromArray($a, $k)->toResult($e)`. A key holding `null` is now `Ok(null)` where 3.x gave a Right; add `->notNull()` before `toResult()` for the old behavior. There is no default error: 3.x made up an `Exception` when you passed none |
+  | `Either::leftWhen($v, $e, $f)` | `Result::ok($v)->filter($f, $e)` |
+  | `Either::rightWhen($v, $e, $f)` | `Result::ok($v)->filter(fn($x) => !$f($x), $e)` |
+  | `isLeft()`, `isRight()` | `isOk()`, `isErr()` |
+  | `leftOr($x)`, `rightOr($x)` | `valueOr($x)`, `errOr($x)` |
+  | `leftOrCreate($f)` | `valueOrCreate($f)` |
+  | `mapLeft($f)`, `mapRight($f)` | `map($f)`, `mapErr($f)` |
+  | `mapLeftSafely($f)` | `mapSafely($f)`, which catches `Throwable` where 3.x caught `Exception`; pass `Exception::class` as the second argument for the old behavior |
+  | `flatMapLeft($f)`, `andThen($f)` | `flatMap($f)`, with `$f` returning a `Result` |
+  | `orLeft($x)`, `orCreateLeft($f)` | `or($x)`, `orCreate($f)` |
+  | `elseLeft($r)`, `elseCreateLeft($f)` | `else($r)`, `elseCreate($f)` |
+  | `filterLeft($c, $e)`, `filterLeftIf($f, $e)` | `filter($c, $e)`, with `$c` a bool or a callable |
+  | `leftNotNull($e)` | `flatMap(fn($v) => Option::someNotNull($v)->toResult($e))` |
+  | `leftNotFalsy($e)` | `flatMap(fn($v) => Option::someNotFalsy($v)->toResult($e))` |
+  | `leftContains($v)`, `existsLeft($f)` | `contains($v)`, which compares with `===` where 3.x used `==`, and `exists($f)` |
+  | `match($l, $r)` | `match(ok: ..., err: ...)` |
+  | `matchLeft($f)`, `matchRight($f)` | `tap($f)`, `tapErr($f)`, which return the box rather than `void` |
+  | `toOptionFromLeft()` | `toOption()` |
+
+  The eleven methods that act on the right side have no one-call equivalent,
+  since `Result` has no reason to turn a failure into a success by default.
+  Each rewrite below was checked against 3.0 on both sides:
+
+  <details>
+  <summary>The right-side methods, rewritten</summary>
+
+  | 3.x `Either` | 4.0 |
+  |---|---|
+  | `rightOrCreate($f)` | `match(ok: $f, err: fn($e) => $e)` |
+  | `rightContains($x)` | `$r->isErr() && $r->errOr(null) === $x` |
+  | `existsRight($f)` | `match(ok: fn() => false, err: $f)` |
+  | `orRight($e)` | `flatMap(fn() => Result::err($e))` |
+  | `orCreateRight($f)` | `flatMap(fn($v) => Result::err($f($v)))` |
+  | `elseRight($other)` | `flatMap(fn() => $other)` |
+  | `elseCreateRight($f)` | `flatMap($f)` |
+  | `filterRight($c, $v)` | `elseCreate(fn($e) => $c ? Result::err($e) : Result::ok($v))` |
+  | `filterRightIf($f, $v)` | `elseCreate(fn($e) => $f($e) ? Result::err($e) : Result::ok($v))` |
+  | `rightNotNull($v)` | `elseCreate(fn($e) => $e === null ? Result::ok($v) : Result::err($e))` |
+  | `rightNotFalsy($v)` | `elseCreate(fn($e) => $e ? Result::err($e) : Result::ok($v))` |
+
+  </details>
+
+  `(string)` shows `Ok(...)` and `Err(...)` rather than `Left(...)` and
+  `Right(...)`. A cached `Either` no longer unserializes, since the class is
+  gone.
+* **`Option`, `Result` and `MissingValueException` are `final`.** Extending a
+  box never worked: the static factories build with `new self`, so a subclass
+  came back as a plain box on the first `map`.
 
 ### Added
 
-* `Optional\Result`, the outcome of something that can fail: `Result::ok()` or
-  `Result::err()`. It uses `Option`'s method names wherever the idea is the
-  same, and `mapErr`, `errOr` and `tapErr` for the error. `Option::toResult()`
-  and `Result::toOption()` cross between the two
+* `Optional\Result`, described under Breaking. `Option::toResult()` and
+  `Result::toOption()` cross between the two boxes
 
 Getting into a chain, which nothing in 3.x could do from a throwing or falsy
 call:
 
-* `Option::fromCallable()` and `Either::fromCallable()`
-* `Option::someNotFalsy()`, `Either::notFalsyLeft()`, `Either::notFalsyRight()`
-* `Option::someNotFalse()` and `notFalse()`, `Either::notFalseLeft()`,
-  `notFalseRight()`, `leftNotFalse()` and `rightNotFalse()`, for PHP's own
-  functions that return `false` on failure. `someNotFalsy` treats a match at
-  index `0` from `strpos` or `array_search` as missing; these only treat
-  `false` that way
+* `Option::fromCallable()`
+* `Option::someNotFalsy()`
+* `Option::someNotFalse()` and `notFalse()`, for PHP's own functions that
+  return `false` on failure. `someNotFalsy` treats a match at index `0` from
+  `strpos` or `array_search` as missing; these only treat `false` that way
 
 Getting out of one, throwing if the value is missing, with a message you
 choose or `MissingValueException` when you pass nothing:
 
 * `Option::valueOrThrow()`
-* `Either::getLeftOrThrow()` and `Either::getRightOrThrow()`
 
 Catching only the failure you expect, the way a `catch` clause names its
 class:
 
-* A `$catch` argument on `Option::fromCallable()`, `Option::mapSafely()`,
-  `Either::fromCallable()`, `Either::mapLeftSafely()` and
-  `Either::mapRightSafely()`. Only that class and its subclasses are caught,
-  and anything else propagates. On `Either` the right side is typed as that
-  class, so `Either::fromCallable($fn, JsonException::class)` is an
-  `Either<T, JsonException>`. Leaving it out keeps the defaults: `Exception`
-  on `Option`, `Throwable` on `Either`
+* A `$catch` argument on `Option::fromCallable()` and `Option::mapSafely()`.
+  Only that class and its subclasses are caught, and anything else
+  propagates. Leaving it out catches `Exception`, as 3.x did
+* The same argument on `Result::fromCallable()` and `Result::mapSafely()`,
+  which also types the error as the class you name:
+  `Result::fromCallable($fn, JsonException::class)` is a
+  `Result<T, JsonException>`. Leaving it out catches `Throwable`. The
+  defaults differ on purpose. `Result` keeps what it caught, so catching more
+  loses nothing. `Option` throws it away, and swallowing an `Error` there
+  would erase a real bug with nothing left to trace it by
 
-Staying in one through a side effect, since the `match*` methods return `void`
-and so end a chain:
+Staying in one through a side effect, since `matchSome` and `matchNone` return
+`void` and so end a chain:
 
 * `Option::tap()` and `Option::tapNone()`
-* `Either::tapLeft()` and `Either::tapRight()`
-
-Naming the sides, because left and right do not say which one went well:
-
-* `Either::success()`, `failure()`, `isSuccess()`, `isFailure()`,
-  `mapSuccess()`, `mapFailure()`, `successOr()`, `failureOr()` and
-  `successOrThrow()`
 
 Shorthands for shapes callers otherwise spell out by hand:
 
@@ -86,100 +124,79 @@ Shorthands for shapes callers otherwise spell out by hand:
 * `Option::toNullable()`, for a chain ending in `->valueOr(null)` at a
   boundary whose signature is `?T`
 
-Completing the left and right mirror, which was 17 pairs out of 21:
-
-* `Either::flatMapRight()`, `mapRightSafely()`, `notNullRight()`,
-  `toOptionFromRight()`
-
 ### Fixed
 
-* **Chained calls lost their type or failed psalm at errorLevel 1.** On 3.0,
-  `Option::some(5)->map(...)->map(...)` was typed `Option<never>`, a box psalm
-  believes is always empty (see the `map` entry below). A second `mapRight()`
-  was handed the unmapped right type and failed with four errors, and
-  `Either::notNullLeft($maybe, ...)->mapLeft(fn(string $s) => ...)` reported
-  `ReservedWord` and `NoValue`. The cause was conditional return types on
-  methods that return a box: psalm cannot decide `T is never` for an ordinary
-  `T`, so it returns both branches, and the empty-box half rejects the next
-  typed callback. Every method that returns a box now declares one type, and
-  20 everyday two-call chains are pinned in `tests/TypeInference`, where
-  nothing is suppressed
-* **`Option::someNotNull()`, `notNull()`, `notFalsy()` and the Either versions
-  kept the value they exist to drop.** `Option::someNotNull($maybe)` on a
-  `?string` was `Option<null|string>`, so the next `->map(fn(string $s) => ...)`
-  was an `InvalidArgument`. They now drop `null`, and the falsy ones `false`,
-  from the type: a row fetch's `array{id: int}|false` comes out as
+* **psalm lost the type of every chain through `Option::map`.** On 3.0 it
+  typed each one `Option<never>`, a box it believes is always empty, so
+  `$opt->map($f)->valueOr(0)` traced as the literal `0`. `map`'s
+  `@psalm-param` named the variable before the type, so the template never
+  bound. `Option::mapSafely` had the same reversal plus a return type
+  describing its input rather than its output. Every method that returns a box
+  now declares one precise type, and 18 everyday two-call chains across both
+  boxes are pinned in `tests/TypeInference`, where nothing is suppressed
+* **`Option::someNotNull()` kept the `null` it exists to drop.** On a
+  `?string`, 3.0 typed it `Option<null|string>`, so psalm reported
+  `strlen(Option::someNotNull($maybe)->valueOr('x'))` as a
+  `PossiblyNullArgument`. It is `Option<string>` now. `notNull()` and
+  `notFalsy()` dropped the right value but added an always-empty
+  `Option<never>` to the union. They return one type now, so a row fetch's
+  `array{id: int}|false` through `notFalsy()` comes out as
   `Option<array{id: int}>`
-* **`Either::orRight` had its conditional branches swapped.** psalm inferred
-  `Either<never, float(3.14)>` for `Either::right("original")->orRight(3.14)`,
-  whose value is the string `"original"`. It infers
-  `Either<never, 'original'|float(3.14)>` now.
-* **`Option::map` erased the mapped type.** Its `@psalm-param` named the
-  variable before the type, so the template never bound and psalm reported
-  `Option<never>` for a box holding a string. `Option::mapSafely` had the same
-  reversal plus a return type describing its input rather than its output.
-* **`Either::toOptionFromLeft` returned `Option<never>`** for every caller,
-  because its `@template U` appeared in no parameter and so bound to nothing.
-* **Both `fromArray` methods** had a `$key is key-of<TArray>` conditional that
-  psalm never resolved, taking the true branch even for a key it could see was
-  absent. `Option::fromArray(['hello' => 'world'], 'hello')->valueOr('x')`
-  traced `mixed` and now traces `'world'|'x'`. `Either::fromArray` with no
-  fallback is `Either<T, Exception>`, which is what it returns.
+* **`Option::fromArray`** had a `$key is key-of<TArray>` conditional that psalm
+  never resolved, so the value was `mixed` whatever the key.
+  `Option::fromArray(['hello' => 'world'], 'hello')->valueOr('x')` traces
+  `'world'|'x'` now
 * **`Option::filter` had no docblock at all**, so psalm gave it no template and
-  the mapped type was lost through it.
-* **Eight docblock examples did not run**, plus three in the README. Calls to
-  methods that never existed (`->or()` on Either, `->toOption()`, `safeMap()`),
-  factories invoked with too few arguments, and variables used but never
-  defined. Two more ran but stated the wrong result, because a PHP 8 warning is
-  not a throwable.
-* **`Either::leftNotFalsy` documented itself with `leftNotNull`'s example.**
+  the mapped type was lost through it
+* **`Option::mapSafely`'s example did not run.** It called `safeMap()`, which
+  never existed, and showed a caught exception using a missing array key,
+  which on PHP 8 is a warning that nothing catches. The README's only complete
+  example called `SimpleResult::okay()`, from a class deleted in the 2.x line
 
 ### Changed
 
-* Every method that returns a new box carries PHP 8.5's `#[\NoDiscard]`, so
+* Every method that returns a new box has PHP 8.5's `#[\NoDiscard]`, so
   `$option->map($f);` on its own line, which does nothing, warns on 8.5. psalm
   cannot catch it: it reports a dropped result only for a method it knows
   changes nothing, and a method that runs your callback cannot promise that.
   PHP 8.4 ignores the attribute. The tap family is left unmarked, since
   dropping its result is the normal use. On 8.5, a test suite that fails on
   warnings now fails wherever it drops a result
-* `Option` and `Either` are `readonly` classes, so PHP enforces the
+* `Option` and `Result` are `readonly` classes, so PHP enforces the
   immutability the docblocks only promised. Setting a property on a box, even
   a new dynamic one, is now an `Error` rather than a deprecation notice
 * psalm infers different types for most methods that return a box, each now a
   single type (see Fixed). A psalm baseline in your own code that recorded the
   old types may need regenerating
-* `filter`, `filterLeft` and `filterRight` take `bool|callable` rather than
-  `bool`, so the short, guessable name has the lazy option. Passing a bool is
-  unchanged. The three lose `@psalm-mutation-free`, because a method that may
-  call code you supplied is not mutation-free.
+* `Option::filter` takes `bool|callable` rather than `bool`, so the short,
+  guessable name has the lazy option. Passing a bool is unchanged. It loses
+  `@psalm-mutation-free`, because a method that may call code you supplied is
+  not mutation-free
 
 ### Deprecated
 
-* `Option::filterIf()`, `Either::filterLeftIf()` and `Either::filterRightIf()`.
-  `filter`, `filterLeft` and `filterRight` take the callable now, so these are
-  a second spelling of the same call. They carry PHP 8.4's `#[\Deprecated]`,
-  so a call prints a deprecation naming the replacement, and psalm reports
-  `DeprecatedMethod`. They still work, and go in the next major version. A
-  test suite that fails on deprecations fails on these calls
+* `Option::filterIf()`. `filter` takes the callable now, so this is a second
+  spelling of the same call. It has PHP 8.4's `#[\Deprecated]`, so a call
+  prints a deprecation naming the replacement, and psalm reports
+  `DeprecatedMethod`. A test suite that fails on deprecations fails on these
+  calls
 
 ### Removed
 
-* `Option::value()`, `Either::getLeft()` and `Either::getRight()`, which were
-  on master but in no tagged release, so no 3.x caller has them. Call
-  `valueOrThrow()`, `getLeftOrThrow()` or `getRightOrThrow()` with no argument
-  instead: same result, same `MissingValueException`. A name that short hides
-  the throw, and an unguarded call to it is the one mistake psalm cannot catch.
-  Java made the same call: the documentation for `Optional.get()` names
-  `orElseThrow()` as the preferred alternative
+* `Option::value()`, which was on master but in no tagged release, so no 3.x
+  caller has it. Call `valueOrThrow()` with no argument instead: same result,
+  same `MissingValueException`. A name that short hides the throw, and an
+  unguarded call to it is the one mistake psalm cannot catch. Java made the
+  same call: the documentation for `Optional.get()` names `orElseThrow()` as
+  the preferred alternative
 * `psalm-baseline.xml`. Every entry in it was already unused, and `src/` and
   `tests/` are clean at errorLevel 1 without it.
 * `sami-config.php`. It configured Sami, which is not a dependency, is not
   installed, and has not been maintained for years. Nothing in CI built or
   deployed the docs it described. The generated site at `php7-optional.surge.sh`
-  is years stale and still serves pages for `Optional\Result` and
-  `Optional\SimpleResult`, deleted back in the 2.x line. The docblocks are the
-  API documentation now, and every example in them is executed by the suite.
+  is years stale and still serves pages for 2.x classes deleted long ago. The
+  docblocks are the API documentation now, and every example in them is
+  executed by the suite.
 
 ### Infrastructure
 
@@ -188,22 +205,25 @@ Completing the left and right mirror, which was 17 pairs out of 21:
   one, the example must call the method it documents rather than mention it in
   a comment or a string, and the method must appear in the README's list. Each
   gate was verified by reintroducing the bug it catches.
-* `SerializationTest` holds boxes serialized by tag 3.0 and checks they read
-  back unchanged, and that this version writes the same bytes. The payload
+* `SerializationTest` pins the serialized bytes of both boxes, in both
+  directions: pinned payloads read back unchanged, and this version writes
+  them byte for byte. `Option`'s are the bytes tag 3.0 writes. The payload
   names every private property, so renaming one would have turned every cached
   Some into a None after a deploy, with a deprecation notice as the only sign.
 * Coverage is measured in CI and fails below a floor, rather than being printed
   into a log nobody reads.
 * `TypeInferenceTest` asserts what psalm infers for every traced expression,
-  including 20 two-call chains and the entrances that drop `null` and `false`,
-  so an annotation that stops carrying information fails a test. Every type
-  defect fixed in this release is among them. PHPStan reads the same
-  annotations; AGENTS.md has the command to check it by hand.
+  including the two-call chains and the entrances that drop `null` and
+  `false`, so an annotation that stops carrying information fails a test.
+  Every type defect fixed in this release is among them. PHPStan reads the
+  same annotations; AGENTS.md has the command to check it by hand.
 * `NoDiscardTest` fails when a method that returns a box lacks
   `#[\NoDiscard]` or anything else has it, and on PHP 8.5 checks the warning
-  fires.
-* Mutation testing runs in CI. Three behaviors in this release had a docblock,
-  a line in AGENTS.md, and no test that would fail if they were deleted.
+  fires. `ResultTest` fails when `Result` stops taking `Option`'s parameter
+  names for a method both boxes have.
+* Mutation testing runs in CI. Mutants made by hand had already found behavior
+  with a docblock, a line in AGENTS.md, and no test that would fail if it were
+  deleted, such as which class `Option::mapSafely` catches.
 * `bin/benchmark.php` measures what the box costs. The README publishes it.
 * CI is four jobs: the test matrix, coverage, psalm, and
   `composer validate --strict`. Static analysis and coverage are out of the

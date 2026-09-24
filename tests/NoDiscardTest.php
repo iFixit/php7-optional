@@ -4,7 +4,6 @@ declare(strict_types = 1);
 
 namespace Optional\Tests;
 
-use Optional\Either;
 use Optional\Option;
 use Optional\Result;
 use PHPUnit\Framework\Attributes\RequiresPhp;
@@ -30,7 +29,7 @@ final class NoDiscardTest extends TestCase {
    public function testEveryMethodThatReturnsABoxIsMarked(): void {
       $checked = 0;
 
-      foreach ([Option::class, Either::class, Result::class] as $class) {
+      foreach ([Option::class, Result::class] as $class) {
          foreach ((new ReflectionClass($class))->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
             if ($method->isStatic()) {
                continue;
@@ -56,7 +55,7 @@ final class NoDiscardTest extends TestCase {
          }
       }
 
-      $this->assertGreaterThan(60, $checked, 'Reflection found suspiciously few methods');
+      $this->assertGreaterThan(35, $checked, 'Reflection found suspiciously few methods');
    }
 
    #[RequiresPhp('>= 8.5')]

@@ -62,7 +62,7 @@ final class DocblockExampleTest extends TestCase {
 
       $this->assertGreaterThanOrEqual(20, count($labels), 'Too few examples extracted from src/');
 
-      foreach (['src/Option.php', 'src/Either.php', 'src/Result.php', 'README.md'] as $relativePath) {
+      foreach (['src/Option.php', 'src/Result.php', 'README.md'] as $relativePath) {
          $fromFile = array_filter($labels, static fn(string $l): bool => str_starts_with($l, $relativePath));
          $this->assertNotEmpty($fromFile, "No docblock examples extracted from {$relativePath}");
       }

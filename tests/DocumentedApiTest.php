@@ -70,8 +70,8 @@ final class DocumentedApiTest extends TestCase {
    /**
     * An example that never calls the method it documents is a copy of the
     * neighbour's. It runs, so DocblockExampleTest passes it, and it carries a
-    * ```php block, so the check above passes it too. Either::leftNotFalsy
-    * shipped for years with leftNotNull's example.
+    * ```php block, so the check above passes it too. A falsy check once shipped
+    * for years with the null check's example.
     */
    #[DataProvider('publicMethodProvider')]
    public function testExampleCallsTheMethodItDocuments(string $label, string $docblock): void {
@@ -189,8 +189,8 @@ final class DocumentedApiTest extends TestCase {
    public function testProviderSeesTheWholeApi(): void {
       $labels = array_keys(iterator_to_array(self::publicMethodProvider()));
 
-      $this->assertGreaterThan(70, count($labels), 'Reflection found suspiciously few public methods');
+      $this->assertGreaterThan(40, count($labels), 'Reflection found suspiciously few public methods');
       $this->assertContains('Option::map()', $labels);
-      $this->assertContains('Either::mapRight()', $labels);
+      $this->assertContains('Result::mapErr()', $labels);
    }
 }

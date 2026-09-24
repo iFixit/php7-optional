@@ -1,8 +1,8 @@
 {
    "name": "ifixit/php7-optional",
-   "description": "Option and Either types for PHP: an alternative to null and to throwing",
+   "description": "Option and Result types for PHP: an alternative to null and to throwing",
    "license": "MIT",
-   "keywords": ["option", "either", "maybe", "null", "optional"],
+   "keywords": ["option", "result", "maybe", "null", "optional"],
    "authors": [
       {
          "name": "Jarred Stelfox",

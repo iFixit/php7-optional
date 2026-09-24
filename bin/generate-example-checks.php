@@ -8,12 +8,13 @@ declare(strict_types = 1);
  *
  * DocblockExampleTest executes the examples, which proves they run. It does not
  * prove they type-check, and this library's whole claim is that it type-checks
- * at errorLevel 1. Either::flatMapLeft shipped for years demanding an
- * impossible `Either<never, never>` from its callback, so its own documented
- * example was an InvalidArgument that nothing reported.
+ * at errorLevel 1. A chaining method once shipped for years demanding an
+ * impossible `never` type from its callback, so its own documented example
+ * was an InvalidArgument that nothing reported.
  *
  * The generated file is committed, because psalm runs in its own CI job and
- * cannot generate it first. ExampleTypeCheckTest fails when it is stale.
+ * cannot generate it first. GeneratedExamplesAreCurrentTest fails when it is
+ * stale.
  *
  *     php bin/generate-example-checks.php
  */

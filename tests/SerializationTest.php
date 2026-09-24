@@ -4,8 +4,8 @@ declare(strict_types = 1);
 
 namespace Optional\Tests;
 
-use Optional\Either;
 use Optional\Option;
+use Optional\Result;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -19,71 +19,72 @@ use PHPUnit\Framework\TestCase;
  * and not loudly: a cached Some whose flag has no property left to land in
  * reads as a None, with only a deprecation notice to say so.
  *
- * The payloads below were written by tag 3.0, byte for byte.
+ * The payloads below are pinned byte for byte. Option's have not changed since
+ * tag 3.0 wrote them.
  */
 final class SerializationTest extends TestCase {
-   private const WRITTEN_BY_3_0 = [
+   private const PAYLOADS = [
       'someInt' => "O:15:\"Optional\\Option\":2:{s:25:\"\0Optional\\Option\0hasValue\";b:1;s:22:\"\0Optional\\Option\0value\";i:5;}",
       'someArray' => "O:15:\"Optional\\Option\":2:{s:25:\"\0Optional\\Option\0hasValue\";b:1;s:22:\"\0Optional\\Option\0value\";a:2:{s:3:\"min\";d:0.5;s:3:\"max\";d:9;}}",
       'none' => "O:15:\"Optional\\Option\":2:{s:25:\"\0Optional\\Option\0hasValue\";b:0;s:22:\"\0Optional\\Option\0value\";N;}",
       'someNull' => "O:15:\"Optional\\Option\":2:{s:25:\"\0Optional\\Option\0hasValue\";b:1;s:22:\"\0Optional\\Option\0value\";N;}",
-      'left' => "O:15:\"Optional\\Either\":3:{s:23:\"\0Optional\\Either\0isLeft\";b:1;s:26:\"\0Optional\\Either\0leftValue\";s:1:\"x\";s:27:\"\0Optional\\Either\0rightValue\";N;}",
-      'right' => "O:15:\"Optional\\Either\":3:{s:23:\"\0Optional\\Either\0isLeft\";b:0;s:26:\"\0Optional\\Either\0leftValue\";N;s:27:\"\0Optional\\Either\0rightValue\";s:5:\"error\";}",
+      'okInt' => "O:15:\"Optional\\Result\":3:{s:21:\"\0Optional\\Result\0isOk\";b:1;s:22:\"\0Optional\\Result\0value\";i:5;s:22:\"\0Optional\\Result\0error\";N;}",
+      'errString' => "O:15:\"Optional\\Result\":3:{s:21:\"\0Optional\\Result\0isOk\";b:0;s:22:\"\0Optional\\Result\0value\";N;s:22:\"\0Optional\\Result\0error\";s:7:\"timeout\";}",
    ];
 
-   public function testASomeWrittenBy30ReadsBackAsTheSameSome(): void {
+   public function testACachedSomeReadsBackAsTheSameSome(): void {
       $this->assertSame(5, self::readOption('someInt')->valueOr(-1));
       $this->assertSame(['min' => 0.5, 'max' => 9.0], self::readOption('someArray')->valueOr([]));
    }
 
-   public function testANoneWrittenBy30ReadsBackAsANone(): void {
+   public function testACachedNoneReadsBackAsANone(): void {
       $this->assertFalse(self::readOption('none')->hasValue());
    }
 
-   public function testASomeNullWrittenBy30IsStillASome(): void {
+   public function testACachedSomeNullIsStillASome(): void {
       $box = self::readOption('someNull');
 
       $this->assertTrue($box->hasValue(), 'a stored null is still a Some after the round trip');
       $this->assertNull($box->valueOr('x'));
    }
 
-   public function testAnEitherWrittenBy30ReadsBackOnTheSameSide(): void {
-      $this->assertSame('x', self::readEither('left')->leftOr('fallback'));
-      $this->assertSame('error', self::readEither('right')->rightOr('fallback'));
+   public function testACachedResultReadsBackOnTheSameSide(): void {
+      $this->assertSame(5, self::readResult('okInt')->valueOr(-1));
+      $this->assertSame('timeout', self::readResult('errString')->errOr('x'));
    }
 
    /**
-    * The other direction. What this version writes has to match what 3.0
-    * wrote, so a box cached after an upgrade is still readable if the upgrade
-    * is rolled back.
+    * The other direction. What this version writes has to match the pinned
+    * bytes, so a box cached before a deploy is still readable after it, and
+    * after a rollback.
     */
-   public function testThisVersionWritesWhat30Wrote(): void {
-      $this->assertSame(self::WRITTEN_BY_3_0['someInt'], serialize(Option::some(5)));
-      $this->assertSame(self::WRITTEN_BY_3_0['someArray'], serialize(Option::some(['min' => 0.5, 'max' => 9.0])));
-      $this->assertSame(self::WRITTEN_BY_3_0['none'], serialize(Option::none()));
-      $this->assertSame(self::WRITTEN_BY_3_0['someNull'], serialize(Option::some(null)));
-      $this->assertSame(self::WRITTEN_BY_3_0['left'], serialize(Either::left('x')));
-      $this->assertSame(self::WRITTEN_BY_3_0['right'], serialize(Either::right('error')));
+   public function testThisVersionWritesThePinnedBytes(): void {
+      $this->assertSame(self::PAYLOADS['someInt'], serialize(Option::some(5)));
+      $this->assertSame(self::PAYLOADS['someArray'], serialize(Option::some(['min' => 0.5, 'max' => 9.0])));
+      $this->assertSame(self::PAYLOADS['none'], serialize(Option::none()));
+      $this->assertSame(self::PAYLOADS['someNull'], serialize(Option::some(null)));
+      $this->assertSame(self::PAYLOADS['okInt'], serialize(Result::ok(5)));
+      $this->assertSame(self::PAYLOADS['errString'], serialize(Result::err('timeout')));
    }
 
    /**
-    * @param key-of<self::WRITTEN_BY_3_0> $name
+    * @param key-of<self::PAYLOADS> $name
     * @return Option<mixed>
     */
    private static function readOption(string $name): Option {
-      $box = unserialize(self::WRITTEN_BY_3_0[$name], ['allowed_classes' => [Option::class]]);
+      $box = unserialize(self::PAYLOADS[$name], ['allowed_classes' => [Option::class]]);
       self::assertInstanceOf(Option::class, $box);
 
       return $box;
    }
 
    /**
-    * @param key-of<self::WRITTEN_BY_3_0> $name
-    * @return Either<mixed, mixed>
+    * @param key-of<self::PAYLOADS> $name
+    * @return Result<mixed, mixed>
     */
-   private static function readEither(string $name): Either {
-      $box = unserialize(self::WRITTEN_BY_3_0[$name], ['allowed_classes' => [Either::class]]);
-      self::assertInstanceOf(Either::class, $box);
+   private static function readResult(string $name): Result {
+      $box = unserialize(self::PAYLOADS[$name], ['allowed_classes' => [Result::class]]);
+      self::assertInstanceOf(Result::class, $box);
 
       return $box;
    }

@@ -1,21 +1,22 @@
 # php7-optional
 
 Two immutable boxes that replace `null` and error returns: `Optional\Option`
-(Some or None) and `Optional\Either` (Left or Right). This is a standalone
+(Some or None) and `Optional\Result` (Ok or Err). This is a standalone
 Composer package published to Packagist as `ifixit/php7-optional`. Consumers
 install it with composer, so nothing you change here reaches any of them until
 someone cuts a tag.
 
-The whole library is three source files (`src/Option.php`, `src/Either.php`,
-`src/Exceptions/MissingValueException.php`). Read them directly. This document
+The whole library is `src/Option.php`, `src/Result.php`,
+`src/Exceptions/MissingValueException.php` and one internal trait,
+`src/Internal/DescribesValues.php`. Read them directly. This document
 covers only what reading them will not tell you, or will tell you wrong.
 
 ## master is not what consumers get
 
 The released package and the code in front of you are different APIs, and the
-gap is now a whole major version. Tag `3.0` is PHP 7 compatible, has no
-`tap()`, `fromCallable()`, `valueOrThrow()` or `first()`, and it is what a
-consumer on `^3.0` resolves to.
+gap is now a whole major version. Tag `3.0` is PHP 7 compatible, has `Either`
+where master has `Result`, has no `tap()`, `fromCallable()`, `valueOrThrow()`
+or `first()`, and it is what a consumer on `^3.0` resolves to.
 
 Before telling anyone a method is available, or writing code elsewhere that
 calls one:
@@ -55,8 +56,8 @@ than no step. `tests/CoverageGateTest.php` covers every one of its outcomes.
 `composer mutation` breaks the source on purpose and checks a test notices. It
 runs in the coverage job, because it needs the same driver. It exists because
 review found behavior that a docblock and this file both described and that no
-test would notice being deleted: both `mapSafely` catch types, and
-`Either::fromArray`'s fabricated Exception.
+test would notice being deleted: the catch types of both `mapSafely` methods,
+and a fallback exception nothing asserted.
 
 `composer benchmark` measures what the box costs against the plain PHP it
 replaces, and against `json_decode()` and a small file read for scale. The
@@ -115,16 +116,16 @@ Each verified by execution on PHP 8.4, not read off the annotations.
 
 ### Pass the callable, not its result
 
-`Option::filter()`, `Either::filterLeft()` and `Either::filterRight()` take a
-bool or a callable. A bool is evaluated at the call site, before the method
-runs, so an expensive or throwing expression runs even when the box is empty:
+`Option::filter()` and `Result::filter()` take a bool or a callable. A bool is
+evaluated at the call site, before the method runs, so an expensive or
+throwing expression runs even when the box is empty:
 
 ```php
 Option::none()->filter($expensive());   // $expensive() still runs
 Option::none()->filter($expensive);     // callback never runs
 ```
 
-The `filterIf` family did the lazy form under a longer name and carries
+`Option::filterIf()` did the lazy form under a longer name and carries
 `#[\Deprecated]` now. Keep it working until a major version removes it, and
 add no new calls.
 
@@ -138,12 +139,12 @@ and a value can be a callable.
 | Call | Catches by default | Because |
 |---|---|---|
 | `Option::fromCallable`, `Option::mapSafely` | `Exception` | the box discards it, so swallowing an `Error` erases a bug |
-| `Either::fromCallable`, `Either::mapLeftSafely`, `Either::mapRightSafely` | `Throwable` | the box keeps it, so nothing is lost |
+| `Result::fromCallable`, `Result::mapSafely` | `Throwable` | the box keeps it, so nothing is lost |
 
 This asymmetry is deliberate and both halves have a test. Do not "fix" it by
 making them agree.
 
-Each of the five takes the class to catch as its last argument, `$catch`, and
+Each of the four takes the class to catch as its last argument, `$catch`, and
 the defaults above are only its default values. The body catches `Throwable`
 and rethrows anything that is not an instance of `$catch`, so narrowing that
 `catch` block would silently stop a caller from naming an `Error` class.
@@ -159,35 +160,34 @@ it.
 
 ### Smaller ones
 
-- `contains()` compares with `==`. `Option::some(1)->contains('1')` is `true`.
+- `Option::contains()` compares with `==`, so `Option::some(1)->contains('1')`
+  is `true`. `Result::contains()` compares with `===`.
 - `someNotFalsy()` drops a match at index `0`, since `0` is falsy. For
   `strpos`, `array_search` and the other functions that return `false` on
   failure, the not-false family (`someNotFalse()`, `notFalse()`,
   `notFalseLeft()`, ...) is the right entrance.
-- There is no `value()`, `getLeft()` or `getRight()`, on purpose. The
-  no-argument `valueOrThrow()`, `getLeftOrThrow()` and `getRightOrThrow()`
-  replace them, so the throw is in the name. Do not add them back.
-- `andThen()` is an alias: `Option::andThen` calls `flatMap`,
-  `Either::andThen` calls `flatMapLeft`.
+- There is no `value()`, on purpose. The no-argument `valueOrThrow()` replaces
+  it, so the throw is in the name. Do not add it back.
+- `Result::valueOrThrow()` with no factory rethrows the error itself when the
+  error is a `Throwable`, so the trace still points where the failure
+  happened. Any other error becomes a `MissingValueException` naming it.
+- `andThen()` is an alias: `Option::andThen` calls `flatMap`.
 - `__toString()` interpolates the boxed value, so a non-stringable value gives
   a PHP warning and `"Some(Array)"` rather than a throw. The
   `@psalm-suppress InvalidCast` is intentional (vimeo/psalm#1982).
 - `Option::none()` builds a new object every call. Compare with `==`.
-- `Either::fromArray` with no `$rightValue` fabricates
-  `new Exception("Either got null for rightValue")`, so there is no way to
-  build a `Right(null)` through it. `Either::right(null)` works.
 
 ## The serialized form is API
 
 Boxes get cached with `serialize()`, and the payload names the class and
 every private property: `Optional\Option` with `hasValue` and `value`,
-`Optional\Either` with `isLeft`, `leftValue` and `rightValue`. Renaming one, or
-splitting a class into `Some` and `None` subclasses, breaks every box cached
-before the deploy, and quietly: a cached Some reads back as a None, with a
-deprecation notice as the only sign. `SerializationTest` holds payloads written
-by tag 3.0 and fails on either direction of that drift.
+`Optional\Result` with `isOk`, `value` and `error`. Renaming one, or splitting a
+class into `Some` and `None` subclasses, breaks every box cached before the
+deploy, and quietly: a cached Some reads back as a None, with a deprecation
+notice as the only sign. `SerializationTest` pins the bytes (Option's are
+unchanged since tag 3.0) and fails on either direction of that drift.
 
-## Three conventions the tests enforce
+## Two conventions the tests enforce
 
 **Every method that returns a new box carries `#[\NoDiscard(self::DISCARDED)]`,
 except the tap family.** `$box->map($f);` alone on a line does nothing, psalm
@@ -199,28 +199,17 @@ throw or not run a callback has to use the result, or assign it to `$_`, which
 psalm treats as deliberately unused. Do not reach for a `(void)` cast; that is
 PHP 8.5 syntax and a parse error on 8.4.
 
-**Every left method needs a right twin.** `Either` is a symmetric box, and
-`testEveryOneSidedMethodHasItsTwin` walks the class with reflection and fails
-on any one-sided name whose counterpart is missing, in both directions. A
-mirror with a few gaps is worse than none, because a reader learns the rule and
-then guesses a method that is not there.
-
-One method breaks the mirror on purpose. `flatMapLeft` pins the right side, so
-the mirror-exact `flatMapRight` would pin the left, and recovering from an error
-is the whole reason to call it. It takes both templates and says so in its
-notes.
-
-**Left is the success side.** `andThen` is `flatMapLeft`, and `fromCallable`
-puts the return value on the left and the `Throwable` on the right. `success`,
-`failure`, `isSuccess`, `isFailure`, `mapSuccess`, `mapFailure`, `successOr`,
-`failureOr` and `successOrThrow` are pure delegation to the left-and-right
-methods. `testSuccessAndFailureNamesDelegate` asserts each agrees with its
-target, and `testAliasAnnotationsMatchTheirTargets` that their psalm
-annotations match, so the two spellings cannot drift.
-
-Do not extend the alias set method by method. It covers create, ask, transform
-each side, and the ways out. Mirroring every `Either` method into a second
-vocabulary would double the class.
+**`Result` takes `Option`'s names.** Wherever the idea is the same, the method
+has the same name and the same parameter names on both boxes, and on `Result`
+it acts on the success: `map`, `mapSafely`, `flatMap`, `filter`, `valueOr`,
+`valueOrCreate`, `valueOrThrow`, `toNullable`, `contains`, `exists`, `or`,
+`orCreate`, `else`, `elseCreate`, `tap`, `fromCallable`. What reaches the error
+is spelled with `Err`: `mapErr`, `errOr`, `tapErr`, `isErr`.
+`testSharesOptionsMethodAndParameterNames` fails when a shared method's
+parameters drift. A new method on either box should take the other's name if
+the other has the idea, and there should be one name per operation: `Either`
+reached 66 methods by spelling every operation twice, left and right, and then
+adding success and failure aliases on top.
 
 ## Two traps in the tooling itself
 
@@ -252,11 +241,9 @@ reporting the test classes themselves as unused.
   `Option<U>|Option<never>`. The next call with a typed callback meets the
   empty half and fails with `ReservedWord` and `NoValue`; that once broke 11
   of 20 everyday two-call chains. Write one type instead (`Option<T|TT>`,
-  `Either<TLeft, URight>`), and state the class invariant in the body with a
-  `/** @var ... */` where psalm cannot see it. A conditional inside a type
-  parameter is fine (`Either<V, (TTRight is null ? Exception : TTRight)>`),
-  and so is one on a method that returns a plain value, since psalm drops
-  `never` from a value union.
+  `Result<T, E|TE>`), and state the class invariant in the body with a
+  `/** @var ... */` where psalm cannot see it. A conditional on a method that
+  returns a plain value is fine, since psalm drops `never` from a value union.
 - To drop `null` or `false` from a box's type, bind a template through
   `@psalm-if-this-is Option<TNotNull|null>`. Two or three members bind; a
   longer union of literals does not, and fails on an array shape.
@@ -269,15 +256,15 @@ reporting the test classes themselves as unused.
 - The classes carry `@api`, which is what keeps psalm from reporting a public
   method as unused just because its callers live in another repository.
 - `@psalm-param` beats a plain `@param` for the same variable. A docblock
-  carrying both silently drops the `@param`, which is how `Either::fromArray`
+  carrying both silently drops the `@param`, which is how a `fromArray` once
   ended up with a `key-of<TArray>` conditional that could never bind.
 
 ## PHPStan reads the same annotations
 
 PHPStan understands the `@psalm-*` tags, so there is one set of types. The
-exception is `@psalm-if-this-is`, which is how `notNull()`, `notFalsy()`,
-`notFalse()` and their six Either twins drop a type; PHPStan ignores it and
-would call the result `mixed`. Those nine methods also carry a
+exception is `@psalm-if-this-is`, which is how `notNull()`, `notFalsy()` and
+`notFalse()` drop a type; PHPStan ignores it and would call the result
+`mixed`. Those three methods also carry a
 `@phpstan-return` conditional such as `(T is null ? self<never> : self<T>)`.
 psalm ignores that tag, and PHPStan merges the `Option<never>` half back into
 the other, which psalm will not do. Keep both when you touch one.

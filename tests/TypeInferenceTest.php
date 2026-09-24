@@ -14,9 +14,7 @@ use PHPUnit\Framework\TestCase;
  * and they need tests. Every annotation defect found on this branch was found
  * by running @psalm-trace by hand and reading the output:
  *
- *   Either::orRight        claimed the alternative for a box that keeps its own
  *   Option::map            reported Option<never> for a box holding a string
- *   Either::toOptionFromLeft  collapsed to Option<never> for every caller
  *   Option::fromArray      collapsed to Option<mixed> at every call site
  *   Option::map            returned Option<U>|Option<never>, so a second map()
  *                          with a typed callback failed psalm at errorLevel 1
@@ -48,40 +46,13 @@ final class TypeInferenceTest extends TestCase {
          'fromCallableKeepsTheReturnType' => 'Optional\\Option<7>',
          'firstWithAPredicateKeepsTheType' => "Optional\\Option<'a'|'bb'>",
 
-         // Either
-         'orRightOnARightKeepsTheOriginal' => "Optional\\Either<never, 'original'|float(3.14)>",
-         'orRightOnALeftTakesTheAlternative' => 'Optional\\Either<never, float(3.14)>',
-         'toOptionFromLeftKeepsTheLeft' => 'Optional\\Option<10>',
-         'toOptionFromRightOnALeftIsNone' => 'Optional\\Option<never>',
-         'eitherFromArrayKeepsTheValueType' => "Optional\\Either<'world', 'oh no'>",
-         'mapLeftKeepsTheMappedType' => "Optional\\Either<'n5', never>",
-         'eitherFromCallableCarriesTheThrowable' => 'Optional\\Either<7, Throwable>',
-         'getLeftOrThrowReturnsTheLeft' => '42',
-         'fromCallableTypesTheNamedClass' => 'Optional\\Either<7, InvalidArgumentException>',
-         'mapLeftSafelyTypesTheNamedClass' => "Optional\\Either<'n5', JsonException>",
-
-         // an alias must infer exactly what its target infers
-         'viaMapSuccess' => "Optional\\Either<'n21', never>",
-         'viaMapLeft' => "Optional\\Either<'n21', never>",
-         'viaSuccessOr' => "'fallback'",
-         'viaLeftOr' => "'fallback'",
-
-         // the chaining methods have to accept a callback that can go either way
-         'flatMapLeftAcceptsAFailingStep' => "Optional\\Either<never, 'rejected 1'>",
-         'flatMapRightAcceptsARecovery' => "Optional\\Either<'default', never>",
-
          // an entrance drops the missing value from the type, not just the box
          'someNotNullDropsNull' => 'Optional\\Option<string>',
          'someNotFalsyDropsFalse' => 'Optional\\Option<array{id: int}>',
          'notNullDropsNull' => 'Optional\\Option<string>',
          'notFalsyDropsFalse' => 'Optional\\Option<int>',
-         'notNullLeftDropsNull' => "Optional\\Either<string, 'missing'>",
-         'notFalsyLeftDropsFalse' => "Optional\\Either<array{id: int}, 'not found'>",
-         'notFalsyRightDropsFalse' => "Optional\\Either<'no error', array{id: int}>",
          'someNotFalseDropsFalse' => 'Optional\\Option<int>',
          'notFalseDropsFalse' => 'Optional\\Option<int>',
-         'notFalseLeftDropsFalse' => "Optional\\Either<int, 'not found'>",
-         'leftNotFalseDropsFalse' => "Optional\\Either<int, 'not found'>",
 
          // two calls in a row: each is one type, never a union with an empty box
          'twoMaps' => 'Optional\\Option<non-falsy-string>',
@@ -95,15 +66,6 @@ final class TypeInferenceTest extends TestCase {
          'elseThenMap' => 'Optional\\Option<int<0, max>>',
          'mapThenValueOr' => 'int<0, max>',
          'notFalsyThenMap' => 'Optional\\Option<int>',
-         'twoMapLefts' => 'Optional\\Either<int<1, max>, string>',
-         'twoMapRights' => 'Optional\\Either<int, int<0, max>>',
-         'filterLeftByACallable' => "Optional\\Either<10, 'small'>",
-         'filterLeftThenMapLeft' => 'Optional\\Either<int, string>',
-         'orLeftThenMapLeft' => 'Optional\\Either<int, never>',
-         'elseLeftThenMapLeft' => 'Optional\\Either<int, never>',
-         'notNullLeftThenMapLeft' => "Optional\\Either<int<0, max>, 'missing'>",
-         'twoMapSuccesses' => 'Optional\\Either<int<1, max>, string>',
-         'flatMapLeftThenMapLeft' => 'Optional\\Either<int<1, max>, string>',
 
          // Result
          'resultMapKeepsTheMappedType' => "Optional\\Result<'n5', never>",

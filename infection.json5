@@ -2,10 +2,10 @@
     // Mutation testing: break the source on purpose and check a test notices.
     //
     // This is here because two adversarial reviews found untested behavior by
-    // mutating by hand, and found it three times: both mapSafely catch types
-    // and Either::fromArray's fabricated Exception. Each had a docblock and a
-    // line in AGENTS.md describing it, and nothing that would fail if it were
-    // deleted. A green suite said nothing about any of them.
+    // mutating by hand, and found it three times: the catch types of both
+    // mapSafely methods, and a fallback exception nothing asserted. Each had a
+    // docblock and a line in AGENTS.md describing it, and nothing that would
+    // fail if it were deleted. A green suite said nothing about any of them.
     //
     // Needs xdebug or pcov, which CI has and a plain PHP install does not.
     //
@@ -32,7 +32,6 @@
         "CastString": {
             "ignore": [
                 "Optional\\Option::__toString",
-                "Optional\\Either::__toString",
                 "Optional\\Result::__toString"
             ]
         }

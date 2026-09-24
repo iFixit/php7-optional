@@ -11,7 +11,7 @@ Two boxes that hold a value so a caller cannot forget the case where there
 isn't one.
 
 * `Optional\Option` is Some or None. Use it instead of returning `null`.
-* `Optional\Either` is Left or Right. Use it when the failure has something to
+* `Optional\Result` is Ok or Err. Use it when the failure has something to
   say for itself.
 
 Both are immutable, and PHP enforces it: they are `readonly` classes. Nothing
@@ -51,17 +51,17 @@ echo ($people['nope']['name'] ?? 'no name') . "\n"; // "no name"
 The boxes are for the two things `null` cannot say.
 
 **Why it is missing.** `json_decode()` returns `null` for a syntax error, and
-also for the valid document `null`. An `Either` keeps the reason:
+also for the valid document `null`. A `Result` keeps the reason:
 
 ```php
-$config = Either::fromCallable(
+$config = Result::fromCallable(
    fn() => json_decode('{"debug": tru}', flags: JSON_THROW_ON_ERROR),
    JsonException::class
 );
 
 echo $config
-   ->mapRight(fn(JsonException $e) => "bad config: {$e->getMessage()}")
-   ->rightOr('config ok') . "\n"; // "bad config: Syntax error"
+   ->mapErr(fn(JsonException $e) => "bad config: {$e->getMessage()}")
+   ->errOr('config ok') . "\n"; // "bad config: Syntax error"
 ```
 
 **That you looked and found nothing.** When a memo or a cache uses `null` for
@@ -122,21 +122,21 @@ echo (string) Option::someNotFalsy(array_search('a', ['a', 'b'])) . "\n"; // "No
 echo (string) Option::someNotFalse(array_search('a', ['a', 'b'])) . "\n"; // "Some(0)"
 ```
 
-`Either` has the same entrances, and keeps the failure instead of dropping it:
+A `Result` keeps the failure instead of dropping it. It starts from a throwing
+call directly, and from any of the entrances above through `toResult()`, which
+gives the missing value a reason:
 
 ```php
-$right = Either::notFalsyLeft(false, 'row not found');
-echo $right->rightOr('') . "\n"; // "row not found"
-
-$kept = Either::fromCallable(fn() => throw new Exception("the api said no"));
-echo $kept->mapRight(fn(Throwable $e) => $e->getMessage())->rightOr('') . "\n";
+$kept = Result::fromCallable(fn() => throw new Exception("the api said no"));
+echo $kept->mapErr(fn(Throwable $e) => $e->getMessage())->errOr('') . "\n";
 // "the api said no"
+
+$row = false; // what a row fetch hands back when it finds nothing
+echo (string) Option::someNotFalsy($row)->toResult('row not found') . "\n"; // "Err(row not found)"
 ```
 
 There is also `Option::some`, `Option::none`, `Option::someNotNull`,
-`Option::someWhen`, `Option::fromArray`, `Option::first`, and the matching
-`Either::left`, `Either::right`, `Either::notNullLeft`, `Either::notFalseLeft`,
-`Either::leftWhen` and `Either::fromArray`.
+`Option::fromArray`, `Option::first`, and `Result::ok` and `Result::err`.
 
 ## The middle of a chain
 
@@ -193,61 +193,34 @@ echo $some->hasValue() ? "yes\n" : "no\n"; // "yes"
 `valueOrThrow()` with no argument throws `MissingValueException`. With a
 factory it throws what the factory builds, and the factory runs only on the
 empty side, so nothing is constructed on the happy path. There is no bare
-`value()`: a name that short hides the throw. On `Either` these are
-`getLeftOrThrow` and `getRightOrThrow`, and the factory is handed the other
-side's value, which is how you keep the original failure as the cause:
+`value()`: a name that short hides the throw.
+
+On a `Result`, the factory is handed the error, which is how you keep the
+original failure as the cause. With no factory, a `Result` rethrows an
+exception it caught, so its trace still points where the failure happened:
 
 ```php
-$failed = Either::fromCallable(fn(): int => throw new Exception("the api said no"));
+$failed = Result::fromCallable(fn(): int => throw new Exception("the api said no"));
 
 try {
-   $failed->getLeftOrThrow(fn(Throwable $cause) => new RuntimeException("could not load the build", 0, $cause));
+   $failed->valueOrThrow(fn(Throwable $cause) => new RuntimeException("could not load the build", 0, $cause));
 } catch (RuntimeException $e) {
    echo $e->getMessage() . ": " . $e->getPrevious()?->getMessage() . "\n";
    // "could not load the build: the api said no"
 }
 ```
 
-## Naming the sides
+## Option or Result
 
-`Either` is symmetric, and plenty of uses have nothing to do with success. But
-this library already leans left for the success case: `andThen` is
-`flatMapLeft`, and `fromCallable` puts the return value on the left with the
-`Throwable` on the right.
-
-When you are modelling success and failure, say so. These are the same box with
-clearer names, and they add no behavior:
+Use `Option` when "there isn't one" is the whole story. Use `Result` when the
+caller needs to know why. They share their method names wherever the idea is
+the same, and you can cross between them:
 
 ```php
-$result = Either::fromCallable(fn(): int => throw new Exception("the api said no"));
+$value = Result::ok(10)->toOption();          // Some(10), drops any error
+$error = Option::none()->toResult('no id');   // Err(no id), gains a reason
 
-echo $result->isFailure() ? "failed\n" : "ok\n"; // "failed"
-
-$message = $result
-   ->mapFailure(fn(Throwable $e) => $e->getMessage())
-   ->mapSuccess(fn(int $n) => "got {$n}")
-   ->successOr('no value');
-
-echo $message . "\n"; // "no value"
-```
-
-`success` and `failure` build them, `isSuccess` and `isFailure` ask, `mapSuccess`
-and `mapFailure` transform, and `successOr`, `failureOr` and `successOrThrow` get
-you out. Everything else is spelled left and right.
-
-`match()` keeps its `left:` and `right:` parameter names. Renaming them would
-break every caller passing them as named arguments.
-
-## Option or Either
-
-Use `Option` when "there isn't one" is the whole story. Use `Either` when the
-caller needs to know why. You can cross between them:
-
-```php
-$value = Either::left(10)->toOptionFromLeft();          // Some(10), drops the error
-$error = Either::right('bad id')->toOptionFromRight();  // Some('bad id')
-
-echo $value->valueOr(-1) . " " . $error->valueOr('none') . "\n"; // "10 bad id"
+echo $value->valueOr(-1) . " " . $error->errOr('') . "\n"; // "10 no id"
 ```
 
 ## Two things that catch people out
@@ -277,25 +250,24 @@ echo Option::some(null)->notNull()->hasValue() ? "some\n" : "none\n"; // "none"
 
 ## What each box catches
 
-`Either::fromCallable`, `Either::mapLeftSafely` and `Either::mapRightSafely`
-catch `Throwable` by default, because the box keeps what it caught: a
-`TypeError` from a bad callable signature lands on the right, where you can
-still find it. `Option::fromCallable` and `Option::mapSafely` catch `Exception`
+`Result::fromCallable` and `Result::mapSafely` catch `Throwable` by default,
+because the box keeps what it caught: a `TypeError` from a bad callable
+signature lands in the error, where you can still find it. `Option::fromCallable` and `Option::mapSafely` catch `Exception`
 by default, because those discard what they caught, and swallowing an `Error`
 would erase a real bug with nothing left to trace it by.
 
 Every one of them takes the class to catch as its last argument, the way a
 `catch` clause names one. Only that class and its subclasses are caught, and
-anything else propagates. On `Either` the right side is then typed as that
-class, so psalm knows what you are holding:
+anything else propagates. On `Result` the error is then typed as that class,
+so psalm knows what you are holding:
 
 ```php
-$user = Either::fromCallable(
+$user = Result::fromCallable(
    fn() => throw new OutOfBoundsException("no user 5"),
    OutOfBoundsException::class
 );
 
-echo $user->rightOr(null)?->getMessage() . "\n"; // "no user 5"
+echo $user->errOr(null)?->getMessage() . "\n"; // "no user 5"
 ```
 
 ## Types
@@ -307,8 +279,8 @@ each call, and the entrances drop what they exist to drop:
 * `Option::someNotNull($name)` on a `?string` is an `Option<string>`
 * `Option::someNotFalsy($row)` on a row fetch's `array{id: int}|false` is an
   `Option<array{id: int}>`, shape and all
-* `Either::fromCallable($fn, JsonException::class)` is an
-  `Either<T, JsonException>`
+* `Result::fromCallable($fn, JsonException::class)` is a
+  `Result<T, JsonException>`
 * `$option->map($f)->map($g)` is an `Option` of whatever `$g` returns
 
 `tests/TypeInference` records what psalm infers for expressions like these,
@@ -362,27 +334,19 @@ with the PHP version and the opcache.
 ## Upgrading from 3.x
 
 * PHP 8.4 or later is required.
-* `Either::fromArray` uses `array_key_exists` rather than `isset`, so a key
-  holding `null` is now a `Left(null)` instead of a Right. `Option::fromArray`
-  always behaved this way and the two now agree. Chain `leftNotNull()` for the
-  old behavior.
-* `Either::mapLeftSafely` catches `Throwable` where 3.x caught `Exception`. An
-  `Error` that used to escape and crash now lands on the right and travels down
-  the chain, so a caller relying on it crashing needs to check the right side.
-  `Option::mapSafely` is unchanged and still catches `Exception` only.
-* Boxes you cached with `serialize()` under 3.x read back unchanged, and 4.0
-  writes the same bytes, so a rollback can read them too. A test holds
-  payloads written by 3.0 to keep it that way.
-* `filterIf`, `filterLeftIf` and `filterRightIf` are deprecated. They still
-  work and print a deprecation naming the replacement: pass the callable to
-  `filter`, `filterLeft` or `filterRight`.
-* `Option` and `Either` are `final`, and so is `MissingValueException`.
-  Extending the two boxes never worked: the static factories build with
-  `new self`, so a subclass came back as a plain `Option` or `Either` on the
-  first `map`.
-* `Optional\Result` and `Optional\UnsafeResult` do not exist and have not since
-  the 2.x line. Earlier versions of this README documented them by mistake. Use
-  `Either`, whose left side is the success.
+* `Either` is gone, and `Result` replaces it. `Either::left()` is
+  `Result::ok()`, `mapLeft()` is `map()`, `mapRight()` is `mapErr()`, and the
+  CHANGELOG maps every other 3.x `Either` method to its `Result` spelling.
+* An `Option` you cached with `serialize()` under 3.x reads back unchanged,
+  and 4.0 writes the same bytes. A cached `Either` does not, since the class is
+  gone.
+* `filterIf` is deprecated. It still works and prints a deprecation naming the
+  replacement: pass the callable to `filter`.
+* `Option`, `Result` and `MissingValueException` are `final`. Extending a box
+  never worked: the static factories build with `new self`, so a subclass came
+  back as a plain box on the first `map`.
+* This `Optional\Result` is new in 4.0. It is not the 2.x class of the same
+  name, which earlier versions of this README documented by mistake.
 
 ## Full method list
 
@@ -395,22 +359,6 @@ with the PHP version and the opcache.
 `mapSafely` `flatMap` `andThen` `tap` `tapNone` `filter` `notNull`
 `notFalsy` `notFalse` `contains` `exists`
 
-`Either` factories: `left` `right` `success` `failure` `leftWhen` `rightWhen`
-`notNullLeft` `notNullRight` `notFalsyLeft` `notFalsyRight` `notFalseLeft`
-`notFalseRight` `fromCallable` `fromArray`
-
-`Either` methods: `isLeft` `isRight` `isSuccess` `isFailure` `mapSuccess`
-`mapFailure` `successOr` `failureOr` `successOrThrow` `leftOr` `rightOr`
-`getLeftOrThrow` `getRightOrThrow` `leftOrCreate` `rightOrCreate` `orLeft`
-`orRight` `orCreateLeft` `orCreateRight` `elseLeft` `elseRight`
-`elseCreateLeft` `elseCreateRight` `match` `matchLeft` `matchRight` `mapLeft`
-`mapRight` `mapLeftSafely` `mapRightSafely` `flatMapLeft` `flatMapRight`
-`andThen` `tapLeft` `tapRight`
-`filterLeft` `filterRight` `leftNotNull`
-`rightNotNull` `leftNotFalsy` `rightNotFalsy` `leftNotFalse` `rightNotFalse`
-`leftContains` `rightContains`
-`existsLeft` `existsRight` `toOptionFromLeft` `toOptionFromRight`
-
 `Result` factories: `ok` `err` `fromCallable`
 
 `Result` methods: `isOk` `isErr` `valueOr` `valueOrCreate` `valueOrThrow`
@@ -418,18 +366,16 @@ with the PHP version and the opcache.
 `mapSafely` `flatMap` `filter` `or` `orCreate` `else` `elseCreate` `tap`
 `tapErr`
 
-Deprecated in 4.0, and still working until a major version removes them:
-`filterIf`, `filterLeftIf` and `filterRightIf`. Pass the callable to `filter`,
-`filterLeft` or `filterRight` instead.
+Deprecated in 4.0, and still working until a major version removes it:
+`filterIf`. Pass the callable to `filter` instead.
 
 Every one carries a worked example in its docblock, and every one of those
 examples is executed by the test suite. Read them in `src/Option.php` and
-`src/Either.php`.
+`src/Result.php`.
 
 There is no generated API site. The old one at `php7-optional.surge.sh` is
-still up but nothing has rebuilt it in years: it still serves pages for
-`Optional\Result` and `Optional\SimpleResult`, which were deleted in
-`b892422`.
+still up but nothing has rebuilt it in years: it still serves pages for 2.x
+classes deleted in `b892422`, including an unrelated `Optional\Result`.
 
 ## Licence
 

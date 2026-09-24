@@ -487,7 +487,7 @@ final readonly class Option {
     *  - `$catch` defaults to `Exception`, not `Throwable`. An `Error` is a bug in
     *    your code, and this box discards what it caught, so swallowing one would
     *    erase the bug with nothing left to find it by. Name an `Error` class in
-    *    `$catch` to catch one anyway. `Either::mapLeftSafely` defaults to
+    *    `$catch` to catch one anyway. `Result::mapSafely` defaults to
     *    `Throwable`, because it keeps what it caught
     *  - A subclass of `$catch` is caught too, the same as a `catch` clause
     *
@@ -1033,7 +1033,7 @@ final readonly class Option {
     *  - `$catch` defaults to `Exception`, not `Throwable`. An `Error` is a bug in
     *    your code, and this box discards what it caught, so swallowing one would
     *    erase the bug with nothing left to find it by. Name an `Error` class in
-    *    `$catch` to catch one anyway. Use `Either::fromCallable` when you need the
+    *    `$catch` to catch one anyway. Use `Result::fromCallable` when you need the
     *    failure itself; it defaults to `Throwable`, because it keeps it
     *  - A subclass of `$catch` is caught too, the same as a `catch` clause
     *  - A factory returning null still gives you `Some(null)`. Chain `notNull()`

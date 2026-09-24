@@ -30,9 +30,9 @@
     <!--
         tests/generated/DocblockExamples.php holds every ```php example from src/
         and README.md, so psalm checks that the documentation type-checks and not
-        just that it runs. Either::flatMapLeft demanded an impossible
-        Either<never, never> for years and its own example was an InvalidArgument
-        that nothing reported.
+        just that it runs. A chaining method once demanded an impossible never
+        type from its callback for years, and its own example was an
+        InvalidArgument that nothing reported.
 
         The suppressions below are the ways an example is legitimately unlike
         production code, and nothing more. An example assigns $myVar to show a
@@ -66,9 +66,6 @@
         <MissingClosureReturnType>
             <errorLevel type="suppress"><file name="tests/generated/DocblockExamples.php"/></errorLevel>
         </MissingClosureReturnType>
-        <MissingClosureParamType>
-            <errorLevel type="suppress"><file name="tests/generated/DocblockExamples.php"/></errorLevel>
-        </MissingClosureParamType>
         <InvalidCast>
             <errorLevel type="suppress"><file name="tests/generated/DocblockExamples.php"/></errorLevel>
         </InvalidCast>
