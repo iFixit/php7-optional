@@ -85,22 +85,44 @@ existed on master but were never in a tagged release.
 
 ### Fixed
 
+* **Chaining two calls failed psalm at errorLevel 1.** `Option::some(5)->map(...)`
+  followed by a second `->map(fn(string $s) => ...)` reported `ReservedWord`
+  and `NoValue`, and so did two `mapLeft()` calls, `notNull()->map()`,
+  `filter($bool)->map()` and 7 other everyday pairs, 11 out of 20. Every method
+  that returns a box had a conditional return type, and psalm cannot decide
+  `T is never` for an ordinary `T`. So `map()` returned
+  `Option<U>|Option<never>`, and the next typed callback met the empty half.
+  Each of those methods now returns one type, and the 20 chains are pinned in
+  `tests/TypeInference`. What this gives up: psalm no longer proves that a
+  box you built empty stays empty through `map()`, which only mattered for
+  code like `Option::none()->map($f)`
+* **`Option::someNotNull()` and `someNotFalsy()` kept the value they exist to
+  drop.** `Option::someNotNull($maybe)` on a `?string` was `Option<null|string>`,
+  so the next `->map(fn(string $s) => ...)` was an `InvalidArgument`. They, and
+  `notNull()`, `notFalsy()` and the Either versions, now drop `null` and
+  `false` from the type: a row fetch's `array{id: int}|false` comes out as
+  `Option<array{id: int}>`
+* **`Either::filterLeft()` with a callable claimed a Left always became a
+  Right.** `Either::left(10)->filterLeft(fn(int $x) => $x > 5, 'small')` was
+  typed `Either<never, 'small'>`; it is `Left(10)`. It is `Either<10, 'small'>`
+  now. `filterRight()` had the mirror image
+* **`Either::mapRight()` typed a box that might be a Left as unmapped**, so a
+  second `mapRight()` got the old right type
 * **`Either::orRight` had its conditional branches swapped.** psalm inferred
   `Either<never, float(3.14)>` for `Either::right("original")->orRight(3.14)`,
-  whose value is the string `"original"`.
+  whose value is the string `"original"`. It infers
+  `Either<never, 'original'|float(3.14)>` now.
 * **`Option::map` erased the mapped type.** Its `@psalm-param` named the
   variable before the type, so the template never bound and psalm reported
   `Option<never>` for a box holding a string. `Option::mapSafely` had the same
   reversal plus a return type describing its input rather than its output.
-* **`Option::map`, `Option::filter` and `Either::mapLeft` did not narrow on the
-  empty side**, so psalm accepted `Option::none()->map(...)->value()`, which
-  always throws. It reports that as dead code now.
 * **`Either::toOptionFromLeft` returned `Option<never>`** for every caller,
   because its `@template U` appeared in no parameter and so bound to nothing.
 * **Both `fromArray` methods** had a `$key is key-of<TArray>` conditional that
   psalm never resolved, taking the true branch even for a key it could see was
   absent. `Option::fromArray(['hello' => 'world'], 'hello')->valueOr('x')`
-  traced `mixed` and now traces `'world'|'x'`.
+  traced `mixed` and now traces `'world'|'x'`. `Either::fromArray` with no
+  fallback is `Either<T, Exception>`, which is what it returns.
 * **`Option::filter` had no docblock at all**, so psalm gave it no template and
   the mapped type was lost through it.
 * **Eight docblock examples did not run**, plus three in the README. Calls to

@@ -21,14 +21,6 @@ function optionTypes(): void {
    $mapKeepsTheMappedType = Option::some(5)->map(function(int $n): string { return "n{$n}"; });
    /** @psalm-trace $mapKeepsTheMappedType */
 
-   // mapping over an empty box gives an empty box, and psalm should know
-   $mapOnNoneStaysNone = Option::none()->map(function(): string { return 'unreachable'; });
-   /** @psalm-trace $mapOnNoneStaysNone */
-
-   // a false condition yields a None whatever the box held
-   $filterFalseIsNone = Option::some(5)->filter(false);
-   /** @psalm-trace $filterFalseIsNone */
-
    $filterTrueKeepsTheValue = Option::some(5)->filter(true);
    /** @psalm-trace $filterTrueKeepsTheValue */
 
@@ -57,8 +49,8 @@ function optionTypes(): void {
 }
 
 function eitherTypes(): void {
-   // orRight had its two branches swapped, so it claimed the alternative
-   // for a box that keeps its original value
+   // orRight had its two branches swapped, so it claimed only the alternative
+   // for a box that keeps its original value. The original has to be in it.
    $orRightOnARightKeepsTheOriginal = Either::right('original')->orRight(3.14);
    /** @psalm-trace $orRightOnARightKeepsTheOriginal */
 
@@ -77,18 +69,10 @@ function eitherTypes(): void {
    $eitherFromArrayKeepsTheValueType = Either::fromArray(['hello' => 'world'], 'hello', 'oh no');
    /** @psalm-trace $eitherFromArrayKeepsTheValueType */
 
-   $mapLeftOnARightStaysRight = Either::right('err')->mapLeft(function(): string { return 'unreachable'; });
-   /** @psalm-trace $mapLeftOnARightStaysRight */
-
    $mapLeftKeepsTheMappedType = Either::left(5)->mapLeft(function(int $n): string { return "n{$n}"; });
    /** @psalm-trace $mapLeftKeepsTheMappedType */
 
-   // notFalsyRight declared a flat union where its twin narrows
-   $notFalsyRightNarrowsOnFalsy = Either::notFalsyRight('', 'no error');
-   /** @psalm-trace $notFalsyRightNarrowsOnFalsy */
 
-   $notFalsyLeftNarrowsOnFalsy = Either::notFalsyLeft('', 'was falsy');
-   /** @psalm-trace $notFalsyLeftNarrowsOnFalsy */
 
    $eitherFromCallableCarriesTheThrowable = Either::fromCallable(function(): int { return 7; });
    /** @psalm-trace $eitherFromCallableCarriesTheThrowable */
@@ -131,4 +115,112 @@ function chainingAcceptsEitherBranch(): void {
       function(string $_e): Either { return Either::left('default'); }
    );
    /** @psalm-trace $flatMapRightAcceptsARecovery */
+}
+
+/**
+ * The entrances exist to drop the missing value, so the type has to drop it
+ * too. someNotNull() on a ?string used to infer Option<null|string>, which made
+ * the very next ->map(fn(string $s) => ...) an InvalidArgument.
+ *
+ * @param array{id: int}|false $row
+ */
+function entrancesDropTheMissingValue(?string $maybe, array|false $row, int|false $position): void {
+   $someNotNullDropsNull = Option::someNotNull($maybe);
+   /** @psalm-trace $someNotNullDropsNull */
+
+   $someNotFalsyDropsFalse = Option::someNotFalsy($row);
+   /** @psalm-trace $someNotFalsyDropsFalse */
+
+   $notNullDropsNull = Option::some($maybe)->notNull();
+   /** @psalm-trace $notNullDropsNull */
+
+   $notFalsyDropsFalse = Option::some($position)->notFalsy();
+   /** @psalm-trace $notFalsyDropsFalse */
+
+   $notNullLeftDropsNull = Either::notNullLeft($maybe, 'missing');
+   /** @psalm-trace $notNullLeftDropsNull */
+
+   $notFalsyLeftDropsFalse = Either::notFalsyLeft($row, 'not found');
+   /** @psalm-trace $notFalsyLeftDropsFalse */
+
+   $notFalsyRightDropsFalse = Either::notFalsyRight($row, 'no error');
+   /** @psalm-trace $notFalsyRightDropsFalse */
+}
+
+/**
+ * Two calls in a row, the way the library is meant to be used.
+ *
+ * Eleven of these twenty failed psalm at errorLevel 1 when box-returning
+ * methods had conditional return types. psalm cannot decide `T is never` for
+ * an ordinary T, so map() returned Option<U>|Option<never>, and the next typed
+ * callback met the Option<never> half and reported ReservedWord and NoValue.
+ * testTheFixtureHasNoOtherIssues fails if any of them does again.
+ *
+ * @param Option<string> $opt
+ * @param Either<int, string> $either
+ */
+function chainsTypeCheck(?string $maybe, bool $flag, string $text, Option $opt, Either $either, int|false $position): void {
+   $twoMaps = Option::some(5)->map(fn(int $n): string => "n{$n}")->map(fn(string $s): string => strtoupper($s));
+   /** @psalm-trace $twoMaps */
+
+   $twoMapsOnAnOption = $opt->map(fn(string $s): int => strlen($s))->map(fn(int $n): int => $n * 2);
+   /** @psalm-trace $twoMapsOnAnOption */
+
+   $notNullThenMap = Option::some($maybe)->notNull()->map(fn(string $s): string => strtoupper($s));
+   /** @psalm-trace $notNullThenMap */
+
+   $someNotNullThenMap = Option::someNotNull($maybe)->map(fn(string $s): string => strtoupper($s));
+   /** @psalm-trace $someNotNullThenMap */
+
+   $someNotFalsyThenMap = Option::someNotFalsy($text)->map(fn(string $s): int => strlen($s));
+   /** @psalm-trace $someNotFalsyThenMap */
+
+   $filterByABoolThenMap = $opt->filter($flag)->map(fn(string $s): int => strlen($s));
+   /** @psalm-trace $filterByABoolThenMap */
+
+   $filterByACallableThenMap = $opt->filter(fn(string $s) => $s !== '')->map(fn(string $s): int => strlen($s));
+   /** @psalm-trace $filterByACallableThenMap */
+
+   $orThenMap = $opt->or('fallback')->map(fn(string $s): int => strlen($s));
+   /** @psalm-trace $orThenMap */
+
+   $elseThenMap = $opt->else(Option::some('x'))->map(fn(string $s): int => strlen($s));
+   /** @psalm-trace $elseThenMap */
+
+   $mapThenValueOr = $opt->map(fn(string $s): int => strlen($s))->valueOr(0);
+   /** @psalm-trace $mapThenValueOr */
+
+   $notFalsyThenMap = Option::some($position)->notFalsy()->map(fn(int $n): int => $n + 1);
+   /** @psalm-trace $notFalsyThenMap */
+
+   $twoMapLefts = $either->mapLeft(fn(int $n): string => "n{$n}")->mapLeft(fn(string $s): int => strlen($s));
+   /** @psalm-trace $twoMapLefts */
+
+   // mapRight declared the unmapped right for any box that might be a Left
+   $twoMapRights = $either->mapRight(fn(string $e): int => strlen($e))->mapRight(fn(int $n): int => $n * 2);
+   /** @psalm-trace $twoMapRights */
+
+   // filterLeft with a callable used to claim a Left could only become a Right
+   $filterLeftByACallable = Either::left(10)->filterLeft(fn(int $x) => $x > 5, 'small');
+   /** @psalm-trace $filterLeftByACallable */
+
+   $filterLeftThenMapLeft = $either->filterLeft(fn(int $x) => $x > 5, 'small')->mapLeft(fn(int $n): int => $n + 1);
+   /** @psalm-trace $filterLeftThenMapLeft */
+
+   $orLeftThenMapLeft = $either->orLeft(0)->mapLeft(fn(int $n): int => $n + 1);
+   /** @psalm-trace $orLeftThenMapLeft */
+
+   $elseLeftThenMapLeft = $either->elseLeft(Either::left(0))->mapLeft(fn(int $n): int => $n + 1);
+   /** @psalm-trace $elseLeftThenMapLeft */
+
+   $notNullLeftThenMapLeft = Either::notNullLeft($maybe, 'missing')->mapLeft(fn(string $s): int => strlen($s));
+   /** @psalm-trace $notNullLeftThenMapLeft */
+
+   $twoMapSuccesses = $either->mapSuccess(fn(int $n): string => "n{$n}")->mapSuccess(fn(string $s): int => strlen($s));
+   /** @psalm-trace $twoMapSuccesses */
+
+   $flatMapLeftThenMapLeft = $either
+      ->flatMapLeft(fn(int $n): Either => Either::left("n{$n}"))
+      ->mapLeft(fn(string $s): int => strlen($s));
+   /** @psalm-trace $flatMapLeftThenMapLeft */
 }

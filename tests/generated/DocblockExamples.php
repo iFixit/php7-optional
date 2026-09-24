@@ -315,9 +315,11 @@ function example23_notNull(): void {
  * src/Option.php #24, notFalsy()
  */
 function example24_notFalsy(): void {
-   $someThing = Option::some(null); // Valid
-   $none = $someThing->notFalsy(); // Turn null into an none Option
-   $none =  Option::some("")->notFalsy(); // Turn empty string into an none Option
+   $row = false; // what a row fetch hands back when it finds nothing
+
+   echo (string) Option::some($row)->notFalsy(), "\n";  // None
+   echo (string) Option::some('')->notFalsy(), "\n";    // None
+   echo (string) Option::some('0.0')->notFalsy(), "\n"; // Some(0.0), truthy in PHP
 }
 
 /**

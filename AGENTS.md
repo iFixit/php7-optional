@@ -208,11 +208,26 @@ which is why `5abacf7` had to abandon it when a single test asserted two.
 `findUnusedCode` on. The `psalm/plugin-phpunit` plugin is what stops psalm
 reporting the test classes themselves as unused.
 
+- **A method that returns a box never gets a conditional return type.**
+  psalm cannot decide `T is never` for an ordinary `T`, so it returns both
+  branches, and `(T is never ? Option<never> : Option<U>)` becomes
+  `Option<U>|Option<never>`. The next call with a typed callback meets the
+  empty half and fails with `ReservedWord` and `NoValue`. That broke 11 of
+  20 everyday chains on this branch until it was found. Write one type
+  instead (`Option<T|TT>`, `Either<TLeft, URight>`), and state the class
+  invariant in the body with a `/** @var ... */` where psalm cannot see it.
+  A conditional inside a type parameter is fine
+  (`Either<V, (TTRight is null ? Exception : TTRight)>`), and so is one on a
+  method that returns a plain value, since psalm drops `never` from a value
+  union.
+- To drop `null` or `false` from a box's type, bind a template through
+  `@psalm-if-this-is Option<TNotNull|null>`. Two or three members bind; a
+  longer union of literals does not, and fails on an array shape.
 - `@psalm-param` is `<type> $var`. Two methods once had it reversed, and the
   effect was invisible: psalm silently failed to bind the template, so `map()`
   reported `Option<never>` for a box holding a string. Check a change to a
-  conditional return type with `@psalm-trace`, and compare it against what the
-  code actually returns.
+  return type with `@psalm-trace`, and compare it against what the code
+  actually returns.
 - `@psalm-pure` already implies `@psalm-mutation-free`. Do not write both.
 - The classes carry `@api`, which is what keeps psalm from reporting a public
   method as unused just because its callers live in another repository.

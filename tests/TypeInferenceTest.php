@@ -18,6 +18,8 @@ use PHPUnit\Framework\TestCase;
  *   Option::map            reported Option<never> for a box holding a string
  *   Either::toOptionFromLeft  collapsed to Option<never> for every caller
  *   Option::fromArray      collapsed to Option<mixed> at every call site
+ *   Option::map            returned Option<U>|Option<never>, so a second map()
+ *                          with a typed callback failed psalm at errorLevel 1
  *
  * None of those failed a test or a psalm run. They were all silently wrong, and
  * all of them are asserted below.
@@ -35,9 +37,7 @@ final class TypeInferenceTest extends TestCase {
    public static function expectationProvider(): iterable {
       $expected = [
          // Option
-         'mapKeepsTheMappedType' => "Optional\\Option<'n5'>|Optional\\Option<never>",
-         'mapOnNoneStaysNone' => 'Optional\\Option<never>',
-         'filterFalseIsNone' => 'Optional\\Option<never>',
+         'mapKeepsTheMappedType' => "Optional\\Option<'n5'>",
          'filterTrueKeepsTheValue' => 'Optional\\Option<5>',
          'mapSafelyKeepsTheMappedType' => "Optional\\Option<'n5'>",
          'fromArrayKeepsTheValueType' => "Optional\\Option<'world'>",
@@ -48,30 +48,57 @@ final class TypeInferenceTest extends TestCase {
          'firstWithAPredicateKeepsTheType' => "Optional\\Option<'a'|'bb'>",
 
          // Either
-         'orRightOnARightKeepsTheOriginal' => "Optional\\Either<never, 'original'>",
-         'orRightOnALeftTakesTheAlternative' => 'Optional\\Either<42, never>|Optional\\Either<never, float(3.14)>',
+         'orRightOnARightKeepsTheOriginal' => "Optional\\Either<never, 'original'|float(3.14)>",
+         'orRightOnALeftTakesTheAlternative' => 'Optional\\Either<never, float(3.14)>',
          'toOptionFromLeftKeepsTheLeft' => 'Optional\\Option<10>',
          'toOptionFromRightOnALeftIsNone' => 'Optional\\Option<never>',
-         'eitherFromArrayKeepsTheValueType' =>
-            "Optional\\Either<'world', never>|Optional\\Either<never, 'oh no'>|Optional\\Either<never, Exception>",
-         'mapLeftOnARightStaysRight' => "Optional\\Either<never, 'err'>",
-         'mapLeftKeepsTheMappedType' => "Optional\\Either<'n5', never>|Optional\\Either<never, never>",
-         'notFalsyRightNarrowsOnFalsy' => "Optional\\Either<'no error', never>",
-         'notFalsyLeftNarrowsOnFalsy' => "Optional\\Either<never, 'was falsy'>",
+         'eitherFromArrayKeepsTheValueType' => "Optional\\Either<'world', 'oh no'>",
+         'mapLeftKeepsTheMappedType' => "Optional\\Either<'n5', never>",
          'eitherFromCallableCarriesTheThrowable' => 'Optional\\Either<7, Throwable>',
          'getLeftOrThrowReturnsTheLeft' => '42',
          'fromCallableTypesTheNamedClass' => 'Optional\\Either<7, InvalidArgumentException>',
-         'mapLeftSafelyTypesTheNamedClass' => "Optional\\Either<'n5', never>|Optional\\Either<never, JsonException>",
+         'mapLeftSafelyTypesTheNamedClass' => "Optional\\Either<'n5', JsonException>",
 
          // an alias must infer exactly what its target infers
-         'viaMapSuccess' => "Optional\\Either<'n21', never>|Optional\\Either<never, never>",
-         'viaMapLeft' => "Optional\\Either<'n21', never>|Optional\\Either<never, never>",
+         'viaMapSuccess' => "Optional\\Either<'n21', never>",
+         'viaMapLeft' => "Optional\\Either<'n21', never>",
          'viaSuccessOr' => "'fallback'",
          'viaLeftOr' => "'fallback'",
 
          // the chaining methods have to accept a callback that can go either way
-         'flatMapLeftAcceptsAFailingStep' => "Optional\\Either<1, never>|Optional\\Either<never, 'rejected 1'>",
-         'flatMapRightAcceptsARecovery' => "Optional\\Either<'default', never>|Optional\\Either<never, 'gone'>",
+         'flatMapLeftAcceptsAFailingStep' => "Optional\\Either<never, 'rejected 1'>",
+         'flatMapRightAcceptsARecovery' => "Optional\\Either<'default', never>",
+
+         // an entrance drops the missing value from the type, not just the box
+         'someNotNullDropsNull' => 'Optional\\Option<string>',
+         'someNotFalsyDropsFalse' => 'Optional\\Option<array{id: int}>',
+         'notNullDropsNull' => 'Optional\\Option<string>',
+         'notFalsyDropsFalse' => 'Optional\\Option<int>',
+         'notNullLeftDropsNull' => "Optional\\Either<string, 'missing'>",
+         'notFalsyLeftDropsFalse' => "Optional\\Either<array{id: int}, 'not found'>",
+         'notFalsyRightDropsFalse' => "Optional\\Either<'no error', array{id: int}>",
+
+         // two calls in a row: each is one type, never a union with an empty box
+         'twoMaps' => 'Optional\\Option<non-falsy-string>',
+         'twoMapsOnAnOption' => 'Optional\\Option<int<0, max>>',
+         'notNullThenMap' => 'Optional\\Option<string>',
+         'someNotNullThenMap' => 'Optional\\Option<string>',
+         'someNotFalsyThenMap' => 'Optional\\Option<int<0, max>>',
+         'filterByABoolThenMap' => 'Optional\\Option<int<0, max>>',
+         'filterByACallableThenMap' => 'Optional\\Option<int<0, max>>',
+         'orThenMap' => 'Optional\\Option<int<0, max>>',
+         'elseThenMap' => 'Optional\\Option<int<0, max>>',
+         'mapThenValueOr' => 'int<0, max>',
+         'notFalsyThenMap' => 'Optional\\Option<int>',
+         'twoMapLefts' => 'Optional\\Either<int<1, max>, string>',
+         'twoMapRights' => 'Optional\\Either<int, int<0, max>>',
+         'filterLeftByACallable' => "Optional\\Either<10, 'small'>",
+         'filterLeftThenMapLeft' => 'Optional\\Either<int, string>',
+         'orLeftThenMapLeft' => 'Optional\\Either<int, never>',
+         'elseLeftThenMapLeft' => 'Optional\\Either<int, never>',
+         'notNullLeftThenMapLeft' => "Optional\\Either<int<0, max>, 'missing'>",
+         'twoMapSuccesses' => 'Optional\\Either<int<1, max>, string>',
+         'flatMapLeftThenMapLeft' => 'Optional\\Either<int<1, max>, string>',
       ];
 
       foreach ($expected as $variable => $type) {

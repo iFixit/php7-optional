@@ -367,9 +367,10 @@ final class Either {
     * @psalm-mutation-free
     * @template TTLeft
     * @psalm-param TTLeft $alternative
-    * @psalm-return (TRight is never ? Either<TLeft, TRight> : Either<TTLeft, never>)
+    * @psalm-return Either<TLeft|TTLeft, never>
     **/
    public function orLeft($alternative): self {
+      /** @var Either<TLeft|TTLeft, never> a Left never holds a right value, which psalm cannot see */
       return $this->isLeft
          ? $this
          : self::left($alternative);
@@ -390,9 +391,10 @@ final class Either {
     * @psalm-mutation-free
     * @template TTRight
     * @psalm-param TTRight $alternative
-    * @psalm-return (TLeft is never ? Either<TLeft, TRight> : Either<never, TTRight>)
+    * @psalm-return Either<never, TRight|TTRight>
     **/
    public function orRight($alternative): self {
+      /** @var Either<never, TRight|TTRight> a Left never holds a right value, which psalm cannot see */
       return !$this->isLeft
          ? $this
          : self::right($alternative);
@@ -415,9 +417,10 @@ final class Either {
     *
     * @template TTLeft
     * @psalm-param callable(TRight):TTLeft $alternativeFactory
-    * @psalm-return (TRight is never ? Either<TLeft, TRight> : self<TTLeft, never>)
+    * @psalm-return Either<TLeft|TTLeft, never>
     **/
    public function orCreateLeft(callable $alternativeFactory): self {
+      /** @var Either<TLeft|TTLeft, never> a Left never holds a right value, which psalm cannot see */
       return $this->isLeft
          ? $this
          : self::left($alternativeFactory($this->rightValue));
@@ -442,9 +445,10 @@ final class Either {
     *
     * @template TTRight
     * @psalm-param callable(TLeft):TTRight $alternativeFactory
-    * @psalm-return (TLeft is never ? Either<TLeft, TRight> : self<never, TTRight>)
+    * @psalm-return Either<never, TRight|TTRight>
     **/
    public function orCreateRight(callable $alternativeFactory): self {
+      /** @var Either<never, TRight|TTRight> a Left never holds a right value, which psalm cannot see */
       return !$this->isLeft
          ? $this
          : self::right($alternativeFactory($this->leftValue));
@@ -468,9 +472,10 @@ final class Either {
     * @template TLeftOther
     * @template TRightOther
     * @psalm-param Either<TLeftOther, TRightOther> $alternativeEither
-    * @psalm-return (TRight is never ? Either<TLeft, TRight> : Either<TLeftOther, TRightOther>)
+    * @psalm-return Either<TLeft|TLeftOther, TRightOther>
     **/
    public function elseLeft(self $alternativeEither): self {
+      /** @var Either<TLeft|TLeftOther, TRightOther> a Left never holds a right value, which psalm cannot see */
       return $this->isLeft
          ? $this
          : $alternativeEither;
@@ -493,9 +498,10 @@ final class Either {
     * @template TLeftOther
     * @template TRightOther
     * @psalm-param Either<TLeftOther, TRightOther> $alternativeEither
-    * @psalm-return (TLeft is never ? Either<TLeft, TRight> : Either<TLeftOther, TRightOther>)
+    * @psalm-return Either<TLeftOther, TRight|TRightOther>
     **/
    public function elseRight(self $alternativeEither): self {
+      /** @var Either<TLeftOther, TRight|TRightOther> a Left never holds a right value, which psalm cannot see */
       return !$this->isLeft
          ? $this
          : $alternativeEither;
@@ -520,9 +526,10 @@ final class Either {
     * @template TLeftOther
     * @template TRightOther
     * @psalm-param callable(TRight):Either<TLeftOther, TRightOther> $alternativeEitherFactory
-    * @psalm-return (TRight is never ? Either<TLeft, TRight> : Either<TLeftOther, TRightOther>)
+    * @psalm-return Either<TLeft|TLeftOther, TRightOther>
     **/
    public function elseCreateLeft(callable $alternativeEitherFactory): self {
+      /** @var Either<TLeft|TLeftOther, TRightOther> a Left never holds a right value, which psalm cannot see */
       return $this->isLeft
          ? $this
          : $alternativeEitherFactory($this->rightValue);
@@ -546,9 +553,10 @@ final class Either {
     * @template TLeftOther
     * @template TRightOther
     * @psalm-param callable(TLeft):Either<TLeftOther, TRightOther> $alternativeEitherFactory
-    * @psalm-return (TLeft is never ? Either<TLeft, TRight> : Either<TLeftOther, TRightOther>)
+    * @psalm-return Either<TLeftOther, TRight|TRightOther>
     **/
    public function elseCreateRight(callable $alternativeEitherFactory): self {
+      /** @var Either<TLeftOther, TRight|TRightOther> a Left never holds a right value, which psalm cannot see */
       return !$this->isLeft
          ? $this
          : $alternativeEitherFactory($this->leftValue);
@@ -668,7 +676,7 @@ final class Either {
     *
     * @template ULeft
     * @psalm-param callable(TLeft):ULeft $mapFunc
-    * @psalm-return (TLeft is never ? Either<never, TRight> : Either<ULeft, TRight>)
+    * @psalm-return Either<ULeft, TRight>
     **/
    public function mapLeft(callable $mapFunc): self {
       return $this->isLeft
@@ -696,7 +704,7 @@ final class Either {
     *
     * @template URight
     * @psalm-param callable(TRight):URight $mapFunc
-    * @psalm-return (TLeft is never ? Either<TLeft, URight> : Either<TLeft, TRight>)
+    * @psalm-return Either<TLeft, URight>
     **/
    public function mapRight(callable $mapFunc): self {
       return $this->isLeft
@@ -736,7 +744,7 @@ final class Either {
     * @template E of Throwable
     * @psalm-param callable(TLeft):ULeft $mapFunc
     * @psalm-param class-string<E> $catch
-    * @psalm-return Either<ULeft, TRight>|Either<never, E>
+    * @psalm-return Either<ULeft, TRight|E>
     **/
    public function mapLeftSafely(callable $mapFunc, string $catch = Throwable::class): self {
       try {
@@ -777,7 +785,7 @@ final class Either {
     * @template E of Throwable
     * @psalm-param callable(TRight):URight $mapFunc
     * @psalm-param class-string<E> $catch
-    * @psalm-return Either<TLeft, TRight>|Either<TLeft, URight>|Either<never, E>
+    * @psalm-return Either<TLeft, URight|E>
     **/
    public function mapRightSafely(callable $mapFunc, string $catch = Throwable::class): self {
       try {
@@ -828,7 +836,7 @@ final class Either {
     * @template ULeft
     * @template URight
     * @psalm-param callable(TLeft):Either<ULeft, URight> $mapFunc
-    * @psalm-return Either<TLeft, TRight>|Either<ULeft, URight>
+    * @psalm-return Either<ULeft, TRight|URight>
     **/
     public function andThen(callable $mapFunc): self {
       return $this->flatMapLeft($mapFunc);
@@ -853,7 +861,7 @@ final class Either {
     * @template ULeft
     * @template URight
     * @psalm-param callable(TLeft):Either<ULeft, URight> $mapFunc
-    * @psalm-return Either<TLeft, TRight>|Either<ULeft, URight>
+    * @psalm-return Either<ULeft, TRight|URight>
     **/
    public function flatMapLeft(callable $mapFunc): self {
       return $this->isLeft
@@ -886,7 +894,7 @@ final class Either {
     * @template ULeft
     * @template URight
     * @psalm-param callable(TRight):Either<ULeft, URight> $mapFunc
-    * @psalm-return Either<TLeft, TRight>|Either<ULeft, URight>
+    * @psalm-return Either<TLeft|ULeft, URight>
     **/
    public function flatMapRight(callable $mapFunc): self {
       return $this->isLeft
@@ -911,11 +919,7 @@ final class Either {
     * @psalm-param bool|callable(TLeft):bool $condition
     * @template TTRight
     * @psalm-param TTRight $rightValue
-    * @psalm-return (
-    *   $condition is true ? Either<TLeft, TRight> : (
-    *   TRight is never ? Either<never, TTRight> :
-    *   Either<TLeft, TRight>
-    * ))
+    * @psalm-return Either<TLeft, TRight|TTRight>
     **/
    public function filterLeft(bool|callable $condition, $rightValue): self {
       if (!$this->isLeft) {
@@ -944,11 +948,7 @@ final class Either {
     * @psalm-param bool|callable(TRight):bool $condition
     * @template TTLeft
     * @psalm-param TTLeft $leftValue
-    * @psalm-return (
-    *   $condition is true ? Either<TLeft, TRight> : (
-    *   TLeft is never ? Either<TTLeft, never> :
-    *   Either<TLeft, TRight>
-    * ))
+    * @psalm-return Either<TLeft|TTLeft, TRight>
     **/
    public function filterRight(bool|callable $condition, $leftValue): self {
       if ($this->isLeft) {
@@ -981,9 +981,7 @@ final class Either {
     * @template TTRight
     * @psalm-param callable(TLeft):bool $filterFunc
     * @psalm-param TTRight $rightValue
-    * @psalm-return (
-    *   TLeft is never ? Either<TLeft, TRight> : Either<never, TTRight>| Either<TLeft, TRight>
-    * )
+    * @psalm-return Either<TLeft, TRight|TTRight>
     **/
    public function filterLeftIf(callable $filterFunc, $rightValue): self {
       return $this->isLeft && !$filterFunc($this->leftValue)
@@ -1010,9 +1008,7 @@ final class Either {
     * @template TTLeft
     * @psalm-param callable(TRight):bool $filterFunc
     * @psalm-param TTLeft $leftValue
-    * @psalm-return (
-    *   TRight is never ? Either<TLeft, TRight> : Either<TTLeft, never>|Either<TLeft, TRight>
-    * )
+    * @psalm-return Either<TLeft|TTLeft, TRight>
     **/
     public function filterRightIf(callable $filterFunc, $leftValue): self {
       return !$this->isLeft && !$filterFunc($this->rightValue)
@@ -1035,10 +1031,13 @@ final class Either {
     *
     * @psalm-mutation-free
     * @template TTRight
+    * @template TNotNull
     * @psalm-param TTRight $rightValue
-    * @psalm-return (TLeft is null ? Either<never, TTRight> : Either<TLeft, TRight>)
+    * @psalm-if-this-is Either<TNotNull|null, TRight>
+    * @psalm-return Either<TNotNull, TRight|TTRight>
     **/
    public function leftNotNull($rightValue): self {
+      /** @var Either<TNotNull, TRight|TTRight> a null left never survives the check */
       return $this->isLeft && is_null($this->leftValue)
       ? self::right($rightValue): $this;
    }
@@ -1057,10 +1056,13 @@ final class Either {
     *
     * @psalm-mutation-free
     * @template TTLeft
+    * @template TNotNull
     * @psalm-param TTLeft $leftValue
-    * @psalm-return (TRight is null ? Either<TTLeft, never> : Either<TLeft, TRight>)
+    * @psalm-if-this-is Either<TLeft, TNotNull|null>
+    * @psalm-return Either<TLeft|TTLeft, TNotNull>
     **/
-    public function rightNotNull($leftValue): self {
+   public function rightNotNull($leftValue): self {
+      /** @var Either<TLeft|TTLeft, TNotNull> a null right never survives the check */
       return !$this->isLeft && is_null($this->rightValue)
          ? self::left($leftValue)
          : $this;
@@ -1082,20 +1084,14 @@ final class Either {
     *
     * @psalm-mutation-free
     * @template TTRight
+    * @template TNotFalsy
     * @psalm-param TTRight $rightValue
-    * @psalm-return (
-    *     TLeft is null                ? self<never, TTRight> : (
-    *     TLeft is false               ? self<never, TTRight> : (
-    *     TLeft is array<never, never> ? self<never, TTRight> : (
-    *     TLeft is 0                   ? self<never, TTRight> : (
-    *     TLeft is 0.0                 ? self<never, TTRight> : (
-    *     TLeft is ''                  ? self<never, TTRight> : (
-    *     TLeft is '0'                 ? self<never, TTRight> :
-    *     self<TLeft, TRight>
-    * )))))))
+    * @psalm-if-this-is Either<TNotFalsy|null|false, TRight>
+    * @psalm-return Either<TNotFalsy, TRight|TTRight>
     **/
    public function leftNotFalsy($rightValue): self {
-      return $this->isLeft && !$this->leftValue
+      /** @var Either<TNotFalsy, TRight|TTRight> a falsy left never survives the check */
+      return $this->isLeft && !((bool) $this->leftValue)
          ? self::right($rightValue)
          : $this;
    }
@@ -1114,20 +1110,14 @@ final class Either {
     *
     * @psalm-mutation-free
     * @template TTLeft
+    * @template TNotFalsy
     * @psalm-param TTLeft $leftValue
-    * @psalm-return (
-    *     TRight is null                ? self<TTLeft, never> : (
-    *     TRight is false               ? self<TTLeft, never> : (
-    *     TRight is array<never, never> ? self<TTLeft, never> : (
-    *     TRight is 0                   ? self<TTLeft, never> : (
-    *     TRight is 0.0                 ? self<TTLeft, never> : (
-    *     TRight is ''                  ? self<TTLeft, never> : (
-    *     TRight is '0'                 ? self<TTLeft, never> :
-    *     self<TLeft, TRight>
-    * )))))))
+    * @psalm-if-this-is Either<TLeft, TNotFalsy|null|false>
+    * @psalm-return Either<TLeft|TTLeft, TNotFalsy>
     **/
    public function rightNotFalsy($leftValue): self {
-      return !$this->isLeft && !$this->rightValue
+      /** @var Either<TLeft|TTLeft, TNotFalsy> a falsy right never survives the check */
+      return !$this->isLeft && !((bool) $this->rightValue)
          ? self::left($leftValue)
          : $this;
    }
@@ -1368,7 +1358,7 @@ final class Either {
     *
     * @template ULeft
     * @psalm-param callable(TLeft):ULeft $mapFunc
-    * @psalm-return (TLeft is never ? Either<never, TRight> : Either<ULeft, TRight>)
+    * @psalm-return Either<ULeft, TRight>
     **/
    public function mapSuccess(callable $mapFunc): self {
       return $this->mapLeft($mapFunc);
@@ -1386,7 +1376,7 @@ final class Either {
     *
     * @template URight
     * @psalm-param callable(TRight):URight $mapFunc
-    * @psalm-return (TLeft is never ? Either<TLeft, URight> : Either<TLeft, TRight>)
+    * @psalm-return Either<TLeft, URight>
     **/
    public function mapFailure(callable $mapFunc): self {
       return $this->mapRight($mapFunc);
@@ -1571,11 +1561,12 @@ final class Either {
     * @psalm-pure
     * @template TTLeft
     * @template TTRight
-    * @psalm-param TTLeft $leftValue
+    * @psalm-param TTLeft|null $leftValue
     * @psalm-param TTRight $rightValue
-    * @psalm-return (TTLeft is null ? self<never, TTRight> : self<TTLeft, never>)
+    * @psalm-return self<TTLeft, TTRight>
     **/
-    public static function notNullLeft($leftValue, $rightValue): self {
+   public static function notNullLeft($leftValue, $rightValue): self {
+      /** @var self<TTLeft, TTRight> */
       return self::left($leftValue)->leftNotNull($rightValue);
     }
 
@@ -1592,11 +1583,12 @@ final class Either {
     * @psalm-pure
     * @template TTLeft
     * @template TTRight
-    * @psalm-param TTRight $rightValue
+    * @psalm-param TTRight|null $rightValue
     * @psalm-param TTLeft $leftValue
-    * @psalm-return (TTRight is null ? self<TTLeft, never> : self<never, TTRight>)
+    * @psalm-return self<TTLeft, TTRight>
     **/
    public static function notNullRight($rightValue, $leftValue): self {
+      /** @var self<TTLeft, TTRight> */
       return self::right($rightValue)->rightNotNull($leftValue);
    }
 
@@ -1620,20 +1612,12 @@ final class Either {
     * @psalm-pure
     * @template TTLeft
     * @template TTRight
-    * @psalm-param TTLeft $leftValue
+    * @psalm-param TTLeft|null|false $leftValue
     * @psalm-param TTRight $rightValue
-    * @psalm-return (
-    *   TTLeft is null                ? self<never, TTRight> : (
-    *   TTLeft is false               ? self<never, TTRight> : (
-    *   TTLeft is array<never, never> ? self<never, TTRight> : (
-    *   TTLeft is 0                   ? self<never, TTRight> : (
-    *   TTLeft is 0.0                 ? self<never, TTRight> : (
-    *   TTLeft is ''                  ? self<never, TTRight> : (
-    *   TTLeft is '0'                 ? self<never, TTRight> :
-    *   self<TTLeft, never>
-    * )))))))
+    * @psalm-return self<TTLeft, TTRight>
     **/
    public static function notFalsyLeft($leftValue, $rightValue): self {
+      /** @var self<TTLeft, TTRight> */
       return self::left($leftValue)->leftNotFalsy($rightValue);
    }
 
@@ -1650,20 +1634,12 @@ final class Either {
     * @psalm-pure
     * @template TTLeft
     * @template TTRight
-    * @psalm-param TTRight $rightValue
+    * @psalm-param TTRight|null|false $rightValue
     * @psalm-param TTLeft $leftValue
-    * @psalm-return (
-    *   TTRight is null                ? self<TTLeft, never> : (
-    *   TTRight is false               ? self<TTLeft, never> : (
-    *   TTRight is array<never, never> ? self<TTLeft, never> : (
-    *   TTRight is 0                   ? self<TTLeft, never> : (
-    *   TTRight is 0.0                 ? self<TTLeft, never> : (
-    *   TTRight is ''                  ? self<TTLeft, never> : (
-    *   TTRight is '0'                 ? self<TTLeft, never> :
-    *   self<never, TTRight>
-    * )))))))
+    * @psalm-return self<TTLeft, TTRight>
     **/
    public static function notFalsyRight($rightValue, $leftValue): self {
+      /** @var self<TTLeft, TTRight> */
       return self::right($rightValue)->rightNotFalsy($leftValue);
    }
 
@@ -1743,9 +1719,9 @@ final class Either {
     *
     *  - psalm does not resolve a `$key is key-of<TArray>` conditional here,
     *    taking the true branch even for a key it can see is absent, so the
-    *    return is the union of the three real outcomes instead
+    *    left is always `value-of<TArray>`
     *
-    * @psalm-return self<value-of<TArray>, never>|self<never, TTRight>|self<never, Exception>
+    * @psalm-return self<value-of<TArray>, (TTRight is null ? Exception : TTRight)>
     **/
     public static function fromArray(array $array, $key, $rightValue = null): self {
       if (array_key_exists($key, $array)) {

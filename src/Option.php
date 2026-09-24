@@ -281,7 +281,7 @@ final class Option {
     * @template TT
     * @psalm-param TT $alternative
     *
-    * @psalm-return (T is never ? self<TT> : self<T>)
+    * @psalm-return self<T|TT>
     */
    public function or($alternative): self {
       return $this->hasValue
@@ -307,7 +307,7 @@ final class Option {
     * @template TT
     * @psalm-param callable():TT $alternativeFactory
     *
-    * @psalm-return (T is never ? self<TT> : self<T>)
+    * @psalm-return self<T|TT>
     */
    public function orCreate(callable $alternativeFactory): self {
       return $this->hasValue
@@ -331,7 +331,7 @@ final class Option {
     * @psalm-mutation-free
     * @template TT
     * @psalm-param Option<TT> $alternativeOption
-    * @psalm-return (T is never ? Option<TT> : Option<T>)
+    * @psalm-return Option<T|TT>
     **/
    public function else(self $alternativeOption): self {
       return $this->hasValue
@@ -357,7 +357,7 @@ final class Option {
     *
     * @template TT
     * @psalm-param callable():Option<TT> $alternativeOptionFactory
-    * @psalm-return (T is never ? Option<TT> : Option<T>)
+    * @psalm-return Option<T|TT>
     **/
    public function elseCreate(callable $alternativeOptionFactory): self {
       return $this->hasValue
@@ -475,7 +475,7 @@ final class Option {
     *
     * @template U
     * @psalm-param callable(T):U $mapFunc
-    * @psalm-return (T is never ? Option<never> : Option<U>)
+    * @psalm-return Option<U>
     **/
    public function map(callable $mapFunc): self {
       return $this->hasValue
@@ -641,7 +641,7 @@ final class Option {
     * ```
     *
     * @psalm-param bool|callable(T):bool $condition
-    * @psalm-return ($condition is false ? self<never> : self<T>)
+    * @psalm-return self<T>
     */
    public function filter(bool|callable $condition): self {
       if (!$this->hasValue) {
@@ -689,36 +689,44 @@ final class Option {
     * $noneThing = $someThing->notNull(); // Turn null into an none Option
     * ```
     * @psalm-mutation-free
-    * @psalm-return (T is null ? self<never> : self<T>)
+    * @template TNotNull
+    * @psalm-if-this-is Option<TNotNull|null>
+    * @psalm-return self<TNotNull>
     */
    public function notNull(): self {
+      /** @var self<TNotNull> a null value never survives the check */
       return $this->hasValue && is_null($this->value)
          ? self::none()
          : $this;
    }
 
    /**
-     * Turn a `Option::some(null)` into an `Option::none()` iff `!$value == true`
-     *
-     * ```php
-     * $someThing = Option::some(null); // Valid
-     * $none = $someThing->notFalsy(); // Turn null into an none Option
-     * $none =  Option::some("")->notFalsy(); // Turn empty string into an none Option
-     * ```
-     * @psalm-mutation-free
-     * @psalm-return (
-     *     T is null                ? self<never> : (
-     *     T is false               ? self<never> : (
-     *     T is array<never, never> ? self<never> : (
-     *     T is 0                   ? self<never> : (
-     *     T is 0.0                 ? self<never> : (
-     *     T is ''                  ? self<never> : (
-     *     T is '0'                 ? self<never> :
-     *     self<T>
-     * )))))))
-     */
-    public function notFalsy(): self {
-      return $this->hasValue && !$this->value
+    * Turn a `Option::some($value)` into an `Option::none()` iff `$value` is falsy
+    *
+    * ```php
+    * $row = false; // what a row fetch hands back when it finds nothing
+    *
+    * echo (string) Option::some($row)->notFalsy(), "\n";  // None
+    * echo (string) Option::some('')->notFalsy(), "\n";    // None
+    * echo (string) Option::some('0.0')->notFalsy(), "\n"; // Some(0.0), truthy in PHP
+    * ```
+    *
+    * _Notes:_
+    *
+    *  - psalm drops `null` and `false` from the type, so an `Option<array|false>`
+    *    comes out as `Option<array>`. The other falsy values (`0`, `''`, `'0'`,
+    *    `[]`) are removed at runtime but stay in the type
+    *  - psalm reports `IfThisIsMismatch` for a box whose type is exactly `null`,
+    *    because there is nothing left to bind. Use `notNull()` there
+    *
+    * @psalm-mutation-free
+    * @template TNotFalsy
+    * @psalm-if-this-is Option<TNotFalsy|null|false>
+    * @psalm-return self<TNotFalsy>
+    */
+   public function notFalsy(): self {
+      /** @var self<TNotFalsy> a falsy value never survives the check */
+      return $this->hasValue && !((bool) $this->value)
          ? self::none()
          : $this;
    }
@@ -887,11 +895,12 @@ final class Option {
     *
     * @template TT
     *
-    * @psalm-param TT $someValue
+    * @psalm-param TT|null $someValue
     *
     * @psalm-return self<TT>
     */
    public static function someNotNull($someValue): self {
+      /** @var self<TT> */
       return self::some($someValue)->notNull();
    }
 
@@ -916,11 +925,12 @@ final class Option {
     *
     * @template TT
     *
-    * @psalm-param TT $someValue
+    * @psalm-param TT|null|false $someValue
     *
     * @psalm-return self<TT>
     */
    public static function someNotFalsy($someValue): self {
+      /** @var self<TT> a falsy value never survives notFalsy() */
       return self::some($someValue)->notFalsy();
    }
 
