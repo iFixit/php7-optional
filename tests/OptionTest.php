@@ -373,7 +373,7 @@ final class OptionTest extends TestCase {
    public function testFilterRejectsAStringInStrictCode(): void {
       $this->expectException(\TypeError::class);
 
-      $_ = Option::some(5)->filter('is_numeric');
+      $_ = Option::some(5)->filter(self::text('is_numeric'));
    }
 
    public function testFlatMapNeverRunsItsCallbackOnANone(): void {
@@ -581,9 +581,6 @@ final class OptionTest extends TestCase {
    /**
     * A string is always a message, even one that names a function: that is
     * why the factory has to be a Closure rather than any callable.
-    *
-    * @psalm-suppress InvalidArgument psalm reads a literal string that names a
-    *    function as a callable and stops seeing the string; PHP does not
     */
    public function testValueOrThrowTakesAMessage(): void {
       $this->assertSame(1, Option::some(1)->valueOrThrow('never used'));
@@ -591,7 +588,7 @@ final class OptionTest extends TestCase {
       $this->expectException(MissingValueException::class);
       $this->expectExceptionMessage('strtoupper');
 
-      Option::none()->valueOrThrow('strtoupper');
+      Option::none()->valueOrThrow(self::text('strtoupper'));
    }
 
    /**
@@ -886,6 +883,16 @@ final class OptionTest extends TestCase {
       $_ = Option::some(1)->mapSafely(function(int $_x): int { throw new \LogicException('a bug'); }, \OutOfBoundsException::class);
    }
 
+
+   /**
+    * A plain string to psalm. A literal that names a function, such as
+    * 'is_numeric', reads as a callable, and not the same way on every run:
+    * one run in three reported ArgumentTypeCoercion where the others reported
+    * InvalidArgument.
+    */
+   private static function text(string $text): string {
+      return $text;
+   }
 }
 
 final class SomeObject {}
