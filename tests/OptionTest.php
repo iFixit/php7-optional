@@ -301,6 +301,19 @@ final class OptionTest extends TestCase {
       $this->assertFalse($someFalse);
    }
 
+   /**
+    * exists() reads its callback's result the way if does, like filter() and
+    * Result::exists(). It used to return the result as is, so a callback that
+    * returned 1 threw a TypeError from the bool return type.
+    *
+    * @psalm-suppress InvalidArgument these callbacks break callable(T):bool on purpose
+    */
+   public function testExistsReadsTheCallbackResultTheWayIfDoes(): void {
+      $this->assertTrue(Option::some(5)->exists(fn() => 1));
+      $this->assertFalse(Option::some(5)->exists(fn() => '0'));
+      $this->assertFalse(Option::some(5)->exists(fn() => null));
+   }
+
    public function testFlatMap(): void {
       $somePerson = [
          'name' => [

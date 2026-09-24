@@ -264,12 +264,11 @@ function example21_contains(): void {
  * src/Option.php #22, exists()
  */
 function example22_exists(): void {
-   $none = Option::none();
-   $false = $none->exists(fn($x) => $x == 10);
+   $isAdult = fn(int $age) => $age >= 18;
 
-   $some = Option::some(10);
-   $true = $some->exists(fn($x) => $x >= 10);
-   $false = $some->exists(fn($x) => $x == "Thing");
+   echo Option::some(30)->exists($isAdult) ? "yes\n" : "no\n"; // "yes"
+   echo Option::some(12)->exists($isAdult) ? "yes\n" : "no\n"; // "no"
+   echo Option::none()->exists($isAdult) ? "yes\n" : "no\n";   // "no", $isAdult never ran
 }
 
 /**

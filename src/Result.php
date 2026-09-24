@@ -320,6 +320,7 @@ final readonly class Result {
     * _Notes:_
     *
     *  - `$existsFunc` must follow this interface `callable(T):bool`
+    *  - Its result counts the way `if` counts it, as in `filter()`
     *
     * @psalm-param callable(T):bool $existsFunc
     */
@@ -471,7 +472,9 @@ final readonly class Result {
     *    expression happens even on a `Result::err`
     *  - `$error` is evaluated at the call site too, whether or not it is used
     *  - A callable's result counts the way `if` counts it, so a callback that
-    *    returns `1` or `'1'` keeps the value, as `array_filter` would
+    *    returns `1` or `'1'` keeps the value, as `array_filter` would. psalm
+    *    and PHPStan still ask for a `bool`, which catches a callback that
+    *    returns something always truthy, such as an object, by mistake
     *
     * @template TE
     * @psalm-param bool|callable(T):bool $condition

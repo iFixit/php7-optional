@@ -183,6 +183,9 @@ Shorthands for shapes callers otherwise spell out by hand:
   never resolved, so the value was `mixed` whatever the key.
   `Option::fromArray(['hello' => 'world'], 'hello')->valueOr('x')` traces
   `'world'|'x'` now
+* **`Option::exists()` threw a `TypeError` for a callback that returned `1`.**
+  It returned the callback's result from a method declared `bool`. It reads
+  the result the way `if` does now, like `filter()` and `Result::exists()`
 * **`Option::filter` had no docblock at all**, so psalm gave it no template and
   the mapped type was lost through it
 * **`Option::mapSafely`'s example did not run.** It called `safeMap()`, which

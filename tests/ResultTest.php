@@ -246,6 +246,15 @@ final class ResultTest extends TestCase {
    }
 
    /**
+    * @psalm-suppress InvalidArgument these callbacks break callable(T):bool on purpose
+    */
+   public function testExistsReadsTheCallbackResultTheWayIfDoes(): void {
+      $this->assertTrue(Result::ok(5)->exists(fn() => 1));
+      $this->assertFalse(Result::ok(5)->exists(fn() => '0'));
+      $this->assertFalse(Result::err('e')->exists(fn() => 1));
+   }
+
+   /**
     * The same rule as Option::filter: a callback's result counts the way `if`
     * counts it, so a flag of 1 or '1' keeps the value.
     *

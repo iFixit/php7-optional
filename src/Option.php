@@ -528,7 +528,9 @@ final readonly class Option {
     *    `Option::none`. Pass the callable instead and it only runs on a
     *    `Option::some`
     *  - A callable's result counts the way `if` counts it, so a callback that
-    *    returns `1` or `'1'` keeps the value, as `array_filter` would
+    *    returns `1` or `'1'` keeps the value, as `array_filter` would. psalm
+    *    and PHPStan still ask for a `bool`, which catches a callback that
+    *    returns something always truthy, such as an object, by mistake
     *  - This method is not `@psalm-mutation-free`, because it may call code you
     *    supplied. That is the cost of taking a callable at all
     *  - Returns `Option<T>`
@@ -664,29 +666,25 @@ final readonly class Option {
    }
 
    /**
-    * Returns true if the `$existsFunc` returns true, otherwise false.
+    * Returns true iff the option is `Option::some` and `$existsFunc` accepts its value
     *
     * ```php
-    * $none = Option::none();
-    * $false = $none->exists(fn($x) => $x == 10);
+    * $isAdult = fn(int $age) => $age >= 18;
     *
-    * $some = Option::some(10);
-    * $true = $some->exists(fn($x) => $x >= 10);
-    * $false = $some->exists(fn($x) => $x == "Thing");
+    * echo Option::some(30)->exists($isAdult) ? "yes\n" : "no\n"; // "yes"
+    * echo Option::some(12)->exists($isAdult) ? "yes\n" : "no\n"; // "no"
+    * echo Option::none()->exists($isAdult) ? "yes\n" : "no\n";   // "no", $isAdult never ran
     * ```
     *
     * _Notes:_
     *
     *  - `$existsFunc` must follow this interface `callable(T):bool`
+    *  - Its result counts the way `if` counts it, as in `filter()`
     *
     * @psalm-param callable(T):bool $existsFunc
     **/
    public function exists(callable $existsFunc): bool {
-      if (!$this->hasValue()) {
-         return false;
-      }
-
-      return $existsFunc($this->value);
+      return $this->hasValue && $existsFunc($this->value);
    }
 
    /**
@@ -928,7 +926,7 @@ final readonly class Option {
     * _Notes:_
     *
     *  - `$predicate` must follow this interface `callable(TT):bool`. It runs on
-    *    each value in turn and stops at the first `true`
+    *    each value in turn and stops at the first result `if` would accept
     *  - PHP 8.4's `array_find` does the same search, but returns `null` for no
     *    match, which looks exactly like a match on a stored `null`, and it only
     *    takes arrays
