@@ -125,6 +125,13 @@ function chainsTypeCheck(?string $maybe, bool $flag, string $text, Option $opt, 
    $notFalsyThenMap = Option::some($position)->notFalsy()->map(fn(int $n): int => $n + 1);
    /** @psalm-trace $notFalsyThenMap */
 
+   // a callback that returns a Some on one branch and a None on the other
+   $flatMapWithBothBranches = $opt->flatMap(fn(string $s) => $s === '' ? Option::none() : Option::some($s));
+   /** @psalm-trace $flatMapWithBothBranches */
+
+   $elseCreateWithBothBranches = $opt->elseCreate(fn() => $flag ? Option::some('fallback') : Option::none());
+   /** @psalm-trace $elseCreateWithBothBranches */
+
 }
 
 function resultTypes(): void {
@@ -175,6 +182,13 @@ function resultChainsTypeCheck(?string $maybe, Result $result): void {
 
    $resultOrThenMap = $result->or(0)->map(fn(int $n): int => $n + 1);
    /** @psalm-trace $resultOrThenMap */
+
+   // a callback that returns an Ok on one branch and an Err on the other
+   $resultFlatMapWithBothBranches = $result->flatMap(fn(int $n) => $n > 0 ? Result::ok($n) : Result::err('not positive'));
+   /** @psalm-trace $resultFlatMapWithBothBranches */
+
+   $resultElseCreateWithBothBranches = $result->elseCreate(fn(string $e) => $e === '' ? Result::ok(0) : Result::err($e));
+   /** @psalm-trace $resultElseCreateWithBothBranches */
 
    $resultElseThenMap = $result->else(Result::ok(0))->map(fn(int $n): int => $n + 1);
    /** @psalm-trace $resultElseThenMap */

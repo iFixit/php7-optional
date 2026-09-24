@@ -146,6 +146,13 @@ Shorthands for shapes callers otherwise spell out by hand:
 
 ### Fixed
 
+* **psalm rejected ordinary code that returns a box.** The templates were
+  invariant, so a function declared `Option<int>` could not return
+  `Option::some(count($items))` (an `Option<int<0, max>>`), nor one declared
+  `Option<Animal>` return `Option::some(new Dog())`. psalm only let a literal
+  type through, which is why nothing noticed. Both boxes are covariant now,
+  which also lets a `flatMap` or `elseCreate` callback return a Some on one
+  branch and a None on the other with no annotation
 * **psalm lost the type of every chain through `Option::map`.** On 3.0 it
   typed each one `Option<never>`, a box it believes is always empty, so
   `$opt->map($f)->valueOr(0)` traced as the literal `0`. `map`'s

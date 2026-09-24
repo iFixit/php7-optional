@@ -315,7 +315,7 @@ final class OptionTest extends TestCase {
       $name = $person->flatMap(
          /**
           * @param array{first: string, last: string} $person
-          * @return Option<string|never>
+          * @return Option<string>
           */
          function(array $person) {
             $fullName = $person['first'] . $person['last'];

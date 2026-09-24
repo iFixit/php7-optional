@@ -244,6 +244,18 @@ asserted two.
 `findUnusedCode` on. The `psalm/plugin-phpunit` plugin is what stops psalm
 reporting the test classes themselves as unused.
 
+- **Both boxes are covariant** (`@template-covariant`), which is what lets a
+  function declared `Option<int>` return `Option::some(count($x))`, and
+  `Option::none()` stand in for any `Option`. With invariant templates psalm
+  rejected both, and the type fixture never noticed: psalm lets a literal type
+  through (`Option<'x'>` into `Option<string>`), and literals are what the
+  fixture used. `tests/TypeInference/Assignability.php` now returns boxes from
+  typed functions and fails if the variance breaks.
+- psalm reports `InvalidTemplateParam` for every `callable(T)` parameter,
+  where the value only flows out, so the class docblocks suppress it once.
+  That suppression would also hide the one real mistake: a public method with
+  a bare `T` or `E` parameter. Never add one. Take a new template instead, the
+  way `valueOr(TT $alternative)` does.
 - **A method that returns a box never gets a conditional return type.**
   psalm cannot decide `T is never` for an ordinary `T`, so it returns both
   branches, and `(T is never ? Option<never> : Option<U>)` becomes

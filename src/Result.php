@@ -24,9 +24,18 @@ use Throwable;
  * built. It is final because the static factories build with `new self`, so a
  * subclass would be silently downgraded to a `Result` by the first `map` call.
  *
+ * Both of its types are covariant: a `Result<Dog, string>` is a
+ * `Result<Animal, string>`, and `Result::err('x')` is a `Result` of any value
+ * type. That is safe because nothing can put a value into a box after it is
+ * built.
+ *
  * @api
- * @template T
- * @template E
+ * @template-covariant T
+ * @template-covariant E
+ * @psalm-suppress InvalidTemplateParam psalm reports T and E in every
+ *    `callable(T)` and `callable(E)` parameter, where the box only hands them
+ *    out, which covariance allows. PHPStan checks those positions properly and
+ *    accepts them.
  */
 final readonly class Result {
    use DescribesValues;
@@ -431,11 +440,6 @@ final readonly class Result {
     * _Notes:_
     *
     *  - `$mapFunc` must follow this interface `callable(T):Result<U, F>`
-    *  - When your callback returns a `Result::ok` on one branch and a
-    *    `Result::err` on another, psalm infers a union of two Result types and
-    *    cannot bind it to the templates. Give the callback an explicit
-    *    `@psalm-return Result<U, F>`, or build the result in one expression as
-    *    above, and it binds
     *
     * @template U
     * @template F
@@ -582,7 +586,6 @@ final readonly class Result {
     * _Notes:_
     *
     *  - `$alternativeResultFactory` must follow this interface `callable(E):Result<U, F>`
-    *  - The same union caveat as `flatMap` applies to the callback's return type
     *  - Returns `Result<T|U, F>`
     *
     * @template U

@@ -283,6 +283,8 @@ each call, and the entrances drop what they exist to drop:
 * `Result::fromCallable($fn, JsonException::class)` is a
   `Result<T, JsonException>`
 * `$option->map($f)->map($g)` is an `Option` of whatever `$g` returns
+* a box is covariant, so a function declared `Option<Animal>` can return
+  `Option::some(new Dog())`, and `Option::none()` fits any `Option`
 
 `tests/TypeInference` records what psalm infers for expressions like these,
 including 18 two-call chains, and fails when one changes. PHPStan was

@@ -18,8 +18,15 @@ use Throwable;
  * built. It is final because the static factories build with `new self`, so a
  * subclass would be silently downgraded to an `Option` by the first `map` call.
  *
+ * Its type is covariant: an `Option<Dog>` is an `Option<Animal>`, and
+ * `Option::none()` is an `Option` of anything. That is safe because nothing
+ * can put a value into a box after it is built.
+ *
  * @api
- * @template T
+ * @template-covariant T
+ * @psalm-suppress InvalidTemplateParam psalm reports T in every `callable(T)`
+ *    parameter, where the box only hands its value out, which covariance allows.
+ *    PHPStan checks those positions properly and accepts them.
  */
 final readonly class Option {
    use DescribesValues;
@@ -488,11 +495,6 @@ final readonly class Option {
     * _Notes:_
     *
     *  - `$mapFunc` must follow this interface `callable(T):Option<U>`
-    *  - When your callback returns a `Option::some` on one branch and a
-    *    `Option::none` on another, psalm infers a union of two Option types
-    *    and cannot bind it to `U`. Give the callback an explicit
-    *    `@psalm-return Option<YourType>`, or use a named function with a
-    *    declared return type, and it binds
     *
     * @template U
     * @psalm-param callable(T):Option<U> $mapFunc
@@ -590,8 +592,9 @@ final readonly class Option {
     *  - psalm drops `null` and `false` from the type, so an `Option<array|false>`
     *    comes out as `Option<array>`. The other falsy values (`0`, `''`, `'0'`,
     *    `[]`) are removed at runtime but stay in the type
-    *  - psalm reports `IfThisIsMismatch` for a box whose type is exactly `null`,
-    *    because there is nothing left to bind. Use `notNull()` there
+    *  - For a box whose type is exactly `null`, psalm has nothing left to bind
+    *    and keeps `Option<null>`. That is wider than the always-empty result,
+    *    but still correct
     *
     * @psalm-mutation-free
     * @template TNotFalsy

@@ -67,6 +67,11 @@ final class TypeInferenceTest extends TestCase {
          'mapThenValueOr' => 'int<0, max>',
          'notFalsyThenMap' => 'Optional\\Option<int>',
 
+         // a callback that returns a Some on one branch and a None on the other
+         // binds, because the box is covariant
+         'flatMapWithBothBranches' => 'Optional\\Option<non-empty-string>',
+         'elseCreateWithBothBranches' => 'Optional\\Option<string>',
+
          // Result
          'resultMapKeepsTheMappedType' => "Optional\\Result<'n5', never>",
          'resultFromCallableCarriesTheThrowable' => 'Optional\\Result<7, Throwable>',
@@ -81,6 +86,8 @@ final class TypeInferenceTest extends TestCase {
          'twoMapErrs' => 'Optional\\Result<int, int<0, max>>',
          'resultFilterThenMap' => 'Optional\\Result<int, string>',
          'resultOrThenMap' => 'Optional\\Result<int, never>',
+         'resultFlatMapWithBothBranches' => 'Optional\\Result<int<1, max>, string>',
+         'resultElseCreateWithBothBranches' => 'Optional\\Result<int, non-empty-string>',
          'resultElseThenMap' => 'Optional\\Result<int, never>',
          'resultFlatMapThenMap' => 'Optional\\Result<int<1, max>, string>',
          'toResultThenMap' => "Optional\\Result<int<0, max>, 'missing'>",
