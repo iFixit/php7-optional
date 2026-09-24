@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace Optional;
 
+use Closure;
 use Optional\Exceptions\MissingValueException;
 use Optional\Internal\DescribesValues;
 use Optional\Internal\EarlyReturn;
@@ -161,55 +162,70 @@ final readonly class Result {
     * With no argument it rethrows the error when the error is a `Throwable`,
     * which is what `Result::fromCallable` stores, so the original trace is
     * kept. Any other error becomes a `MissingValueException` that names it.
-    * Pass `$exceptionFactory` to say what failed instead; it is handed the
-    * error, so the error can become the cause.
+    *
+    * Say what failed, which is almost always worth it. A message becomes a
+    * `MissingValueException` that also names the error, with the error as its
+    * cause when it is a `Throwable`. A closure is handed the error and builds
+    * the exception itself.
     *
     * ```php
-    * echo Result::ok(1)->valueOrThrow(), "\n"; // 1
+    * echo Result::ok(1)->valueOrThrow('could not load user 5'), "\n"; // 1
     *
     * try {
-    *    Result::err(new \RuntimeException("the api said no"))->valueOrThrow();
-    * } catch (\RuntimeException $e) {
-    *    echo $e->getMessage(), "\n"; // "the api said no", the same exception
+    *    Result::err('timeout')->valueOrThrow('could not load user 5');
+    * } catch (\Optional\Exceptions\MissingValueException $e) {
+    *    echo $e->getMessage(), "\n"; // "could not load user 5: 'timeout'"
     * }
     *
     * try {
-    *    Result::err("timeout")->valueOrThrow(fn(string $error) => new \RuntimeException("could not load: {$error}"));
-    * } catch (\RuntimeException $e) {
+    *    Result::err(new \RuntimeException('the api said no'))->valueOrThrow('could not load user 5');
+    * } catch (\Optional\Exceptions\MissingValueException $e) {
+    *    echo $e->getPrevious()?->getMessage(), "\n"; // "the api said no", kept as the cause
+    * }
+    *
+    * try {
+    *    Result::err('timeout')->valueOrThrow(fn(string $error) => new \DomainException("could not load: {$error}"));
+    * } catch (\DomainException $e) {
     *    echo $e->getMessage(), "\n"; // "could not load: timeout"
     * }
     *
     * try {
-    *    Result::err("timeout")->valueOrThrow();
-    * } catch (\Optional\Exceptions\MissingValueException $e) {
-    *    echo $e->getMessage(), "\n"; // "Result is an Err: 'timeout'"
+    *    Result::err(new \RuntimeException('the api said no'))->valueOrThrow();
+    * } catch (\RuntimeException $e) {
+    *    echo $e->getMessage(), "\n"; // "the api said no", the same exception
     * }
     * ```
     *
     * _Notes:_
     *
-    *  - `$exceptionFactory` must follow this interface `callable(E):Throwable`
-    *  - It is called lazily, so building the exception costs nothing on a success
+    *  - `$orThrow` is a message, or a closure that follows the interface
+    *    `callable(E):Throwable`. It takes a closure rather than any callable,
+    *    because a string naming a function is also a message
+    *  - The closure runs only on a `Result::err`, so building the exception
+    *    costs nothing on a success
     *
-    * @psalm-param null|callable(E):Throwable $exceptionFactory
+    * @psalm-param null|string|Closure(E):Throwable $orThrow
     * @psalm-return T
     */
-   public function valueOrThrow(?callable $exceptionFactory = null): mixed {
-      $error = $this->error;
-
+   public function valueOrThrow(string|Closure|null $orThrow = null): mixed {
       if ($this->isOk) {
          return $this->value;
       }
 
-      if ($exceptionFactory !== null) {
-         throw $exceptionFactory($error);
+      $error = $this->error;
+
+      if ($orThrow instanceof Closure) {
+         throw $orThrow($error);
       }
 
-      if ($this->error instanceof Throwable) {
-         throw $this->error;
+      if ($orThrow === null && $error instanceof Throwable) {
+         throw $error;
       }
 
-      throw new MissingValueException('Result is an Err: ' . self::describe($this->error));
+      throw new MissingValueException(
+         ($orThrow ?? 'Result is an Err') . ': ' . self::describe($error),
+         previous: $error instanceof Throwable ? $error : null,
+      );
    }
 
    /**

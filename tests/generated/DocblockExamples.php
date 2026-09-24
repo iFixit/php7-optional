@@ -45,12 +45,18 @@ function example3_toNullable(): void {
  * src/Option.php #4, valueOrThrow()
  */
 function example4_valueOrThrow(): void {
-   echo Option::some(1)->valueOrThrow(), "\n"; // 1
+   echo Option::some(1)->valueOrThrow('no id for this device'), "\n"; // 1
 
    try {
-      Option::none()->valueOrThrow(fn() => new \RuntimeException("No id for this device"));
-   } catch (\RuntimeException $e) {
-      echo $e->getMessage(), "\n"; // "No id for this device"
+      Option::none()->valueOrThrow('no id for this device');
+   } catch (\Optional\Exceptions\MissingValueException $e) {
+      echo $e->getMessage(), "\n"; // "no id for this device"
+   }
+
+   try {
+      Option::none()->valueOrThrow(fn() => new \DomainException('no id for this device'));
+   } catch (\DomainException $e) {
+      echo get_class($e), "\n"; // "DomainException"
    }
 
    try {
@@ -457,24 +463,30 @@ function example39_valueOrCreate(): void {
  * src/Result.php #5, valueOrThrow()
  */
 function example40_valueOrThrow(): void {
-   echo Result::ok(1)->valueOrThrow(), "\n"; // 1
+   echo Result::ok(1)->valueOrThrow('could not load user 5'), "\n"; // 1
 
    try {
-      Result::err(new \RuntimeException("the api said no"))->valueOrThrow();
-   } catch (\RuntimeException $e) {
-      echo $e->getMessage(), "\n"; // "the api said no", the same exception
+      Result::err('timeout')->valueOrThrow('could not load user 5');
+   } catch (\Optional\Exceptions\MissingValueException $e) {
+      echo $e->getMessage(), "\n"; // "could not load user 5: 'timeout'"
    }
 
    try {
-      Result::err("timeout")->valueOrThrow(fn(string $error) => new \RuntimeException("could not load: {$error}"));
-   } catch (\RuntimeException $e) {
+      Result::err(new \RuntimeException('the api said no'))->valueOrThrow('could not load user 5');
+   } catch (\Optional\Exceptions\MissingValueException $e) {
+      echo $e->getPrevious()?->getMessage(), "\n"; // "the api said no", kept as the cause
+   }
+
+   try {
+      Result::err('timeout')->valueOrThrow(fn(string $error) => new \DomainException("could not load: {$error}"));
+   } catch (\DomainException $e) {
       echo $e->getMessage(), "\n"; // "could not load: timeout"
    }
 
    try {
-      Result::err("timeout")->valueOrThrow();
-   } catch (\Optional\Exceptions\MissingValueException $e) {
-      echo $e->getMessage(), "\n"; // "Result is an Err: 'timeout'"
+      Result::err(new \RuntimeException('the api said no'))->valueOrThrow();
+   } catch (\RuntimeException $e) {
+      echo $e->getMessage(), "\n"; // "the api said no", the same exception
    }
 }
 
@@ -887,7 +899,7 @@ function example75_unknown(): void {
    ) . "\n"; // "got 41"
 
    // 3. Throw if it is missing, saying what was missing
-   echo $some->valueOrThrow(fn() => new RuntimeException("no id")) . "\n"; // 41
+   echo $some->valueOrThrow('no id for this device') . "\n"; // 41
 
    // 4. Ask
    echo $some->hasValue() ? "yes\n" : "no\n"; // "yes"

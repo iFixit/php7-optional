@@ -41,6 +41,7 @@ final class TypeInferenceTest extends TestCase {
          'fromArrayKeepsTheValueType' => "Optional\\Option<'world'>",
          'valueOrThrowReturnsTheValue' => '41',
          'valueOrThrowWithNoFactory' => '41',
+         'valueOrThrowWithAMessage' => '41',
          'tapReturnsTheSameBox' => 'Optional\\Option<5>',
          'someNotFalsyKeepsTheType' => "Optional\\Option<'Ada'>",
          'fromCallableKeepsTheReturnType' => 'Optional\\Option<7>',

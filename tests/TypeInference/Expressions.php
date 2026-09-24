@@ -38,6 +38,9 @@ function optionTypes(): void {
    $valueOrThrowWithNoFactory = Option::some(41)->valueOrThrow();
    /** @psalm-trace $valueOrThrowWithNoFactory */
 
+   $valueOrThrowWithAMessage = Option::some(41)->valueOrThrow('no id for this device');
+   /** @psalm-trace $valueOrThrowWithAMessage */
+
    $tapReturnsTheSameBox = Option::some(5)->tap(function(int $_n): void {});
    /** @psalm-trace $tapReturnsTheSameBox */
 

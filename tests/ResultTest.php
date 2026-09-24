@@ -325,6 +325,28 @@ final class ResultTest extends TestCase {
       $this->assertSame([[], []], Result::partition([]));
    }
 
+   public function testValueOrThrowWithAMessageNamesTheErrorAndKeepsItAsTheCause(): void {
+      $this->assertSame(1, Result::ok(1)->valueOrThrow('never used'));
+
+      try {
+         $_ = self::failure('timeout')->valueOrThrow('could not load');
+         $this->fail('valueOrThrow() on an Err must throw');
+      } catch (MissingValueException $e) {
+         $this->assertSame("could not load: 'timeout'", $e->getMessage());
+         $this->assertNull($e->getPrevious(), 'a string error is named, not chained');
+      }
+
+      $cause = new \RuntimeException('the api said no');
+
+      try {
+         $_ = self::failure($cause)->valueOrThrow('could not load');
+         $this->fail('valueOrThrow() on an Err must throw');
+      } catch (MissingValueException $e) {
+         $this->assertSame('could not load: RuntimeException: the api said no', $e->getMessage());
+         $this->assertSame($cause, $e->getPrevious(), 'a Throwable error becomes the cause');
+      }
+   }
+
    public function testOrAndOrCreateRecoverOnlyAnErr(): void {
       $this->assertSame(0, Result::err('timeout')->or(0)->valueOr(-1));
 
@@ -409,5 +431,16 @@ final class ResultTest extends TestCase {
       $this->assertSame('Ok(array)', (string) Result::ok([1, 2]), 'an array is shown by its type');
       $this->assertSame('Ok(stdClass)', (string) Result::ok(new \stdClass()), 'an object with no string form is shown by its class');
       $this->assertSame('Err(RuntimeException: boom)', (string) Result::err(new \RuntimeException('boom')), 'an exception by its class and message, not its trace');
+   }
+
+   /**
+    * An Err psalm cannot see is one, so a test can check what happens after
+    *
+    * @template E
+    * @param E $error
+    * @return Result<int, E>
+    */
+   private static function failure(mixed $error): Result {
+      return Result::err($error);
    }
 }

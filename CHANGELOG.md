@@ -111,10 +111,12 @@ call:
   return `false` on failure. `someNotFalsy` treats a match at index `0` from
   `strpos` or `array_search` as missing; these only treat `false` that way
 
-Getting out of one, throwing if the value is missing, with a message you
-choose or `MissingValueException` when you pass nothing:
+Getting out of one, throwing if the value is missing:
 
-* `Option::valueOrThrow()`
+* `Option::valueOrThrow()`. Pass a message and it throws a
+  `MissingValueException` saying it, or a closure that builds your own
+  exception. `Result::valueOrThrow()` takes the same, adds the error's
+  description to a message, and keeps a `Throwable` error as the cause
 
 Catching only the failure you expect, the way a `catch` clause names its
 class:

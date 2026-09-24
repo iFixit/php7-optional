@@ -472,6 +472,22 @@ final class OptionTest extends TestCase {
       $this->assertSame('Some(RuntimeException@anonymous: disk full)', (string) Option::some(new class('disk full') extends \RuntimeException {}));
    }
 
+   /**
+    * A string is always a message, even one that names a function: that is
+    * why the factory has to be a Closure rather than any callable.
+    *
+    * @psalm-suppress InvalidArgument psalm reads a literal string that names a
+    *    function as a callable and stops seeing the string; PHP does not
+    */
+   public function testValueOrThrowTakesAMessage(): void {
+      $this->assertSame(1, Option::some(1)->valueOrThrow('never used'));
+
+      $this->expectException(MissingValueException::class);
+      $this->expectExceptionMessage('strtoupper');
+
+      Option::none()->valueOrThrow('strtoupper');
+   }
+
    public function testValueOrThrowUsesTheSuppliedException(): void {
       $some = Option::some(1);
       $this->assertSame(1, $some->valueOrThrow(function(): \Exception {

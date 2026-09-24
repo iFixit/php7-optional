@@ -182,19 +182,19 @@ echo $some->match(
 ) . "\n"; // "got 41"
 
 // 3. Throw if it is missing, saying what was missing
-echo $some->valueOrThrow(fn() => new RuntimeException("no id")) . "\n"; // 41
+echo $some->valueOrThrow('no id for this device') . "\n"; // 41
 
 // 4. Ask
 echo $some->hasValue() ? "yes\n" : "no\n"; // "yes"
 ```
 
-`valueOrThrow()` with no argument throws `MissingValueException`. With a
-factory it throws what the factory builds, and the factory runs only on the
-empty side, so nothing is constructed on the happy path. There is no bare
-`value()`: a name that short hides the throw.
+`valueOrThrow()` with a message throws a `MissingValueException` saying it.
+Pass a closure instead to throw your own exception; it runs only on the empty
+side, so nothing is built on the happy path. There is no bare `value()`: a name
+that short hides the throw.
 
-On a `Result`, the factory is handed the error, which is how you keep the
-original failure as the cause. With no factory, a `Result` rethrows an
+On a `Result`, a message also names the error, and a closure is handed the
+error, which is how you keep the original failure as the cause. With no factory, a `Result` rethrows an
 exception it caught, so its trace still points where the failure happened:
 
 ```php

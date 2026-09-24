@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace Optional;
 
+use Closure;
 use Exception;
 use Optional\Exceptions\MissingValueException;
 use Optional\Internal\DescribesValues;
@@ -137,19 +138,25 @@ final readonly class Option {
    }
 
    /**
-    * Returns the options value, or throws
+    * Returns the value, or throws
     *
-    * With no argument it throws `MissingValueException("Value is missing.")`.
-    * Pass `$exceptionFactory` to say what was missing instead, which is almost
-    * always worth it.
+    * Say what was missing, which is almost always worth it. A message throws a
+    * `MissingValueException` with it, and a closure builds the exception to
+    * throw. With no argument the message is "Value is missing."
     *
     * ```php
-    * echo Option::some(1)->valueOrThrow(), "\n"; // 1
+    * echo Option::some(1)->valueOrThrow('no id for this device'), "\n"; // 1
     *
     * try {
-    *    Option::none()->valueOrThrow(fn() => new \RuntimeException("No id for this device"));
-    * } catch (\RuntimeException $e) {
-    *    echo $e->getMessage(), "\n"; // "No id for this device"
+    *    Option::none()->valueOrThrow('no id for this device');
+    * } catch (\Optional\Exceptions\MissingValueException $e) {
+    *    echo $e->getMessage(), "\n"; // "no id for this device"
+    * }
+    *
+    * try {
+    *    Option::none()->valueOrThrow(fn() => new \DomainException('no id for this device'));
+    * } catch (\DomainException $e) {
+    *    echo get_class($e), "\n"; // "DomainException"
     * }
     *
     * try {
@@ -161,19 +168,22 @@ final readonly class Option {
     *
     * _Notes:_
     *
-    *  - `$exceptionFactory` must follow this interface `callable():Throwable`
-    *  - It is called lazily, so building the exception costs nothing on a `Option::some`
+    *  - `$orThrow` is a message, or a closure that follows the interface
+    *    `callable():Throwable`. It takes a closure rather than any callable,
+    *    because a string naming a function is also a message
+    *  - The closure runs only on a `Option::none`, so building the exception
+    *    costs nothing when there is a value
     *  - There is no `value()`. A name that short hides the throw, and an
     *    unguarded call to it is the one mistake psalm cannot catch for you
     *
-    * @psalm-param null|callable():Throwable $exceptionFactory
+    * @psalm-param null|string|Closure():Throwable $orThrow
     * @psalm-return T
     **/
-   public function valueOrThrow(?callable $exceptionFactory = null): mixed {
+   public function valueOrThrow(string|Closure|null $orThrow = null): mixed {
       if (!$this->hasValue) {
-         throw $exceptionFactory === null
-            ? new MissingValueException("Value is missing.")
-            : $exceptionFactory();
+         throw $orThrow instanceof Closure
+            ? $orThrow()
+            : new MissingValueException($orThrow ?? 'Value is missing.');
       }
 
       return $this->value;
