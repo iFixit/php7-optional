@@ -30,7 +30,7 @@
 
     <plugins>
         <pluginClass class="Psalm\PhpUnitPlugin\Plugin"/>
-        <!-- The library's own check for dropped Results, held to its own code. -->
+        <!-- The library's own plugin, held to its own code. -->
         <pluginClass class="Optional\StaticAnalysis\Psalm\Plugin"/>
     </plugins>
 

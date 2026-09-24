@@ -153,11 +153,16 @@ Leaving a block of steps early, like Rust's `?`:
 
 Catching a `Result` that is dropped, the way Rust's `#[must_use]` does:
 
-* A psalm plugin, `Optional\StaticAnalysis\Psalm\Plugin`, and a PHPStan rule
-  in `extension.neon`. Each reports a call whose `Result` is dropped on its
-  own line, from any function, including a missing `return` before a
+* A psalm plugin, `Optional\StaticAnalysis\Psalm\Plugin`, and a PHPStan
+  extension, `extension.neon`. Each reports a call whose `Result` is dropped
+  on its own line, from any function, including a missing `return` before a
   `Result::err()`. `#[\NoDiscard]` covers only the library's own methods, and
   only on PHP 8.5
+* The same plugin and extension type a box built in two branches as one box.
+  Without them, `$flag ? Result::ok($id) : Result::err('no')` is a
+  `Result<int, never>|Result<never, string>`, psalm reports `ReservedWord` on
+  the next typed callback, and PHPStan types a `map()` on it as
+  `Result<never, string>`
 
 Turning a batch of boxes into one:
 

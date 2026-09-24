@@ -7,16 +7,164 @@ namespace Optional\Tests;
 use PHPUnit\Framework\TestCase;
 
 /**
- * The dropped-Result check, run the way a user runs it
+ * The psalm plugin and the PHPStan extension, run the way a user runs them
  *
- * tests/StaticAnalysis/dropped-results.php marks each line the check has to
- * report with "// dropped". Every other line is a way of using or handling a
- * Result that must not be reported.
+ * tests/StaticAnalysis/dropped-results.php marks each line the dropped-Result
+ * check has to report with "// dropped". Every other line is a way of using or
+ * handling a Result that must not be reported.
+ *
+ * tests/StaticAnalysis/branch-built.php traces boxes built in two branches,
+ * which each tool types as one box only with the plugin or extension on.
  */
 final class StaticAnalysisTest extends TestCase {
-   private const FIXTURE = __DIR__ . '/StaticAnalysis/dropped-results.php';
+   private const DROPPED = __DIR__ . '/StaticAnalysis/dropped-results.php';
+
+   private const BRANCH_BUILT = __DIR__ . '/StaticAnalysis/branch-built.php';
+
+   /**
+    * What each tool infers for the traced variables. psalm keeps literal
+    * types where PHPStan widens them, as in tests/TypeInference.
+    */
+   private const BRANCH_BUILT_TYPES = [
+      'psalm' => [
+         'ternary' => "Optional\\Result<int, 'no'>",
+         'mapped' => "Optional\\Result<int, 'no'>",
+         'length' => 'Optional\\Result<int<0, max>, RuntimeException>',
+         'described' => 'Optional\\Result<float(1.5), non-empty-literal-string>',
+         'name' => 'Optional\\Option<string>',
+         'direct' => 'int',
+      ],
+      'phpstan' => [
+         'ternary' => 'Optional\\Result<int, string>',
+         'mapped' => 'Optional\\Result<int, string>',
+         'length' => 'Optional\\Result<int<0, max>, RuntimeException>',
+         'described' => 'Optional\\Result<float, non-falsy-string>',
+         'name' => 'Optional\\Option<string>',
+         'direct' => 'int',
+      ],
+   ];
 
    public function testThePsalmPluginReportsExactlyTheDroppedResults(): void {
+      $reported = [];
+      $other = [];
+
+      foreach (self::psalm()[self::DROPPED] ?? [] as [$type, $line, $message]) {
+         if ($type === 'UnusedResult') {
+            $reported[] = $line;
+         } else {
+            $other[] = "{$type} on line {$line}: {$message}";
+         }
+      }
+
+      $this->assertSame([], $other, 'the fixture has psalm issues besides the dropped Results');
+      $this->assertSame(self::droppedLines(), $reported);
+   }
+
+   /**
+    * PHPStan's own checks also flag some of these lines, as calls to functions
+    * with no side effects or methods marked #[\NoDiscard]. Only the rule's
+    * identifier counts here, and the line with droppedResultsWrite() is one
+    * PHPStan's own checks let through.
+    */
+   public function testThePhpstanRuleReportsExactlyTheDroppedResults(): void {
+      $reported = [];
+
+      foreach (self::phpstan()[self::DROPPED] ?? [] as [$identifier, $line]) {
+         if ($identifier === 'optional.unusedResult') {
+            $reported[] = $line;
+         }
+      }
+
+      sort($reported);
+      $this->assertSame(self::droppedLines(), $reported);
+   }
+
+   public function testThePsalmPluginTypesABoxBuiltInTwoBranchesAsOne(): void {
+      $traced = [];
+      $other = [];
+
+      foreach (self::psalm()[self::BRANCH_BUILT] ?? [] as [$type, $line, $message]) {
+         $parts = explode(': ', $message, 2);
+
+         if ($type === 'Trace' && count($parts) === 2) {
+            $traced[ltrim($parts[0], '$')] = $parts[1];
+         } else {
+            $other[] = "{$type} on line {$line}: {$message}";
+         }
+      }
+
+      $this->assertSame([], $other, 'psalm reports issues in the branch-built fixture besides its traces');
+      $this->assertSame(self::BRANCH_BUILT_TYPES['psalm'], $traced);
+   }
+
+   public function testThePhpstanExtensionTypesABoxBuiltInTwoBranchesAsOne(): void {
+      $traced = [];
+      $other = [];
+      $variables = self::tracedVariables();
+
+      foreach (self::phpstan()[self::BRANCH_BUILT] ?? [] as [$identifier, $line, $message]) {
+         if ($identifier === 'phpstan.dumpType' && isset($variables[$line])) {
+            $traced[$variables[$line]] = substr($message, strlen('Dumped type: '));
+         } else {
+            $other[] = "{$identifier} on line {$line}: {$message}";
+         }
+      }
+
+      $this->assertSame([], $other, 'PHPStan reports issues in the branch-built fixture besides its dumps');
+      $this->assertSame(self::BRANCH_BUILT_TYPES['phpstan'], $traced);
+   }
+
+   /**
+    * @return list<int>
+    */
+   private static function droppedLines(): array {
+      $lines = [];
+      $source = file(self::DROPPED);
+      self::assertIsArray($source);
+
+      foreach ($source as $index => $line) {
+         if (str_contains($line, '// dropped')) {
+            $lines[] = $index + 1;
+         }
+      }
+
+      self::assertGreaterThan(5, count($lines), 'the fixture marks suspiciously few lines');
+
+      return $lines;
+   }
+
+   /**
+    * The variable traced on each line of the branch-built fixture
+    *
+    * @return array<int, string>
+    */
+   private static function tracedVariables(): array {
+      $variables = [];
+      $source = file(self::BRANCH_BUILT);
+      self::assertIsArray($source);
+
+      foreach ($source as $index => $line) {
+         if (preg_match('#/\*\* @psalm-trace \$(\w+) \*/#', $line, $match) === 1) {
+            $variables[$index + 1] = $match[1];
+         }
+      }
+
+      return $variables;
+   }
+
+   /**
+    * Every issue psalm reports in the fixtures, by file
+    *
+    * @return array<string, list<array{string, int, string}>>
+    */
+   private static function psalm(): array {
+      /** @var array<string, list<array{string, int, string}>>|null $cached */
+      static $cached = null;
+
+      if ($cached !== null) {
+         return $cached;
+      }
+
       $root = dirname(__DIR__);
       $command = sprintf(
          '%s %s --no-cache --no-progress --config=%s --output-format=json 2>/dev/null',
@@ -32,96 +180,103 @@ final class StaticAnalysisTest extends TestCase {
       $printed = implode("\n", $output);
       /** @var mixed $issues */
       $issues = json_decode($printed, true);
-      $this->assertIsArray($issues, "psalm did not report as JSON:\n{$printed}");
+      self::assertIsArray($issues, "psalm did not report as JSON:\n{$printed}");
 
-      $reported = [];
-      $other = [];
+      $cached = [];
 
       foreach ($issues as $issue) {
-         $this->assertIsArray($issue);
+         self::assertIsArray($issue);
+         /** @var mixed $file */
+         $file = $issue['file_path'] ?? null;
          /** @var mixed $type */
          $type = $issue['type'] ?? null;
          /** @var mixed $line */
          $line = $issue['line_from'] ?? null;
-         $this->assertIsString($type);
-         $this->assertIsInt($line);
+         /** @var mixed $message */
+         $message = $issue['message'] ?? null;
+         self::assertIsString($file);
+         self::assertIsString($type);
+         self::assertIsInt($line);
+         self::assertIsString($message);
 
-         if ($type === 'UnusedResult') {
-            $reported[] = $line;
-         } else {
-            $other[] = "{$type} on line {$line}";
-         }
+         $cached[$file][] = [$type, $line, $message];
       }
 
-      $this->assertSame([], $other, 'the fixture has psalm issues besides the dropped Results');
-      $this->assertSame(self::droppedLines(), $reported);
+      return $cached;
    }
 
    /**
-    * PHPStan's own checks also flag some of these lines, as calls to functions
-    * with no side effects. Only the rule's identifier counts here, and the line
-    * with droppedResultsWrite() is one PHPStan's own checks let through.
+    * Every message PHPStan reports in the fixtures, by file, with the library's
+    * extension.neon included. The branch-built fixture is copied with each
+    * trace turned into a dumpType() on the same line, and filed under its own
+    * name.
+    *
+    * @return array<string, list<array{string, int, string}>>
     */
-   public function testThePhpstanRuleReportsExactlyTheDroppedResults(): void {
+   private static function phpstan(): array {
+      /** @var array<string, list<array{string, int, string}>>|null $cached */
+      static $cached = null;
+
+      if ($cached !== null) {
+         return $cached;
+      }
+
       $root = dirname(__DIR__);
+      $dir = sys_get_temp_dir() . '/php7-optional-phpstan-' . bin2hex(random_bytes(6));
+      mkdir($dir);
+      $copy = "{$dir}/branch-built.php";
+      $source = (string) file_get_contents(self::BRANCH_BUILT);
+      file_put_contents($copy, (string) preg_replace('#/\*\* @psalm-trace (\$\w+) \*/#', '\\PHPStan\\dumpType($1);', $source));
+
       $command = sprintf(
-         '%s %s analyse --no-progress --error-format=json --level=max --configuration=%s --autoload-file=%s %s 2>/dev/null',
+         '%s %s analyse --no-progress --error-format=json --level=max --configuration=%s --autoload-file=%s %s %s 2>/dev/null',
          escapeshellarg(PHP_BINARY),
          escapeshellarg("{$root}/vendor/bin/phpstan"),
          escapeshellarg("{$root}/extension.neon"),
          escapeshellarg("{$root}/vendor/autoload.php"),
-         escapeshellarg(self::FIXTURE)
+         escapeshellarg(self::DROPPED),
+         escapeshellarg($copy)
       );
 
       $output = [];
       exec($command, $output);
+      unlink($copy);
+      rmdir($dir);
 
       /** @var list<string> $output */
       $printed = implode("\n", $output);
       /** @var mixed $report */
       $report = json_decode($printed, true);
-      $this->assertIsArray($report, "PHPStan did not report as JSON:\n{$printed}");
-      $this->assertIsArray($report['files'] ?? null, "PHPStan's report has no files:\n{$printed}");
+      self::assertIsArray($report, "PHPStan did not report as JSON:\n{$printed}");
+      self::assertIsArray($report['files'] ?? null, "PHPStan's report has no files:\n{$printed}");
 
-      $reported = [];
+      $cached = [];
 
-      foreach ($report['files'] as $file) {
-         $this->assertIsArray($file);
-         $this->assertIsArray($file['messages'] ?? null);
+      /** @var array<string, mixed> $files PHPStan keys its report by file path */
+      $files = $report['files'];
+
+      foreach ($files as $file => $messages) {
+         self::assertIsArray($messages);
+         self::assertIsArray($messages['messages'] ?? null);
+         $file = $file === $copy ? self::BRANCH_BUILT : $file;
 
          /** @var mixed $message */
-         foreach ($file['messages'] as $message) {
-            $this->assertIsArray($message);
+         foreach ($messages['messages'] as $message) {
+            self::assertIsArray($message);
+            /** @var mixed $identifier */
+            $identifier = $message['identifier'] ?? '';
+            /** @var mixed $line */
+            $line = $message['line'] ?? null;
+            /** @var mixed $text */
+            $text = $message['message'] ?? null;
+            self::assertIsString($identifier);
+            self::assertIsInt($line);
+            self::assertIsString($text);
 
-            if (($message['identifier'] ?? null) === 'optional.unusedResult') {
-               /** @var mixed $line */
-               $line = $message['line'] ?? null;
-               $this->assertIsInt($line);
-               $reported[] = $line;
-            }
+            $cached[$file][] = [$identifier, $line, $text];
          }
       }
 
-      sort($reported);
-      $this->assertSame(self::droppedLines(), $reported);
-   }
-
-   /**
-    * @return list<int>
-    */
-   private static function droppedLines(): array {
-      $lines = [];
-      $source = file(self::FIXTURE);
-      self::assertIsArray($source);
-
-      foreach ($source as $index => $line) {
-         if (str_contains($line, '// dropped')) {
-            $lines[] = $index + 1;
-         }
-      }
-
-      self::assertGreaterThan(5, count($lines), 'the fixture marks suspiciously few lines');
-
-      return $lines;
+      return $cached;
    }
 }

@@ -352,7 +352,8 @@ includes:
 ```
 
 Assign a result to `$_` to drop it on purpose. A chain ending in `tapErr()` has
-looked at the error, so it is not reported.
+looked at the error, so it is not reported. The same plugin and extension also
+type a box built in two branches as one box, as the next section explains.
 
 ## Types
 
@@ -369,12 +370,14 @@ each call, and the entrances drop what they exist to drop:
 * a box is covariant, so a function declared `Option<Animal>` can return
   `Option::some(new Dog())`, and `Option::none()` fits any `Option`
 
-One shape psalm cannot follow: a box built with a ternary,
-`$flag ? Option::some($user) : Option::none()`, stays a union of two boxes
-(`Option<User>|Option<never>`), and the next typed callback reports
-`ReservedWord`. Declare the variable (`/** @var Option<User> $x */`), build it
-in a function declared `Option<User>`, or write `Option::some($user)->filter($flag)`,
-which is one box.
+One shape neither tool follows on its own: a box built in two branches, such
+as `$flag ? Result::ok($id) : Result::err('no')`, is a union of two boxes,
+`Result<int, never>|Result<never, string>`. psalm then reports `ReservedWord`
+on the next typed callback, and PHPStan types `->map(fn(int $x) => $x * 2)`
+as `Result<never, string>`. The plugin and extension from the section above
+type it as one box, `Result<int, string>`. Without them, declare the variable
+(`/** @var Result<int, string> $x */`) or build it in a function declared to
+return that type.
 
 `tests/TypeInference` records what psalm and PHPStan (level max) infer for
 expressions like these, including 18 two-call chains, and fails when either

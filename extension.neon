@@ -1,6 +1,14 @@
-# The dropped-Result check for PHPStan. In your phpstan.neon:
+# The library's PHPStan extension. In your phpstan.neon:
 #
 #     includes:
 #         - vendor/ifixit/php7-optional/extension.neon
+#
+# It reports a dropped Result, and types a box built in two branches as one box.
 rules:
     - Optional\StaticAnalysis\PHPStan\UnusedResultRule
+
+services:
+    -
+        class: Optional\StaticAnalysis\PHPStan\MergeBoxUnions
+        tags:
+            - phpstan.broker.expressionTypeResolverExtension

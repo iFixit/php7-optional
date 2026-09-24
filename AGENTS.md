@@ -9,8 +9,9 @@ someone cuts a tag.
 The whole library is `src/Option.php`, `src/Result.php`, two exceptions in
 `src/Exceptions/` (`MissingValueException` and `EarlyReturn`) and two internal
 traits in `src/Internal/`: `DescribesValues` for the string form and
-`ChecksItems` for what `all()` and `partition()` accept. The psalm plugin and PHPStan rule
-that report a dropped `Result` are in `static-analysis/`. Read them directly. This document
+`ChecksItems` for what `all()` and `partition()` accept. The psalm plugin and PHPStan
+extension, which report a dropped `Result` and type a box built in two branches
+as one box, are in `static-analysis/`. Read them directly. This document
 covers only what reading them will not tell you, or will tell you wrong.
 
 ## master is not what consumers get
@@ -275,12 +276,17 @@ aliases on top. `Option` had six second names of its own, which 4.0 removed:
 beside `tap` and `tapNone`, and the `someWhen` and `noneWhen` factories. Do not
 add an alias back. No test catches one, so this rule is on review.
 
-## The dropped-Result check
+## The psalm plugin and PHPStan extension
 
-`static-analysis/` holds a psalm plugin and a PHPStan rule that report a call
-whose `Result` is dropped on its own line. They live outside `src/` because
-they are tooling, not the library's API, and the PHPStan half names classes
-psalm cannot see inside PHPStan's phar, so `psalm.xml` skips that directory.
+`static-analysis/` holds a psalm plugin and a PHPStan extension. Each does two
+things: it reports a call whose `Result` is dropped on its own line, and it
+types a box built in two branches (`Result<A, never>|Result<never, B>`) as one
+box (`Result<A, B>`). The merge is exact only because a box holds one value and
+its type parameters are covariant, so never extend it to a class that can hold
+several values, where `List<A>|List<B>` is not `List<A|B>`. They live outside
+`src/` because they are tooling, not the library's API, and the PHPStan half
+names classes psalm cannot see inside PHPStan's phar, so `psalm.xml` skips that
+directory.
 
 `psalm.xml` and `phpstan.neon` turn the check on for this repo too, so a test
 or an example that drops a `Result` is reported. The one test that drops one on purpose says so
@@ -292,6 +298,12 @@ it and compares. It also holds the calls that must not be reported: a `void`
 call, a `never` one, and `parent::__construct()`. PHPStan types the last two
 `never`, which is a subtype of `Result`, so the rule skips `never` by name. Add
 a case there before changing what the check reports.
+
+`tests/StaticAnalysis/branch-built.php` traces boxes built in two branches, and
+`StaticAnalysisTest` compares each trace with the type it records for each
+tool. Turning either merge off fails it, with `ReservedWord` from psalm and
+`Result<never, string>` from PHPStan. Measured on this repo, neither merge
+changes how long the tool takes.
 
 ## Two traps in the tooling itself
 

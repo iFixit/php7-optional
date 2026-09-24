@@ -1,7 +1,8 @@
 <?xml version="1.0"?>
 <!--
-    Runs the dropped-Result plugin over its fixture, for StaticAnalysisTest.
-    The fixture drops Results on purpose, so the main psalm.xml leaves it out.
+    Runs the library's psalm plugin over its fixtures, for StaticAnalysisTest.
+    One drops Results on purpose and the other traces types, so the main
+    psalm.xml leaves both out.
 -->
 <psalm
     errorLevel="1"
@@ -14,6 +15,7 @@
 >
     <projectFiles>
         <file name="dropped-results.php"/>
+        <file name="branch-built.php"/>
     </projectFiles>
 
     <plugins>
