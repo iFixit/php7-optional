@@ -40,7 +40,7 @@ final readonly class Option {
     * @psalm-param T $value
     * @psalm-mutation-free
     */
-   private function __construct($value, bool $hasValue) {
+   private function __construct(mixed $value, bool $hasValue) {
       $this->hasValue = $hasValue;
       $this->value = $value;
    }
@@ -80,7 +80,7 @@ final readonly class Option {
     * @psalm-param TT $alternative
     * @psalm-return (T is never ? TT : T)
     **/
-   public function valueOr($alternative) {
+   public function valueOr(mixed $alternative): mixed {
       return $this->hasValue
          ? $this->value
          : $alternative;
@@ -111,7 +111,7 @@ final readonly class Option {
     * @psalm-mutation-free
     * @psalm-return (T is never ? null : T|null)
     **/
-   public function toNullable() {
+   public function toNullable(): mixed {
       return $this->hasValue
          ? $this->value
          : null;
@@ -150,7 +150,7 @@ final readonly class Option {
     * @psalm-param null|callable():Throwable $exceptionFactory
     * @psalm-return (T is never ? never : T)
     **/
-   public function valueOrThrow(?callable $exceptionFactory = null) {
+   public function valueOrThrow(?callable $exceptionFactory = null): mixed {
       if (!$this->hasValue) {
          throw $exceptionFactory === null
             ? new MissingValueException("Value is missing.")
@@ -242,7 +242,7 @@ final readonly class Option {
     * @psalm-param callable():TT $alternativeFactory
     * @psalm-return (T is never ? TT : T)
     **/
-   public function valueOrCreate(callable $alternativeFactory) {
+   public function valueOrCreate(callable $alternativeFactory): mixed {
       return $this->hasValue
          ? $this->value
          : $alternativeFactory();
@@ -268,7 +268,7 @@ final readonly class Option {
     * @psalm-return self<T|TT>
     */
    #[\NoDiscard(self::DISCARDED)]
-   public function or($alternative): self {
+   public function or(mixed $alternative): self {
       return $this->hasValue
          ? $this
          : self::some($alternative);
@@ -383,7 +383,7 @@ final readonly class Option {
     * @psalm-param callable():U $none
     * @psalm-return U
     **/
-   public function match(callable $some, callable $none) {
+   public function match(callable $some, callable $none): mixed {
       return $this->hasValue
          ? $some($this->value)
          : $none();
@@ -736,7 +736,7 @@ final readonly class Option {
     * @psalm-param TT $someValue
     * @psalm-return Option<TT>
     **/
-   public static function some($someValue): self {
+   public static function some(mixed $someValue): self {
       return new self($someValue, true);
    }
 
@@ -776,7 +776,7 @@ final readonly class Option {
     *
     * @psalm-return self<TT>
     */
-   public static function someNotNull($someValue): self {
+   public static function someNotNull(mixed $someValue): self {
       /** @var self<TT> */
       return self::some($someValue)->notNull();
    }
@@ -806,7 +806,7 @@ final readonly class Option {
     *
     * @psalm-return self<TT>
     */
-   public static function someNotFalsy($someValue): self {
+   public static function someNotFalsy(mixed $someValue): self {
       /** @var self<TT> a falsy value never survives notFalsy() */
       return self::some($someValue)->notFalsy();
    }
@@ -837,7 +837,7 @@ final readonly class Option {
     *
     * @psalm-return self<TT>
     */
-   public static function someNotFalse($someValue): self {
+   public static function someNotFalse(mixed $someValue): self {
       /** @var self<TT> a false value never survives notFalse() */
       return self::some($someValue)->notFalse();
    }
@@ -955,11 +955,6 @@ final readonly class Option {
     * $some = Option::fromArray(['hello' => ' world'], 'hello');
     * $none = Option::fromArray(['hello' => ' world'], 'nope');
     * ```
-    * @psalm-pure
-    *
-    * @template TArray of array
-    * @param TArray $array
-    * @param array-key $key
     *
     * _Notes:_
     *
@@ -968,9 +963,12 @@ final readonly class Option {
     *    for a key it can see is absent, so there is no point writing one. This
     *    type is still sound, because the miss returns `Option<never>`
     *
+    * @psalm-pure
+    * @template TArray of array
+    * @param TArray $array
     * @psalm-return self<value-of<TArray>>
     */
-   public static function fromArray(array $array, $key): self {
+   public static function fromArray(array $array, int|string $key): self {
       if (array_key_exists($key, $array)) {
          /** @psalm-var value-of<TArray> $value psalm does not narrow $array[$key] on its own */
          $value = $array[$key];

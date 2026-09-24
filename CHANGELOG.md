@@ -89,6 +89,9 @@ change below that breaks a caller says what to write instead.
   `Option::some('1e1')->contains('10')` and `Option::some(null)->contains(false)`
   were all true, and two separate but equal objects matched. For a looser
   test, pass your own comparison to `exists()`.
+* **`Option::fromArray()` takes an `int|string` key.** A `null` key throws a
+  `TypeError` where 3.x looked up the `""` key, and so do float and bool keys
+  in a file with `strict_types`. psalm already typed the key `array-key`.
 * **`Option`, `Result` and `MissingValueException` are `final`.** Extending a
   box never worked: the static factories build with `new self`, so a subclass
   came back as a plain box on the first `map`.
@@ -189,6 +192,9 @@ Shorthands for shapes callers otherwise spell out by hand:
 * `Option` and `Result` are `readonly` classes, so PHP enforces the
   immutability the docblocks only promised. Setting a property on a box, even
   a new dynamic one, is now an `Error` rather than a deprecation notice
+* Every `Option` parameter and return has a native type, `mixed` where it
+  holds a value, as on `Result`. Only `fromArray`'s key accepts less than it
+  did (see Breaking)
 * psalm infers different types for most methods that return a box, each now a
   single type (see Fixed). A psalm baseline in your own code that recorded the
   old types may need regenerating
