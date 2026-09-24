@@ -27,6 +27,10 @@
         <pluginClass class="Psalm\PhpUnitPlugin\Plugin"/>
     </plugins>
 
+    <stubs>
+        <file name="stubs/NoDiscard.phpstub"/>
+    </stubs>
+
     <!--
         tests/generated/DocblockExamples.php holds every ```php example from src/
         and README.md, so psalm checks that the documentation type-checks and not

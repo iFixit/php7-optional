@@ -207,8 +207,11 @@ Shorthands for shapes callers otherwise spell out by hand:
   cannot catch it: it reports a dropped result only for a method it knows
   changes nothing, and a method that runs your callback cannot promise that.
   PHP 8.4 ignores the attribute. The tap family is left unmarked, since
-  dropping its result is the normal use. On 8.5, a test suite that fails on
-  warnings now fails wherever it drops a result
+  dropping its result is the normal use. The static factories are marked too,
+  with a message that names the usual cause, a missing `return`:
+  `if ($input === '') { Result::err('empty'); }` falls through to the success
+  path, and on 8.5 it now warns. A test suite that fails on warnings now
+  fails wherever it drops a result
 * `Option` and `Result` are `readonly` classes, so PHP enforces the
   immutability the docblocks only promised. Setting a property on a box, even
   a new dynamic one, is now an `Error` rather than a deprecation notice. A

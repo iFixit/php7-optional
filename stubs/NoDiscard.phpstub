@@ -1,0 +1,18 @@
+<?php
+
+/**
+ * psalm analyses an attribute as a call to its constructor, in the context of
+ * the method it marks. It does not know this constructor has no side effects,
+ * so every @psalm-pure factory carrying #[\NoDiscard] reported
+ * ImpureMethodCall. This says what the engine's attribute does: nothing but
+ * store the message.
+ */
+#[Attribute(Attribute::TARGET_METHOD | Attribute::TARGET_FUNCTION)]
+final class NoDiscard {
+   public readonly ?string $message;
+
+   /** @psalm-pure */
+   public function __construct(?string $message = null) {
+      $this->message = $message;
+   }
+}

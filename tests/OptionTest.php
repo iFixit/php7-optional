@@ -625,7 +625,7 @@ final class OptionTest extends TestCase {
 
    public function testFromCallableLetsErrorsThrough(): void {
       $this->expectException(\TypeError::class);
-      Option::fromCallable(function(): int { throw new \TypeError("not an exception"); });
+      $_ = Option::fromCallable(function(): int { throw new \TypeError("not an exception"); });
    }
 
    public function testFromCallableCatchesTheNamedClassAndItsSubclasses(): void {
@@ -638,7 +638,7 @@ final class OptionTest extends TestCase {
 
    public function testFromCallableLetsAnyOtherClassThrough(): void {
       $this->expectException(\LogicException::class);
-      Option::fromCallable(function(): int { throw new \LogicException('a bug'); }, \OutOfBoundsException::class);
+      $_ = Option::fromCallable(function(): int { throw new \LogicException('a bug'); }, \OutOfBoundsException::class);
    }
 
    public function testFromCallableCatchesAnErrorOnlyWhenNamed(): void {

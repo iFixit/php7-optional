@@ -374,7 +374,7 @@ final class ResultTest extends TestCase {
    public function testFromCallableLetsAnyOtherClassThrough(): void {
       $this->expectException(\LogicException::class);
 
-      Result::fromCallable(function(): int { throw new \LogicException('a bug'); }, \OutOfBoundsException::class);
+      $_ = Result::fromCallable(function(): int { throw new \LogicException('a bug'); }, \OutOfBoundsException::class);
    }
 
    public function testToStringShowsAnyValueWithoutWarning(): void {

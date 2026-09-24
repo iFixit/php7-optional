@@ -38,6 +38,12 @@ final readonly class Option {
     */
    private const DISCARDED = 'a box never changes after it is built, so this call only made a new one';
 
+   /**
+    * The same, for the static factories. A factory's result dropped on its
+    * own line is almost always a missing `return`.
+    */
+   private const UNREAD = 'nothing reads this box, so what it holds is lost; a missing return is the usual cause';
+
    private bool $hasValue;
 
    /**
@@ -757,6 +763,7 @@ final readonly class Option {
     * @psalm-param TT $someValue
     * @psalm-return Option<TT>
     **/
+   #[\NoDiscard(self::UNREAD)]
    public static function some(mixed $someValue): self {
       return new self($someValue, true);
    }
@@ -775,6 +782,7 @@ final readonly class Option {
     * @psalm-pure
     * @psalm-return Option<never>
     **/
+   #[\NoDiscard(self::UNREAD)]
    public static function none(): self {
       /** @var Option<never> */
       return new self(null, false);
@@ -797,6 +805,7 @@ final readonly class Option {
     *
     * @psalm-return self<TT>
     */
+   #[\NoDiscard(self::UNREAD)]
    public static function someNotNull(mixed $someValue): self {
       /** @var self<TT> */
       return self::some($someValue)->notNull();
@@ -827,6 +836,7 @@ final readonly class Option {
     *
     * @psalm-return self<TT>
     */
+   #[\NoDiscard(self::UNREAD)]
    public static function someNotFalsy(mixed $someValue): self {
       /** @var self<TT> a falsy value never survives notFalsy() */
       return self::some($someValue)->notFalsy();
@@ -858,6 +868,7 @@ final readonly class Option {
     *
     * @psalm-return self<TT>
     */
+   #[\NoDiscard(self::UNREAD)]
    public static function someNotFalse(mixed $someValue): self {
       /** @var self<TT> a false value never survives notFalse() */
       return self::some($someValue)->notFalse();
@@ -906,6 +917,7 @@ final readonly class Option {
     *
     * @psalm-return self<TT>
     */
+   #[\NoDiscard(self::UNREAD)]
    public static function fromCallable(callable $valueFactory, string $catch = Exception::class): self {
       try {
          return self::some($valueFactory());
@@ -959,6 +971,7 @@ final readonly class Option {
     *
     * @psalm-return self<TT>
     */
+   #[\NoDiscard(self::UNREAD)]
    public static function first(iterable $values, ?callable $predicate = null): self {
       foreach ($values as $value) {
          if ($predicate === null || $predicate($value)) {
@@ -989,6 +1002,7 @@ final readonly class Option {
     * @param TArray $array
     * @psalm-return self<value-of<TArray>>
     */
+   #[\NoDiscard(self::UNREAD)]
    public static function fromArray(array $array, int|string $key): self {
       if (array_key_exists($key, $array)) {
          /** @psalm-var value-of<TArray> $value psalm does not narrow $array[$key] on its own */

@@ -47,6 +47,12 @@ final readonly class Result {
     */
    private const DISCARDED = 'a box never changes after it is built, so this call only made a new one';
 
+   /**
+    * The same, for the static factories. A factory's result dropped on its
+    * own line is almost always a missing `return`.
+    */
+   private const UNREAD = 'nothing reads this box, so what it holds is lost; a missing return is the usual cause';
+
    private bool $isOk;
 
    /**
@@ -708,6 +714,7 @@ final readonly class Result {
     * @psalm-param TT $value
     * @psalm-return Result<TT, never>
     */
+   #[\NoDiscard(self::UNREAD)]
    public static function ok(mixed $value): self {
       /** @var Result<TT, never> */
       return new self(true, $value, null);
@@ -728,6 +735,7 @@ final readonly class Result {
     * @psalm-param TE $error
     * @psalm-return Result<never, TE>
     */
+   #[\NoDiscard(self::UNREAD)]
    public static function err(mixed $error): self {
       /** @var Result<never, TE> */
       return new self(false, null, $error);
@@ -771,6 +779,7 @@ final readonly class Result {
     *
     * @psalm-return Result<TT, C>
     */
+   #[\NoDiscard(self::UNREAD)]
    public static function fromCallable(callable $valueFactory, string $catch = Throwable::class): self {
       try {
          return self::ok($valueFactory());

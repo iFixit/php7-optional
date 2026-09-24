@@ -22,19 +22,16 @@ use ReflectionMethod;
  */
 final class NoDiscardTest extends TestCase {
    /**
-    * Every method that hands back a new box carries the attribute, and nothing
-    * else does. The tap family returns a box too, but running it for the side
-    * effect and dropping the box is the whole point of calling it.
+    * Every method that hands back a new box carries the attribute, factories
+    * included, and nothing else does. The tap family returns a box too, but
+    * running it for the side effect and dropping the box is the whole point of
+    * calling it.
     */
    public function testEveryMethodThatReturnsABoxIsMarked(): void {
       $checked = 0;
 
       foreach ([Option::class, Result::class] as $class) {
          foreach ((new ReflectionClass($class))->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
-            if ($method->isStatic()) {
-               continue;
-            }
-
             // PHP 8.4 renders a `self` return type as "self", 8.5 as the class name
             $returnsABox = in_array((string) $method->getReturnType(), ['self', $class, Option::class, Result::class], true);
             $expected = $returnsABox && !str_starts_with($method->getName(), 'tap');
@@ -76,5 +73,32 @@ final class NoDiscardTest extends TestCase {
       $this->assertCount(1, $warnings);
       $this->assertStringContainsString('Optional\Option::map() should either be used', $warnings[0]);
       $this->assertStringContainsString('a box never changes after it is built', $warnings[0]);
+   }
+
+   /**
+    * A factory dropped on its own line is almost always a missing return, as
+    * in `if ($input === '') { Result::err('empty'); }`, which then falls
+    * through to the success path.
+    */
+   #[RequiresPhp('>= 8.5')]
+   public function testPhp85WarnsWhenAFactoryIsDropped(): void {
+      $warnings = [];
+
+      set_error_handler(function(int $_level, string $message) use (&$warnings): bool {
+         $warnings[] = $message;
+         return true;
+      });
+
+      try {
+         Result::err('empty');
+         Option::fromCallable(fn() => throw new \RuntimeException('swallowed'));
+      } finally {
+         restore_error_handler();
+      }
+
+      $this->assertCount(2, $warnings);
+      $this->assertStringContainsString('Optional\Result::err() should either be used', $warnings[0]);
+      $this->assertStringContainsString('a missing return is the usual cause', $warnings[0]);
+      $this->assertStringContainsString('Optional\Option::fromCallable() should either be used', $warnings[1]);
    }
 }

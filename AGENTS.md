@@ -193,15 +193,24 @@ drift.
 
 ## Two conventions the tests enforce
 
-**Every method that returns a new box carries `#[\NoDiscard(self::DISCARDED)]`,
-except the tap family.** `$box->map($f);` alone on a line does nothing, psalm
-cannot see it (a method that runs a callback is never mutation-free), and PHP
-8.5 warns for it. `NoDiscardTest` fails when a box-returning method lacks the
-attribute or anything else has it. PHP 8.4 ignores the attribute, so a dropped
-result only shows up in the 8.5 run. A test that calls a method just to see it
-throw, or to see a callback not run, still has to use the result. Assigning it
-to `$_` counts, and psalm treats that as deliberately unused. Do not reach for a `(void)` cast; that is
-PHP 8.5 syntax and a parse error on 8.4.
+**Every method that returns a new box carries `#[\NoDiscard]`, factories
+included, except the tap family.** `$box->map($f);` alone on a line does
+nothing, psalm cannot see it (a method that runs a callback is never
+mutation-free), and PHP 8.5 warns for it. The factories use `self::UNREAD`
+rather than `self::DISCARDED`, because a factory dropped on its own line is
+almost always a missing `return`. `NoDiscardTest` fails when a box-returning
+method lacks the attribute or anything else has it.
+
+PHP 8.4 ignores the attribute, so a dropped result only shows up in the 8.5
+run. A test that calls a method just to see it throw, or to see a callback not
+run, still has to use the result. Assigning it to `$_` counts, and psalm treats
+that as deliberately unused. Do not reach for a `(void)` cast; that is PHP 8.5
+syntax and a parse error on 8.4.
+
+psalm checks an attribute by analysing it as a call to its constructor, in the
+method's own context, and it does not know `NoDiscard`'s constructor is pure.
+`stubs/NoDiscard.phpstub` says so. Without it, every `@psalm-pure` factory
+reports `ImpureMethodCall`.
 
 **`Result` takes `Option`'s names.** Wherever the idea is the same, the method
 has the same name and the same parameter names on both boxes. On `Result` it
