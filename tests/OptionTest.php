@@ -825,6 +825,34 @@ final class OptionTest extends TestCase {
       $_ = Option::some(1)->mapSafely(function(int $_x): int { throw new \TypeError("not an exception"); });
    }
 
+   /**
+    * It catches Throwable and then checks the class, so a named Error is
+    * caught. Narrowing that catch to Exception would drop it.
+    */
+   public function testMapSafelyCatchesAnErrorWhenNamed(): void {
+      $none = Option::some(1)->mapSafely(function(int $_x): int { throw new \TypeError("not an exception"); }, \Error::class);
+
+      $this->assertFalse($none->hasValue());
+   }
+
+   /**
+    * A method on an empty box hands back that box rather than building a new
+    * one. The README's cost numbers depend on it, and a revert would change
+    * no other result.
+    */
+   public function testAnEmptyBoxComesBackAsItIs(): void {
+      /** @var Option<int> $none typed as a caller would hold it, so psalm allows the callbacks */
+      $none = Option::none();
+
+      $this->assertSame($none, $none->map(fn(int $x): int => $x + 1));
+      $this->assertSame($none, $none->mapSafely(fn(int $x): int => $x + 1));
+      $this->assertSame($none, $none->flatMap(fn(int $x): Option => Option::some($x)));
+      $this->assertSame($none, $none->filter(fn(int $x): bool => $x > 0));
+      $this->assertSame($none, $none->notNull());
+      $this->assertSame($none, $none->notFalsy());
+      $this->assertSame($none, $none->notFalse());
+   }
+
    public function testFromCallableLetsErrorsThrough(): void {
       $this->expectException(\TypeError::class);
       $_ = Option::fromCallable(function(): int { throw new \TypeError("not an exception"); });

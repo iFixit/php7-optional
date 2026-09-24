@@ -321,8 +321,8 @@ changes how long the tool takes.
 but a deprecation raised while a file is being compiled fires before PHPUnit
 has a handler attached to a test. That is how an implicitly nullable parameter
 (`string $ex = null`, deprecated in 8.4) sat in the test suite unnoticed. The
-only thing that catches those is running the file in a subprocess, which is
-what `ExampleScriptTest` does.
+only thing that catches those is compiling the file in a subprocess, which
+`CompileTest` does for every PHP file in the repo.
 
 **psalm proves the throws, so code after one is unreachable.**
 `valueOrThrow()` returns `T`, and `T` is `never` on an `Option::none()`, so

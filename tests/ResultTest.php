@@ -149,6 +149,23 @@ final class ResultTest extends TestCase {
       self::failure('timeout')->valueOrThrow(\RuntimeException::class);
    }
 
+   /**
+    * A method on the side a box does not have hands back that box rather than
+    * building a new one. The README's cost numbers depend on it, and a revert
+    * would change no other result.
+    */
+   public function testTheOtherSideComesBackAsItIs(): void {
+      $err = self::failure('no');
+      /** @var Result<int, string> $ok typed as a caller would hold it, so psalm allows mapErr() */
+      $ok = Result::ok(1);
+
+      $this->assertSame($err, $err->map(fn(int $x): int => $x + 1));
+      $this->assertSame($err, $err->mapSafely(fn(int $x): int => $x + 1));
+      $this->assertSame($err, $err->flatMap(fn(int $x): Result => Result::ok($x)));
+      $this->assertSame($err, $err->filter(fn(int $x): bool => $x > 0, 'not positive'));
+      $this->assertSame($ok, $ok->mapErr(fn(string $e): string => "{$e}!"));
+   }
+
    public function testValueOrThrowWithNoFactoryNamesAPlainError(): void {
       $this->expectException(MissingValueException::class);
       $this->expectExceptionMessage("Result is an Err: 'timeout'");

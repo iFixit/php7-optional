@@ -285,6 +285,11 @@ Shorthands for shapes callers otherwise spell out by hand:
   callback that takes its argument by reference, such as `map(end(...))`,
   still works as it did in 3.x: it gets a copy of the value. So does the new
   `first()`'s predicate, so it cannot change the value it boxes
+* A method on an empty box hands back that same box instead of building a new
+  one: `map()`, `flatMap()` and `filter()` on a None or an Err, `mapErr()` on
+  an Ok, and the rest. Three `map()`s on an empty box went from 352 to 166 ns
+  on `Option` and from 415 to 187 ns on `Result`, and the box you get back is
+  `===` the one you had
 * Every `Option` parameter and return has a native type, `mixed` where it
   holds a value, as on `Result`. Only `fromArray`'s key accepts less than it
   did (see Breaking)
