@@ -1026,6 +1026,45 @@ final readonly class Option {
    }
 
    /**
+    * Boxes every value, keyed as given, iff every option is `Option::some`, otherwise `Option::none()`
+    *
+    * For needing several optional things at once, such as the settings a
+    * connection cannot open without.
+    *
+    * ```php
+    * $settings = ['host' => Option::some('db1'), 'port' => Option::some(5432)];
+    *
+    * echo (string) Option::all($settings)->map(fn(array $s) => "{$s['host']}:{$s['port']}"), "\n"; // Some('db1:5432')
+    * echo (string) Option::all([...$settings, 'user' => Option::none()]), "\n";                   // None
+    * ```
+    *
+    * _Notes:_
+    *
+    *  - It stops at the first `Option::none`, so a generator is read no further
+    *  - An empty input gives `Some([])`
+    *  - Keys are kept, so a list comes back as a list
+    *
+    * @template K of array-key
+    * @template TT
+    * @psalm-param iterable<K, Option<TT>> $options
+    * @psalm-return Option<array<K, TT>>
+    */
+   #[\NoDiscard(self::UNREAD)]
+   public static function all(iterable $options): self {
+      $values = [];
+
+      foreach ($options as $key => $option) {
+         if (!$option->hasValue) {
+            return self::none();
+         }
+
+         $values[$key] = $option->value;
+      }
+
+      return self::some($values);
+   }
+
+   /**
     * Boxes the first value of `$values` that `$predicate` accepts, or `Option::none()`
     *
     * The "did I find anything" shape, without the count check or the loop.

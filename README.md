@@ -235,6 +235,23 @@ unwrapped value exactly, so `$user` is a `string`, but the block's error type
 is `mixed` unless you annotate it. A `catch (Throwable)` inside the block
 catches the early exit too; a `catch (Exception)` does not.
 
+## Many boxes at once
+
+`all()` turns a batch of boxes into one: every value, keyed as given, or the
+first failure. `Result::partition()` keeps going and splits the values from
+the errors, which is what a form needs to report every bad field at once.
+
+```php
+$parse = fn(string $input) => Option::someNotFalse(filter_var($input, FILTER_VALIDATE_INT))
+   ->toResult("not a number: {$input}");
+
+echo Result::all(array_map($parse, ['1', '2']))->map(array_sum(...)), "\n"; // Ok(3)
+echo Result::all(array_map($parse, ['1', 'x'])), "\n";                     // Err('not a number: x')
+
+[$numbers, $errors] = Result::partition(array_map($parse, ['1', 'x', '3', 'y']));
+echo implode(' ', $numbers) . ' / ' . implode(', ', $errors), "\n"; // "1 3 / not a number: x, not a number: y"
+```
+
 ## Option or Result
 
 Use `Option` when "there isn't one" is the whole story. Use `Result` when the
@@ -407,14 +424,14 @@ The CHANGELOG lists every change, with the rest of the `Either` table.
 ## Full method list
 
 `Option` factories: `some` `none` `someNotNull` `someNotFalsy` `someNotFalse`
-`fromCallable` `fromArray` `first` `do`
+`fromCallable` `fromArray` `first` `do` `all`
 
 `Option` methods: `hasValue` `valueOr` `valueOrThrow` `valueOrCreate`
 `valueOrReturn` `toNullable` `toResult`
 `or` `orCreate` `else` `elseCreate` `match` `map` `mapSafely` `flatMap` `tap`
 `tapNone` `filter` `notNull` `notFalsy` `notFalse` `contains` `exists`
 
-`Result` factories: `ok` `err` `fromCallable` `do`
+`Result` factories: `ok` `err` `fromCallable` `do` `all` `partition`
 
 `Result` methods: `isOk` `isErr` `valueOr` `valueOrCreate` `valueOrThrow`
 `valueOrReturn` `errOr` `toNullable` `toOption` `match` `contains` `exists` `map` `mapErr`

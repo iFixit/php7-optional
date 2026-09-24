@@ -890,6 +890,93 @@ final readonly class Result {
    }
 
    /**
+    * `Result::ok` with every value, keyed as given, iff every result is ok, otherwise the first `Result::err`
+    *
+    * For a batch where one failure fails the whole, such as parsing every line
+    * of a file. `partition()` keeps going and collects every error instead.
+    *
+    * ```php
+    * $parse = fn(string $input) => Option::someNotFalse(filter_var($input, FILTER_VALIDATE_INT))
+    *    ->toResult("not a number: {$input}");
+    *
+    * echo (string) Result::all(array_map($parse, ['1', '2']))->map(array_sum(...)), "\n"; // Ok(3)
+    * echo (string) Result::all(array_map($parse, ['1', 'x', 'y'])), "\n";                 // Err('not a number: x')
+    * ```
+    *
+    * _Notes:_
+    *
+    *  - It stops at the first `Result::err`, so a generator is read no further
+    *  - An empty input gives `Ok([])`
+    *  - Keys are kept, so a list comes back as a list
+    *
+    * @template K of array-key
+    * @template TT
+    * @template TE
+    * @psalm-param iterable<K, Result<TT, TE>> $results
+    * @psalm-return Result<array<K, TT>, TE>
+    */
+   #[\NoDiscard(self::UNREAD)]
+   public static function all(iterable $results): self {
+      $values = [];
+
+      foreach ($results as $key => $result) {
+         if (!$result->isOk) {
+            /** @var Result<array<K, TT>, TE> an Err holds no value, so it stands in for any value type */
+            return $result;
+         }
+
+         $values[$key] = $result->value;
+      }
+
+      return self::ok($values);
+   }
+
+   /**
+    * Splits results into their values and their errors, both keyed as given
+    *
+    * For reporting every failure at once, such as every invalid field of a
+    * form, where `all()` stops at the first.
+    *
+    * ```php
+    * $form = [
+    *    'email' => Result::ok('ada@example.com'),
+    *    'age' => Result::err('must be a number'),
+    *    'name' => Result::err('is required'),
+    * ];
+    *
+    * [$valid, $errors] = Result::partition($form);
+    *
+    * echo implode(', ', array_keys($valid)), "\n"; // "email"
+    * echo implode('; ', array_map(fn(string $field, string $error) => "{$field} {$error}", array_keys($errors), $errors)), "\n"; // "age must be a number; name is required"
+    * ```
+    *
+    * _Notes:_
+    *
+    *  - Keys are kept, so each error still says which input it came from.
+    *    From a list, `array_values()` renumbers them
+    *
+    * @template K of array-key
+    * @template TT
+    * @template TE
+    * @psalm-param iterable<K, Result<TT, TE>> $results
+    * @psalm-return array{0: array<K, TT>, 1: array<K, TE>}
+    */
+   public static function partition(iterable $results): array {
+      $values = [];
+      $errors = [];
+
+      foreach ($results as $key => $result) {
+         if ($result->isOk) {
+            $values[$key] = $result->value;
+         } else {
+            $errors[$key] = $result->error;
+         }
+      }
+
+      return [$values, $errors];
+   }
+
+   /**
     * Shows the result for debugging, as `Ok(value)` or `Err(error)`
     *
     * A value with no string form is shown by its type, and an exception by its

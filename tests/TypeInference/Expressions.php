@@ -197,6 +197,16 @@ function resultChainsTypeCheck(?string $maybe, Result $result): void {
    $resultElseCreateWithBothBranches = $result->elseCreate(fn(string $e) => $e === '' ? Result::ok(0) : Result::err($e));
    /** @psalm-trace $resultElseCreateWithBothBranches */
 
+   // a batch keeps its keys and the value and error types of its boxes
+   $resultAllKeepsTheKeys = Result::all(['a' => $result, 'b' => $result]);
+   /** @psalm-trace $resultAllKeepsTheKeys */
+
+   $resultPartition = Result::partition([$result, $result]);
+   /** @psalm-trace $resultPartition */
+
+   $optionAllOfAList = Option::all([Option::someNotNull($maybe), Option::someNotNull($maybe)]);
+   /** @psalm-trace $optionAllOfAList */
+
    // the block's errors are not part of its type, so the error side is mixed
    $resultDoBlock = Result::do(fn() => $result->valueOrReturn() * 2);
    /** @psalm-trace $resultDoBlock */

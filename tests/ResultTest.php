@@ -301,6 +301,30 @@ final class ResultTest extends TestCase {
       $this->assertSame([4, 5, 6], $err->errOr([]), 'the callbacks changed a copy, never the box');
    }
 
+   public function testAllKeepsTheKeysOrStopsAtTheFirstErr(): void {
+      $this->assertSame(['a' => 1, 'b' => 2], Result::all(['a' => Result::ok(1), 'b' => Result::ok(2)])->valueOr([]));
+      $this->assertSame([], Result::all([])->valueOr(['not', 'empty']));
+
+      $pulled = 0;
+      $results = (function() use (&$pulled): \Generator {
+         foreach ([Result::ok(1), Result::err('second'), Result::err('third')] as $result) {
+            $pulled++;
+            yield $result;
+         }
+      })();
+
+      $this->assertSame('second', Result::all($results)->errOr(''));
+      $this->assertSame(2, $pulled, 'all() stops reading at the first Err');
+   }
+
+   public function testPartitionSplitsValuesFromErrorsAndKeepsTheKeys(): void {
+      [$values, $errors] = Result::partition([Result::ok(1), Result::err('x'), Result::ok(3), Result::err('y')]);
+
+      $this->assertSame([0 => 1, 2 => 3], $values);
+      $this->assertSame([1 => 'x', 3 => 'y'], $errors, 'each error still says which input it came from');
+      $this->assertSame([[], []], Result::partition([]));
+   }
+
    public function testOrAndOrCreateRecoverOnlyAnErr(): void {
       $this->assertSame(0, Result::err('timeout')->or(0)->valueOr(-1));
 

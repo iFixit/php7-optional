@@ -137,6 +137,14 @@ Leaving a block of steps early, the way Rust's `?` returns from a function:
   ends the block with that None or Err. psalm types each unwrapped value
   exactly; the block's error type is `mixed` unless you annotate it
 
+Turning a batch of boxes into one:
+
+* `Option::all()` and `Result::all()`: every value, keyed as given, or the
+  first failure. They stop reading at that failure, so a generator is not
+  drained
+* `Result::partition()`: the values and the errors, both keyed as given, for
+  reporting every failure at once, such as every bad field in a form
+
 Staying in one through a side effect, which 3.x's `matchSome` and
 `matchNone` could not do, since they returned `void`:
 

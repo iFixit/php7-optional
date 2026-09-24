@@ -335,6 +335,22 @@ final class OptionTest extends TestCase {
       $this->assertSame([1, 2, 3], $box->valueOr([]), 'the callbacks changed a copy, never the box');
    }
 
+   public function testAllKeepsTheKeysOrStopsAtTheFirstNone(): void {
+      $this->assertSame(['a' => 1, 'b' => null], Option::all(['a' => Option::some(1), 'b' => Option::some(null)])->valueOr([]));
+      $this->assertSame([], Option::all([])->valueOr(['not', 'empty']));
+
+      $pulled = 0;
+      $options = (function() use (&$pulled): \Generator {
+         foreach ([Option::some(1), Option::none(), Option::some(3)] as $option) {
+            $pulled++;
+            yield $option;
+         }
+      })();
+
+      $this->assertFalse(Option::all($options)->hasValue());
+      $this->assertSame(2, $pulled, 'all() stops reading at the first None');
+   }
+
    public function testFlatMap(): void {
       $somePerson = [
          'name' => [
