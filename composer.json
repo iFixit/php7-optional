@@ -20,7 +20,8 @@
    },
    "autoload": {
       "psr-4": {
-         "Optional\\": "src/"
+         "Optional\\": "src/",
+         "Optional\\StaticAnalysis\\": "static-analysis/"
       }
    },
    "autoload-dev": {

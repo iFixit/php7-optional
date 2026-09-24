@@ -1,0 +1,6 @@
+# The dropped-Result check for PHPStan. In your phpstan.neon:
+#
+#     includes:
+#         - vendor/ifixit/php7-optional/extension.neon
+rules:
+    - Optional\StaticAnalysis\PHPStan\UnusedResultRule

@@ -265,6 +265,21 @@ aliases on top. `Option` had six second names of its own, which 4.0 removed:
 beside `tap` and `tapNone`, and the `someWhen` and `noneWhen` factories. Do not
 add an alias back. No test catches one, so this rule is on review.
 
+## The dropped-Result check
+
+`static-analysis/` holds a psalm plugin and a PHPStan rule that report a call
+whose `Result` is dropped on its own line. They live outside `src/` because
+they are tooling, not the library's API, and the PHPStan half names classes
+psalm cannot see inside PHPStan's phar, so `psalm.xml` skips that directory.
+
+`psalm.xml` runs the plugin over this repo too, so a test or an example that
+drops a `Result` is reported. The one test that drops one on purpose says so
+with `@psalm-suppress UnusedResult`.
+
+`tests/StaticAnalysis/dropped-results.php` marks every line the check must
+report with `// dropped`, and `StaticAnalysisTest` runs psalm over it and
+compares. Add a case there before changing what the check reports.
+
 ## Two traps in the tooling itself
 
 **PHPUnit cannot see a compile-time deprecation.** `failOnDeprecation` is set,

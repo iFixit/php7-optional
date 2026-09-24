@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<!--
+    Runs the dropped-Result plugin over its fixture, for StaticAnalysisTest.
+    The fixture drops Results on purpose, so the main psalm.xml leaves it out.
+-->
+<psalm
+    errorLevel="1"
+    resolveFromConfigFile="true"
+    findUnusedCode="false"
+    autoloader="../../vendor/autoload.php"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns="https://getpsalm.org/schema/config"
+    xsi:schemaLocation="https://getpsalm.org/schema/config ../../vendor/vimeo/psalm/config.xsd"
+>
+    <projectFiles>
+        <file name="dropped-results.php"/>
+    </projectFiles>
+
+    <plugins>
+        <pluginClass class="Optional\StaticAnalysis\Psalm\Plugin"/>
+    </plugins>
+</psalm>

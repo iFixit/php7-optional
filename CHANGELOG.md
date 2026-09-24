@@ -139,6 +139,14 @@ Leaving a block of steps early, the way Rust's `?` returns from a function:
   ends the block with that None or Err. psalm types each unwrapped value
   exactly; the block's error type is `mixed` unless you annotate it
 
+Catching a `Result` that is dropped, the way Rust's `#[must_use]` does:
+
+* A psalm plugin, `Optional\StaticAnalysis\Psalm\Plugin`, and a PHPStan rule
+  in `extension.neon`. Each reports a call whose `Result` is dropped on its
+  own line, from any function, including a missing `return` before a
+  `Result::err()`. `#[\NoDiscard]` covers only the library's own methods, and
+  only on PHP 8.5
+
 Turning a batch of boxes into one:
 
 * `Option::all()` and `Result::all()`: every value, keyed as given, or the

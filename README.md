@@ -318,6 +318,37 @@ $user = Result::fromCallable(
 echo $user->errOr(null)?->getMessage() . "\n"; // "no user 5"
 ```
 
+## Catching a dropped Result
+
+A `Result` nobody looks at loses its error, and the classic way to drop one is
+a missing `return`:
+
+```text
+if ($input === '') {
+   Result::err('empty');   // falls through, and the caller gets Ok('')
+}
+return Result::ok($input);
+```
+
+On PHP 8.5 the library's own factories and methods warn about that. For every
+function that returns a `Result`, yours included, on any PHP version, turn on
+the check for psalm or PHPStan. It reports a call whose `Result` is dropped on
+its own line, the way Rust's `#[must_use]` does:
+
+```text
+<!-- psalm.xml -->
+<plugins>
+    <pluginClass class="Optional\StaticAnalysis\Psalm\Plugin"/>
+</plugins>
+
+# phpstan.neon
+includes:
+    - vendor/ifixit/php7-optional/extension.neon
+```
+
+Assign a result to `$_` to drop it on purpose. A chain ending in `tapErr()` has
+looked at the error, so it is not reported.
+
 ## Types
 
 psalm and PHPStan both read the annotations, at their strictest levels. Every

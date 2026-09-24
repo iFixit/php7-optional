@@ -79,6 +79,8 @@ final class NoDiscardTest extends TestCase {
     * A factory dropped on its own line is almost always a missing return, as
     * in `if ($input === '') { Result::err('empty'); }`, which then falls
     * through to the success path.
+    *
+    * @psalm-suppress UnusedResult dropping it is what this test is about
     */
    #[RequiresPhp('>= 8.5')]
    public function testPhp85WarnsWhenAFactoryIsDropped(): void {
