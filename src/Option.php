@@ -666,6 +666,7 @@ final readonly class Option {
     * @template TNotNull
     * @psalm-if-this-is Option<TNotNull|null>
     * @psalm-return self<TNotNull>
+    * @phpstan-return (T is null ? self<never> : self<T>)
     */
    #[\NoDiscard(self::DISCARDED)]
    public function notNull(): self {
@@ -698,6 +699,7 @@ final readonly class Option {
     * @template TNotFalsy
     * @psalm-if-this-is Option<TNotFalsy|null|false>
     * @psalm-return self<TNotFalsy>
+    * @phpstan-return (T is null ? self<never> : (T is false ? self<never> : self<T>))
     */
    #[\NoDiscard(self::DISCARDED)]
    public function notFalsy(): self {
@@ -728,6 +730,7 @@ final readonly class Option {
     * @template TNotFalse
     * @psalm-if-this-is Option<TNotFalse|false>
     * @psalm-return self<TNotFalse>
+    * @phpstan-return (T is false ? self<never> : self<T>)
     */
    #[\NoDiscard(self::DISCARDED)]
    public function notFalse(): self {

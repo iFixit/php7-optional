@@ -267,6 +267,31 @@ reporting the test classes themselves as unused.
   carrying both silently drops the `@param`, which is how `Either::fromArray`
   ended up with a `key-of<TArray>` conditional that could never bind.
 
+## PHPStan reads the same annotations
+
+PHPStan understands the `@psalm-*` tags, so there is one set of types. The
+exception is `@psalm-if-this-is`, which is how `notNull()`, `notFalsy()`,
+`notFalse()` and their six Either twins drop a type; PHPStan ignores it and
+would call the result `mixed`. Those nine methods also carry a
+`@phpstan-return` conditional such as `(T is null ? self<never> : self<T>)`.
+psalm ignores that tag, and PHPStan merges the `Option<never>` half back into
+the other, which psalm will not do. Keep both when you touch one.
+
+Nothing in CI runs PHPStan. To check by hand with any PHPStan binary:
+
+```bash
+sed -E 's#/\*\* @psalm-trace (\$[A-Za-z]+) \*/#\\PHPStan\\dumpType(\1);#' \
+   tests/TypeInference/Expressions.php > /tmp/phpstan-expressions.php
+phpstan analyse --level=max --autoload-file=vendor/autoload.php \
+   --no-progress --error-format=raw /tmp/phpstan-expressions.php
+```
+
+Every expression should get a type, none of them `mixed`. The one error to
+expect is PHPStan's, not ours: it widens a `false` passed to `Option::some()`
+into `bool`, so `Option::some($intOrFalse)->notFalsy()` stays
+`Option<int|true>`. The factories, `someNotFalse()` and `someNotFalsy()`,
+narrow it.
+
 ## Style
 
 - **Three spaces** for code indentation, with docblock `*` lines one further

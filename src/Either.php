@@ -991,6 +991,7 @@ final readonly class Either {
     * @psalm-param TTRight $rightValue
     * @psalm-if-this-is Either<TNotNull|null, TRight>
     * @psalm-return Either<TNotNull, TRight|TTRight>
+    * @phpstan-return (TLeft is null ? Either<never, TTRight> : Either<TLeft, TRight|TTRight>)
     **/
    #[\NoDiscard(self::DISCARDED)]
    public function leftNotNull($rightValue): self {
@@ -1017,6 +1018,7 @@ final readonly class Either {
     * @psalm-param TTLeft $leftValue
     * @psalm-if-this-is Either<TLeft, TNotNull|null>
     * @psalm-return Either<TLeft|TTLeft, TNotNull>
+    * @phpstan-return (TRight is null ? Either<TTLeft, never> : Either<TLeft|TTLeft, TRight>)
     **/
    #[\NoDiscard(self::DISCARDED)]
    public function rightNotNull($leftValue): self {
@@ -1046,6 +1048,7 @@ final readonly class Either {
     * @psalm-param TTRight $rightValue
     * @psalm-if-this-is Either<TNotFalsy|null|false, TRight>
     * @psalm-return Either<TNotFalsy, TRight|TTRight>
+    * @phpstan-return (TLeft is null ? Either<never, TTRight> : (TLeft is false ? Either<never, TTRight> : Either<TLeft, TRight|TTRight>))
     **/
    #[\NoDiscard(self::DISCARDED)]
    public function leftNotFalsy($rightValue): self {
@@ -1073,6 +1076,7 @@ final readonly class Either {
     * @psalm-param TTLeft $leftValue
     * @psalm-if-this-is Either<TLeft, TNotFalsy|null|false>
     * @psalm-return Either<TLeft|TTLeft, TNotFalsy>
+    * @phpstan-return (TRight is null ? Either<TTLeft, never> : (TRight is false ? Either<TTLeft, never> : Either<TLeft|TTLeft, TRight>))
     **/
    #[\NoDiscard(self::DISCARDED)]
    public function rightNotFalsy($leftValue): self {
@@ -1104,6 +1108,7 @@ final readonly class Either {
     * @psalm-param TTRight $rightValue
     * @psalm-if-this-is Either<TNotFalse|false, TRight>
     * @psalm-return Either<TNotFalse, TRight|TTRight>
+    * @phpstan-return (TLeft is false ? Either<never, TTRight> : Either<TLeft, TRight|TTRight>)
     **/
    #[\NoDiscard(self::DISCARDED)]
    public function leftNotFalse($rightValue): self {
@@ -1133,6 +1138,7 @@ final readonly class Either {
     * @psalm-param TTLeft $leftValue
     * @psalm-if-this-is Either<TLeft, TNotFalse|false>
     * @psalm-return Either<TLeft|TTLeft, TNotFalse>
+    * @phpstan-return (TRight is false ? Either<TTLeft, never> : Either<TLeft|TTLeft, TRight>)
     **/
    #[\NoDiscard(self::DISCARDED)]
    public function rightNotFalse($leftValue): self {

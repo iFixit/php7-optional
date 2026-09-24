@@ -79,6 +79,23 @@ echo "\nConstruction alone\n";
 measure('Option::some(1)', static fn(): Option => Option::some(1), $iterations);
 measure('Option::none()', static fn(): Option => Option::none(), $iterations);
 
+// Work of the size a box usually wraps, so the overhead has something to be
+// compared against that anyone can reproduce.
+echo "\nFor scale, work a box typically wraps\n";
+$json = '{"id":7,"name":"Ada","tags":["a","b","c"],"meta":{"active":true,"score":9.5}}';
+measure('json_decode() of a small object', static fn(): mixed => json_decode($json, true), $iterations);
+
+$file = tempnam(sys_get_temp_dir(), 'php7-optional-benchmark');
+
+if ($file === false) {
+   fwrite(STDERR, "Could not create a temporary file to read.\n");
+   exit(1);
+}
+
+file_put_contents($file, str_repeat('x', 1024));
+measure('file_get_contents() of a 1 KB file', static fn(): string|false => file_get_contents($file), $iterations);
+unlink($file);
+
 printf(
    "\nOverhead: %.1fx on a hit, %.1fx on a miss, %.1fx on the two step chain.\n",
    $plainHit > 0.0 ? $boxHit / $plainHit : 0.0,
