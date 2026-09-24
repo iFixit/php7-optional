@@ -16,6 +16,7 @@ final class ExampleSource {
       'src/Option.php',
       'src/Result.php',
       'src/Exceptions/MissingValueException.php',
+      'src/Exceptions/EarlyReturn.php',
       'README.md',
    ];
 

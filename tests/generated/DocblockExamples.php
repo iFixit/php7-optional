@@ -769,9 +769,27 @@ function example65___toString(): void {
 }
 
 /**
+ * src/Exceptions/EarlyReturn.php #1, __construct()
+ */
+function example66___construct(): void {
+   $port = Option::do(function() {
+      try {
+         return Option::fromArray(['host' => 'db1'], 'port')->valueOrReturn();
+      } catch (\Optional\Exceptions\EarlyReturn $exit) {
+         throw $exit; // the block ends here with a None
+      } catch (\Throwable $e) {
+         error_log("lookup failed: {$e->getMessage()}");
+         return 5432;
+      }
+   });
+
+   echo (string) $port, "\n"; // None
+}
+
+/**
  * README.md #1, unknown()
  */
-function example66_unknown(): void {
+function example67_unknown(): void {
    /** @var array<string, array{name: string}> $people */
    $people = ['a1' => ['name' => 'Ada']];
 
@@ -781,7 +799,7 @@ function example66_unknown(): void {
 /**
  * README.md #2, unknown()
  */
-function example67_unknown(): void {
+function example68_unknown(): void {
    $config = Result::fromCallable(
       fn() => json_decode('{"debug": tru}', flags: JSON_THROW_ON_ERROR),
       JsonException::class
@@ -795,7 +813,7 @@ function example67_unknown(): void {
 /**
  * README.md #3, unknown()
  */
-function example68_unknown(): void {
+function example69_unknown(): void {
    $lookups = 0;
    /** @var Closure(): ?string $findAvatar a user with no avatar */
    $findAvatar = function() use (&$lookups): ?string { $lookups++; return null; };
@@ -811,7 +829,7 @@ function example68_unknown(): void {
 /**
  * README.md #4, unknown()
  */
-function example69_unknown(): void {
+function example70_unknown(): void {
    $lookups = 0;
    $findAvatar = function() use (&$lookups): Option { $lookups++; return Option::none(); };
 
@@ -826,7 +844,7 @@ function example69_unknown(): void {
 /**
  * README.md #5, unknown()
  */
-function example70_unknown(): void {
+function example71_unknown(): void {
    // A falsy return, the shape a row fetch gives you
    echo Option::someNotFalsy(false), "\n"; // None
    echo Option::someNotFalsy('Ada'), "\n"; // Some('Ada')
@@ -839,7 +857,7 @@ function example70_unknown(): void {
 /**
  * README.md #6, unknown()
  */
-function example71_unknown(): void {
+function example72_unknown(): void {
    echo (string) Option::someNotFalsy(array_search('a', ['a', 'b'])) . "\n"; // "None", the match is lost
    echo (string) Option::someNotFalse(array_search('a', ['a', 'b'])) . "\n"; // "Some(0)"
 }
@@ -847,7 +865,7 @@ function example71_unknown(): void {
 /**
  * README.md #7, unknown()
  */
-function example72_unknown(): void {
+function example73_unknown(): void {
    $kept = Result::fromCallable(fn() => throw new Exception("the api said no"));
    echo $kept->mapErr(fn(Throwable $e) => $e->getMessage())->errOr('') . "\n";
    // "the api said no"
@@ -859,7 +877,7 @@ function example72_unknown(): void {
 /**
  * README.md #8, unknown()
  */
-function example73_unknown(): void {
+function example74_unknown(): void {
    $total = Option::some(['price' => 5, 'qty' => 3])
       ->filter(fn(array $line) => $line['qty'] > 0)
       ->tap(fn(array $line) => error_log("pricing {$line['qty']} items"))
@@ -872,7 +890,7 @@ function example73_unknown(): void {
 /**
  * README.md #9, unknown()
  */
-function example74_unknown(): void {
+function example75_unknown(): void {
    $ran = false;
 
    $total = Option::none()
@@ -886,7 +904,7 @@ function example74_unknown(): void {
 /**
  * README.md #10, unknown()
  */
-function example75_unknown(): void {
+function example76_unknown(): void {
    $some = Option::some(41);
 
    // 1. Supply a fallback
@@ -908,7 +926,7 @@ function example75_unknown(): void {
 /**
  * README.md #11, unknown()
  */
-function example76_unknown(): void {
+function example77_unknown(): void {
    $failed = Result::fromCallable(fn(): int => throw new Exception("the api said no"));
 
    try {
@@ -922,7 +940,7 @@ function example76_unknown(): void {
 /**
  * README.md #12, unknown()
  */
-function example77_unknown(): void {
+function example78_unknown(): void {
    $findUser = fn(int $id) => $id > 0 ? Result::ok("user{$id}") : Result::err("no user {$id}");
    $findCart = fn(string $user) => $user !== 'user13' ? Result::ok(4200) : Result::err("cart for {$user} is locked");
 
@@ -941,7 +959,7 @@ function example77_unknown(): void {
 /**
  * README.md #13, unknown()
  */
-function example78_unknown(): void {
+function example79_unknown(): void {
    $parse = fn(string $input) => Option::someNotFalse(filter_var($input, FILTER_VALIDATE_INT))
       ->toResult("not a number: {$input}");
 
@@ -955,7 +973,7 @@ function example78_unknown(): void {
 /**
  * README.md #14, unknown()
  */
-function example79_unknown(): void {
+function example80_unknown(): void {
    echo Result::ok(10)->toOption(), "\n";        // Some(10), drops any error
    echo Option::none()->toResult('no id'), "\n"; // Err('no id'), gains a reason
 }
@@ -963,7 +981,7 @@ function example79_unknown(): void {
 /**
  * README.md #15, unknown()
  */
-function example80_unknown(): void {
+function example81_unknown(): void {
    $calls = 0;
    $check = function() use (&$calls) { $calls++; return true; };
 
@@ -976,7 +994,7 @@ function example80_unknown(): void {
 /**
  * README.md #16, unknown()
  */
-function example81_unknown(): void {
+function example82_unknown(): void {
    echo Option::some(null)->hasValue() ? "some\n" : "none\n";            // "some"
    echo Option::some(null)->notNull()->hasValue() ? "some\n" : "none\n"; // "none"
 }
@@ -984,7 +1002,7 @@ function example81_unknown(): void {
 /**
  * README.md #17, unknown()
  */
-function example82_unknown(): void {
+function example83_unknown(): void {
    $user = Result::fromCallable(
       fn() => throw new OutOfBoundsException("no user 5"),
       OutOfBoundsException::class

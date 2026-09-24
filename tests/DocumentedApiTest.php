@@ -42,6 +42,11 @@ final class DocumentedApiTest extends TestCase {
                continue;
             }
 
+            // An @internal method is how the library works, not what it offers
+            if (str_contains((string) $method->getDocComment(), '@internal')) {
+               continue;
+            }
+
             $label = sprintf('%s::%s()', $reflection->getShortName(), $method->getName());
             yield $label => [$label, (string) $method->getDocComment()];
          }

@@ -132,12 +132,15 @@ class:
   loses nothing. `Option` throws it away, and swallowing an `Error` there
   would erase a real bug with nothing left to trace it by
 
-Leaving a block of steps early, the way Rust's `?` returns from a function:
+Leaving a block of steps early, like Rust's `?`:
 
 * `Option::do()` and `Result::do()`, with `valueOrReturn()` on both boxes.
   Inside the block, `valueOrReturn()` unwraps a box, and the first empty one
   ends the block with that None or Err. psalm types each unwrapped value
   exactly; the block's error type is `mixed` unless you annotate it
+* `Optional\Exceptions\EarlyReturn`, the `Error` thrown for the early
+  exit. A `catch (Throwable)` inside a block catches it too, so a catch-all
+  catches `EarlyReturn` first and rethrows it
 
 Catching a `Result` that is dropped, the way Rust's `#[must_use]` does:
 

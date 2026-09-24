@@ -6,9 +6,10 @@ Composer package published to Packagist as `ifixit/php7-optional`. Consumers
 install it with composer, so nothing you change here reaches any of them until
 someone cuts a tag.
 
-The whole library is `src/Option.php`, `src/Result.php`,
-`src/Exceptions/MissingValueException.php` and one internal trait,
-`src/Internal/DescribesValues.php`. Read them directly. This document
+The whole library is `src/Option.php`, `src/Result.php`, two exceptions in
+`src/Exceptions/` (`MissingValueException` and `EarlyReturn`) and one internal
+trait, `src/Internal/DescribesValues.php`. The psalm plugin and PHPStan rule
+that report a dropped `Result` are in `static-analysis/`. Read them directly. This document
 covers only what reading them will not tell you, or will tell you wrong.
 
 ## master is not what consumers get
@@ -172,12 +173,14 @@ A PHP 8 warning is not a throwable either, so a missing array key inside a
 
 ### The early exit is an exception
 
-`valueOrReturn()` leaves a `do()` block by throwing `Internal\EarlyReturn`,
-and the nearest `do()` for the same kind of box catches it. Three rules keep
-that safe, and each has a test in `EarlyReturnTest`:
+`valueOrReturn()` leaves a `do()` block by throwing
+`Exceptions\EarlyReturn`, and the nearest `do()` for the same kind of box
+catches it, however many calls down it was thrown. Three rules keep that safe,
+and each has a test in `EarlyReturnTest`:
 
 - It extends `Error`, so a `catch (Exception)` in the block cannot swallow it.
-  A `catch (Throwable)` can, which the docblocks say.
+  A `catch (Throwable)` can, so the class is public API: a catch-all catches
+  `EarlyReturn` first and rethrows it. Its constructor is `@internal`.
 - `fromCallable()` and `mapSafely()` never catch it, whatever `$catch` says,
   because it is not a failure of their callable. Any new method that catches
   a callable's throw needs the same `!$e instanceof EarlyReturn` check.

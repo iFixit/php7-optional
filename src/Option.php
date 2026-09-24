@@ -6,9 +6,9 @@ namespace Optional;
 
 use Closure;
 use Exception;
+use Optional\Exceptions\EarlyReturn;
 use Optional\Exceptions\MissingValueException;
 use Optional\Internal\DescribesValues;
-use Optional\Internal\EarlyReturn;
 use Throwable;
 
 /**
@@ -192,8 +192,8 @@ final readonly class Option {
    /**
     * Returns the value, or ends the enclosing `Option::do()` block with `Option::none()`
     *
-    * The early exit for a block of steps that each need a value, the way
-    * Rust's `?` returns from a function. See `Option::do()`.
+    * The early exit for a block of steps that each need a value, like Rust's
+    * `?`. See `Option::do()`.
     *
     * ```php
     * $ports = ['http' => 80];
@@ -1016,8 +1016,13 @@ final readonly class Option {
     * _Notes:_
     *
     *  - `$block` must follow this interface `callable():TT`
-    *  - A `catch (Throwable)` or `catch (Error)` inside the block also catches
-    *    the early exit. A `catch (Exception)` does not
+    *  - `valueOrReturn()` ends the nearest `Option::do()`, even from inside a
+    *    function the block calls, the way a throw reaches the nearest catch
+    *  - A `catch (Throwable)` or `catch (Error)` in between also catches the
+    *    early exit. Let it through by catching `EarlyReturn` first and
+    *    rethrowing it. A `catch (Exception)` lets it through already
+    *  - Return the plain value. A box returned from the block ends up inside
+    *    another box, and a generator is returned without running
     *  - Anything else the block throws propagates. `fromCallable()` inside the
     *    block catches a throw, and never the early exit
     *

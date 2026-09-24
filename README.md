@@ -212,7 +212,7 @@ try {
 
 `flatMap` nests a closure for every step that depends on the last. `do()`
 runs the steps as plain code instead: `valueOrReturn()` unwraps a box, and the
-first empty one ends the block, the way Rust's `?` returns from a function.
+first empty one ends the block, like Rust's `?`.
 
 ```php
 $findUser = fn(int $id) => $id > 0 ? Result::ok("user{$id}") : Result::err("no user {$id}");
@@ -232,8 +232,13 @@ echo $owes(13), "\n"; // Err('cart for user13 is locked')
 
 `Option::do()` works the same way, ending with a None. psalm types each
 unwrapped value exactly, so `$user` is a `string`, but the block's error type
-is `mixed` unless you annotate it. A `catch (Throwable)` inside the block
-catches the early exit too; a `catch (Exception)` does not.
+is `mixed` unless you annotate it.
+
+The early exit is thrown, so it reaches the nearest `do()` from inside any
+function the block calls, the way a throw reaches the nearest catch. A
+`catch (Throwable)` in between catches it too; catch
+`Optional\Exceptions\EarlyReturn` first and rethrow it. Return the plain
+value from the block: a box returned from it ends up inside another box.
 
 ## Many boxes at once
 

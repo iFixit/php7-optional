@@ -5,9 +5,9 @@ declare(strict_types = 1);
 namespace Optional;
 
 use Closure;
+use Optional\Exceptions\EarlyReturn;
 use Optional\Exceptions\MissingValueException;
 use Optional\Internal\DescribesValues;
-use Optional\Internal\EarlyReturn;
 use Throwable;
 
 /**
@@ -231,8 +231,8 @@ final readonly class Result {
    /**
     * Returns the success value, or ends the enclosing `Result::do()` block with this error
     *
-    * The early exit for a block of steps that can each fail, the way Rust's `?`
-    * returns from a function. See `Result::do()`.
+    * The early exit for a block of steps that can each fail, like Rust's `?`.
+    * See `Result::do()`.
     *
     * ```php
     * $parse = fn(string $input) => Option::someNotFalse(filter_var($input, FILTER_VALIDATE_INT))
@@ -885,8 +885,13 @@ final readonly class Result {
     *  - psalm types the result `Result<TT, mixed>`, because the errors that can
     *    end the block are not part of its type. Give the variable an
     *    `@var Result<string, string>` annotation when you want them
-    *  - A `catch (Throwable)` or `catch (Error)` inside the block also catches
-    *    the early exit. A `catch (Exception)` does not
+    *  - `valueOrReturn()` ends the nearest `Result::do()`, even from inside a
+    *    function the block calls, the way a throw reaches the nearest catch
+    *  - A `catch (Throwable)` or `catch (Error)` in between also catches the
+    *    early exit. Let it through by catching `EarlyReturn` first and
+    *    rethrowing it. A `catch (Exception)` lets it through already
+    *  - Return the plain value. A box returned from the block ends up inside
+    *    another box, and a generator is returned without running
     *  - Anything else the block throws propagates. `Result::fromCallable()`
     *    inside the block catches a throw, and never the early exit
     *
