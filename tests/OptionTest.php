@@ -506,6 +506,33 @@ final class OptionTest extends TestCase {
       $this->assertFalse($drained, 'first() pulled more than one value from the generator');
    }
 
+   public function testFirstWithAPredicateTakesTheFirstMatch(): void {
+      $this->assertSame('bb', Option::first(['a', 'bb', 'ccc'], fn(string $s) => strlen($s) > 1)->valueOr('x'));
+      $this->assertFalse(Option::first(['a', 'b'], fn(string $s) => strlen($s) > 1)->hasValue(), 'no match is a None');
+      $this->assertTrue(
+         Option::first(['a', null], fn(?string $s) => $s === null)->hasValue(),
+         'a match on null is Some(null), where array_find would return null for a miss too'
+      );
+   }
+
+   public function testFirstWithAPredicateStopsAtTheMatch(): void {
+      $checked = [];
+
+      $values = (function() {
+         yield 1;
+         yield 2;
+         yield 3;
+      })();
+
+      $even = function(int $n) use (&$checked): bool {
+         $checked[] = $n;
+         return $n % 2 === 0;
+      };
+
+      $this->assertSame(2, Option::first($values, $even)->valueOr(-1));
+      $this->assertSame([1, 2], $checked, 'first() kept checking values after the first match');
+   }
+
    public function testToNullable(): void {
       $this->assertSame('Ada', Option::some('Ada')->toNullable());
       $this->assertNull(Option::none()->toNullable());

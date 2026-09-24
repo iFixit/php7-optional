@@ -51,6 +51,9 @@ function optionTypes(): void {
 
    $fromCallableKeepsTheReturnType = Option::fromCallable(function(): int { return 7; });
    /** @psalm-trace $fromCallableKeepsTheReturnType */
+
+   $firstWithAPredicateKeepsTheType = Option::first(['a', 'bb'], function(string $s): bool { return strlen($s) > 1; });
+   /** @psalm-trace $firstWithAPredicateKeepsTheType */
 }
 
 function eitherTypes(): void {

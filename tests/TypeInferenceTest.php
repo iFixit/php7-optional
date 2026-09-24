@@ -45,6 +45,7 @@ final class TypeInferenceTest extends TestCase {
          'tapReturnsTheSameBox' => 'Optional\\Option<5>',
          'someNotFalsyKeepsTheType' => "Optional\\Option<'Ada'>",
          'fromCallableKeepsTheReturnType' => 'Optional\\Option<7>',
+         'firstWithAPredicateKeepsTheType' => "Optional\\Option<'a'|'bb'>",
 
          // Either
          'orRightOnARightKeepsTheOriginal' => "Optional\\Either<never, 'original'>",

@@ -425,6 +425,13 @@ function example34_first(): void {
 
    // keys are ignored, it is the first value in iteration order
    echo (string) Option::first(['x' => 'a']), "\n"; // Some(a)
+
+   // with a predicate, the first value it accepts
+   $users = [['name' => 'Ada', 'admin' => false], ['name' => 'Grace', 'admin' => true]];
+
+   echo Option::first($users, fn(array $user) => $user['admin'] === true)
+      ->map(fn(array $user) => $user['name'])
+      ->valueOr('nobody'), "\n"; // "Grace"
 }
 
 /**

@@ -980,10 +980,11 @@ final class Option {
    }
 
    /**
-    * Boxes the first value of `$values`, or `Option::none()` when it is empty
+    * Boxes the first value of `$values` that `$predicate` accepts, or `Option::none()`
     *
-    * The "did I find anything" shape, without the count check. Works on any
-    * iterable, so a generator stops after the first value rather than being
+    * The "did I find anything" shape, without the count check or the loop.
+    * Leave out `$predicate` and it takes the first value there is. Works on any
+    * iterable, so a generator stops at the first match rather than being
     * drained into an array first.
     *
     * ```php
@@ -992,23 +993,38 @@ final class Option {
     *
     * // keys are ignored, it is the first value in iteration order
     * echo (string) Option::first(['x' => 'a']), "\n"; // Some(a)
+    *
+    * // with a predicate, the first value it accepts
+    * $users = [['name' => 'Ada', 'admin' => false], ['name' => 'Grace', 'admin' => true]];
+    *
+    * echo Option::first($users, fn(array $user) => $user['admin'] === true)
+    *    ->map(fn(array $user) => $user['name'])
+    *    ->valueOr('nobody'), "\n"; // "Grace"
     * ```
     *
     * _Notes:_
     *
-    *  - A first value of `null` gives you `Some(null)`, like every other
-    *    factory here. Chain `notNull()` to collapse it
+    *  - `$predicate` must follow this interface `callable(TT):bool`. It runs on
+    *    each value in turn and stops at the first `true`
+    *  - PHP 8.4's `array_find` does the same search, but returns `null` for no
+    *    match, which looks exactly like a match on a stored `null`, and it only
+    *    takes arrays
+    *  - A match on `null` gives you `Some(null)`, like every other factory
+    *    here. Chain `notNull()` to collapse it
     *  - Returns `Option<TT>`
     *
     * @template TT
     *
     * @psalm-param iterable<array-key, TT> $values
+    * @psalm-param null|callable(TT):bool $predicate
     *
     * @psalm-return self<TT>
     */
-   public static function first(iterable $values): self {
+   public static function first(iterable $values, ?callable $predicate = null): self {
       foreach ($values as $value) {
-         return self::some($value);
+         if ($predicate === null || $predicate($value)) {
+            return self::some($value);
+         }
       }
 
       return self::none();
