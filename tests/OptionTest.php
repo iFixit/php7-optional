@@ -314,6 +314,27 @@ final class OptionTest extends TestCase {
       $this->assertFalse(Option::some(5)->exists(fn() => null));
    }
 
+   /**
+    * A callback that takes its argument by reference, like end() or reset(),
+    * gets a copy of the value. Handing it the readonly property itself threw
+    * "Cannot indirectly modify readonly property"; 3.0 gave Some(3).
+    */
+   public function testCallbacksMayTakeTheirArgumentByReference(): void {
+      $box = Option::some([1, 2, 3]);
+      $last = function(array &$values): int {
+         return (int) end($values);
+      };
+
+      $this->assertSame(3, $box->map(end(...))->valueOr(0));
+      $this->assertSame(3, $box->flatMap(fn(array $v) => Option::some($last($v)))->valueOr(0));
+      $this->assertSame(3, $box->match(some: $last, none: fn() => 0));
+      $this->assertTrue($box->filter(function(array &$values): bool { return end($values) === 3; })->hasValue());
+      $this->assertTrue($box->exists(function(array &$values): bool { return end($values) === 3; }));
+      $_ = $box->tap(function(array &$values): void { end($values); });
+
+      $this->assertSame([1, 2, 3], $box->valueOr([]), 'the callbacks changed a copy, never the box');
+   }
+
    public function testFlatMap(): void {
       $somePerson = [
          'name' => [

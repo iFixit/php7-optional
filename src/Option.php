@@ -40,7 +40,13 @@ final readonly class Option {
 
    private bool $hasValue;
 
-   /** @psalm-var T */
+   /**
+    * Callbacks get a local copy of this, never the property itself. A callback
+    * that takes its argument by reference, such as `end(...)`, would otherwise
+    * try to write to a readonly property and throw.
+    *
+    * @psalm-var T
+    */
    private mixed $value;
 
    /**
@@ -191,8 +197,10 @@ final readonly class Option {
     * @psalm-return self<T>
     **/
    public function tap(callable $sideEffect): self {
+      $value = $this->value;
+
       if ($this->hasValue) {
-         $sideEffect($this->value);
+         $sideEffect($value);
       }
 
       return $this;
@@ -393,8 +401,10 @@ final readonly class Option {
     * @psalm-return U
     **/
    public function match(callable $some, callable $none): mixed {
+      $value = $this->value;
+
       return $this->hasValue
-         ? $some($this->value)
+         ? $some($value)
          : $none();
    }
 
@@ -422,8 +432,10 @@ final readonly class Option {
     **/
    #[\NoDiscard(self::DISCARDED)]
    public function map(callable $mapFunc): self {
+      $value = $this->value;
+
       return $this->hasValue
-         ? self::some($mapFunc($this->value))
+         ? self::some($mapFunc($value))
          : self::none();
    }
 
@@ -504,8 +516,10 @@ final readonly class Option {
     **/
    #[\NoDiscard(self::DISCARDED)]
    public function flatMap(callable $mapFunc): self {
+      $value = $this->value;
+
       return $this->hasValue
-         ? $mapFunc($this->value)
+         ? $mapFunc($value)
          : self::none();
    }
 
@@ -550,11 +564,13 @@ final readonly class Option {
     */
    #[\NoDiscard(self::DISCARDED)]
    public function filter(bool|callable $condition): self {
+      $value = $this->value;
+
       if (!$this->hasValue) {
          return $this;
       }
 
-      $keep = is_callable($condition) ? $condition($this->value) : $condition;
+      $keep = is_callable($condition) ? $condition($value) : $condition;
 
       return $keep ? $this : self::none();
    }
@@ -684,7 +700,9 @@ final readonly class Option {
     * @psalm-param callable(T):bool $existsFunc
     **/
    public function exists(callable $existsFunc): bool {
-      return $this->hasValue && $existsFunc($this->value);
+      $value = $this->value;
+
+      return $this->hasValue && $existsFunc($value);
    }
 
    /**

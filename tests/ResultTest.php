@@ -267,6 +267,40 @@ final class ResultTest extends TestCase {
       $this->assertSame('e', Result::ok(5)->filter(fn() => null, 'e')->errOr('x'));
    }
 
+   /**
+    * The same as Option: a by-reference callback gets a copy, on both sides.
+    */
+   public function testCallbacksMayTakeTheirArgumentByReference(): void {
+      $ok = Result::ok([1, 2, 3]);
+      $err = Result::err([4, 5, 6]);
+      $last = function(array &$values): int {
+         return (int) end($values);
+      };
+
+      $this->assertSame(3, $ok->map(end(...))->valueOr(0));
+      $this->assertSame(6, $err->mapErr(end(...))->errOr(0));
+      $this->assertSame(3, $ok->mapSafely(end(...))->valueOr(0));
+      $this->assertSame(3, $ok->flatMap(fn(array $v) => Result::ok($last($v)))->valueOr(0));
+      $this->assertSame(3, $ok->match(ok: $last, err: $last));
+      $this->assertSame(6, $err->match(ok: $last, err: $last));
+      $this->assertSame(6, $err->valueOrCreate($last));
+      $this->assertSame(6, $err->orCreate($last)->valueOr(0));
+      $this->assertSame(6, $err->elseCreate(fn(array $e) => Result::ok($last($e)))->valueOr(0));
+      $this->assertTrue($ok->filter(function(array &$values): bool { return end($values) === 3; }, 'no')->isOk());
+      $this->assertTrue($ok->exists(function(array &$values): bool { return end($values) === 3; }));
+      $_ = $ok->tap(function(array &$values): void { end($values); });
+      $_ = $err->tapErr(function(array &$values): void { end($values); });
+
+      try {
+         $err->valueOrThrow(function(array &$values): \RuntimeException { return new \RuntimeException((string) end($values)); });
+      } catch (\RuntimeException $e) {
+         $this->assertSame('6', $e->getMessage());
+      }
+
+      $this->assertSame([1, 2, 3], $ok->valueOr([]), 'the callbacks changed a copy, never the box');
+      $this->assertSame([4, 5, 6], $err->errOr([]), 'the callbacks changed a copy, never the box');
+   }
+
    public function testOrAndOrCreateRecoverOnlyAnErr(): void {
       $this->assertSame(0, Result::err('timeout')->or(0)->valueOr(-1));
 

@@ -49,7 +49,13 @@ final readonly class Result {
 
    private bool $isOk;
 
-   /** @psalm-var T */
+   /**
+    * Callbacks get a local copy of this and of `$error`, never the properties.
+    * A callback that takes its argument by reference, such as `end(...)`,
+    * would otherwise try to write to a readonly property and throw.
+    *
+    * @psalm-var T
+    */
    private mixed $value;
 
    /** @psalm-var E */
@@ -135,9 +141,11 @@ final readonly class Result {
     * @psalm-return T|TT
     */
    public function valueOrCreate(callable $alternativeFactory): mixed {
+      $error = $this->error;
+
       return $this->isOk
          ? $this->value
-         : $alternativeFactory($this->error);
+         : $alternativeFactory($error);
    }
 
    /**
@@ -180,12 +188,14 @@ final readonly class Result {
     * @psalm-return T
     */
    public function valueOrThrow(?callable $exceptionFactory = null): mixed {
+      $error = $this->error;
+
       if ($this->isOk) {
          return $this->value;
       }
 
       if ($exceptionFactory !== null) {
-         throw $exceptionFactory($this->error);
+         throw $exceptionFactory($error);
       }
 
       if ($this->error instanceof Throwable) {
@@ -286,9 +296,12 @@ final readonly class Result {
     * @psalm-return U
     */
    public function match(callable $ok, callable $err): mixed {
+      $value = $this->value;
+      $error = $this->error;
+
       return $this->isOk
-         ? $ok($this->value)
-         : $err($this->error);
+         ? $ok($value)
+         : $err($error);
    }
 
    /**
@@ -325,7 +338,9 @@ final readonly class Result {
     * @psalm-param callable(T):bool $existsFunc
     */
    public function exists(callable $existsFunc): bool {
-      return $this->isOk && $existsFunc($this->value);
+      $value = $this->value;
+
+      return $this->isOk && $existsFunc($value);
    }
 
    /**
@@ -350,8 +365,10 @@ final readonly class Result {
     */
    #[\NoDiscard(self::DISCARDED)]
    public function map(callable $mapFunc): self {
+      $value = $this->value;
+
       return $this->isOk
-         ? self::ok($mapFunc($this->value))
+         ? self::ok($mapFunc($value))
          : self::err($this->error);
    }
 
@@ -377,9 +394,11 @@ final readonly class Result {
     */
    #[\NoDiscard(self::DISCARDED)]
    public function mapErr(callable $mapFunc): self {
+      $error = $this->error;
+
       return $this->isOk
          ? self::ok($this->value)
-         : self::err($mapFunc($this->error));
+         : self::err($mapFunc($error));
    }
 
    /**
@@ -449,8 +468,10 @@ final readonly class Result {
     */
    #[\NoDiscard(self::DISCARDED)]
    public function flatMap(callable $mapFunc): self {
+      $value = $this->value;
+
       return $this->isOk
-         ? $mapFunc($this->value)
+         ? $mapFunc($value)
          : self::err($this->error);
    }
 
@@ -483,11 +504,13 @@ final readonly class Result {
     */
    #[\NoDiscard(self::DISCARDED)]
    public function filter(bool|callable $condition, mixed $error): self {
+      $value = $this->value;
+
       if (!$this->isOk) {
          return $this;
       }
 
-      $keep = is_callable($condition) ? $condition($this->value) : $condition;
+      $keep = is_callable($condition) ? $condition($value) : $condition;
 
       return $keep ? $this : self::err($error);
    }
@@ -540,10 +563,12 @@ final readonly class Result {
     */
    #[\NoDiscard(self::DISCARDED)]
    public function orCreate(callable $alternativeFactory): self {
+      $error = $this->error;
+
       /** @var Result<T|TT, never> an Ok never holds an error, which psalm cannot see */
       return $this->isOk
          ? $this
-         : self::ok($alternativeFactory($this->error));
+         : self::ok($alternativeFactory($error));
    }
 
    /**
@@ -598,10 +623,12 @@ final readonly class Result {
     */
    #[\NoDiscard(self::DISCARDED)]
    public function elseCreate(callable $alternativeResultFactory): self {
+      $error = $this->error;
+
       /** @var Result<T|U, F> an Ok never holds an error, which psalm cannot see */
       return $this->isOk
          ? $this
-         : $alternativeResultFactory($this->error);
+         : $alternativeResultFactory($error);
    }
 
    /**
@@ -625,8 +652,10 @@ final readonly class Result {
     * @psalm-return Result<T, E>
     */
    public function tap(callable $sideEffect): self {
+      $value = $this->value;
+
       if ($this->isOk) {
-         $sideEffect($this->value);
+         $sideEffect($value);
       }
 
       return $this;
@@ -654,8 +683,10 @@ final readonly class Result {
     * @psalm-return Result<T, E>
     */
    public function tapErr(callable $sideEffect): self {
+      $error = $this->error;
+
       if (!$this->isOk) {
-         $sideEffect($this->error);
+         $sideEffect($error);
       }
 
       return $this;

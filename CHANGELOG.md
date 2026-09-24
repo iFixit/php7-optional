@@ -211,7 +211,9 @@ Shorthands for shapes callers otherwise spell out by hand:
   warnings now fails wherever it drops a result
 * `Option` and `Result` are `readonly` classes, so PHP enforces the
   immutability the docblocks only promised. Setting a property on a box, even
-  a new dynamic one, is now an `Error` rather than a deprecation notice
+  a new dynamic one, is now an `Error` rather than a deprecation notice. A
+  callback that takes its argument by reference, such as `map(end(...))`,
+  still works as it did in 3.x: it gets a copy of the value
 * Every `Option` parameter and return has a native type, `mixed` where it
   holds a value, as on `Result`. Only `fromArray`'s key accepts less than it
   did (see Breaking)
