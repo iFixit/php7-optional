@@ -301,6 +301,22 @@ final class ResultTest extends TestCase {
       $this->assertSame([4, 5, 6], $err->errOr([]), 'the callbacks changed a copy, never the box');
    }
 
+   /**
+    * The same rule as Option::filter(): a string is never called.
+    *
+    * @psalm-suppress ForbiddenCode the point is code without strict types
+    */
+   public function testFilterNeverCallsAString(): void {
+      ob_start();
+      /** @var mixed $kept */
+      $kept = eval("return \\Optional\\Result::ok('held')->filter('var_dump', 'rejected');");
+      $printed = (string) ob_get_clean();
+
+      $this->assertSame('', $printed, 'var_dump() must not run');
+      $this->assertInstanceOf(Result::class, $kept);
+      $this->assertSame("Ok('held')", (string) $kept);
+   }
+
    public function testAllKeepsTheKeysOrStopsAtTheFirstErr(): void {
       $this->assertSame(['a' => 1, 'b' => 2], Result::all(['a' => Result::ok(1), 'b' => Result::ok(2)])->valueOr([]));
       $this->assertSame([], Result::all([])->valueOr(['not', 'empty']));

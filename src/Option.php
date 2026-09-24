@@ -602,8 +602,11 @@ final readonly class Option {
     *
     *  - Pass a `bool` and PHP evaluates it at the call site, before this method
     *    runs, so an expensive or throwing expression happens even on a
-    *    `Option::none`. Pass the callable instead and it only runs on a
+    *    `Option::none`. Pass a closure instead and it only runs on a
     *    `Option::some`
+    *  - It takes a closure rather than any callable, so a string is never
+    *    called: `filter('var_dump')` from a file without strict types is
+    *    `filter(true)`, as it was in 3.x, not a call to `var_dump()`
     *  - A callable's result counts the way `if` counts it, so a callback that
     *    returns `1` or `'1'` keeps the value, as `array_filter` would. psalm
     *    and PHPStan still ask for a `bool`, which catches a callback that
@@ -622,18 +625,18 @@ final readonly class Option {
     * echo $calls, "\n"; // 1
     * ```
     *
-    * @psalm-param bool|callable(T):bool $condition
+    * @psalm-param bool|Closure(T):bool $condition
     * @psalm-return self<T>
     */
    #[\NoDiscard(self::DISCARDED)]
-   public function filter(bool|callable $condition): self {
+   public function filter(bool|Closure $condition): self {
       $value = $this->value;
 
       if (!$this->hasValue) {
          return $this;
       }
 
-      $keep = is_callable($condition) ? $condition($value) : $condition;
+      $keep = $condition instanceof Closure ? $condition($value) : $condition;
 
       return $keep ? $this : self::none();
    }

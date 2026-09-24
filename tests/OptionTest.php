@@ -335,6 +335,33 @@ final class OptionTest extends TestCase {
       $this->assertSame([1, 2, 3], $box->valueOr([]), 'the callbacks changed a copy, never the box');
    }
 
+   /**
+    * filter() takes a Closure, not any callable, so a string is never called.
+    * Code without strict types, which eval'd code is, coerces one to true, as
+    * 3.x did. A callable parameter would have called var_dump() here.
+    *
+    * @psalm-suppress ForbiddenCode the point is code without strict types
+    */
+   public function testFilterNeverCallsAString(): void {
+      ob_start();
+      /** @var mixed $kept */
+      $kept = eval("return \\Optional\\Option::some('held')->filter('var_dump');");
+      $printed = (string) ob_get_clean();
+
+      $this->assertSame('', $printed, 'var_dump() must not run');
+      $this->assertInstanceOf(Option::class, $kept);
+      $this->assertSame("Some('held')", (string) $kept);
+   }
+
+   /**
+    * @psalm-suppress InvalidArgument a string where a Closure belongs is the point
+    */
+   public function testFilterRejectsAStringInStrictCode(): void {
+      $this->expectException(\TypeError::class);
+
+      $_ = Option::some(5)->filter('is_numeric');
+   }
+
    public function testFlatMapNeverRunsItsCallbackOnANone(): void {
       $ran = false;
 

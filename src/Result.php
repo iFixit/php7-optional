@@ -553,9 +553,11 @@ final readonly class Result {
     *
     * _Notes:_
     *
-    *  - Pass the callable rather than calling it. A bool is evaluated at the
+    *  - Pass a closure rather than calling it. A bool is evaluated at the
     *    call site, before this method runs, so an expensive or throwing
     *    expression happens even on a `Result::err`
+    *  - It takes a closure rather than any callable, so a string is never
+    *    called, and a string from a file without strict types is `true`
     *  - `$error` is evaluated at the call site too, whether or not it is used
     *  - A callable's result counts the way `if` counts it, so a callback that
     *    returns `1` or `'1'` keeps the value, as `array_filter` would. psalm
@@ -563,19 +565,19 @@ final readonly class Result {
     *    returns something always truthy, such as an object, by mistake
     *
     * @template TE
-    * @psalm-param bool|callable(T):bool $condition
+    * @psalm-param bool|Closure(T):bool $condition
     * @psalm-param TE $error
     * @psalm-return Result<T, E|TE>
     */
    #[\NoDiscard(self::DISCARDED)]
-   public function filter(bool|callable $condition, mixed $error): self {
+   public function filter(bool|Closure $condition, mixed $error): self {
       $value = $this->value;
 
       if (!$this->isOk) {
          return $this;
       }
 
-      $keep = is_callable($condition) ? $condition($value) : $condition;
+      $keep = $condition instanceof Closure ? $condition($value) : $condition;
 
       return $keep ? $this : self::err($error);
    }

@@ -130,9 +130,11 @@ unowned and years stale; do not send anyone to it.
 
 Each verified by execution on PHP 8.4, not read off the annotations.
 
-### Pass the callable, not its result
+### Pass the closure, not its result
 
-`Option::filter()` and `Result::filter()` take a bool or a callable. A bool is
+`Option::filter()` and `Result::filter()` take a bool or a `Closure`, not any
+callable, so a string is never called. In a file without strict types a string
+becomes `true`, as it did in 3.x. A bool is
 evaluated at the call site, before the method runs, so an expensive or
 throwing expression runs even when the box is empty:
 

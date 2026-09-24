@@ -265,8 +265,8 @@ echo Option::none()->toResult('no id'), "\n"; // Err('no id'), gains a reason
 
 ## Three things that catch people out
 
-**Pass `filter` the callable, not its result.** `filter` takes a bool or a
-callable. PHP evaluates an argument at the call site, so `filter(expensive())`
+**Pass `filter` the closure, not its result.** `filter` takes a bool or a
+closure. PHP evaluates an argument at the call site, so `filter(expensive())`
 runs `expensive()` even on a None, while `filter($expensive)` runs it only when
 there is a value to test.
 
