@@ -42,6 +42,12 @@ final class DocumentedApiTest extends TestCase {
                continue;
             }
 
+            // A deprecated method points at its replacement instead of teaching
+            // a call nobody should add, and the README lists it apart.
+            if ($method->getAttributes(\Deprecated::class) !== []) {
+               continue;
+            }
+
             $label = sprintf('%s::%s()', $reflection->getShortName(), $method->getName());
             yield $label => [$label, (string) $method->getDocComment()];
          }

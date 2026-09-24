@@ -146,6 +146,14 @@ Completing the left and right mirror, which was 17 pairs out of 21:
   unchanged. The three lose `@psalm-mutation-free`, because a method that may
   call code you supplied is not mutation-free.
 
+### Deprecated
+
+* `Option::filterIf()`, `Either::filterLeftIf()` and `Either::filterRightIf()`.
+  `filter`, `filterLeft` and `filterRight` take the callable now, so these are
+  a second spelling of the same call. They carry PHP 8.4's `#[\Deprecated]`,
+  so a call prints a deprecation naming the replacement, and psalm reports
+  `DeprecatedMethod`. They still work, and go in the next major version
+
 ### Removed
 
 * `Option::value()`, `Either::getLeft()` and `Either::getRight()`, which were

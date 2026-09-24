@@ -598,7 +598,7 @@ final readonly class Option {
     *  - Pass a `bool` and PHP evaluates it at the call site, before this method
     *    runs, so an expensive or throwing expression happens even on a
     *    `Option::none`. Pass the callable instead and it only runs on a
-    *    `Option::some`. `filterIf()` is the same thing, spelled explicitly
+    *    `Option::some`. That is what the deprecated `filterIf()` was for
     *  - This method is not `@psalm-mutation-free`, because it may call code you
     *    supplied. That is the cost of taking a callable at all
     *  - Returns `Option<T>`
@@ -627,27 +627,22 @@ final readonly class Option {
    }
 
    /**
-    * Change the `Option::some($value)` into `Option::none()` iff `$filterFunc` returns false,
-    * otherwise propigate the `Option::none()`
+    * Deprecated since 4.0: pass the callable to `filter()` instead
     *
-    * ```php
-    * $none = Option::none();
-    * $stillNone = $none->filterIf(function($x) { return $x > 10; });
-    *
-    * $some = Option::some(10);
-    * $stillSome = $some->filterIf(function($x) { return $x == 10; });
-    * $none = $some->filterIf(function($x) { return $x != 10; });
-    * ```
+    * `filter()` takes a callable as well as a bool since 4.0, which made this a
+    * second spelling of the same call. It still works as it always did.
     *
     * _Notes:_
     *
     *  - `$filterFunc` must follow this interface `callable(T):bool`
     *  - Returns `Option<T>`
     *
+    * @deprecated Pass the callable to filter() instead
     * @psalm-param callable(T):bool $filterFunc
     *
     * @psalm-return self<T>
     */
+   #[\Deprecated('pass the callable to filter() instead', since: '4.0')]
    public function filterIf(callable $filterFunc): self {
       return $this->hasValue && !$filterFunc($this->value)
          ? self::none()

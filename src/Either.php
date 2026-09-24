@@ -864,7 +864,7 @@ final readonly class Either {
     *  - Pass a `bool` and PHP evaluates it at the call site, before this method
     *    runs, so an expensive or throwing expression happens even on the side
     *    this cannot affect. Pass the callable instead and it only runs on the
-    *    side it can. `filterLeftIf()` is the same thing, spelled explicitly
+    *    side it can. That is what the deprecated `filterLeftIf()` was for
     *  - No longer `@psalm-mutation-free`, because it may call code you supplied
     *
     * @psalm-param bool|callable(TLeft):bool $condition
@@ -893,7 +893,7 @@ final readonly class Either {
     *  - Pass a `bool` and PHP evaluates it at the call site, before this method
     *    runs, so an expensive or throwing expression happens even on the side
     *    this cannot affect. Pass the callable instead and it only runs on the
-    *    side it can. `filterRightIf()` is the same thing, spelled explicitly
+    *    side it can. That is what the deprecated `filterRightIf()` was for
     *  - No longer `@psalm-mutation-free`, because it may call code you supplied
     *
     * @psalm-param bool|callable(TRight):bool $condition
@@ -912,28 +912,22 @@ final readonly class Either {
    }
 
    /**
-    * Change the `Either::left($value)` into `Either::right()` iff `$filterFunc` returns false,
-    * otherwise propigate the `Either::right()`
+    * Deprecated since 4.0: pass the callable to `filterLeft()` instead
     *
-    * ```php
-    * $right = Either::right("Some Error Message");
-    * $stillRight = $right->filterLeftIf(function($x) { return $x > 10; }, "New right value");
-    *
-    * $left = Either::left(10);
-    * $stillleft = $left->filterLeftIf(function($x) { return $x == 10; }, "New right value");
-    * $right = $left->filterLeftIf(function($x) { return $x != 10; }, "New right value");
-    * ```
+    * `filterLeft()` takes a callable as well as a bool since 4.0, which made
+    * this a second spelling of the same call. It still works as it always did.
     *
     * _Notes:_
     *
     *  - `$filterFunc` must follow this interface `callable(TLeft):bool`
-    *  - Returns `Either<TLeft, TRight>`
     *
+    * @deprecated Pass the callable to filterLeft() instead
     * @template TTRight
     * @psalm-param callable(TLeft):bool $filterFunc
     * @psalm-param TTRight $rightValue
     * @psalm-return Either<TLeft, TRight|TTRight>
     **/
+   #[\Deprecated('pass the callable to filterLeft() instead', since: '4.0')]
    public function filterLeftIf(callable $filterFunc, $rightValue): self {
       return $this->isLeft && !$filterFunc($this->leftValue)
          ? self::right($rightValue)
@@ -941,27 +935,23 @@ final readonly class Either {
    }
 
    /**
-    * Change the `Either::right($value)` into `Either::left()` iff `$filterFunc` returns false,
-    * otherwise propigate the `Either::left()`
+    * Deprecated since 4.0: pass the callable to `filterRight()` instead
+    *
+    * `filterRight()` takes a callable as well as a bool since 4.0, which made
+    * this a second spelling of the same call. It still works as it always did.
     *
     * _Notes:_
     *
     *  - `$filterFunc` must follow this interface `callable(TRight):bool`
-    *  - Returns `Either<TLeft, TRight>`
     *
-    * ```php
-    * $isReal = function(string $error) { return $error !== ""; };
-    *
-    * echo (string) Either::right("e")->filterRightIf($isReal, 0), "\n"; // Right(e)
-    * echo (string) Either::right("")->filterRightIf($isReal, 0), "\n";  // Left(0)
-    * ```
-    *
+    * @deprecated Pass the callable to filterRight() instead
     * @template TTLeft
     * @psalm-param callable(TRight):bool $filterFunc
     * @psalm-param TTLeft $leftValue
     * @psalm-return Either<TLeft|TTLeft, TRight>
     **/
-    public function filterRightIf(callable $filterFunc, $leftValue): self {
+   #[\Deprecated('pass the callable to filterRight() instead', since: '4.0')]
+   public function filterRightIf(callable $filterFunc, $leftValue): self {
       return !$this->isLeft && !$filterFunc($this->rightValue)
          ? self::left($leftValue)
          : $this;

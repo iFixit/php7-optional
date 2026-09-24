@@ -100,12 +100,12 @@ There is also `Option::some`, `Option::none`, `Option::someNotNull`,
 ## The middle of a chain
 
 `map` transforms the value. `andThen` (also spelled `flatMap`) is for a step
-that hands back a box of its own. `filterIf` drops a value that fails a test.
+that hands back a box of its own. `filter` drops a value that fails a test.
 `tap` runs a side effect without ending the chain.
 
 ```php
 $total = Option::some(['price' => 5, 'qty' => 3])
-   ->filterIf(function(array $line) { return $line['qty'] > 0; })
+   ->filter(function(array $line) { return $line['qty'] > 0; })
    ->tap(function(array $line) { error_log("pricing {$line['qty']} items"); })
    ->map(function(array $line) { return $line['price'] * $line['qty']; })
    ->valueOr(0);
@@ -213,16 +213,17 @@ echo $value->valueOr(-1) . " " . $error->valueOr('none') . "\n"; // "10 bad id"
 
 ## Two things that catch people out
 
-**`filter` takes a bool, `filterIf` takes a callable.** PHP evaluates an
-argument at the call site, so `filter(expensive())` runs `expensive()` even on
-a None. Reach for `filterIf` unless you already have the bool in hand.
+**Pass `filter` the callable, not its result.** `filter` takes a bool or a
+callable. PHP evaluates an argument at the call site, so `filter(expensive())`
+runs `expensive()` even on a None, while `filter($expensive)` runs it only when
+there is a value to test.
 
 ```php
 $calls = 0;
 $check = function() use (&$calls) { $calls++; return true; };
 
 Option::none()->filter($check()); // $check ran
-Option::none()->filterIf($check); // $check did not
+Option::none()->filter($check);   // $check did not
 
 echo $calls . "\n"; // 1
 ```
@@ -311,7 +312,7 @@ with the PHP version and the opcache.
 `Option` methods: `hasValue` `valueOr` `valueOrThrow` `valueOrCreate`
 `toNullable`
 `or` `orCreate` `else` `elseCreate` `match` `matchSome` `matchNone` `map`
-`mapSafely` `flatMap` `andThen` `tap` `tapNone` `filter` `filterIf` `notNull`
+`mapSafely` `flatMap` `andThen` `tap` `tapNone` `filter` `notNull`
 `notFalsy` `notFalse` `contains` `exists`
 
 `Either` factories: `left` `right` `success` `failure` `leftWhen` `rightWhen`
@@ -325,10 +326,14 @@ with the PHP version and the opcache.
 `elseCreateLeft` `elseCreateRight` `match` `matchLeft` `matchRight` `mapLeft`
 `mapRight` `mapLeftSafely` `mapRightSafely` `flatMapLeft` `flatMapRight`
 `andThen` `tapLeft` `tapRight`
-`filterLeft` `filterRight` `filterLeftIf` `filterRightIf` `leftNotNull`
+`filterLeft` `filterRight` `leftNotNull`
 `rightNotNull` `leftNotFalsy` `rightNotFalsy` `leftNotFalse` `rightNotFalse`
 `leftContains` `rightContains`
 `existsLeft` `existsRight` `toOptionFromLeft` `toOptionFromRight`
+
+Deprecated in 4.0, and still working until a major version removes them:
+`filterIf`, `filterLeftIf` and `filterRightIf`. Pass the callable to `filter`,
+`filterLeft` or `filterRight` instead.
 
 Every one carries a worked example in its docblock, and every one of those
 examples is executed by the test suite. Read them in `src/Option.php` and

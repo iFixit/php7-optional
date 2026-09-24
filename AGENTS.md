@@ -107,21 +107,25 @@ unowned and years stale, returning 200 for `Optional/Result.html` and
 
 Each verified by execution on PHP 8.4, not read off the annotations.
 
-### The filter family is eager, the filterIf family is lazy
+### Pass the callable, not its result
 
 `Option::filter()`, `Either::filterLeft()` and `Either::filterRight()` take a
-**`bool`**, not a callable. PHP evaluates the argument at the call site, before
-the method runs, so an expensive or throwing expression runs even when the box
-is empty:
+bool or a callable. A bool is evaluated at the call site, before the method
+runs, so an expensive or throwing expression runs even when the box is empty:
 
 ```php
 Option::none()->filter($expensive());   // $expensive() still runs
-Option::none()->filterIf($expensive);   // callback never runs
+Option::none()->filter($expensive);     // callback never runs
 ```
 
-The discoverable spelling is the costly one across the whole API: `valueOr`,
-`or`, `else` and `filter` are eager, while `valueOrCreate`, `orCreate`,
-`elseCreate` and `filterIf` are lazy.
+The `filterIf` family did the lazy form under a longer name and carries
+`#[\Deprecated]` now. Keep it working until a major version removes it, and
+add no new calls. `DocumentedApiTest` skips any method with that attribute.
+
+Elsewhere the short name is still the costly one: `valueOr`, `or` and `else`
+are eager, while `valueOrCreate`, `orCreate` and `elseCreate` are lazy. They
+cannot take a callable the way `filter` did, because their argument is a value,
+and a value can be a callable.
 
 ### Exception or Throwable, and why they differ
 

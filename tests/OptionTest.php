@@ -6,6 +6,7 @@ namespace Optional\Tests;
 
 use Optional\Exceptions\MissingValueException;
 use Optional\Option;
+use PHPUnit\Framework\Attributes\IgnoreDeprecations;
 use PHPUnit\Framework\TestCase;
 
 final class OptionTest extends TestCase {
@@ -280,16 +281,6 @@ final class OptionTest extends TestCase {
       $this->assertFalse($noneTrue->hasValue());
       $this->assertFalse($noneFalse->hasValue());
 
-      $noneNotA = $none->filterIf(function($x) { return $x != "a"; });
-      $someNotA = $some->filterIf(function($x) { return $x != "a"; });
-      $noneA = $none->filterIf(function($x) { return $x == "a"; });
-      $someA = $some->filterIf(function($x) { return $x == "a"; });
-
-      $this->assertFalse($noneNotA->hasValue());
-      $this->assertFalse($someNotA->hasValue());
-      $this->assertFalse($noneA->hasValue());
-      $this->assertTrue($someA->hasValue());
-
       $someNull = Option::some(null);
       $this->assertTrue($someNull->hasValue());
       $noneNull = $someNull->notNull();
@@ -477,11 +468,40 @@ final class OptionTest extends TestCase {
       Option::none()->filter(function() use (&$ran): bool { $ran = true; return true; });
       $this->assertFalse($ran, 'the callable must not run on a None');
 
+   }
+
+   /**
+    * filterIf is deprecated, not removed, so it has to keep working until a
+    * major version takes it away.
+    *
+    * @psalm-suppress DeprecatedMethod
+    */
+   #[IgnoreDeprecations]
+   public function testFilterIfStillWorks(): void {
+      $none = Option::none();
+      $some = Option::some("a");
+
+      $this->assertFalse($none->filterIf(function($x) { return $x == "a"; })->hasValue());
+      $this->assertFalse($some->filterIf(function($x) { return $x != "a"; })->hasValue());
+      $this->assertTrue($some->filterIf(function($x) { return $x == "a"; })->hasValue());
+
       $this->assertSame(
          (string) Option::some(5)->filterIf(function(int $n): bool { return $n > 3; }),
          (string) Option::some(5)->filter(function(int $n): bool { return $n > 3; }),
          'filter with a callable and filterIf are the same operation'
       );
+   }
+
+   /**
+    * @psalm-suppress DeprecatedMethod
+    */
+   #[IgnoreDeprecations]
+   public function testFilterIfSaysWhatReplacesIt(): void {
+      $this->expectUserDeprecationMessage(
+         'Method Optional\Option::filterIf() is deprecated since 4.0, pass the callable to filter() instead'
+      );
+
+      Option::some(1)->filterIf(fn(int $n) => $n > 0);
    }
 
    public function testFirst(): void {

@@ -8,6 +8,7 @@ use Exception;
 use Optional\Either;
 use Optional\Exceptions\MissingValueException;
 use Optional\Option;
+use PHPUnit\Framework\Attributes\IgnoreDeprecations;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 
@@ -382,16 +383,6 @@ final class EitherTest extends TestCase
       $this->assertFalse($rightTrue->isLeft());
       $this->assertFalse($rightFalse->isLeft());
 
-      $rightNotA = $right->filterLeftIf(function($x) { return $x != "a"; }, $rightValue);
-      $leftNotA = $left->filterLeftIf(function($x) { return $x != "a"; }, $rightValue);
-      $rightA = $right->filterLeftIf(function($x) { return $x == "a"; }, $rightValue);
-      $leftA = $left->filterLeftIf(function($x) { return $x == "a"; }, $rightValue);
-
-      $this->assertFalse($rightNotA->isLeft());
-      $this->assertFalse($leftNotA->isLeft());
-      $this->assertFalse($rightA->isLeft());
-      $this->assertTrue($leftA->isLeft());
-
       $leftNull = Either::left(null);
       $this->assertTrue($leftNull->isLeft());
       $rightNull = $leftNull->leftNotNull($rightValue);
@@ -419,17 +410,50 @@ final class EitherTest extends TestCase
       $this->assertFalse($leftTrue->isRight());
       $this->assertTrue($rightTrue->isRight());
       $this->assertFalse($rightFalse->isRight());
+   }
 
-      $rightNotA = $right->filterRightIf(function($x) { return $x != "a"; }, $rightValue);
-      $leftNotA = $left->filterRightIf(function($x) { return $x != "a"; }, $rightValue);
-      /** @psalm-suppress DocblockTypeContradiction */
-      $rightA = $right->filterRightIf(function($x) { return $x == "a"; }, $rightValue);
-      $leftA = $left->filterRightIf(function($x) { return $x == "a"; }, $rightValue);
+   /**
+    * Deprecated, not removed, so both have to keep working until a major
+    * version takes them away.
+    *
+    * @psalm-suppress DeprecatedMethod
+    */
+   #[IgnoreDeprecations]
+   public function testFilterLeftIfAndFilterRightIfStillWork(): void {
+      $left = Either::left("a");
+      $right = Either::right("a");
 
-      $this->assertTrue($rightNotA->isRight());
-      $this->assertFalse($leftNotA->isRight());
-      $this->assertFalse($rightA->isRight());
-      $this->assertFalse($leftA->isRight());
+      $this->assertTrue($left->filterLeftIf(function($x) { return $x == "a"; }, 'no')->isLeft());
+      $this->assertTrue($left->filterLeftIf(function($x) { return $x != "a"; }, 'no')->isRight());
+      $this->assertTrue($right->filterLeftIf(function($x) { return $x == "a"; }, 'no')->isRight(), 'a Right is untouched');
+
+      $this->assertTrue($right->filterRightIf(function($x) { return $x == "a"; }, 0)->isRight());
+      $this->assertTrue($right->filterRightIf(function($x) { return $x != "a"; }, 0)->isLeft());
+      $this->assertTrue($left->filterRightIf(function($x) { return $x == "a"; }, 0)->isLeft(), 'a Left is untouched');
+   }
+
+   /**
+    * @psalm-suppress DeprecatedMethod
+    */
+   #[IgnoreDeprecations]
+   public function testFilterLeftIfSaysWhatReplacesIt(): void {
+      $this->expectUserDeprecationMessage(
+         'Method Optional\Either::filterLeftIf() is deprecated since 4.0, pass the callable to filterLeft() instead'
+      );
+
+      Either::left(1)->filterLeftIf(fn(int $n) => $n > 0, 'no');
+   }
+
+   /**
+    * @psalm-suppress DeprecatedMethod
+    */
+   #[IgnoreDeprecations]
+   public function testFilterRightIfSaysWhatReplacesIt(): void {
+      $this->expectUserDeprecationMessage(
+         'Method Optional\Either::filterRightIf() is deprecated since 4.0, pass the callable to filterRight() instead'
+      );
+
+      Either::right('e')->filterRightIf(is_string(...), 0);
    }
 
    public function testContains(): void {
