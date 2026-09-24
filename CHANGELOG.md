@@ -293,7 +293,8 @@ Shorthands for shapes callers otherwise spell out by hand:
   names every private property, so renaming one would make every box cached
   before a deploy throw an `Error` when it is read back.
 * Coverage is measured in CI and fails below a floor, rather than being printed
-  into a log nobody reads.
+  into a log nobody reads. Every line of `src/` is covered, so the floor is
+  100%.
 * `TypeInferenceTest` asserts what psalm infers for every traced expression,
   including the two-call chains and the entrances that drop `null` and
   `false`, so an annotation that stops carrying information fails a test.
@@ -305,7 +306,10 @@ Shorthands for shapes callers otherwise spell out by hand:
   names for a method both boxes have.
 * Mutation testing runs in CI. Mutants made by hand had already found behavior
   with a docblock, a line in AGENTS.md, and no test that would fail if it were
-  deleted, such as which class `Option::mapSafely` catches.
+  deleted, such as which class `Option::mapSafely` catches. The first full run
+  killed 272 of 276 mutants; the four survivors were two missing tests, dead
+  code, and one equivalent mutant, now skipped by name. Every mutant is killed
+  now, and the threshold is 100%.
 * `bin/benchmark.php` measures what the box costs. The README publishes it.
 * CI is four jobs: the test matrix, coverage, psalm, and
   `composer validate --strict`. Static analysis and coverage are out of the

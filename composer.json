@@ -44,7 +44,7 @@
       "mutation": "infection --threads=max",
       "coverage": [
          "phpunit --coverage-text --coverage-clover=clover.xml",
-         "php bin/check-coverage.php clover.xml 90"
+         "php bin/check-coverage.php clover.xml 100"
       ],
       "check": [
          "@test",

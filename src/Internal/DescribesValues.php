@@ -23,7 +23,6 @@ use UnitEnum;
 trait DescribesValues {
    private static function describe(mixed $value): string {
       return match (true) {
-         $value === null => 'null',
          is_bool($value) => $value ? 'true' : 'false',
          is_int($value) => (string) $value,
          is_float($value) => var_export($value, true),
@@ -31,7 +30,7 @@ trait DescribesValues {
          $value instanceof UnitEnum => $value::class . '::' . $value->name,
          $value instanceof Throwable => get_debug_type($value) . ': ' . $value->getMessage(),
          $value instanceof Stringable => self::describeStringable($value),
-         default => get_debug_type($value),
+         default => get_debug_type($value), // null is 'null' here too
       };
    }
 

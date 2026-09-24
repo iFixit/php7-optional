@@ -335,6 +335,19 @@ final class OptionTest extends TestCase {
       $this->assertSame([1, 2, 3], $box->valueOr([]), 'the callbacks changed a copy, never the box');
    }
 
+   public function testFlatMapNeverRunsItsCallbackOnANone(): void {
+      $ran = false;
+
+      $result = Option::none()->flatMap(function() use (&$ran): Option {
+         $ran = true;
+
+         return Option::some(1);
+      });
+
+      $this->assertFalse($ran, 'flatMap must not run its callback on a None');
+      $this->assertFalse($result->hasValue());
+   }
+
    public function testAllKeepsTheKeysOrStopsAtTheFirstNone(): void {
       $this->assertSame(['a' => 1, 'b' => null], Option::all(['a' => Option::some(1), 'b' => Option::some(null)])->valueOr([]));
       $this->assertSame([], Option::all([])->valueOr(['not', 'empty']));
@@ -458,6 +471,17 @@ final class OptionTest extends TestCase {
       foreach ($shown as $expected => $box) {
          $this->assertSame("Some({$expected})", (string) $box);
       }
+   }
+
+   public function testToStringShowsAStringableByItsStringForm(): void {
+      $id = new class implements \Stringable {
+         #[\Override]
+         public function __toString(): string {
+            return 'order-42';
+         }
+      };
+
+      $this->assertSame('Some(order-42)', (string) Option::some($id));
    }
 
    public function testToStringNeverThrowsForAValueThatDoes(): void {

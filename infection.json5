@@ -11,11 +11,9 @@
     //
     //     composer mutation
     //
-    // The two thresholds are estimates. Nobody has run this yet, because the
-    // machine it was written on has no coverage driver and installing one needs
-    // root. The first CI run prints the real numbers; set them just under those
-    // and raise them as the suite improves. A threshold below the real score is
-    // decoration.
+    // Both thresholds are 100. Measured on PHP 8.5 with pcov, every mutant is
+    // killed, so one that survives from now on fails the build. It means one of two things, both worth a look: a test is
+    // missing, or the code it changed does nothing.
     "$schema": "vendor/infection/infection/resources/schema.json",
     "source": {
         "directories": [
@@ -26,10 +24,16 @@
         "text": "php://stdout"
     },
     "mutators": {
-        "@default": true
+        "@default": true,
+        // The (bool) in notFalsy() is for psalm, which reports ! on a mixed
+        // value as RiskyTruthyFalsyComparison. Without it the expression means
+        // the same, so no test can kill the mutant that removes it.
+        "CastBool": {
+            "ignore": ["Optional\\Option::notFalsy"]
+        }
     },
-    "minMsi": 80,
-    "minCoveredMsi": 85,
+    "minMsi": 100,
+    "minCoveredMsi": 100,
     "testFramework": "phpunit",
     "testFrameworkOptions": "--testsuite='PHP Optional Test Suite'"
 }

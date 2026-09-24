@@ -55,7 +55,10 @@ number. A coverage step that passes when nothing was measured is worse than no
 step. `tests/CoverageGateTest.php` covers every one of its outcomes.
 
 `composer mutation` breaks the source on purpose and checks a test notices. It
-runs in the coverage job, because it needs the same driver. It exists because
+runs in the coverage job, because it needs the same driver. Both gates are at
+100: every line of `src/` is covered, and every mutant is killed. A mutant that
+survives is a missing test or code that does nothing; `infection.json5` names
+the one equivalent mutant it skips, and why. It exists because
 review found behavior that a docblock and this file both described and that no
 test would notice being deleted, such as which class `Option::mapSafely`
 catches.
