@@ -2,40 +2,33 @@
 declare(strict_types = 1);
 
 require_once dirname(__DIR__) . '/vendor/autoload.php';
+
 use Optional\Option;
 
-class SomeComplexThing {
+// optionExampleBefore.php with the box. The missing key and the throw are
+// handled by the chain, so there is no null to check and no try to write.
+
+final class SomeComplexThing {
    public static function doWork(string $thing): string {
       return $thing;
    }
-};
+}
 
-class User {
-public $name;
-   public function __construct(string $name) {
-      $this->name = $name;
-   }
-};
+final class User {
+   public function __construct(public readonly string $name) {}
+}
 
 $somePerson = [
    'name' => [
       'first' => 'First',
-      'last' => 'Last'
-   ]
+      'last' => 'Last',
+   ],
 ];
 
-$person = Option::fromArray($somePerson, 'name');
-
-$nameOption = $person->mapSafely(function($person): string {
-   $fullName = $person['first'] . $person['last'];
-   return SomeComplexThing::doWork($fullName);
-});
-
-$userOption = $nameOption->map(function($name) {
-   return new User($name);
-});
-
-$userOption->match(
-   function ($user) { echo "The user is {$user->name}\n"; },
-   function () { echo "Oh no! The user is missing!\n"; }
-);
+echo Option::fromArray($somePerson, 'name')
+   ->mapSafely(fn(array $person) => SomeComplexThing::doWork("{$person['first']} {$person['last']}"))
+   ->map(fn(string $name) => new User($name))
+   ->match(
+      some: fn(User $user) => "The user is {$user->name}\n",
+      none: fn() => "Oh no! The user is missing!\n",
+   );

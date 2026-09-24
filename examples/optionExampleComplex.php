@@ -2,25 +2,29 @@
 declare(strict_types = 1);
 
 require_once dirname(__DIR__) . '/vendor/autoload.php';
+
 use Optional\Option;
 
-class Config {
-   private $config;
+// A config reader where any key along the path may be missing. Each step of
+// the path is an andThen(), so a miss anywhere ends in the default.
 
+final class Config {
+   /** @var Option<array<array-key, mixed>> */
+   private Option $config;
+
+   /** @param array<array-key, mixed> $configFileContents */
    public function __construct(array $configFileContents) {
       $this->config = Option::some($configFileContents);
    }
 
-   public function get(... $jsonKeys): Option {
-      return array_reduce($jsonKeys, function (Option $config, string $jsonKey) {
-         return $this->getFrom($config, $jsonKey);
-      }, $this->config);
-   }
-
-   private function getFrom(Option $config, string $jsonKey): Option {
-      return $config->andThen(function(array $configData) use ($jsonKey) {
-         return Option::fromArray($configData, $jsonKey);
-      });
+   public function get(string ...$jsonKeys): Option {
+      return array_reduce(
+         $jsonKeys,
+         fn(Option $config, string $jsonKey) => $config->andThen(
+            fn(mixed $configData) => is_array($configData) ? Option::fromArray($configData, $jsonKey) : Option::none()
+         ),
+         $this->config
+      );
    }
 }
 
@@ -43,23 +47,20 @@ $configFileContents = '
     }
 ';
 
-$configData = json_decode($configFileContents, true);
-$config = new Config($configData);
+$config = new Config(json_decode($configFileContents, true, flags: JSON_THROW_ON_ERROR));
 
 $name = $config
    ->get('environment_config', 'app', 'name')
    ->valueOr('My Default Name');
 
-$dbOption = $config
-   ->get('environment_config', 'database');
+$dbConnectionStr = $config
+   ->get('environment_config', 'database')
+   ->map(fn(array $db) => "Server={$db['host']};Port={$db['port']};Uid={$db['username']};Pwd={$db['password']};")
+   ->valueOr('Server=myServerAddress;Port=1234;Database=myDataBase;Uid=myUsername;Pwd=myPassword;');
 
-$dbConnectionStr = $dbOption->map(function($dbData) {
-   $host = $dbData['host'];
-   $port = $dbData['port'];
-   $username = $dbData['username'];
-   $password = $dbData['password'];
-   return "Server=$host;Port=$port;Uid=$username;Pwd=$password;";
-})
-->valueOr('Server=myServerAddress;Port=1234;Database=myDataBase;Uid=myUsername;Pwd=myPassword;');
+$missing = $config
+   ->get('environment_config', 'cache', 'host')
+   ->valueOr('no cache configured');
 
-echo "Will connect to $name with: $dbConnectionStr \n";
+echo "Will connect to {$name} with: {$dbConnectionStr}\n";
+echo "Cache: {$missing}\n";

@@ -1,43 +1,38 @@
 <?php
 declare(strict_types = 1);
 
-class SomeComplexThing {
+// Read a nested name, run it through something that can throw, and build a
+// user from it, in plain PHP. optionExampleAfter.php does the same with the box.
+
+final class SomeComplexThing {
    public static function doWork(string $thing): string {
       return $thing;
    }
-};
+}
 
-class User {
-public $name;
-   public function __construct(string $name) {
-      $this->name = $name;
-   }
-};
+final class User {
+   public function __construct(public readonly string $name) {}
+}
 
 $somePerson = [
    'name' => [
       'first' => 'First',
-      'last' => 'Last'
-   ]
+      'last' => 'Last',
+   ],
 ];
 
-$person = isset($somePerson['name']) ? $somePerson['name'] : null;
+$person = $somePerson['name'] ?? null;
+$user = null;
 
-if (!$person) {
-   return;
+if ($person !== null) {
+   try {
+      $user = new User(SomeComplexThing::doWork("{$person['first']} {$person['last']}"));
+   } catch (Exception) {
+      $user = null;
+   }
 }
 
-$fullName = "{$person['first']} {$person['last']}";
-
-try {
-   $name = SomeComplexThing::doWork($fullName);
-} catch (\Exception $e) {
-   $name = null;
-}
-
-$user = new User($name);
-
-if ($user) {
+if ($user !== null) {
    echo "The user is {$user->name}\n";
 } else {
    echo "Oh no! The user is missing!\n";
