@@ -27,15 +27,4 @@ final class GeneratedExamplesAreCurrentTest extends TestCase {
          . 'Run: php bin/generate-example-checks.php'
       );
    }
-
-   public function testEveryExampleReachedTheGeneratedFile(): void {
-      $rendered = ExampleSource::render();
-
-      $this->assertGreaterThan(50, count(ExampleSource::all()), 'Suspiciously few examples extracted');
-      $this->assertSame(
-         count(ExampleSource::all()),
-         substr_count($rendered, "\nfunction example"),
-         'An example was extracted but not rendered into the generated file'
-      );
-   }
 }

@@ -12,13 +12,6 @@ namespace Optional\Tests;
  * generated file is current.
  */
 final class ExampleSource {
-   public const SOURCE_FILES = [
-      'src/Option.php',
-      'src/Result.php',
-      'src/Exceptions/MissingValueException.php',
-      'src/Exceptions/EarlyReturn.php',
-      'README.md',
-   ];
 
    public const PRELUDE = <<<'PHP'
       use Optional\Option;
@@ -32,7 +25,7 @@ final class ExampleSource {
       $root = dirname(__DIR__);
       $examples = [];
 
-      foreach (self::SOURCE_FILES as $relativePath) {
+      foreach (self::sourceFiles() as $relativePath) {
          $source = (string) file_get_contents("{$root}/{$relativePath}");
 
          foreach (self::extract($source) as $index => $example) {
@@ -46,6 +39,29 @@ final class ExampleSource {
       }
 
       return $examples;
+   }
+
+   /**
+    * README.md and every PHP file under src/, so an example in a new file is
+    * run like the rest without anyone adding it to a list
+    *
+    * @return list<string>
+    */
+   public static function sourceFiles(): array {
+      $root = dirname(__DIR__);
+      $files = [];
+
+      /** @var \SplFileInfo $file */
+      foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator("{$root}/src")) as $file) {
+         if ($file->getExtension() === 'php') {
+            $files[] = substr($file->getPathname(), strlen($root) + 1);
+         }
+      }
+
+      sort($files);
+      $files[] = 'README.md';
+
+      return $files;
    }
 
    /**

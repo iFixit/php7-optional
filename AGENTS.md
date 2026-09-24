@@ -94,9 +94,12 @@ The docblocks are the only API documentation, and four suites hold them to it.
 - `ExampleScriptTest` runs each script in `examples/` in a subprocess, failing
   on any Fatal, Warning, Notice or Deprecated.
 - `DocumentedApiTest` walks every class under `src/` with reflection and
-  requires that every public method has a fence, that the fence calls the
-  method it sits above, and that the method appears in README.md's list.
-  `__toString` is exempt.
+  requires that every public method has a fence, and that the fence calls the
+  method it sits above on its own class: a factory as `Result::ok(`, a method
+  on a box the example builds from `Result::`. README.md's lists of factories
+  and methods have to match reflection exactly, both ways. `__toString` and
+  `@internal` methods are exempt. The examples come from every PHP file under
+  `src/` plus README.md, found by listing the directory.
 
 Together: a new public method needs an example, the example has to be about
 that method, it has to run and type-check, and the method has to be listed.

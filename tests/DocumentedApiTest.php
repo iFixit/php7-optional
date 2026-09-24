@@ -27,7 +27,7 @@ final class DocumentedApiTest extends TestCase {
    private const EXEMPT = ['__toString'];
 
    /**
-    * @return iterable<string, array{string, string}>
+    * @return iterable<string, array{string, string, bool}>
     */
    public static function publicMethodProvider(): iterable {
       foreach (self::publicClasses() as $class) {
@@ -48,7 +48,7 @@ final class DocumentedApiTest extends TestCase {
             }
 
             $label = sprintf('%s::%s()', $reflection->getShortName(), $method->getName());
-            yield $label => [$label, (string) $method->getDocComment()];
+            yield $label => [$label, (string) $method->getDocComment(), $method->isStatic()];
          }
       }
    }
@@ -71,10 +71,15 @@ final class DocumentedApiTest extends TestCase {
     * neighbour's. It runs, so DocblockExampleTest passes it, and it carries a
     * ```php block, so the check above passes it too. A falsy check once shipped
     * for years with the null check's example.
+    *
+    * The call has to be on the right class, too: a factory by its class name,
+    * and a method on a box the example builds from that class. Otherwise
+    * `Option::some('Ada')->toNullable()` passes as the example for
+    * `Result::toNullable()`.
     */
    #[DataProvider('publicMethodProvider')]
-   public function testExampleCallsTheMethodItDocuments(string $label, string $docblock): void {
-      $method = substr($label, (int) strpos($label, '::') + 2, -2);
+   public function testExampleCallsTheMethodItDocuments(string $label, string $docblock, bool $isStatic): void {
+      [$class, $method] = explode('::', substr($label, 0, -2));
 
       $this->assertSame(
          1,
@@ -83,29 +88,60 @@ final class DocumentedApiTest extends TestCase {
          . "because a skipped test fails nothing."
       );
 
+      $code = self::stripCommentsAndStrings($m[1]);
+
       $this->assertMatchesRegularExpression(
-         '/(?:->|::)' . preg_quote($method, '/') . '\s*\(/',
-         self::stripCommentsAndStrings($m[1]),
+         $isStatic ? '/\b' . $class . '::' . $method . '\s*\(/' : '/->' . $method . '\s*\(/',
+         $code,
          "{$label}'s example never calls it, so it is documenting some other method. A call "
          . "inside a comment or a string literal does not count."
+      );
+      $this->assertMatchesRegularExpression(
+         '/\b' . $class . '::/',
+         $code,
+         "{$label}'s example never builds a {$class}, so the {$method}() it calls belongs to another class."
       );
    }
 
    /**
-    * README.md carries a hand-written list of every method. A list like that
-    * rots the first time someone adds one, and the rot is invisible: nothing
-    * breaks, the list is just quietly wrong.
+    * README.md carries a hand-written list of every factory and method, one
+    * pair of lists per class. A list like that rots the first time someone
+    * adds a method, and the rot is invisible: nothing breaks, the list is just
+    * wrong. Each list has to match reflection exactly, so a method left out
+    * and a name that is not a method both fail.
     */
-   #[DataProvider('publicMethodProvider')]
-   public function testPublicMethodIsListedInTheReadme(string $label): void {
-      $method = substr($label, (int) strpos($label, '::') + 2, -2);
+   public function testTheReadmeListsMatchTheClasses(): void {
+      $expected = [];
 
-      $this->assertStringContainsString(
-         "`{$method}`",
-         self::readmeMethodList(),
-         "{$label} is missing from the method list in README.md. A mention elsewhere in the "
-         . "README does not count; it has to be in the list under 'Full method list'."
-      );
+      foreach (self::publicMethodProvider() as $label => [, , $isStatic]) {
+         [$class, $method] = explode('::', substr($label, 0, -2));
+         $expected["`{$class}` " . ($isStatic ? 'factories' : 'methods')][] = $method;
+      }
+
+      $listed = [];
+      preg_match_all('/^(`\w+` (?:factories|methods)):(.*?)(?:\n\n|\z)/ms', self::readmeMethodList(), $lists, PREG_SET_ORDER);
+
+      foreach ($lists as [, $heading, $names]) {
+         preg_match_all('/`(\w+)`/', $names, $found);
+         $listed[$heading] = $found[1];
+      }
+
+      ksort($expected);
+      ksort($listed);
+      $expected = array_map(fn(array $names): array => self::sorted($names), $expected);
+      $listed = array_map(fn(array $names): array => self::sorted($names), $listed);
+
+      $this->assertSame($expected, $listed, "README.md's 'Full method list' does not match the classes.");
+   }
+
+   /**
+    * @param list<string> $names
+    * @return list<string>
+    */
+   private static function sorted(array $names): array {
+      sort($names);
+
+      return $names;
    }
 
    /**
@@ -131,14 +167,18 @@ final class DocumentedApiTest extends TestCase {
 
          // Anchored, because an unanchored match finds "class is" in a docblock.
          // Any run of modifiers, because `final readonly class` has two.
-         if (preg_match('/^(?:(?:final|abstract|readonly)\s+)*class\s+(\w+)/m', $source, $cls) !== 1) {
+         if (preg_match('/^(?:(?:final|abstract|readonly)\s+)*(?:class|enum|interface|trait)\s+(\w+)/m', $source, $cls) !== 1) {
             continue;
          }
 
          $name = trim($ns[1]) . '\\' . $cls[1];
+         self::assertTrue(
+            class_exists($name) || interface_exists($name) || trait_exists($name),
+            "{$file->getPathname()} declares {$name}, which the autoloader cannot find"
+         );
 
          // An @internal class is how the library works, not what it offers
-         if (class_exists($name) && !str_contains((string) (new \ReflectionClass($name))->getDocComment(), '@internal')) {
+         if (!str_contains((string) (new \ReflectionClass($name))->getDocComment(), '@internal')) {
             $classes[] = $name;
          }
       }
