@@ -95,8 +95,8 @@ Four things to know when you touch an example:
 - It has to run. One that means to show a throw must catch it itself.
 - `eval` does not inherit `use` aliases, which is why the runner prepends its
   own imports as a `PRELUDE` string.
-- `SomeObject`, `NewObject` and `SomeComplexThing` are real fixtures in
-  `tests/Fixtures/`. Add to those rather than teaching the runner to skip one.
+- `SomeObject` and `NewObject` are real fixtures in `tests/Fixtures/`. Add
+  to those rather than teaching the runner to skip one.
 - stdout is buffered and `error_log` redirected, so an example may print.
 
 Nothing checks that an example prints what its trailing comment claims. Run it

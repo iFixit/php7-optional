@@ -5,7 +5,6 @@ declare(strict_types = 1);
 namespace Optional\Tests;
 
 use Optional\Tests\Fixtures\NewObject;
-use Optional\Tests\Fixtures\SomeComplexThing;
 use Optional\Tests\Fixtures\SomeObject;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -76,16 +75,12 @@ final class DocblockExampleTest extends TestCase {
     * as unused classes.
     */
    public function testPreludeImportsResolve(): void {
-      $imported = [SomeObject::class, NewObject::class, SomeComplexThing::class];
+      $imported = [SomeObject::class, NewObject::class];
 
       foreach ($imported as $class) {
          $this->assertTrue(class_exists($class), "{$class} is imported by PRELUDE but does not exist");
          $this->assertStringContainsString($class, ExampleSource::PRELUDE, "PRELUDE no longer imports {$class}");
       }
-
-      $this->assertSame('work', SomeComplexThing::doWork('work'));
-      $this->expectException(\Exception::class);
-      SomeComplexThing::doWork('work', 'boom');
    }
 
    /**
