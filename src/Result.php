@@ -7,6 +7,7 @@ namespace Optional;
 use Closure;
 use Optional\Exceptions\EarlyReturn;
 use Optional\Exceptions\MissingValueException;
+use Optional\Internal\ChecksItems;
 use Optional\Internal\DescribesValues;
 use Throwable;
 
@@ -40,6 +41,7 @@ use Throwable;
  *    accepts them.
  */
 final readonly class Result {
+   use ChecksItems;
    use DescribesValues;
 
    /**
@@ -931,9 +933,14 @@ final readonly class Result {
     *
     *  - It stops at the first `Result::err`, so a generator is read no further
     *  - An empty input gives `Ok([])`
-    *  - Keys are kept, so a list comes back as a list
+    *  - Keys are kept, and a key that repeats keeps its last value, as with
+    *    `iterator_to_array()`. A key that is not an int or a string, or an item
+    *    that is not a `Result`, throws a `TypeError`
+    *  - The type is `Result<array<K, TT>, TE>`, so a list is not typed as a
+    *    `list`, and a shape loses its per-key types: neither psalm nor PHPStan
+    *    can map a type one key at a time
     *
-    * @template K of array-key
+    * @template K
     * @template TT
     * @template TE
     * @psalm-param iterable<K, Result<TT, TE>> $results
@@ -944,6 +951,8 @@ final readonly class Result {
       $values = [];
 
       foreach ($results as $key => $result) {
+         self::checkItem('Result::all()', $key, $result);
+
          if (!$result->isOk) {
             /** @var Result<array<K, TT>, TE> an Err holds no value, so it stands in for any value type */
             return $result;
@@ -978,8 +987,11 @@ final readonly class Result {
     *
     *  - Keys are kept, so each error still says which input it came from.
     *    From a list, `array_values()` renumbers them
+    *  - A key that repeats keeps its last value, as with `iterator_to_array()`.
+    *    A key that is not an int or a string, or an item that is not a
+    *    `Result`, throws a `TypeError`
     *
-    * @template K of array-key
+    * @template K
     * @template TT
     * @template TE
     * @psalm-param iterable<K, Result<TT, TE>> $results
@@ -990,6 +1002,8 @@ final readonly class Result {
       $errors = [];
 
       foreach ($results as $key => $result) {
+         self::checkItem('Result::partition()', $key, $result);
+
          if ($result->isOk) {
             $values[$key] = $result->value;
          } else {

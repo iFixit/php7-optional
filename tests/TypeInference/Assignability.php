@@ -106,3 +106,16 @@ function assignabilityPassesADog(): bool {
 function assignabilityFirstOfAnyIterable(iterable $dogs, WeakMap $ages): Option {
    return Option::first($ages)->hasValue() ? Option::first($dogs) : Option::none();
 }
+
+/**
+ * all() and partition() take any iterable of boxes, keys declared or not
+ *
+ * @param iterable<Option<int>> $options
+ * @param Generator<Result<int, string>> $results
+ * @return array{0: Option<array<int>>, 1: array<int>}
+ */
+function assignabilityCollectAnyIterable(iterable $options, Generator $results): array {
+   [$values] = Result::partition($results);
+
+   return [Option::all($options), $values];
+}

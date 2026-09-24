@@ -341,6 +341,44 @@ final class ResultTest extends TestCase {
       $this->assertSame([[], []], Result::partition([]));
    }
 
+   public function testAllAndPartitionKeepTheLastValueOfAKeyThatRepeats(): void {
+      $repeat = function(): \Generator {
+         yield 'a' => Result::ok(1);
+         yield 'b' => Result::err('first');
+         yield 'a' => Result::ok(2);
+         yield 'b' => Result::err('second');
+      };
+
+      $this->assertSame(['a' => 2], Result::all((function(): \Generator {
+         yield 'a' => Result::ok(1);
+         yield 'a' => Result::ok(2);
+      })())->valueOr([]), 'as iterator_to_array() would');
+      $this->assertSame([['a' => 2], ['b' => 'second']], Result::partition($repeat()));
+   }
+
+   /**
+    * @psalm-suppress InvalidArgument, MixedArgumentTypeCoercion these items are wrong on purpose
+    */
+   public function testAllAndPartitionRejectWhatTheyCannotCollect(): void {
+      $cases = [
+         'takes only Optional\\Result items, got int' => fn(): array => [Result::ok(1), 2],
+         'takes only Optional\\Result items, got Optional\\Option' => fn(): array => [Option::none()],
+         'needs int or string keys, got null' => fn(): \Generator => yield null => Result::ok(1),
+         'needs int or string keys, got stdClass' => fn(): \Generator => yield new \stdClass() => Result::ok(1),
+      ];
+
+      foreach ($cases as $message => $items) {
+         foreach (['all', 'partition'] as $method) {
+            try {
+               $_ = $method === 'all' ? Result::all($items()) : Result::partition($items());
+               $this->fail("{$method}() took the items it should reject with: {$message}");
+            } catch (\TypeError $e) {
+               $this->assertSame("Result::{$method}() {$message}", $e->getMessage());
+            }
+         }
+      }
+   }
+
    public function testValueOrThrowWithAMessageNamesTheErrorAndKeepsItAsTheCause(): void {
       $this->assertSame(1, Result::ok(1)->valueOrThrow('never used'));
 

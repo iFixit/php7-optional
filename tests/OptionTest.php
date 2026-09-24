@@ -6,6 +6,7 @@ namespace Optional\Tests;
 
 use Optional\Exceptions\MissingValueException;
 use Optional\Option;
+use Optional\Result;
 use PHPUnit\Framework\TestCase;
 
 final class OptionTest extends TestCase {
@@ -389,6 +390,39 @@ final class OptionTest extends TestCase {
 
       $this->assertFalse(Option::all($options)->hasValue());
       $this->assertSame(2, $pulled, 'all() stops reading at the first None');
+   }
+
+   public function testAllKeepsTheLastValueOfAKeyThatRepeats(): void {
+      $options = (function(): \Generator {
+         yield 'a' => Option::some(1);
+         yield 'a' => Option::some(2);
+      })();
+
+      $this->assertSame(['a' => 2], Option::all($options)->valueOr([]), 'as iterator_to_array() would');
+   }
+
+   /**
+    * Without the check, a number gave a warning and a None, and a null key is
+    * deprecated on PHP 8.5.
+    *
+    * @psalm-suppress InvalidArgument, MixedArgumentTypeCoercion these items are wrong on purpose
+    */
+   public function testAllRejectsWhatItCannotCollect(): void {
+      $cases = [
+         'Option::all() takes only Optional\\Option items, got int' => [Option::some(1), 2],
+         'Option::all() takes only Optional\\Option items, got Optional\\Result' => [Result::ok(1)],
+         'Option::all() needs int or string keys, got null' => (fn() => yield null => Option::some(1))(),
+         'Option::all() needs int or string keys, got stdClass' => (fn() => yield new \stdClass() => Option::some(1))(),
+      ];
+
+      foreach ($cases as $message => $items) {
+         try {
+            $_ = Option::all($items);
+            $this->fail("all() took the items it should reject with: {$message}");
+         } catch (\TypeError $e) {
+            $this->assertSame($message, $e->getMessage());
+         }
+      }
    }
 
    public function testFlatMap(): void {

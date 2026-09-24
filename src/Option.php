@@ -8,6 +8,7 @@ use Closure;
 use Exception;
 use Optional\Exceptions\EarlyReturn;
 use Optional\Exceptions\MissingValueException;
+use Optional\Internal\ChecksItems;
 use Optional\Internal\DescribesValues;
 use Throwable;
 
@@ -31,6 +32,7 @@ use Throwable;
  *    PHPStan checks those positions properly and accepts them.
  */
 final readonly class Option {
+   use ChecksItems;
    use DescribesValues;
 
    /**
@@ -1062,9 +1064,14 @@ final readonly class Option {
     *
     *  - It stops at the first `Option::none`, so a generator is read no further
     *  - An empty input gives `Some([])`
-    *  - Keys are kept, so a list comes back as a list
+    *  - Keys are kept, and a key that repeats keeps its last value, as with
+    *    `iterator_to_array()`. A key that is not an int or a string, or an item
+    *    that is not an `Option`, throws a `TypeError`
+    *  - The type is `Option<array<K, TT>>`, so a list is not typed as a `list`,
+    *    and a shape loses its per-key types: neither psalm nor PHPStan can map
+    *    a type one key at a time
     *
-    * @template K of array-key
+    * @template K
     * @template TT
     * @psalm-param iterable<K, Option<TT>> $options
     * @psalm-return Option<array<K, TT>>
@@ -1074,6 +1081,8 @@ final readonly class Option {
       $values = [];
 
       foreach ($options as $key => $option) {
+         self::checkItem('Option::all()', $key, $option);
+
          if (!$option->hasValue) {
             return self::none();
          }
