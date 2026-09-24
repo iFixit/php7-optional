@@ -160,7 +160,8 @@ final readonly class Option {
    /**
     * Runs `$sideEffect` on the value iff the option is `Option::some`, then returns the original option
     *
-    * `matchSome` returns void, so a side effect ends a chain. This keeps it going.
+    * For a side effect such as logging, partway through a chain. The chain goes
+    * on with the same box.
     *
     * ```php
     * $logged = Option::some(5)
@@ -189,8 +190,8 @@ final readonly class Option {
    /**
     * Runs `$sideEffect` iff the option is `Option::none`, then returns the original option
     *
-    * The counterpart to `tap`. `matchNone` returns void, so noting an empty
-    * result ends a chain. This keeps it going.
+    * The counterpart to `tap`, for noting an empty result partway through a
+    * chain.
     *
     * ```php
     * $recovered = Option::none()
@@ -386,54 +387,6 @@ final readonly class Option {
    }
 
    /**
-    * Runs `$some` with the value iff the option is `Option::some`, for a side effect
-    *
-    * It returns `void`, so it ends a chain. `tap()` is the same thing mid-chain.
-    *
-    * ```php
-    * Option::some('Ada')->matchSome(function(string $name) { echo "hello {$name}\n"; }); // "hello Ada"
-    * Option::none()->matchSome(function(string $name) { echo "hello {$name}\n"; });     // prints nothing
-    * ```
-    *
-    * _Notes:_
-    *
-    *  - `$some` must follow this interface `callable(T)`
-    * @psalm-param callable(T) $some
-    **/
-   public function matchSome(callable $some): void {
-      if (!$this->hasValue) {
-         return;
-      }
-
-      $some($this->value);
-   }
-
-   /**
-    * Runs `$none` iff the option is `Option::none`, for a side effect
-    *
-    * It returns `void`, so it ends a chain. `tapNone()` is the same thing
-    * mid-chain.
-    *
-    * ```php
-    * Option::none()->matchNone(function() { echo "nobody there\n"; });     // "nobody there"
-    * Option::some('Ada')->matchNone(function() { echo "nobody there\n"; }); // prints nothing
-    * ```
-    *
-    * _Notes:_
-    *
-    *  - `$none` must follow this interface `callable()`
-    *
-    * @psalm-param callable() $none
-    **/
-   public function matchNone(callable $none): void {
-      if ($this->hasValue) {
-         return;
-      }
-
-      $none();
-   }
-
-   /**
     * Maps the `$value` of a `Option::some($value)`
     *
     * `$mapFunc` runs only iff the option is `Option::some`. A `Option::none` passes through.
@@ -550,42 +503,6 @@ final readonly class Option {
    }
 
    /**
-    * The same as `flatMap`, under the name most people guess first
-    *
-    * ```php
-    * $somePerson = [
-    *     'name' => [
-    *        'first' => 'First',
-    *        'last' => 'Last'
-    *     ]
-    *  ];
-    *
-    * $person = Option::fromArray($somePerson, 'name');
-    *
-    * $name = $person->andThen(fn(array $person): Option => Option::someNotFalsy($person['first'] . $person['last']));
-    *
-    * echo (string) $name, "\n"; // Some(FirstLast)
-    * ```
-    *
-    * _Notes:_
-    *
-    *  - `$mapFunc` must follow this interface `callable(T):Option<U>`
-    *  - When your callback returns a `Option::some` on one branch and a
-    *    `Option::none` on another, psalm infers a union of two Option types
-    *    and cannot bind it to `U`. Give the callback an explicit
-    *    `@psalm-return Option<YourType>`, or use a named function with a
-    *    declared return type, and it binds
-    *
-    * @template U
-    * @psalm-param callable(T):Option<U> $mapFunc
-    * @psalm-return Option<U>
-    **/
-   #[\NoDiscard(self::DISCARDED)]
-   public function andThen(callable $mapFunc): self {
-      return $this->flatMap($mapFunc);
-   }
-
-   /**
     * Turns `Option::some($value)` into `Option::none()` iff `$condition` is false,
     * or a callable that returns false for the value. A `Option::none` stays one.
     *
@@ -602,7 +519,7 @@ final readonly class Option {
     *  - Pass a `bool` and PHP evaluates it at the call site, before this method
     *    runs, so an expensive or throwing expression happens even on a
     *    `Option::none`. Pass the callable instead and it only runs on a
-    *    `Option::some`. That is what the deprecated `filterIf()` was for
+    *    `Option::some`
     *  - A callable's result counts the way `if` counts it, so a callback that
     *    returns `1` or `'1'` keeps the value, as `array_filter` would
     *  - This method is not `@psalm-mutation-free`, because it may call code you
@@ -631,30 +548,6 @@ final readonly class Option {
       $keep = is_callable($condition) ? $condition($this->value) : $condition;
 
       return $keep ? $this : self::none();
-   }
-
-   /**
-    * Deprecated since 4.0: pass the callable to `filter()` instead
-    *
-    * `filter()` takes a callable as well as a bool since 4.0, which made this a
-    * second spelling of the same call. It still works as it always did.
-    *
-    * _Notes:_
-    *
-    *  - `$filterFunc` must follow this interface `callable(T):bool`
-    *  - Returns `Option<T>`
-    *
-    * @deprecated Pass the callable to filter() instead
-    * @psalm-param callable(T):bool $filterFunc
-    *
-    * @psalm-return self<T>
-    */
-   #[\Deprecated('pass the callable to filter() instead', since: '4.0')]
-   #[\NoDiscard(self::DISCARDED)]
-   public function filterIf(callable $filterFunc): self {
-      return $this->hasValue && !$filterFunc($this->value)
-         ? self::none()
-         : $this;
    }
 
    /**
@@ -864,61 +757,6 @@ final readonly class Option {
    public static function none(): self {
       /** @var Option<never> */
       return new self(null, false);
-   }
-
-   /**
-    * Boxes `$someValue` iff `$filterFunc` returns true for it, otherwise `Option::none()`
-    *
-    * ```php
-    * $positiveThing = Option::someWhen(1, fn($x) => $x > 0);
-    * $negativeThing = Option::someWhen(1, fn($x) => $x < 0);
-    * ```
-    *
-    * _Notes:_
-    *
-    *  - `$filterFunc` must follow this interface `callable(TT):bool`
-    *  - Returns `Option<TT>`
-    *
-    *
-    * @template TT
-    *
-    * @psalm-param TT $someValue
-    * @psalm-param callable(TT):bool $filterFunc
-    *
-    * @psalm-return self<TT>
-    */
-   public static function someWhen($someValue, callable $filterFunc): self {
-      if ($filterFunc($someValue)) {
-         return self::some($someValue);
-      }
-      return self::none();
-   }
-
-   /**
-    * Returns `Option::none()` iff `$filterFunc` returns true for `$someValue`, otherwise boxes it
-    *
-    * ```php
-    * $positiveThing = Option::noneWhen(1, fn($x) => $x < 0);
-    * $negativeThing = Option::noneWhen(1, fn($x) => $x > 0);
-    * ```
-    *
-    * _Notes:_
-    *
-    *  - `$filterFunc` must follow this interface `callable(TT):bool`
-    *  - Returns `Option<TT>`
-    *
-    * @template TT
-    *
-    * @psalm-param TT $someValue
-    * @psalm-param callable(TT):bool $filterFunc
-    *
-    * @psalm-return self<TT>
-    */
-   public static function noneWhen($someValue, callable $filterFunc): self {
-      if ($filterFunc($someValue)) {
-         return self::none();
-      }
-      return self::some($someValue);
    }
 
    /**

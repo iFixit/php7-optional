@@ -6,7 +6,6 @@ namespace Optional\Tests;
 
 use Optional\Exceptions\MissingValueException;
 use Optional\Option;
-use PHPUnit\Framework\Attributes\IgnoreDeprecations;
 use PHPUnit\Framework\TestCase;
 
 final class OptionTest extends TestCase {
@@ -49,20 +48,6 @@ final class OptionTest extends TestCase {
       $this->expectExceptionMessage("Value is missing.");
 
       Option::none()->valueOrThrow();
-   }
-
-   public function testCreateAndCheckExistenceWhen(): void {
-      $someThing = Option::someWhen(1, function(int $x) { return $x > 0; });
-      $someThing2 = Option::someWhen(-1, function(int $x) { return $x > 0; });
-
-      $this->assertSame($someThing->valueOr(-5), 1);
-      $this->assertSame($someThing2->valueOr(-5), -5);
-
-      $someThing3 = Option::noneWhen(1, function(int $x) { return $x > 0; });
-      $someThing4 = Option::noneWhen(-1, function(int $x) { return $x > 0; });
-
-      $this->assertSame($someThing3->valueOr(-5), -5);
-      $this->assertSame($someThing4->valueOr(-5), -1);
    }
 
    public function testGettingValue(): void {
@@ -218,22 +203,6 @@ final class OptionTest extends TestCase {
           function() { return 'none'; }
       );
       $this->assertSame('some', $whichRan, 'match on a Some runs the some branch');
-
-      $someRan = false;
-      $none->matchSome(function() use (&$someRan) { $someRan = true; });
-      $this->assertFalse($someRan, 'matchSome must not run its callback on a None');
-
-      $hasMatched = false;
-      $some->matchSome(function(int $x) use (&$hasMatched) { return $hasMatched = $x == 1; });
-      $this->assertTrue($hasMatched);
-
-      $noneRan = false;
-      $some->matchNone(function() use (&$noneRan) { $noneRan = true; });
-      $this->assertFalse($noneRan, 'matchNone must not run its callback on a Some');
-
-      $hasMatched = false;
-      $none->matchNone(function() use (&$hasMatched) { $hasMatched = true; });
-      $this->assertTrue($hasMatched, 'matchNone must run its callback on a None');
    }
 
    public function testMapping(): void {
@@ -252,14 +221,6 @@ final class OptionTest extends TestCase {
       $noneNotNull = $none->flatMap(function($x) { return Option::some($x)->notNull(); });
       $someNotNull = $some->flatMap(function($x) { return Option::some($x)->notNull(); });
       $someNullNotNull = $someNull->flatMap(function($x) { return Option::some($x)->notNull(); });
-
-      $this->assertFalse($noneNotNull->hasValue());
-      $this->assertTrue($someNotNull->hasValue());
-      $this->assertFalse($someNullNotNull->hasValue());
-
-      $noneNotNull = $none->andThen(function($x) { return Option::some($x)->notNull(); });
-      $someNotNull = $some->andThen(function($x) { return Option::some($x)->notNull(); });
-      $someNullNotNull = $someNull->andThen(function($x) { return Option::some($x)->notNull(); });
 
       $this->assertFalse($noneNotNull->hasValue());
       $this->assertTrue($someNotNull->hasValue());
@@ -337,7 +298,7 @@ final class OptionTest extends TestCase {
       /** @var Option<array{first: string, last: string}> */
       $person = Option::fromArray($somePerson, 'name');
 
-      $name = $person->andThen(
+      $name = $person->flatMap(
          /**
           * @param array{first: string, last: string} $person
           * @return Option<string|never>
@@ -483,40 +444,6 @@ final class OptionTest extends TestCase {
       $this->assertSame(5, Option::some(5)->filter(fn() => '1')->valueOr(-1));
       $this->assertFalse(Option::some(5)->filter(fn() => '0')->hasValue());
       $this->assertFalse(Option::some(5)->filter(fn() => null)->hasValue());
-   }
-
-   /**
-    * filterIf is deprecated, not removed, so it has to keep working until a
-    * major version takes it away.
-    *
-    * @psalm-suppress DeprecatedMethod
-    */
-   #[IgnoreDeprecations]
-   public function testFilterIfStillWorks(): void {
-      $none = Option::none();
-      $some = Option::some("a");
-
-      $this->assertFalse($none->filterIf(function($x) { return $x == "a"; })->hasValue());
-      $this->assertFalse($some->filterIf(function($x) { return $x != "a"; })->hasValue());
-      $this->assertTrue($some->filterIf(function($x) { return $x == "a"; })->hasValue());
-
-      $this->assertSame(
-         (string) Option::some(5)->filterIf(function(int $n): bool { return $n > 3; }),
-         (string) Option::some(5)->filter(function(int $n): bool { return $n > 3; }),
-         'filter with a callable and filterIf are the same operation'
-      );
-   }
-
-   /**
-    * @psalm-suppress DeprecatedMethod
-    */
-   #[IgnoreDeprecations]
-   public function testFilterIfSaysWhatReplacesIt(): void {
-      $this->expectUserDeprecationMessage(
-         'Method Optional\Option::filterIf() is deprecated since 4.0, pass the callable to filter() instead'
-      );
-
-      $_ = Option::some(1)->filterIf(fn(int $n) => $n > 0);
    }
 
    public function testFirst(): void {

@@ -6,7 +6,7 @@ require_once dirname(__DIR__) . '/vendor/autoload.php';
 use Optional\Option;
 
 // A config reader where any key along the path may be missing. Each step of
-// the path is an andThen(), so a miss anywhere ends in the default.
+// the path is a flatMap(), so a miss anywhere ends in the default.
 
 final class Config {
    /** @var Option<array<array-key, mixed>> */
@@ -20,7 +20,7 @@ final class Config {
    public function get(string ...$jsonKeys): Option {
       return array_reduce(
          $jsonKeys,
-         fn(Option $config, string $jsonKey) => $config->andThen(
+         fn(Option $config, string $jsonKey) => $config->flatMap(
             fn(mixed $configData) => is_array($configData) ? Option::fromArray($configData, $jsonKey) : Option::none()
          ),
          $this->config

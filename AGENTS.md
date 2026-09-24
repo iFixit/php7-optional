@@ -125,13 +125,9 @@ Option::none()->filter($expensive());   // $expensive() still runs
 Option::none()->filter($expensive);     // callback never runs
 ```
 
-A callable's result counts the way `if` counts it, as `array_filter` and 3.x's
-`filterIf` do. Do not tighten it to `=== true`: a flag read back from a
+A callable's result counts the way `if` counts it, as `array_filter` does and
+3.x's `filterIf` did. Do not tighten it to `=== true`: a flag read back from a
 database as `1` would then drop the value, with nothing to say why.
-
-`Option::filterIf()` did the lazy form under a longer name and carries
-`#[\Deprecated]` now. Keep it working until a major version removes it, and
-add no new calls.
 
 Elsewhere the short name is still the costly one: `valueOr`, `or` and `else`
 are eager, while `valueOrCreate`, `orCreate` and `elseCreate` are lazy. They
@@ -168,14 +164,12 @@ it.
   is `true`. `Result::contains()` compares with `===`.
 - `someNotFalsy()` drops a match at index `0`, since `0` is falsy. For
   `strpos`, `array_search` and the other functions that return `false` on
-  failure, the not-false family (`someNotFalse()`, `notFalse()`,
-  `notFalseLeft()`, ...) is the right entrance.
+  failure, `someNotFalse()` and `notFalse()` are the right entrance.
 - There is no `value()`, on purpose. The no-argument `valueOrThrow()` replaces
   it, so the throw is in the name. Do not add it back.
 - `Result::valueOrThrow()` with no factory rethrows the error itself when the
   error is a `Throwable`, so the trace still points where the failure
   happened. Any other error becomes a `MissingValueException` naming it.
-- `andThen()` is an alias: `Option::andThen` calls `flatMap`.
 - `__toString()` interpolates the boxed value, so a non-stringable value gives
   a PHP warning and `"Some(Array)"` rather than a throw. The
   `@psalm-suppress InvalidCast` is intentional (vimeo/psalm#1982).
@@ -211,9 +205,14 @@ it acts on the success: `map`, `mapSafely`, `flatMap`, `filter`, `valueOr`,
 is spelled with `Err`: `mapErr`, `errOr`, `tapErr`, `isErr`.
 `testSharesOptionsMethodAndParameterNames` fails when a shared method's
 parameters drift. A new method on either box should take the other's name if
-the other has the idea, and there should be one name per operation: `Either`
-reached 66 methods by spelling every operation twice, left and right, and then
-adding success and failure aliases on top.
+the other has the idea.
+
+There is also one name per operation. `Either` reached 66 methods by spelling
+every operation twice, left and right, and then adding success and failure
+aliases on top. `Option` had six second names of its own, which 4.0 removed:
+`andThen` for `flatMap`, `filterIf` for `filter`, `matchSome` and `matchNone`
+beside `tap` and `tapNone`, and the `someWhen` and `noneWhen` factories. Do not
+add an alias back. No test catches one, so this rule is on review.
 
 ## Two traps in the tooling itself
 

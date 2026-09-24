@@ -73,6 +73,17 @@ change below that breaks a caller says what to write instead.
   `(string)` shows `Ok(...)` and `Err(...)` rather than `Left(...)` and
   `Right(...)`. A cached `Either` no longer unserializes, since the class is
   gone.
+* **`Option` has one name per operation.** Six 3.x methods repeated another
+  method under a second name, and are gone. Each replacement was checked
+  against 3.0:
+
+  | 3.x | 4.0 |
+  |---|---|
+  | `andThen($f)` | `flatMap($f)` |
+  | `filterIf($f)` | `filter($f)` |
+  | `matchSome($f)`, `matchNone($f)` | `tap($f)`, `tapNone($f)`, which return the box rather than `void` |
+  | `Option::someWhen($v, $f)` | `Option::some($v)->filter($f)` |
+  | `Option::noneWhen($v, $f)` | `Option::some($v)->filter(fn($x) => !$f($x))` |
 * **`Option`, `Result` and `MissingValueException` are `final`.** Extending a
   box never worked: the static factories build with `new self`, so a subclass
   came back as a plain box on the first `map`.
@@ -110,8 +121,8 @@ class:
   loses nothing. `Option` throws it away, and swallowing an `Error` there
   would erase a real bug with nothing left to trace it by
 
-Staying in one through a side effect, since `matchSome` and `matchNone` return
-`void` and so end a chain:
+Staying in one through a side effect, which 3.x's `matchSome` and
+`matchNone` could not do, since they returned `void`:
 
 * `Option::tap()` and `Option::tapNone()`
 
@@ -173,14 +184,6 @@ Shorthands for shapes callers otherwise spell out by hand:
   callable's result counts the way `if` counts it, as `filterIf`'s did. It
   loses `@psalm-mutation-free`, because a method that may call code you
   supplied is not mutation-free
-
-### Deprecated
-
-* `Option::filterIf()`. `filter` takes the callable now, so this is a second
-  spelling of the same call. It has PHP 8.4's `#[\Deprecated]`, so a call
-  prints a deprecation naming the replacement, and psalm reports
-  `DeprecatedMethod`. A test suite that fails on deprecations fails on these
-  calls
 
 ### Removed
 

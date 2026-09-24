@@ -140,8 +140,8 @@ There is also `Option::some`, `Option::none`, `Option::someNotNull`,
 
 ## The middle of a chain
 
-`map` transforms the value. `andThen` (also spelled `flatMap`) is for a step
-that hands back a box of its own. `filter` drops a value that fails a test.
+`map` transforms the value. `flatMap` is for a step that hands back a box of
+its own. `filter` drops a value that fails a test.
 `tap` runs a side effect without ending the chain.
 
 ```php
@@ -340,8 +340,15 @@ with the PHP version and the opcache.
 * An `Option` you cached with `serialize()` under 3.x reads back unchanged,
   and 4.0 writes the same bytes. A cached `Either` does not, since the class is
   gone.
-* `filterIf` is deprecated. It still works and prints a deprecation naming the
-  replacement: pass the callable to `filter`.
+* `Option` keeps one name per operation, so six 3.x spellings are gone:
+
+  | 3.x | 4.0 |
+  |---|---|
+  | `andThen($f)` | `flatMap($f)` |
+  | `filterIf($f)` | `filter($f)` |
+  | `matchSome($f)`, `matchNone($f)` | `tap($f)`, `tapNone($f)` |
+  | `Option::someWhen($v, $f)` | `Option::some($v)->filter($f)` |
+  | `Option::noneWhen($v, $f)` | `Option::some($v)->filter(fn($x) => !$f($x))` |
 * `Option`, `Result` and `MissingValueException` are `final`. Extending a box
   never worked: the static factories build with `new self`, so a subclass came
   back as a plain box on the first `map`.
@@ -350,14 +357,13 @@ with the PHP version and the opcache.
 
 ## Full method list
 
-`Option` factories: `some` `none` `someWhen` `noneWhen` `someNotNull`
-`someNotFalsy` `someNotFalse` `fromCallable` `fromArray` `first`
+`Option` factories: `some` `none` `someNotNull` `someNotFalsy` `someNotFalse`
+`fromCallable` `fromArray` `first`
 
 `Option` methods: `hasValue` `valueOr` `valueOrThrow` `valueOrCreate`
 `toNullable` `toResult`
-`or` `orCreate` `else` `elseCreate` `match` `matchSome` `matchNone` `map`
-`mapSafely` `flatMap` `andThen` `tap` `tapNone` `filter` `notNull`
-`notFalsy` `notFalse` `contains` `exists`
+`or` `orCreate` `else` `elseCreate` `match` `map` `mapSafely` `flatMap` `tap`
+`tapNone` `filter` `notNull` `notFalsy` `notFalse` `contains` `exists`
 
 `Result` factories: `ok` `err` `fromCallable`
 
@@ -366,10 +372,7 @@ with the PHP version and the opcache.
 `mapSafely` `flatMap` `filter` `or` `orCreate` `else` `elseCreate` `tap`
 `tapErr`
 
-Deprecated in 4.0, and still working until a major version removes it:
-`filterIf`. Pass the callable to `filter` instead.
-
-Every one carries a worked example in its docblock, and every one of those
+Every one has a worked example in its docblock, and every one of those
 examples is executed by the test suite. Read them in `src/Option.php` and
 `src/Result.php`.
 
