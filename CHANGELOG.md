@@ -69,7 +69,8 @@ and so end a chain:
 Naming the sides, because left and right do not say which one went well:
 
 * `Either::success()`, `failure()`, `isSuccess()`, `isFailure()`,
-  `mapSuccess()`, `mapFailure()`, `successOr()`, `successOrThrow()`
+  `mapSuccess()`, `mapFailure()`, `successOr()`, `failureOr()` and
+  `successOrThrow()`
 
 Shorthands for shapes callers otherwise spell out by hand:
 
@@ -85,32 +86,25 @@ Completing the left and right mirror, which was 17 pairs out of 21:
 * `Either::flatMapRight()`, `mapRightSafely()`, `notNullRight()`,
   `toOptionFromRight()`
 
-
 ### Fixed
 
-* **Chaining two calls failed psalm at errorLevel 1.** `Option::some(5)->map(...)`
-  followed by a second `->map(fn(string $s) => ...)` reported `ReservedWord`
-  and `NoValue`, and so did two `mapLeft()` calls, `notNull()->map()`,
-  `filter($bool)->map()` and 7 other everyday pairs, 11 out of 20. Every method
-  that returns a box had a conditional return type, and psalm cannot decide
-  `T is never` for an ordinary `T`. So `map()` returned
-  `Option<U>|Option<never>`, and the next typed callback met the empty half.
-  Each of those methods now returns one type, and the 20 chains are pinned in
-  `tests/TypeInference`. What this gives up: psalm no longer proves that a
-  box you built empty stays empty through `map()`, which only mattered for
-  code like `Option::none()->map($f)`
-* **`Option::someNotNull()` and `someNotFalsy()` kept the value they exist to
-  drop.** `Option::someNotNull($maybe)` on a `?string` was `Option<null|string>`,
-  so the next `->map(fn(string $s) => ...)` was an `InvalidArgument`. They, and
-  `notNull()`, `notFalsy()` and the Either versions, now drop `null` and
-  `false` from the type: a row fetch's `array{id: int}|false` comes out as
+* **Chained calls lost their type or failed psalm at errorLevel 1.** On 3.0,
+  `Option::some(5)->map(...)->map(...)` was typed `Option<never>`, a box psalm
+  believes is always empty (see the `map` entry below). A second `mapRight()`
+  was handed the unmapped right type and failed with four errors, and
+  `Either::notNullLeft($maybe, ...)->mapLeft(fn(string $s) => ...)` reported
+  `ReservedWord` and `NoValue`. The cause was conditional return types on
+  methods that return a box: psalm cannot decide `T is never` for an ordinary
+  `T`, so it returns both branches, and the empty-box half rejects the next
+  typed callback. Every method that returns a box now declares one type, and
+  20 everyday two-call chains are pinned in `tests/TypeInference`, where
+  nothing is suppressed
+* **`Option::someNotNull()`, `notNull()`, `notFalsy()` and the Either versions
+  kept the value they exist to drop.** `Option::someNotNull($maybe)` on a
+  `?string` was `Option<null|string>`, so the next `->map(fn(string $s) => ...)`
+  was an `InvalidArgument`. They now drop `null`, and the falsy ones `false`,
+  from the type: a row fetch's `array{id: int}|false` comes out as
   `Option<array{id: int}>`
-* **`Either::filterLeft()` with a callable claimed a Left always became a
-  Right.** `Either::left(10)->filterLeft(fn(int $x) => $x > 5, 'small')` was
-  typed `Either<never, 'small'>`; it is `Left(10)`. It is `Either<10, 'small'>`
-  now. `filterRight()` had the mirror image
-* **`Either::mapRight()` typed a box that might be a Left as unmapped**, so a
-  second `mapRight()` got the old right type
 * **`Either::orRight` had its conditional branches swapped.** psalm inferred
   `Either<never, float(3.14)>` for `Either::right("original")->orRight(3.14)`,
   whose value is the string `"original"`. It infers
@@ -142,12 +136,14 @@ Completing the left and right mirror, which was 17 pairs out of 21:
   cannot catch it: it reports a dropped result only for a method it knows
   changes nothing, and a method that runs your callback cannot promise that.
   PHP 8.4 ignores the attribute. The tap family is left unmarked, since
-  dropping its result is the normal use
-
+  dropping its result is the normal use. On 8.5, a test suite that fails on
+  warnings now fails wherever it drops a result
 * `Option` and `Either` are `readonly` classes, so PHP enforces the
   immutability the docblocks only promised. Setting a property on a box, even
   a new dynamic one, is now an `Error` rather than a deprecation notice
-
+* psalm infers different types for most methods that return a box, each now a
+  single type (see Fixed). A psalm baseline in your own code that recorded the
+  old types may need regenerating
 * `filter`, `filterLeft` and `filterRight` take `bool|callable` rather than
   `bool`, so the short, guessable name has the lazy option. Passing a bool is
   unchanged. The three lose `@psalm-mutation-free`, because a method that may
@@ -159,7 +155,8 @@ Completing the left and right mirror, which was 17 pairs out of 21:
   `filter`, `filterLeft` and `filterRight` take the callable now, so these are
   a second spelling of the same call. They carry PHP 8.4's `#[\Deprecated]`,
   so a call prints a deprecation naming the replacement, and psalm reports
-  `DeprecatedMethod`. They still work, and go in the next major version
+  `DeprecatedMethod`. They still work, and go in the next major version. A
+  test suite that fails on deprecations fails on these calls
 
 ### Removed
 
@@ -170,7 +167,6 @@ Completing the left and right mirror, which was 17 pairs out of 21:
   the throw, and an unguarded call to it is the one mistake psalm cannot catch.
   Java made the same call: the documentation for `Optional.get()` names
   `orElseThrow()` as the preferred alternative
-
 * `psalm-baseline.xml`. Every entry in it was already unused, and `src/` and
   `tests/` are clean at errorLevel 1 without it.
 * `sami-config.php`. It configured Sami, which is not a dependency, is not
@@ -193,9 +189,14 @@ Completing the left and right mirror, which was 17 pairs out of 21:
   Some into a None after a deploy, with a deprecation notice as the only sign.
 * Coverage is measured in CI and fails below a floor, rather than being printed
   into a log nobody reads.
-* `TypeInferenceTest` asserts what psalm infers for 27 expressions, so an
-  annotation that stops carrying information fails a test. Every type defect
-  fixed in this release is among them.
+* `TypeInferenceTest` asserts what psalm infers for every traced expression,
+  including 20 two-call chains and the entrances that drop `null` and `false`,
+  so an annotation that stops carrying information fails a test. Every type
+  defect fixed in this release is among them. PHPStan reads the same
+  annotations; AGENTS.md has the command to check it by hand.
+* `NoDiscardTest` fails when a method that returns a box lacks
+  `#[\NoDiscard]` or anything else has it, and on PHP 8.5 checks the warning
+  fires.
 * Mutation testing runs in CI. Three behaviors in this release had a docblock,
   a line in AGENTS.md, and no test that would fail if they were deleted.
 * `bin/benchmark.php` measures what the box costs. The README publishes it.
@@ -203,9 +204,6 @@ Completing the left and right mirror, which was 17 pairs out of 21:
   `composer validate --strict`. Static analysis and coverage are out of the
   matrix, because pinning psalm to the oldest PHP in it is what froze the
   toolchain for years.
-* The suite went from 35 test methods to 81, and from 246 assertions to over a
-  thousand. Most of the case count is data providers: every example is its own
-  case.
 
 ## [3.0]
 

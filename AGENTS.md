@@ -33,57 +33,61 @@ composer check       # what CI runs: phpunit then psalm
 composer test        # phpunit alone
 composer psalm       # psalm alone, errorLevel 1, no baseline
 composer coverage    # needs xdebug or pcov, which a plain PHP install lacks
+php bin/generate-example-checks.php   # after editing any example, see below
+
+# the PHP 8.5 CI leg, the only place a dropped #[\NoDiscard] result warns
+docker run --rm --user "$(id -u):$(id -g)" -v "$PWD":/app -w /app php:8.5-cli vendor/bin/phpunit
 ```
 
 **Check psalm's exit code, not its output.** `vendor/bin/psalm | grep error`
 matches neither "No errors found!" nor a clean run's silence, so it reports
-success for both. That mistake put a psalm failure into this branch once.
+success for both. That mistake has put a psalm failure into a commit before.
 
 There is no `psalm-baseline.xml` and there should not be one. `src/` and
 `tests/` are clean at errorLevel 1. Fix the type rather than baselining it.
 
-`composer coverage` writes `clover.xml`, runs `bin/check-coverage.php` and fails
-below the floor. That script exits 2, not 0, when the report is missing or
-unparseable, when the counts are impossible, or when the floor is not a number. A coverage step that passes because nothing was measured is worse
-than no step. `tests/CoverageGateTest.php` covers every one of its outcomes, including a
-floor that arrives as an empty shell variable.
+`composer coverage` writes `clover.xml`, runs `bin/check-coverage.php` and
+fails below the floor. That script exits 2, not 0, when the report is missing
+or unparseable, when the counts are impossible, or when the floor is not a
+number, because a coverage step that passes when nothing was measured is worse
+than no step. `tests/CoverageGateTest.php` covers every one of its outcomes.
 
 `composer mutation` breaks the source on purpose and checks a test notices. It
-is in the coverage job, because it needs the same driver. Two adversarial
-reviews found untested behavior by doing this by hand, three times: both
-`mapSafely` catch types and `Either::fromArray`'s fabricated Exception. Each had
-a docblock and a line in this file describing it, and nothing that would fail if
-it were deleted.
+runs in the coverage job, because it needs the same driver. It exists because
+review found behavior that a docblock and this file both described and that no
+test would notice being deleted: both `mapSafely` catch types, and
+`Either::fromArray`'s fabricated Exception.
 
 `composer benchmark` measures what the box costs against the plain PHP it
-replaces. The README carries the numbers.
+replaces, and against `json_decode()` and a small file read for scale. The
+README carries the numbers.
 
-`.github/workflows/test.yaml` is four jobs: the phpunit matrix, then coverage
-plus mutation testing, psalm, and `composer validate --strict` once each on 8.4. Static analysis is out
-of the matrix because pinning psalm to the oldest PHP in it is what kept this
-repo on a 2022 psalm for years. Coverage is out for a duller reason: xdebug
-roughly triples the run and measuring the same lines once per PHP version in
-the matrix teaches nothing.
+`.github/workflows/test.yaml` is four jobs: the phpunit matrix on 8.4 and 8.5,
+then coverage plus mutation testing, psalm, and `composer validate --strict`
+once each on 8.4. Static analysis is out of the matrix because pinning psalm to
+the oldest PHP in it is what kept this repo on a 2022 psalm for years. Coverage
+is out because xdebug roughly triples the run, and measuring the same lines
+once per PHP version teaches nothing.
 
 ## The docs are tested, and that is the point
 
-The docblocks are the only API documentation, and three suites hold them to it.
+The docblocks are the only API documentation, and four suites hold them to it.
 
 - `DocblockExampleTest` executes every ```php fence in `src/` and `README.md`,
   one test case each, named for the method it documents.
+- psalm analyses every one of those examples as well, through
+  `tests/generated/DocblockExamples.php`. Regenerate it with
+  `php bin/generate-example-checks.php` after editing an example;
+  `GeneratedExamplesAreCurrentTest` fails until you do.
 - `ExampleScriptTest` runs each script in `examples/` in a subprocess, failing
   on any Fatal, Warning, Notice or Deprecated.
-- `DocumentedApiTest` walks both classes with reflection and requires that every
-  public method has a fence, that the fence calls the method it sits above, and
-  that the method appears in README.md's list. `__toString` is exempt.
+- `DocumentedApiTest` walks every class under `src/` with reflection and
+  requires that every public method has a fence, that the fence calls the
+  method it sits above, and that the method appears in README.md's list.
+  `__toString` and anything marked `#[\Deprecated]` are exempt.
 
 Together: a new public method needs an example, the example has to be about
-that method, it has to run, and the method has to be listed.
-
-This exists because eight docblock examples had been uncallable for years. They
-called methods that never existed, invoked factories with too few arguments,
-and in two cases stated a result that is wrong on PHP 8. A ninth documented
-`leftNotFalsy` with `leftNotNull`'s example. Nothing executed them.
+that method, it has to run and type-check, and the method has to be listed.
 
 Four things to know when you touch an example:
 
@@ -94,14 +98,16 @@ Four things to know when you touch an example:
   `tests/Fixtures/`. Add to those rather than teaching the runner to skip one.
 - stdout is buffered and `error_log` redirected, so an example may print.
 
-Nothing checks that an example prints what its trailing comment claims. Fewer
-than a fifth carry a claim a machine could read, so that gate was judged not
-worth a parser. Change the comment by hand when you change what an example
-returns.
+Nothing checks that an example prints what its trailing comment claims. Run it
+and change the comment by hand when you change what an example returns.
+
+The generated-example file has its own psalm suppressions, each listed with its
+reason in `psalm.xml`. Two of them, `ReservedWord` and `NoValue`, once hid a
+real defect in chained calls, which is why chains are checked in
+`tests/TypeInference` with nothing suppressed.
 
 There is no generated API site. `php7-optional.surge.sh` is still served but
-unowned and years stale, returning 200 for `Optional/Result.html` and
-`Optional/SimpleResult.html`, classes deleted in `b892422`.
+unowned and years stale; do not send anyone to it.
 
 ## Behavior that surprises people
 
@@ -120,7 +126,7 @@ Option::none()->filter($expensive);     // callback never runs
 
 The `filterIf` family did the lazy form under a longer name and carries
 `#[\Deprecated]` now. Keep it working until a major version removes it, and
-add no new calls. `DocumentedApiTest` skips any method with that attribute.
+add no new calls.
 
 Elsewhere the short name is still the costly one: `valueOr`, `or` and `else`
 are eager, while `valueOrCreate`, `orCreate` and `elseCreate` are lazy. They
@@ -188,34 +194,33 @@ except the tap family.** `$box->map($f);` alone on a line does nothing, psalm
 cannot see it (a method that runs a callback is never mutation-free), and PHP
 8.5 warns for it. `NoDiscardTest` fails when a box-returning method lacks the
 attribute or anything else has it. PHP 8.4 ignores the attribute, so a dropped
-result only shows up in the 8.5 CI leg: a test that calls a method just to see
-it throw or not run a callback has to use the result, or assign it to `$_`,
-which psalm treats as deliberately unused. Do not reach for a `(void)` cast;
-that is PHP 8.5 syntax and a parse error on 8.4.
-
+result only shows up in the 8.5 run: a test that calls a method just to see it
+throw or not run a callback has to use the result, or assign it to `$_`, which
+psalm treats as deliberately unused. Do not reach for a `(void)` cast; that is
+PHP 8.5 syntax and a parse error on 8.4.
 
 **Every left method needs a right twin.** `Either` is a symmetric box, and
-`testEveryLeftMethodHasARightTwin` walks the class with reflection and fails on
-any one-sided name whose counterpart is missing, in both directions. It found
-four that were absent. A mirror with a few gaps is worse than none, because a
-reader learns the rule and then guesses a method that is not there.
+`testEveryOneSidedMethodHasItsTwin` walks the class with reflection and fails
+on any one-sided name whose counterpart is missing, in both directions. A
+mirror with a few gaps is worse than none, because a reader learns the rule and
+then guesses a method that is not there.
 
 One method breaks the mirror on purpose. `flatMapLeft` pins the right side, so
 the mirror-exact `flatMapRight` would pin the left, and recovering from an error
 is the whole reason to call it. It takes both templates and says so in its
 notes.
 
-**Left is the success side.** `andThen` is `flatMapLeft`, `fromCallable` puts
-the return value on the left and the `Throwable` on the right, and
-`toOptionFromLeft` shipped years before its twin. `success`, `failure`,
-`isSuccess`, `isFailure`, `mapSuccess`, `mapFailure`, `successOr` and
-`successOrThrow` are pure delegation to the left-and-right methods, and
-`testSuccessAndFailureNamesDelegate` asserts each agrees with its target so the
-two spellings cannot drift.
+**Left is the success side.** `andThen` is `flatMapLeft`, and `fromCallable`
+puts the return value on the left and the `Throwable` on the right. `success`,
+`failure`, `isSuccess`, `isFailure`, `mapSuccess`, `mapFailure`, `successOr`,
+`failureOr` and `successOrThrow` are pure delegation to the left-and-right
+methods. `testSuccessAndFailureNamesDelegate` asserts each agrees with its
+target, and `testAliasAnnotationsMatchTheirTargets` that their psalm
+annotations match, so the two spellings cannot drift.
 
-Do not extend the alias set method by method. It is eight names covering create,
-ask, transform each side, and two ways out. Mirroring all 63 of Either's methods
-into a second vocabulary is how a class gets to 126.
+Do not extend the alias set method by method. It covers create, ask, transform
+each side, and the ways out. Mirroring every `Either` method into a second
+vocabulary would double the class.
 
 ## Two traps in the tooling itself
 
@@ -227,12 +232,13 @@ only thing that catches those is running the file in a subprocess, which is
 what `ExampleScriptTest` does.
 
 **psalm proves the throws, so code after one is unreachable.** The conditional
-return types (`(T is never ? never : T)`) let psalm prove that `valueOrThrow()` on a
-`None` cannot return. Anything written after such a call is reported as
-`UnevaluatedCode`, and a `$threw` flag read afterwards as `RedundantCondition`.
-Use one `expectException` per test rather than fighting it. One throw per test
-is what makes that safe. `expectException` ends a test at the first throw,
-which is why `5abacf7` had to abandon it when a single test asserted two.
+return types (`(T is never ? never : T)`) let psalm prove that
+`valueOrThrow()` on a `None` cannot return. Anything written after such a call
+is reported as `UnevaluatedCode`, and a `$threw` flag read afterwards as
+`RedundantCondition`. Use one `expectException` per test rather than fighting
+it. One throw per test is what makes that safe. `expectException` ends a test
+at the first throw, which is why `5abacf7` had to abandon it when a single test
+asserted two.
 
 ## Psalm annotations
 
@@ -244,14 +250,13 @@ reporting the test classes themselves as unused.
   psalm cannot decide `T is never` for an ordinary `T`, so it returns both
   branches, and `(T is never ? Option<never> : Option<U>)` becomes
   `Option<U>|Option<never>`. The next call with a typed callback meets the
-  empty half and fails with `ReservedWord` and `NoValue`. That broke 11 of
-  20 everyday chains on this branch until it was found. Write one type
-  instead (`Option<T|TT>`, `Either<TLeft, URight>`), and state the class
-  invariant in the body with a `/** @var ... */` where psalm cannot see it.
-  A conditional inside a type parameter is fine
-  (`Either<V, (TTRight is null ? Exception : TTRight)>`), and so is one on a
-  method that returns a plain value, since psalm drops `never` from a value
-  union.
+  empty half and fails with `ReservedWord` and `NoValue`; that once broke 11
+  of 20 everyday two-call chains. Write one type instead (`Option<T|TT>`,
+  `Either<TLeft, URight>`), and state the class invariant in the body with a
+  `/** @var ... */` where psalm cannot see it. A conditional inside a type
+  parameter is fine (`Either<V, (TTRight is null ? Exception : TTRight)>`),
+  and so is one on a method that returns a plain value, since psalm drops
+  `never` from a value union.
 - To drop `null` or `false` from a box's type, bind a template through
   `@psalm-if-this-is Option<TNotNull|null>`. Two or three members bind; a
   longer union of literals does not, and fails on an array shape.
@@ -298,6 +303,9 @@ narrow it.
   in. There is no `.editorconfig` and no phpcs, so nothing corrects you.
 - `declare(strict_types = 1);` with spaces around the `=`.
 - `iff` in the docblocks means "if and only if". Leave it.
+- Examples use arrow functions, first-class callables (`strtoupper(...)`) and
+  named arguments on `match()`. Keep `function` only where an arrow function
+  cannot do the job: a by-reference `use`, or a statement such as `echo`.
 - A new public method needs a worked `php` example showing both states of the
   box. Match the surrounding order: description, fenced example, `_Notes:_`,
   then the psalm annotations. The example will be executed.
