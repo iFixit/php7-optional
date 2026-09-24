@@ -636,26 +636,23 @@ final readonly class Option {
    }
 
    /**
-    * Returns true if the option's value == `$value`, otherwise false.
+    * Returns true iff the option is `Option::some` and its value is `$value`, compared with `===`
     *
     * ```php
-    * $none = Option::none();
-    * $false = $none->contains(1);
-    *
-    * $some = Option::some(10);
-    * $true = $some->contains(10);
-    * $false = $some->contains("Thing");
+    * echo Option::some(10)->contains(10) ? "yes\n" : "no\n";   // "yes"
+    * echo Option::some(10)->contains('10') ? "yes\n" : "no\n"; // "no", compared strictly
+    * echo Option::none()->contains(null) ? "yes\n" : "no\n";   // "no", a None holds nothing
     * ```
     *
+    * _Notes:_
+    *
+    *  - An object matches only the same instance. For any other comparison,
+    *    pass it to `exists()`
+    *
     * @psalm-mutation-free
-    * @psalm-param mixed $value
-    **/
-   public function contains($value): bool {
-      if (!$this->hasValue()) {
-         return false;
-      }
-
-      return $this->value == $value;
+    */
+   public function contains(mixed $value): bool {
+      return $this->hasValue && $this->value === $value;
    }
 
    /**

@@ -256,12 +256,9 @@ function example20_notFalse(): void {
  * src/Option.php #21, contains()
  */
 function example21_contains(): void {
-   $none = Option::none();
-   $false = $none->contains(1);
-
-   $some = Option::some(10);
-   $true = $some->contains(10);
-   $false = $some->contains("Thing");
+   echo Option::some(10)->contains(10) ? "yes\n" : "no\n";   // "yes"
+   echo Option::some(10)->contains('10') ? "yes\n" : "no\n"; // "no", compared strictly
+   echo Option::none()->contains(null) ? "yes\n" : "no\n";   // "no", a None holds nothing
 }
 
 /**

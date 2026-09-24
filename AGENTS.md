@@ -160,8 +160,9 @@ it.
 
 ### Smaller ones
 
-- `Option::contains()` compares with `==`, so `Option::some(1)->contains('1')`
-  is `true`. `Result::contains()` compares with `===`.
+- `contains()` compares with `===` on both boxes, so
+  `Option::some(1)->contains('1')` is `false` and an object matches only
+  itself. 3.x compared with `==`. For a looser test, pass it to `exists()`.
 - `someNotFalsy()` drops a match at index `0`, since `0` is falsy. For
   `strpos`, `array_search` and the other functions that return `false` on
   failure, `someNotFalse()` and `notFalse()` are the right entrance.

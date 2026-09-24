@@ -84,6 +84,11 @@ change below that breaks a caller says what to write instead.
   | `matchSome($f)`, `matchNone($f)` | `tap($f)`, `tapNone($f)`, which return the box rather than `void` |
   | `Option::someWhen($v, $f)` | `Option::some($v)->filter($f)` |
   | `Option::noneWhen($v, $f)` | `Option::some($v)->filter(fn($x) => !$f($x))` |
+* **`Option::contains()` compares with `===`**, as `Result::contains()` does.
+  Under 3.x's `==`, `Option::some(1)->contains('1')`,
+  `Option::some('1e1')->contains('10')` and `Option::some(null)->contains(false)`
+  were all true, and two separate but equal objects matched. For a looser
+  test, pass your own comparison to `exists()`.
 * **`Option`, `Result` and `MissingValueException` are `final`.** Extending a
   box never worked: the static factories build with `new self`, so a subclass
   came back as a plain box on the first `map`.

@@ -274,6 +274,20 @@ final class OptionTest extends TestCase {
       $this->assertFalse($none->contains(null));
    }
 
+   /**
+    * contains() compares with ===, as Result::contains() does. Under the ==
+    * of 3.x, each of these was true.
+    */
+   public function testContainsComparesStrictly(): void {
+      $this->assertFalse(Option::some(1)->contains('1'));
+      $this->assertFalse(Option::some('1e1')->contains('10'));
+      $this->assertFalse(Option::some(null)->contains(false));
+      $this->assertFalse(Option::some(new \stdClass())->contains(new \stdClass()));
+
+      $object = new \stdClass();
+      $this->assertTrue(Option::some($object)->contains($object), 'the same instance still matches');
+   }
+
    public function testExists(): void {
       $none = Option::none();
       $some = Option::some(10);
