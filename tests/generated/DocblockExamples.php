@@ -253,8 +253,8 @@ function example20_filter(): void {
    $calls = 0;
    $check = function() use (&$calls) { $calls++; return true; };
 
-   Option::none()->filter($check()); // $check ran: PHP evaluated the argument
-   Option::none()->filter($check);   // $check did not run
+   $eager = Option::none()->filter($check()); // $check ran: PHP evaluated the argument
+   $lazy = Option::none()->filter($check);    // $check did not run
 
    echo $calls, "\n"; // 1
 }
@@ -1216,8 +1216,8 @@ function example110_unknown(): void {
    $calls = 0;
    $check = function() use (&$calls) { $calls++; return true; };
 
-   Option::none()->filter($check()); // $check ran
-   Option::none()->filter($check);   // $check did not
+   $eager = Option::none()->filter($check()); // $check ran, though the box is empty
+   $lazy = Option::none()->filter($check);    // $check did not
 
    echo $calls . "\n"; // 1
 }

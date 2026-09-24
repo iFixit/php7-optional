@@ -22,6 +22,13 @@ use Throwable;
  * @template TRight
  */
 final readonly class Either {
+   /**
+    * Finishes PHP 8.5's warning when a call below has its result dropped:
+    * "The return value of method ... should either be used or intentionally
+    * ignored by casting it as (void), " followed by this.
+    */
+   private const DISCARDED = 'a box never changes after it is built, so this call only made a new one';
+
    private bool $isLeft;
 
    /** @psalm-var TLeft */
@@ -320,6 +327,7 @@ final readonly class Either {
     * @psalm-param TTLeft $alternative
     * @psalm-return Either<TLeft|TTLeft, never>
     **/
+   #[\NoDiscard(self::DISCARDED)]
    public function orLeft($alternative): self {
       /** @var Either<TLeft|TTLeft, never> a Left never holds a right value, which psalm cannot see */
       return $this->isLeft
@@ -344,6 +352,7 @@ final readonly class Either {
     * @psalm-param TTRight $alternative
     * @psalm-return Either<never, TRight|TTRight>
     **/
+   #[\NoDiscard(self::DISCARDED)]
    public function orRight($alternative): self {
       /** @var Either<never, TRight|TTRight> a Left never holds a right value, which psalm cannot see */
       return !$this->isLeft
@@ -370,6 +379,7 @@ final readonly class Either {
     * @psalm-param callable(TRight):TTLeft $alternativeFactory
     * @psalm-return Either<TLeft|TTLeft, never>
     **/
+   #[\NoDiscard(self::DISCARDED)]
    public function orCreateLeft(callable $alternativeFactory): self {
       /** @var Either<TLeft|TTLeft, never> a Left never holds a right value, which psalm cannot see */
       return $this->isLeft
@@ -398,6 +408,7 @@ final readonly class Either {
     * @psalm-param callable(TLeft):TTRight $alternativeFactory
     * @psalm-return Either<never, TRight|TTRight>
     **/
+   #[\NoDiscard(self::DISCARDED)]
    public function orCreateRight(callable $alternativeFactory): self {
       /** @var Either<never, TRight|TTRight> a Left never holds a right value, which psalm cannot see */
       return !$this->isLeft
@@ -425,6 +436,7 @@ final readonly class Either {
     * @psalm-param Either<TLeftOther, TRightOther> $alternativeEither
     * @psalm-return Either<TLeft|TLeftOther, TRightOther>
     **/
+   #[\NoDiscard(self::DISCARDED)]
    public function elseLeft(self $alternativeEither): self {
       /** @var Either<TLeft|TLeftOther, TRightOther> a Left never holds a right value, which psalm cannot see */
       return $this->isLeft
@@ -451,6 +463,7 @@ final readonly class Either {
     * @psalm-param Either<TLeftOther, TRightOther> $alternativeEither
     * @psalm-return Either<TLeftOther, TRight|TRightOther>
     **/
+   #[\NoDiscard(self::DISCARDED)]
    public function elseRight(self $alternativeEither): self {
       /** @var Either<TLeftOther, TRight|TRightOther> a Left never holds a right value, which psalm cannot see */
       return !$this->isLeft
@@ -479,6 +492,7 @@ final readonly class Either {
     * @psalm-param callable(TRight):Either<TLeftOther, TRightOther> $alternativeEitherFactory
     * @psalm-return Either<TLeft|TLeftOther, TRightOther>
     **/
+   #[\NoDiscard(self::DISCARDED)]
    public function elseCreateLeft(callable $alternativeEitherFactory): self {
       /** @var Either<TLeft|TLeftOther, TRightOther> a Left never holds a right value, which psalm cannot see */
       return $this->isLeft
@@ -506,6 +520,7 @@ final readonly class Either {
     * @psalm-param callable(TLeft):Either<TLeftOther, TRightOther> $alternativeEitherFactory
     * @psalm-return Either<TLeftOther, TRight|TRightOther>
     **/
+   #[\NoDiscard(self::DISCARDED)]
    public function elseCreateRight(callable $alternativeEitherFactory): self {
       /** @var Either<TLeftOther, TRight|TRightOther> a Left never holds a right value, which psalm cannot see */
       return !$this->isLeft
@@ -622,6 +637,7 @@ final readonly class Either {
     * @psalm-param callable(TLeft):ULeft $mapFunc
     * @psalm-return Either<ULeft, TRight>
     **/
+   #[\NoDiscard(self::DISCARDED)]
    public function mapLeft(callable $mapFunc): self {
       return $this->isLeft
          ? self::left($mapFunc($this->leftValue))
@@ -649,6 +665,7 @@ final readonly class Either {
     * @psalm-param callable(TRight):URight $mapFunc
     * @psalm-return Either<TLeft, URight>
     **/
+   #[\NoDiscard(self::DISCARDED)]
    public function mapRight(callable $mapFunc): self {
       return $this->isLeft
          ? self::left($this->leftValue)
@@ -689,6 +706,7 @@ final readonly class Either {
     * @psalm-param class-string<E> $catch
     * @psalm-return Either<ULeft, TRight|E>
     **/
+   #[\NoDiscard(self::DISCARDED)]
    public function mapLeftSafely(callable $mapFunc, string $catch = Throwable::class): self {
       try {
          return $this->mapLeft($mapFunc);
@@ -730,6 +748,7 @@ final readonly class Either {
     * @psalm-param class-string<E> $catch
     * @psalm-return Either<TLeft, URight|E>
     **/
+   #[\NoDiscard(self::DISCARDED)]
    public function mapRightSafely(callable $mapFunc, string $catch = Throwable::class): self {
       try {
          return $this->mapRight($mapFunc);
@@ -778,6 +797,7 @@ final readonly class Either {
     * @psalm-param callable(TLeft):Either<ULeft, URight> $mapFunc
     * @psalm-return Either<ULeft, TRight|URight>
     **/
+   #[\NoDiscard(self::DISCARDED)]
    public function andThen(callable $mapFunc): self {
       return $this->flatMapLeft($mapFunc);
    }
@@ -803,6 +823,7 @@ final readonly class Either {
     * @psalm-param callable(TLeft):Either<ULeft, URight> $mapFunc
     * @psalm-return Either<ULeft, TRight|URight>
     **/
+   #[\NoDiscard(self::DISCARDED)]
    public function flatMapLeft(callable $mapFunc): self {
       return $this->isLeft
          ? $mapFunc($this->leftValue)
@@ -836,6 +857,7 @@ final readonly class Either {
     * @psalm-param callable(TRight):Either<ULeft, URight> $mapFunc
     * @psalm-return Either<TLeft|ULeft, URight>
     **/
+   #[\NoDiscard(self::DISCARDED)]
    public function flatMapRight(callable $mapFunc): self {
       return $this->isLeft
          ? self::left($this->leftValue)
@@ -861,6 +883,7 @@ final readonly class Either {
     * @psalm-param TTRight $rightValue
     * @psalm-return Either<TLeft, TRight|TTRight>
     **/
+   #[\NoDiscard(self::DISCARDED)]
    public function filterLeft(bool|callable $condition, $rightValue): self {
       if (!$this->isLeft) {
          return $this;
@@ -890,6 +913,7 @@ final readonly class Either {
     * @psalm-param TTLeft $leftValue
     * @psalm-return Either<TLeft|TTLeft, TRight>
     **/
+   #[\NoDiscard(self::DISCARDED)]
    public function filterRight(bool|callable $condition, $leftValue): self {
       if ($this->isLeft) {
          return $this;
@@ -917,6 +941,7 @@ final readonly class Either {
     * @psalm-return Either<TLeft, TRight|TTRight>
     **/
    #[\Deprecated('pass the callable to filterLeft() instead', since: '4.0')]
+   #[\NoDiscard(self::DISCARDED)]
    public function filterLeftIf(callable $filterFunc, $rightValue): self {
       return $this->isLeft && !$filterFunc($this->leftValue)
          ? self::right($rightValue)
@@ -940,6 +965,7 @@ final readonly class Either {
     * @psalm-return Either<TLeft|TTLeft, TRight>
     **/
    #[\Deprecated('pass the callable to filterRight() instead', since: '4.0')]
+   #[\NoDiscard(self::DISCARDED)]
    public function filterRightIf(callable $filterFunc, $leftValue): self {
       return !$this->isLeft && !$filterFunc($this->rightValue)
          ? self::left($leftValue)
@@ -966,6 +992,7 @@ final readonly class Either {
     * @psalm-if-this-is Either<TNotNull|null, TRight>
     * @psalm-return Either<TNotNull, TRight|TTRight>
     **/
+   #[\NoDiscard(self::DISCARDED)]
    public function leftNotNull($rightValue): self {
       /** @var Either<TNotNull, TRight|TTRight> a null left never survives the check */
       return $this->isLeft && is_null($this->leftValue)
@@ -991,6 +1018,7 @@ final readonly class Either {
     * @psalm-if-this-is Either<TLeft, TNotNull|null>
     * @psalm-return Either<TLeft|TTLeft, TNotNull>
     **/
+   #[\NoDiscard(self::DISCARDED)]
    public function rightNotNull($leftValue): self {
       /** @var Either<TLeft|TTLeft, TNotNull> a null right never survives the check */
       return !$this->isLeft && is_null($this->rightValue)
@@ -1019,6 +1047,7 @@ final readonly class Either {
     * @psalm-if-this-is Either<TNotFalsy|null|false, TRight>
     * @psalm-return Either<TNotFalsy, TRight|TTRight>
     **/
+   #[\NoDiscard(self::DISCARDED)]
    public function leftNotFalsy($rightValue): self {
       /** @var Either<TNotFalsy, TRight|TTRight> a falsy left never survives the check */
       return $this->isLeft && !((bool) $this->leftValue)
@@ -1045,6 +1074,7 @@ final readonly class Either {
     * @psalm-if-this-is Either<TLeft, TNotFalsy|null|false>
     * @psalm-return Either<TLeft|TTLeft, TNotFalsy>
     **/
+   #[\NoDiscard(self::DISCARDED)]
    public function rightNotFalsy($leftValue): self {
       /** @var Either<TLeft|TTLeft, TNotFalsy> a falsy right never survives the check */
       return !$this->isLeft && !((bool) $this->rightValue)
@@ -1075,6 +1105,7 @@ final readonly class Either {
     * @psalm-if-this-is Either<TNotFalse|false, TRight>
     * @psalm-return Either<TNotFalse, TRight|TTRight>
     **/
+   #[\NoDiscard(self::DISCARDED)]
    public function leftNotFalse($rightValue): self {
       /** @var Either<TNotFalse, TRight|TTRight> a false left never survives the check */
       return $this->isLeft && $this->leftValue === false
@@ -1103,6 +1134,7 @@ final readonly class Either {
     * @psalm-if-this-is Either<TLeft, TNotFalse|false>
     * @psalm-return Either<TLeft|TTLeft, TNotFalse>
     **/
+   #[\NoDiscard(self::DISCARDED)]
    public function rightNotFalse($leftValue): self {
       /** @var Either<TLeft|TTLeft, TNotFalse> a false right never survives the check */
       return !$this->isLeft && $this->rightValue === false
@@ -1219,6 +1251,7 @@ final readonly class Either {
     * @psalm-mutation-free
     * @psalm-return Option<TLeft>
     **/
+   #[\NoDiscard(self::DISCARDED)]
    public function toOptionFromLeft(): Option {
       return $this->isLeft
          ? Option::some($this->leftValue)
@@ -1243,6 +1276,7 @@ final readonly class Either {
     * @psalm-mutation-free
     * @psalm-return Option<TRight>
     **/
+   #[\NoDiscard(self::DISCARDED)]
    public function toOptionFromRight(): Option {
       return $this->isLeft
          ? Option::none()
@@ -1348,6 +1382,7 @@ final readonly class Either {
     * @psalm-param callable(TLeft):ULeft $mapFunc
     * @psalm-return Either<ULeft, TRight>
     **/
+   #[\NoDiscard(self::DISCARDED)]
    public function mapSuccess(callable $mapFunc): self {
       return $this->mapLeft($mapFunc);
    }
@@ -1366,6 +1401,7 @@ final readonly class Either {
     * @psalm-param callable(TRight):URight $mapFunc
     * @psalm-return Either<TLeft, URight>
     **/
+   #[\NoDiscard(self::DISCARDED)]
    public function mapFailure(callable $mapFunc): self {
       return $this->mapRight($mapFunc);
    }

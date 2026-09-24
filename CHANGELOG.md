@@ -137,6 +137,13 @@ Completing the left and right mirror, which was 17 pairs out of 21:
 
 ### Changed
 
+* Every method that returns a new box carries PHP 8.5's `#[\NoDiscard]`, so
+  `$option->map($f);` on its own line, which does nothing, warns on 8.5. psalm
+  cannot catch it: it reports a dropped result only for a method it knows
+  changes nothing, and a method that runs your callback cannot promise that.
+  PHP 8.4 ignores the attribute. The tap family is left unmarked, since
+  dropping its result is the normal use
+
 * `Option` and `Either` are `readonly` classes, so PHP enforces the
   immutability the docblocks only promised. Setting a property on a box, even
   a new dynamic one, is now an `Error` rather than a deprecation notice

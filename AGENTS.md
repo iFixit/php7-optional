@@ -181,7 +181,18 @@ before the deploy, and quietly: a cached Some reads back as a None, with a
 deprecation notice as the only sign. `SerializationTest` holds payloads written
 by tag 3.0 and fails on either direction of that drift.
 
-## Two conventions the tests enforce
+## Three conventions the tests enforce
+
+**Every method that returns a new box carries `#[\NoDiscard(self::DISCARDED)]`,
+except the tap family.** `$box->map($f);` alone on a line does nothing, psalm
+cannot see it (a method that runs a callback is never mutation-free), and PHP
+8.5 warns for it. `NoDiscardTest` fails when a box-returning method lacks the
+attribute or anything else has it. PHP 8.4 ignores the attribute, so a dropped
+result only shows up in the 8.5 CI leg: a test that calls a method just to see
+it throw or not run a callback has to use the result, or assign it to `$_`,
+which psalm treats as deliberately unused. Do not reach for a `(void)` cast;
+that is PHP 8.5 syntax and a parse error on 8.4.
+
 
 **Every left method needs a right twin.** `Either` is a symmetric box, and
 `testEveryLeftMethodHasARightTwin` walks the class with reflection and fails on

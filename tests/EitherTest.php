@@ -247,18 +247,20 @@ final class EitherTest extends TestCase
       $this->assertSame($leftClass->leftOr("-1"), $someObject);
 
       $factoryRan = false;
-      $leftThing->elseCreateLeft(function() use (&$factoryRan): Either {
+      $kept = $leftThing->elseCreateLeft(function() use (&$factoryRan): Either {
          $factoryRan = true;
          return Either::left('unreachable');
       });
       $this->assertFalse($factoryRan, 'elseCreateLeft must not build an alternative for a Left');
+      $this->assertSame($leftThing, $kept, 'a Left comes back as it was');
 
       $factoryRan = false;
-      $leftClass->elseCreateLeft(function() use (&$factoryRan): Either {
+      $kept = $leftClass->elseCreateLeft(function() use (&$factoryRan): Either {
          $factoryRan = true;
          return Either::left('unreachable');
       });
       $this->assertFalse($factoryRan, 'elseCreateLeft must not build an alternative for a Left');
+      $this->assertSame($leftClass, $kept, 'a Left comes back as it was');
 
 
       $rightThing = $rightEither->elseCreateRight(function($_x) {
@@ -269,11 +271,12 @@ final class EitherTest extends TestCase
       $this->assertSame($rightThing->rightOr(-1), $rightValue);
 
       $factoryRan = false;
-      $rightThing->elseCreateRight(function() use (&$factoryRan): Either {
+      $kept = $rightThing->elseCreateRight(function() use (&$factoryRan): Either {
          $factoryRan = true;
          return Either::left('unreachable');
       });
       $this->assertFalse($factoryRan, 'elseCreateRight must not build an alternative for a Right');
+      $this->assertSame($rightThing, $kept, 'a Right comes back as it was');
    }
 
    public function testMatching(): void {
@@ -441,7 +444,7 @@ final class EitherTest extends TestCase
          'Method Optional\Either::filterLeftIf() is deprecated since 4.0, pass the callable to filterLeft() instead'
       );
 
-      Either::left(1)->filterLeftIf(fn(int $n) => $n > 0, 'no');
+      $_ = Either::left(1)->filterLeftIf(fn(int $n) => $n > 0, 'no');
    }
 
    /**
@@ -453,7 +456,7 @@ final class EitherTest extends TestCase
          'Method Optional\Either::filterRightIf() is deprecated since 4.0, pass the callable to filterRight() instead'
       );
 
-      Either::right('e')->filterRightIf(is_string(...), 0);
+      $_ = Either::right('e')->filterRightIf(is_string(...), 0);
    }
 
    public function testContains(): void {
@@ -757,7 +760,7 @@ final class EitherTest extends TestCase
 
    public function testMapLeftSafelyLetsAnyOtherClassThrough(): void {
       $this->expectException(\LogicException::class);
-      Either::left(1)->mapLeftSafely(function(int $_x): int { throw new \LogicException('a bug'); }, \OutOfBoundsException::class);
+      $_ = Either::left(1)->mapLeftSafely(function(int $_x): int { throw new \LogicException('a bug'); }, \OutOfBoundsException::class);
    }
 
    public function testMapRightSafelyCatchesTheNamedClass(): void {
@@ -767,7 +770,7 @@ final class EitherTest extends TestCase
 
    public function testMapRightSafelyLetsAnyOtherClassThrough(): void {
       $this->expectException(\LogicException::class);
-      Either::right('e')->mapRightSafely(function(string $_e): string { throw new \LogicException('a bug'); }, \OutOfBoundsException::class);
+      $_ = Either::right('e')->mapRightSafely(function(string $_e): string { throw new \LogicException('a bug'); }, \OutOfBoundsException::class);
    }
 
    /**
@@ -858,12 +861,14 @@ final class EitherTest extends TestCase
       $this->assertSame(0, Either::right('e')->filterRight($longEnough, 0)->leftOr(-1));
 
       $ranOnRight = false;
-      Either::right('e')->filterLeft(function() use (&$ranOnRight): bool { $ranOnRight = true; return true; }, 'x');
+      $untouchedRight = Either::right('e')->filterLeft(function() use (&$ranOnRight): bool { $ranOnRight = true; return true; }, 'x');
       $this->assertFalse($ranOnRight, 'filterLeft must not run its callable on a Right');
+      $this->assertSame('e', $untouchedRight->rightOr('x'));
 
       $ranOnLeft = false;
-      Either::left(1)->filterRight(function() use (&$ranOnLeft): bool { $ranOnLeft = true; return true; }, 'x');
+      $untouchedLeft = Either::left(1)->filterRight(function() use (&$ranOnLeft): bool { $ranOnLeft = true; return true; }, 'x');
       $this->assertFalse($ranOnLeft, 'filterRight must not run its callable on a Left');
+      $this->assertSame(1, $untouchedLeft->leftOr(-1));
    }
 
    public function testFlatMapRight(): void {

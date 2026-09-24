@@ -16,7 +16,14 @@ isn't one.
 
 Both are immutable, and PHP enforces it: they are `readonly` classes. Nothing
 you call can change a box you already hold, so a method either hands you a new
-one or hands back the one you gave it.
+one or hands back the one you gave it. On PHP 8.5, dropping that result warns,
+since the call did nothing:
+
+```text
+Warning: The return value of method Optional\Option::map() should either be used
+or intentionally ignored by casting it as (void), a box never changes after it
+is built, so this call only made a new one
+```
 
 Every example in this file runs as part of the test suite, so if one of them is
 wrong the build goes red.
@@ -222,8 +229,8 @@ there is a value to test.
 $calls = 0;
 $check = function() use (&$calls) { $calls++; return true; };
 
-Option::none()->filter($check()); // $check ran
-Option::none()->filter($check);   // $check did not
+$eager = Option::none()->filter($check()); // $check ran, though the box is empty
+$lazy = Option::none()->filter($check);    // $check did not
 
 echo $calls . "\n"; // 1
 ```

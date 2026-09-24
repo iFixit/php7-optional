@@ -173,21 +173,21 @@ final class OptionTest extends TestCase {
       $this->assertSame($someThing->valueOr(-1), 1);
       $this->assertSame($someClass->valueOr("-1"), $someObject);
 
-      /** @psalm-suppress UnusedMethodCall so we can show that psalm even knows this is impossible */
-      $someThing->elseCreate(
+      $kept = $someThing->elseCreate(
          /** @return never */
          function() {
             $this->fail('Callback should not have been run!');
          }
       );
+      $this->assertSame($someThing, $kept, 'elseCreate hands back the Some it was called on');
 
-      /** @psalm-suppress UnusedMethodCall so we can show that psalm even knows this is impossible */
-      $someClass->elseCreate(
+      $kept = $someClass->elseCreate(
          /** @return never */
          function() {
             $this->fail('Callback should not have been run!');
          }
       );
+      $this->assertSame($someClass, $kept, 'elseCreate hands back the Some it was called on');
    }
 
    public function testMatching(): void {
@@ -465,8 +465,9 @@ final class OptionTest extends TestCase {
       $this->assertFalse(Option::some(5)->filter(function(int $n): bool { return $n > 9; })->hasValue());
 
       $ran = false;
-      Option::none()->filter(function() use (&$ran): bool { $ran = true; return true; });
+      $filtered = Option::none()->filter(function() use (&$ran): bool { $ran = true; return true; });
       $this->assertFalse($ran, 'the callable must not run on a None');
+      $this->assertFalse($filtered->hasValue());
 
    }
 
@@ -501,7 +502,7 @@ final class OptionTest extends TestCase {
          'Method Optional\Option::filterIf() is deprecated since 4.0, pass the callable to filter() instead'
       );
 
-      Option::some(1)->filterIf(fn(int $n) => $n > 0);
+      $_ = Option::some(1)->filterIf(fn(int $n) => $n > 0);
    }
 
    public function testFirst(): void {
@@ -622,7 +623,7 @@ final class OptionTest extends TestCase {
    public function testMapSafelyLetsErrorsThrough(): void {
       $this->expectException(\TypeError::class);
 
-      Option::some(1)->mapSafely(function(int $_x): int { throw new \TypeError("not an exception"); });
+      $_ = Option::some(1)->mapSafely(function(int $_x): int { throw new \TypeError("not an exception"); });
    }
 
    public function testFromCallableLetsErrorsThrough(): void {
@@ -655,7 +656,7 @@ final class OptionTest extends TestCase {
 
    public function testMapSafelyLetsAnyOtherClassThrough(): void {
       $this->expectException(\LogicException::class);
-      Option::some(1)->mapSafely(function(int $_x): int { throw new \LogicException('a bug'); }, \OutOfBoundsException::class);
+      $_ = Option::some(1)->mapSafely(function(int $_x): int { throw new \LogicException('a bug'); }, \OutOfBoundsException::class);
    }
 
 }

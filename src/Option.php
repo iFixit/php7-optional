@@ -21,6 +21,13 @@ use Throwable;
  * @template T
  */
 final readonly class Option {
+   /**
+    * Finishes PHP 8.5's warning when a call below has its result dropped:
+    * "The return value of method ... should either be used or intentionally
+    * ignored by casting it as (void), " followed by this.
+    */
+   private const DISCARDED = 'a box never changes after it is built, so this call only made a new one';
+
    private bool $hasValue;
 
    /** @psalm-var T */
@@ -256,6 +263,7 @@ final readonly class Option {
     *
     * @psalm-return self<T|TT>
     */
+   #[\NoDiscard(self::DISCARDED)]
    public function or($alternative): self {
       return $this->hasValue
          ? $this
@@ -282,6 +290,7 @@ final readonly class Option {
     *
     * @psalm-return self<T|TT>
     */
+   #[\NoDiscard(self::DISCARDED)]
    public function orCreate(callable $alternativeFactory): self {
       return $this->hasValue
          ? $this
@@ -306,6 +315,7 @@ final readonly class Option {
     * @psalm-param Option<TT> $alternativeOption
     * @psalm-return Option<T|TT>
     **/
+   #[\NoDiscard(self::DISCARDED)]
    public function else(self $alternativeOption): self {
       return $this->hasValue
          ? $this
@@ -332,6 +342,7 @@ final readonly class Option {
     * @psalm-param callable():Option<TT> $alternativeOptionFactory
     * @psalm-return Option<T|TT>
     **/
+   #[\NoDiscard(self::DISCARDED)]
    public function elseCreate(callable $alternativeOptionFactory): self {
       return $this->hasValue
          ? $this
@@ -444,6 +455,7 @@ final readonly class Option {
     * @psalm-param callable(T):U $mapFunc
     * @psalm-return Option<U>
     **/
+   #[\NoDiscard(self::DISCARDED)]
    public function map(callable $mapFunc): self {
       return $this->hasValue
          ? self::some($mapFunc($this->value))
@@ -486,6 +498,7 @@ final readonly class Option {
     *
     * @psalm-return self<U>
     */
+   #[\NoDiscard(self::DISCARDED)]
    public function mapSafely(callable $mapFunc, string $catch = Exception::class): self {
       try {
          return $this->map($mapFunc);
@@ -529,6 +542,7 @@ final readonly class Option {
     * @psalm-param callable(T):Option<U> $mapFunc
     * @psalm-return Option<U>
     **/
+   #[\NoDiscard(self::DISCARDED)]
    public function flatMap(callable $mapFunc): self {
       return $this->hasValue
          ? $mapFunc($this->value)
@@ -566,6 +580,7 @@ final readonly class Option {
     * @psalm-param callable(T):Option<U> $mapFunc
     * @psalm-return Option<U>
     **/
+   #[\NoDiscard(self::DISCARDED)]
    public function andThen(callable $mapFunc): self {
       return $this->flatMap($mapFunc);
    }
@@ -596,8 +611,8 @@ final readonly class Option {
     * $calls = 0;
     * $check = function() use (&$calls) { $calls++; return true; };
     *
-    * Option::none()->filter($check()); // $check ran: PHP evaluated the argument
-    * Option::none()->filter($check);   // $check did not run
+    * $eager = Option::none()->filter($check()); // $check ran: PHP evaluated the argument
+    * $lazy = Option::none()->filter($check);    // $check did not run
     *
     * echo $calls, "\n"; // 1
     * ```
@@ -605,6 +620,7 @@ final readonly class Option {
     * @psalm-param bool|callable(T):bool $condition
     * @psalm-return self<T>
     */
+   #[\NoDiscard(self::DISCARDED)]
    public function filter(bool|callable $condition): self {
       if (!$this->hasValue) {
          return $this;
@@ -632,6 +648,7 @@ final readonly class Option {
     * @psalm-return self<T>
     */
    #[\Deprecated('pass the callable to filter() instead', since: '4.0')]
+   #[\NoDiscard(self::DISCARDED)]
    public function filterIf(callable $filterFunc): self {
       return $this->hasValue && !$filterFunc($this->value)
          ? self::none()
@@ -650,6 +667,7 @@ final readonly class Option {
     * @psalm-if-this-is Option<TNotNull|null>
     * @psalm-return self<TNotNull>
     */
+   #[\NoDiscard(self::DISCARDED)]
    public function notNull(): self {
       /** @var self<TNotNull> a null value never survives the check */
       return $this->hasValue && is_null($this->value)
@@ -681,6 +699,7 @@ final readonly class Option {
     * @psalm-if-this-is Option<TNotFalsy|null|false>
     * @psalm-return self<TNotFalsy>
     */
+   #[\NoDiscard(self::DISCARDED)]
    public function notFalsy(): self {
       /** @var self<TNotFalsy> a falsy value never survives the check */
       return $this->hasValue && !((bool) $this->value)
@@ -710,6 +729,7 @@ final readonly class Option {
     * @psalm-if-this-is Option<TNotFalse|false>
     * @psalm-return self<TNotFalse>
     */
+   #[\NoDiscard(self::DISCARDED)]
    public function notFalse(): self {
       /** @var self<TNotFalse> a false value never survives the check */
       return $this->hasValue && $this->value === false
