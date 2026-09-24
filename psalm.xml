@@ -37,17 +37,16 @@
         The suppressions below are the ways an example is legitimately unlike
         production code, and nothing more. An example assigns $myVar to show a
         result and never reads it, echoes to show output, casts a box to string,
-        and leaves closure types off for brevity. The Mixed* entries are an
-        untyped example array that psalm cannot narrow past mixed.
+        and leaves closure types off for brevity.
 
-        ReservedWord, NoValue, InvalidOperand and InvalidArrayOffset have one
-        shape: an example that shows nothing happens on the empty side calls a
-        method on a box it just built empty, and psalm, correctly, types that
-        callback's parameter as never. DocblockTypeContradiction is the same
-        shape once more: an annotation good enough to prove the outcome makes
-        the example demonstrating it look redundant.
+        ReservedWord, NoValue and InvalidOperand have one shape: an example
+        that shows nothing happens on the empty side calls a method on a box it
+        just built empty, and psalm, correctly, types that callback's parameter
+        as never. DocblockTypeContradiction is the same shape once more: an
+        annotation good enough to prove the outcome makes the example
+        demonstrating it look redundant.
 
-        Those four once hid a real defect. When map() returned
+        The first two once hid a real defect. When map() returned
         Option<U>|Option<never>, a second typed map() in a user's own code failed
         with ReservedWord, and these suppressions kept the examples quiet about
         it. tests/TypeInference/Expressions.php is where chained calls are
@@ -76,12 +75,6 @@
         <ReservedWord>
             <errorLevel type="suppress"><file name="tests/generated/DocblockExamples.php"/></errorLevel>
         </ReservedWord>
-        <MixedArrayAccess>
-            <errorLevel type="suppress"><file name="tests/generated/DocblockExamples.php"/></errorLevel>
-        </MixedArrayAccess>
-        <MixedAssignment>
-            <errorLevel type="suppress"><file name="tests/generated/DocblockExamples.php"/></errorLevel>
-        </MixedAssignment>
         <InvalidOperand>
             <errorLevel type="suppress"><file name="tests/generated/DocblockExamples.php"/></errorLevel>
         </InvalidOperand>
@@ -91,12 +84,6 @@
         <NoValue>
             <errorLevel type="suppress"><file name="tests/generated/DocblockExamples.php"/></errorLevel>
         </NoValue>
-        <InvalidArrayOffset>
-            <errorLevel type="suppress"><file name="tests/generated/DocblockExamples.php"/></errorLevel>
-        </InvalidArrayOffset>
-        <MixedArgument>
-            <errorLevel type="suppress"><file name="tests/generated/DocblockExamples.php"/></errorLevel>
-        </MixedArgument>
         <DocblockTypeContradiction>
             <errorLevel type="suppress"><file name="tests/generated/DocblockExamples.php"/></errorLevel>
         </DocblockTypeContradiction>

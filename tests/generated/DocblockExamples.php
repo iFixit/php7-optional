@@ -1060,81 +1060,110 @@ function example98_fromArray(): void {
  * README.md #1, unknown()
  */
 function example99_unknown(): void {
+   /** @var array<string, array{name: string}> $people */
    $people = ['a1' => ['name' => 'Ada']];
 
-   $person = $people['nope'] ?? null;
-   $name = $person === null ? null : ($person['name'] ?? null);
-
-   echo $name === null ? "no name\n" : strtoupper($name) . "\n";
+   echo ($people['nope']['name'] ?? 'no name') . "\n"; // "no name"
 }
 
 /**
  * README.md #2, unknown()
  */
 function example100_unknown(): void {
-   $people = ['a1' => ['name' => 'Ada']];
+   $config = Either::fromCallable(
+      fn() => json_decode('{"debug": tru}', flags: JSON_THROW_ON_ERROR),
+      JsonException::class
+   );
 
-   $name = Option::fromArray($people, 'nope')
-      ->andThen(function(array $person) { return Option::fromArray($person, 'name'); })
-      ->map('strtoupper')
-      ->valueOr('no name');
-
-   echo $name . "\n"; // "no name"
+   echo $config
+      ->mapRight(fn(JsonException $e) => "bad config: {$e->getMessage()}")
+      ->rightOr('config ok') . "\n"; // "bad config: Syntax error"
 }
 
 /**
  * README.md #3, unknown()
  */
 function example101_unknown(): void {
-   // A falsy return, the shape a row fetch or a lookup gives you
-   $none = Option::someNotFalsy(false); // None
-   $some = Option::someNotFalsy('Ada'); // Some('Ada')
+   $lookups = 0;
+   /** @var Closure(): ?string $findAvatar a user with no avatar */
+   $findAvatar = function() use (&$lookups): ?string { $lookups++; return null; };
 
-   // A throwing call
-   $ok = Option::fromCallable(function() { return 7; });                      // Some(7)
-   $failed = Option::fromCallable(function() { throw new Exception("no"); }); // None
+   $avatar = null;
+   for ($request = 0; $request < 3; $request++) {
+      $avatar ??= $findAvatar();
+   }
 
-   echo $none->valueOr('-') . " " . $some->valueOr('-') . " "
-      . $ok->valueOr(0) . " " . $failed->valueOr(0) . "\n"; // "- Ada 7 0"
+   echo $lookups . "\n"; // 3
 }
 
 /**
  * README.md #4, unknown()
  */
 function example102_unknown(): void {
-   echo (string) Option::someNotFalsy(array_search('a', ['a', 'b'])) . "\n"; // "None", the match is lost
-   echo (string) Option::someNotFalse(array_search('a', ['a', 'b'])) . "\n"; // "Some(0)"
+   $lookups = 0;
+   $findAvatar = function() use (&$lookups): Option { $lookups++; return Option::none(); };
+
+   $avatar = null;
+   for ($request = 0; $request < 3; $request++) {
+      $avatar ??= $findAvatar();
+   }
+
+   echo $lookups . "\n"; // 1
 }
 
 /**
  * README.md #5, unknown()
  */
 function example103_unknown(): void {
-   $right = Either::notFalsyLeft(false, 'row not found');
-   echo $right->rightOr('') . "\n"; // "row not found"
+   // A falsy return, the shape a row fetch gives you
+   $none = Option::someNotFalsy(false); // None
+   $some = Option::someNotFalsy('Ada'); // Some('Ada')
 
-   $kept = Either::fromCallable(function() { throw new Exception("the api said no"); });
-   echo $kept->mapRight(function(Throwable $e) { return $e->getMessage(); })->rightOr('') . "\n";
-   // "the api said no"
+   // A throwing call
+   $ok = Option::fromCallable(fn() => 7);                             // Some(7)
+   $failed = Option::fromCallable(fn() => throw new Exception("no")); // None
+
+   echo $none->valueOr('-') . " " . $some->valueOr('-') . " "
+      . $ok->valueOr(0) . " " . $failed->valueOr(0) . "\n"; // "- Ada 7 0"
 }
 
 /**
  * README.md #6, unknown()
  */
 function example104_unknown(): void {
-   $total = Option::some(['price' => 5, 'qty' => 3])
-      ->filter(function(array $line) { return $line['qty'] > 0; })
-      ->tap(function(array $line) { error_log("pricing {$line['qty']} items"); })
-      ->map(function(array $line) { return $line['price'] * $line['qty']; })
-      ->valueOr(0);
-
-   echo $total . "\n"; // 15
+   echo (string) Option::someNotFalsy(array_search('a', ['a', 'b'])) . "\n"; // "None", the match is lost
+   echo (string) Option::someNotFalse(array_search('a', ['a', 'b'])) . "\n"; // "Some(0)"
 }
 
 /**
  * README.md #7, unknown()
  */
 function example105_unknown(): void {
+   $right = Either::notFalsyLeft(false, 'row not found');
+   echo $right->rightOr('') . "\n"; // "row not found"
+
+   $kept = Either::fromCallable(fn() => throw new Exception("the api said no"));
+   echo $kept->mapRight(fn(Throwable $e) => $e->getMessage())->rightOr('') . "\n";
+   // "the api said no"
+}
+
+/**
+ * README.md #8, unknown()
+ */
+function example106_unknown(): void {
+   $total = Option::some(['price' => 5, 'qty' => 3])
+      ->filter(fn(array $line) => $line['qty'] > 0)
+      ->tap(fn(array $line) => error_log("pricing {$line['qty']} items"))
+      ->map(fn(array $line) => $line['price'] * $line['qty'])
+      ->valueOr(0);
+
+   echo $total . "\n"; // 15
+}
+
+/**
+ * README.md #9, unknown()
+ */
+function example107_unknown(): void {
    $ran = false;
 
    $total = Option::none()
@@ -1146,37 +1175,35 @@ function example105_unknown(): void {
 }
 
 /**
- * README.md #8, unknown()
+ * README.md #10, unknown()
  */
-function example106_unknown(): void {
+function example108_unknown(): void {
    $some = Option::some(41);
 
    // 1. Supply a fallback
    echo $some->valueOr(0) . "\n"; // 41
 
-   // 2. Handle both cases
+   // 2. Handle both cases, named so the call reads like the two cases
    echo $some->match(
-      function(int $n) { return "got {$n}"; },
-      function() { return "got nothing"; }
+      some: fn(int $n) => "got {$n}",
+      none: fn() => "got nothing",
    ) . "\n"; // "got 41"
 
-   // 3. Throw, saying what was missing
-   echo $some->valueOrThrow(function() { return new RuntimeException("no id"); }) . "\n"; // 41
+   // 3. Throw if it is missing, saying what was missing
+   echo $some->valueOrThrow(fn() => new RuntimeException("no id")) . "\n"; // 41
 
    // 4. Ask
    echo $some->hasValue() ? "yes\n" : "no\n"; // "yes"
 }
 
 /**
- * README.md #9, unknown()
+ * README.md #11, unknown()
  */
-function example107_unknown(): void {
-   $failed = Either::fromCallable(function(): int { throw new Exception("the api said no"); });
+function example109_unknown(): void {
+   $failed = Either::fromCallable(fn(): int => throw new Exception("the api said no"));
 
    try {
-      $failed->getLeftOrThrow(function(Throwable $cause) {
-         return new RuntimeException("could not load the build", 0, $cause);
-      });
+      $failed->getLeftOrThrow(fn(Throwable $cause) => new RuntimeException("could not load the build", 0, $cause));
    } catch (RuntimeException $e) {
       echo $e->getMessage() . ": " . $e->getPrevious()?->getMessage() . "\n";
       // "could not load the build: the api said no"
@@ -1184,25 +1211,25 @@ function example107_unknown(): void {
 }
 
 /**
- * README.md #10, unknown()
+ * README.md #12, unknown()
  */
-function example108_unknown(): void {
-   $result = Either::fromCallable(function(): int { throw new Exception("the api said no"); });
+function example110_unknown(): void {
+   $result = Either::fromCallable(fn(): int => throw new Exception("the api said no"));
 
    echo $result->isFailure() ? "failed\n" : "ok\n"; // "failed"
 
    $message = $result
-      ->mapFailure(function(Throwable $e) { return $e->getMessage(); })
-      ->mapSuccess(function(int $n) { return "got {$n}"; })
+      ->mapFailure(fn(Throwable $e) => $e->getMessage())
+      ->mapSuccess(fn(int $n) => "got {$n}")
       ->successOr('no value');
 
    echo $message . "\n"; // "no value"
 }
 
 /**
- * README.md #11, unknown()
+ * README.md #13, unknown()
  */
-function example109_unknown(): void {
+function example111_unknown(): void {
    $value = Either::left(10)->toOptionFromLeft();          // Some(10), drops the error
    $error = Either::right('bad id')->toOptionFromRight();  // Some('bad id')
 
@@ -1210,9 +1237,9 @@ function example109_unknown(): void {
 }
 
 /**
- * README.md #12, unknown()
+ * README.md #14, unknown()
  */
-function example110_unknown(): void {
+function example112_unknown(): void {
    $calls = 0;
    $check = function() use (&$calls) { $calls++; return true; };
 
@@ -1223,17 +1250,17 @@ function example110_unknown(): void {
 }
 
 /**
- * README.md #13, unknown()
+ * README.md #15, unknown()
  */
-function example111_unknown(): void {
+function example113_unknown(): void {
    echo Option::some(null)->hasValue() ? "some\n" : "none\n";            // "some"
    echo Option::some(null)->notNull()->hasValue() ? "some\n" : "none\n"; // "none"
 }
 
 /**
- * README.md #14, unknown()
+ * README.md #16, unknown()
  */
-function example112_unknown(): void {
+function example114_unknown(): void {
    $user = Either::fromCallable(
       fn() => throw new OutOfBoundsException("no user 5"),
       OutOfBoundsException::class

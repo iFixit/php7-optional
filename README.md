@@ -36,30 +36,63 @@ composer require ifixit/php7-optional
 
 Requires PHP 8.4. For PHP 7, stay on the 3.x line.
 
-## The shortest useful example
+## Why not just null?
 
-Without the box, the null check leaks into every caller:
+PHP 8's `??` and `?->` handle most missing values in one line, and when they
+do, use them:
 
 ```php
+/** @var array<string, array{name: string}> $people */
 $people = ['a1' => ['name' => 'Ada']];
 
-$person = $people['nope'] ?? null;
-$name = $person === null ? null : ($person['name'] ?? null);
-
-echo $name === null ? "no name\n" : strtoupper($name) . "\n";
+echo ($people['nope']['name'] ?? 'no name') . "\n"; // "no name"
 ```
 
-With it, the caller says what it wants and the empty case takes care of itself:
+The boxes are for the two things `null` cannot say.
+
+**Why it is missing.** `json_decode()` returns `null` for a syntax error, and
+also for the valid document `null`. An `Either` keeps the reason:
 
 ```php
-$people = ['a1' => ['name' => 'Ada']];
+$config = Either::fromCallable(
+   fn() => json_decode('{"debug": tru}', flags: JSON_THROW_ON_ERROR),
+   JsonException::class
+);
 
-$name = Option::fromArray($people, 'nope')
-   ->andThen(function(array $person) { return Option::fromArray($person, 'name'); })
-   ->map('strtoupper')
-   ->valueOr('no name');
+echo $config
+   ->mapRight(fn(JsonException $e) => "bad config: {$e->getMessage()}")
+   ->rightOr('config ok') . "\n"; // "bad config: Syntax error"
+```
 
-echo $name . "\n"; // "no name"
+**That you looked and found nothing.** When a memo or a cache uses `null` for
+"not looked up yet", a lookup that finds nothing returns `null` too, so it
+runs again on every call:
+
+```php
+$lookups = 0;
+/** @var Closure(): ?string $findAvatar a user with no avatar */
+$findAvatar = function() use (&$lookups): ?string { $lookups++; return null; };
+
+$avatar = null;
+for ($request = 0; $request < 3; $request++) {
+   $avatar ??= $findAvatar();
+}
+
+echo $lookups . "\n"; // 3
+```
+
+`Option::none()` is not `null`, so the same memo looks once:
+
+```php
+$lookups = 0;
+$findAvatar = function() use (&$lookups): Option { $lookups++; return Option::none(); };
+
+$avatar = null;
+for ($request = 0; $request < 3; $request++) {
+   $avatar ??= $findAvatar();
+}
+
+echo $lookups . "\n"; // 1
 ```
 
 ## Starting a chain
@@ -68,13 +101,13 @@ PHP says something is missing in two ways: it returns something falsy, or it
 throws. There is a factory for each.
 
 ```php
-// A falsy return, the shape a row fetch or a lookup gives you
+// A falsy return, the shape a row fetch gives you
 $none = Option::someNotFalsy(false); // None
 $some = Option::someNotFalsy('Ada'); // Some('Ada')
 
 // A throwing call
-$ok = Option::fromCallable(function() { return 7; });                      // Some(7)
-$failed = Option::fromCallable(function() { throw new Exception("no"); }); // None
+$ok = Option::fromCallable(fn() => 7);                             // Some(7)
+$failed = Option::fromCallable(fn() => throw new Exception("no")); // None
 
 echo $none->valueOr('-') . " " . $some->valueOr('-') . " "
    . $ok->valueOr(0) . " " . $failed->valueOr(0) . "\n"; // "- Ada 7 0"
@@ -95,14 +128,15 @@ echo (string) Option::someNotFalse(array_search('a', ['a', 'b'])) . "\n"; // "So
 $right = Either::notFalsyLeft(false, 'row not found');
 echo $right->rightOr('') . "\n"; // "row not found"
 
-$kept = Either::fromCallable(function() { throw new Exception("the api said no"); });
-echo $kept->mapRight(function(Throwable $e) { return $e->getMessage(); })->rightOr('') . "\n";
+$kept = Either::fromCallable(fn() => throw new Exception("the api said no"));
+echo $kept->mapRight(fn(Throwable $e) => $e->getMessage())->rightOr('') . "\n";
 // "the api said no"
 ```
 
 There is also `Option::some`, `Option::none`, `Option::someNotNull`,
-`Option::someWhen`, `Option::fromArray`, and the matching `Either::left`,
-`Either::right`, `Either::notNullLeft`, `Either::leftWhen`, `Either::fromArray`.
+`Option::someWhen`, `Option::fromArray`, `Option::first`, and the matching
+`Either::left`, `Either::right`, `Either::notNullLeft`, `Either::notFalseLeft`,
+`Either::leftWhen` and `Either::fromArray`.
 
 ## The middle of a chain
 
@@ -112,9 +146,9 @@ that hands back a box of its own. `filter` drops a value that fails a test.
 
 ```php
 $total = Option::some(['price' => 5, 'qty' => 3])
-   ->filter(function(array $line) { return $line['qty'] > 0; })
-   ->tap(function(array $line) { error_log("pricing {$line['qty']} items"); })
-   ->map(function(array $line) { return $line['price'] * $line['qty']; })
+   ->filter(fn(array $line) => $line['qty'] > 0)
+   ->tap(fn(array $line) => error_log("pricing {$line['qty']} items"))
+   ->map(fn(array $line) => $line['price'] * $line['qty'])
    ->valueOr(0);
 
 echo $total . "\n"; // 15
@@ -143,14 +177,14 @@ $some = Option::some(41);
 // 1. Supply a fallback
 echo $some->valueOr(0) . "\n"; // 41
 
-// 2. Handle both cases
+// 2. Handle both cases, named so the call reads like the two cases
 echo $some->match(
-   function(int $n) { return "got {$n}"; },
-   function() { return "got nothing"; }
+   some: fn(int $n) => "got {$n}",
+   none: fn() => "got nothing",
 ) . "\n"; // "got 41"
 
-// 3. Throw, saying what was missing
-echo $some->valueOrThrow(function() { return new RuntimeException("no id"); }) . "\n"; // 41
+// 3. Throw if it is missing, saying what was missing
+echo $some->valueOrThrow(fn() => new RuntimeException("no id")) . "\n"; // 41
 
 // 4. Ask
 echo $some->hasValue() ? "yes\n" : "no\n"; // "yes"
@@ -159,17 +193,15 @@ echo $some->hasValue() ? "yes\n" : "no\n"; // "yes"
 `valueOrThrow()` with no argument throws `MissingValueException`. With a
 factory it throws what the factory builds, and the factory runs only on the
 empty side, so nothing is constructed on the happy path. There is no bare
-`value()`: a name that short hides the throw. On `Either` these are `getLeftOrThrow` and
-`getRightOrThrow`, and the factory is handed the other side's value, which is
-how you keep the original failure as the cause:
+`value()`: a name that short hides the throw. On `Either` these are
+`getLeftOrThrow` and `getRightOrThrow`, and the factory is handed the other
+side's value, which is how you keep the original failure as the cause:
 
 ```php
-$failed = Either::fromCallable(function(): int { throw new Exception("the api said no"); });
+$failed = Either::fromCallable(fn(): int => throw new Exception("the api said no"));
 
 try {
-   $failed->getLeftOrThrow(function(Throwable $cause) {
-      return new RuntimeException("could not load the build", 0, $cause);
-   });
+   $failed->getLeftOrThrow(fn(Throwable $cause) => new RuntimeException("could not load the build", 0, $cause));
 } catch (RuntimeException $e) {
    echo $e->getMessage() . ": " . $e->getPrevious()?->getMessage() . "\n";
    // "could not load the build: the api said no"
@@ -187,13 +219,13 @@ When you are modelling success and failure, say so. These are the same box with
 clearer names, and they add no behavior:
 
 ```php
-$result = Either::fromCallable(function(): int { throw new Exception("the api said no"); });
+$result = Either::fromCallable(fn(): int => throw new Exception("the api said no"));
 
 echo $result->isFailure() ? "failed\n" : "ok\n"; // "failed"
 
 $message = $result
-   ->mapFailure(function(Throwable $e) { return $e->getMessage(); })
-   ->mapSuccess(function(int $n) { return "got {$n}"; })
+   ->mapFailure(fn(Throwable $e) => $e->getMessage())
+   ->mapSuccess(fn(int $n) => "got {$n}")
    ->successOr('no value');
 
 echo $message . "\n"; // "no value"
@@ -266,6 +298,42 @@ $user = Either::fromCallable(
 echo $user->rightOr(null)?->getMessage() . "\n"; // "no user 5"
 ```
 
+## Types
+
+psalm and PHPStan both read the annotations, at their strictest levels. Every
+method that returns a box returns one type, so a chain keeps its type through
+each call, and the entrances drop what they exist to drop:
+
+* `Option::someNotNull($name)` on a `?string` is an `Option<string>`
+* `Option::someNotFalsy($row)` on a row fetch's `array{id: int}|false` is an
+  `Option<array{id: int}>`, shape and all
+* `Either::fromCallable($fn, JsonException::class)` is an
+  `Either<T, JsonException>`
+* `$option->map($f)->map($g)` is an `Option` of whatever `$g` returns
+
+`tests/TypeInference` records what psalm infers for expressions like these,
+including twenty two-call chains, and fails when one changes. PHPStan was
+checked against the same expressions at level max. Its one quirk: it widens a
+`false` passed to `Option::some()` into `bool`, so drop `false` with the
+factories (`someNotFalse()`, `someNotFalsy()`) rather than
+`some($value)->notFalse()`.
+
+## On PHP 8.5
+
+Two things work with no change to your code. A dropped result warns, as shown
+at the top. And the pipe operator can feed a box, because a static factory is a
+one-argument callable:
+
+```text
+echo $id
+   |> $findName(...)
+   |> Option::someNotNull(...)
+   |> (fn(Option $name) => $name->map(strtoupper(...))->valueOr('nobody'));
+```
+
+That one is PHP 8.5 syntax, so it is the only example here the test suite
+does not run: it also runs on 8.4, which cannot parse `|>`.
+
 ## What it costs
 
 A library that asks you to allocate an object where you used to write `??`
@@ -274,13 +342,15 @@ it, and on PHP 8.4 with no opcache it reports:
 
 | | plain PHP | boxed | overhead |
 |---|---|---|---|
-| read a key that is present | 23 ns | 123 ns | 5.4x |
-| read a key that is absent | 20 ns | 108 ns | 5.5x |
-| two step chain | 63 ns | 328 ns | 5.2x |
+| read a key that is present | 23 ns | 130 ns | 5.7x |
+| read a key that is absent | 19 ns | 116 ns | 6.0x |
+| two step chain | 63 ns | 350 ns | 5.6x |
 
 So the box costs roughly 100 ns per call. Read the ratio and the absolute
-number together: 5.4x sounds alarming and 100 ns usually is not, because the
-work it wraps is almost always larger by orders of magnitude.
+number together: 5.7x sounds alarming and 100 ns usually is not. On the same
+machine, decoding a small JSON object takes about 590 ns and reading a 1 KB
+file about 5.5 µs. A box adds about a sixth to the first and under 2% to the
+second, and a database query or an HTTP call is slower again.
 
 Where it does matter is a tight loop over a large array. Boxing a million
 elements adds about a tenth of a second. Reach for plain PHP there and keep
@@ -303,6 +373,9 @@ with the PHP version and the opcache.
 * Boxes you cached with `serialize()` under 3.x read back unchanged, and 4.0
   writes the same bytes, so a rollback can read them too. A test holds
   payloads written by 3.0 to keep it that way.
+* `filterIf`, `filterLeftIf` and `filterRightIf` are deprecated. They still
+  work and print a deprecation naming the replacement: pass the callable to
+  `filter`, `filterLeft` or `filterRight`.
 * `Option` and `Either` are `final`, and so is `MissingValueException`.
   Extending the two boxes never worked: the static factories build with
   `new self`, so a subclass came back as a plain `Option` or `Either` on the
