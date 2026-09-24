@@ -63,7 +63,7 @@ final readonly class Either {
     *
     * @psalm-mutation-free
     **/
-    public function isRight(): bool {
+   public function isRight(): bool {
       return !$this->isLeft;
    }
 
@@ -108,7 +108,7 @@ final readonly class Either {
     * @psalm-param TTRight $alternative
     * @psalm-return (TRight is never ? TTRight : TRight)
     **/
-    public function rightOr($alternative) {
+   public function rightOr($alternative) {
       return !$this->isLeft
          ? $this->rightValue
          : $alternative;
@@ -200,10 +200,10 @@ final readonly class Either {
     *
     * ```php
     * $logged = Either::left(5)
-    *    ->tapLeft(function($x) { error_log("about to double {$x}"); })
-    *    ->mapLeft(function($x) { return $x * 2; }); // Left(10), and the log line ran
+    *    ->tapLeft(fn($x) => error_log("about to double {$x}"))
+    *    ->mapLeft(fn($x) => $x * 2); // Left(10), and the log line ran
     *
-    * Either::right("no")->tapLeft(function($x) { error_log("never runs"); }); // Right("no")
+    * Either::right("no")->tapLeft(fn($x) => error_log("never runs")); // Right("no")
     * ```
     *
     * _Notes:_
@@ -229,9 +229,9 @@ final readonly class Either {
     *
     * ```php
     * $either = Either::right("the api said no")
-    *    ->tapRight(function($error) { error_log("request failed: {$error}"); }); // Right, and the log line ran
+    *    ->tapRight(fn($error) => error_log("request failed: {$error}")); // Right, and the log line ran
     *
-    * Either::left(5)->tapRight(function($error) { error_log("never runs"); }); // Left(5)
+    * Either::left(5)->tapRight(fn($error) => error_log("never runs")); // Left(5)
     * ```
     *
     * _Notes:_
@@ -251,7 +251,7 @@ final readonly class Either {
    }
 
    /**
-    * Returns the either's value or calls `$valueFactoryFunc` and returns the value of that function
+    * Returns the left value, or what `$alternativeFactory` builds from the right value
     *
     * ```php
     * $leftThing = Either::left(1);
@@ -259,15 +259,15 @@ final readonly class Either {
     *
     * $right = Either::right("Error Code 123");
     *
-    * $myVar = $leftThing->leftOrCreate(function($rightValue) { return new NewObject(); }); // 1
-    * $myVar = $leftClass->leftOrCreate(function($rightValue) { return new NewObject(); }); // instance of SomeObject
+    * $myVar = $leftThing->leftOrCreate(fn($rightValue) => new NewObject()); // 1
+    * $myVar = $leftClass->leftOrCreate(fn($rightValue) => new NewObject()); // instance of SomeObject
     *
-    * $myVar = $right->leftOrCreate(function($rightValue) { return new NewObject(); }); // instance of NewObject
+    * $myVar = $right->leftOrCreate(fn($rightValue) => new NewObject()); // instance of NewObject
     * ```
     *
     * _Notes:_
     *
-    *  - `$valueFactoryFunc` must follow this interface `callable(TRight):TLeft`
+    *  - `$alternativeFactory` must follow this interface `callable(TRight):TTLeft`
     *
     * @template TTLeft
     * @psalm-param callable(TRight):TTLeft $alternativeFactory
@@ -280,14 +280,14 @@ final readonly class Either {
    }
 
    /**
-    * Returns the either's value or calls `$valueFactoryFunc` and returns the value of that function
+    * Returns the right value, or what `$alternativeFactory` builds from the left value
     *
     * _Notes:_
     *
-    *  - `$valueFactoryFunc` must follow this interface `callable(TRight):TLeft`
+    *  - `$alternativeFactory` must follow this interface `callable(TLeft):TTRight`
     *
     * ```php
-    * $describe = function($leftValue) { return "no error, got {$leftValue}"; };
+    * $describe = fn($leftValue) => "no error, got {$leftValue}";
     *
     * echo Either::right("e")->rightOrCreate($describe), "\n"; // "e"
     * echo Either::left(1)->rightOrCreate($describe), "\n";    // "no error, got 1"
@@ -304,7 +304,7 @@ final readonly class Either {
    }
 
    /**
-    * Returns a `Either::left($value)` iff the either orginally was `Either::right($rightValue)`
+    * Returns `Either::left($alternative)` iff the either is `Either::right`, otherwise this one
     *
     * ```php
     * $right = Either::right("no value");
@@ -313,7 +313,7 @@ final readonly class Either {
     *
     * _Notes:_
     *
-    *  - Returns `Either<TLeft, TRight>`
+    *  - Returns `Either<TLeft|TTLeft, never>`, always a Left
     *
     * @psalm-mutation-free
     * @template TTLeft
@@ -328,11 +328,11 @@ final readonly class Either {
    }
 
    /**
-    * Returns a `Either::right($value)` iff the either orginally was `Either::left($leftValue)`
+    * Returns `Either::right($alternative)` iff the either is `Either::left`, otherwise this one
     *
     * _Notes:_
     *
-    *  - Returns `Either<TLeft, TRight>`
+    *  - Returns `Either<never, TRight|TTRight>`, always a Right
     *
     * ```php
     * echo (string) Either::left(1)->orRight("e"), "\n";        // Right(e)
@@ -352,19 +352,19 @@ final readonly class Either {
    }
 
    /**
-    * Returns a `Either::left($value)` iff the the either orginally was `Either::right($rightValue)`
+    * Returns `Either::left()` of what `$alternativeFactory` returns iff the either is `Either::right`, otherwise this one
     *
-    * The `$valueFactoryFunc` is called lazily - iff the either orginally was `Either::right($rightValue)`
+    * `$alternativeFactory` is handed the right value, and runs only on a Right
     *
     * ```php
     * $right = Either::right("no value");
-    * $myVar = $right->orCreateLeft(function($rightValue) { return 10; }); // A left instance, with value 10, but lazy
+    * $myVar = $right->orCreateLeft(fn($rightValue) => 10); // A left instance, with value 10, but lazy
     * ```
     *
     * _Notes:_
     *
-    *  - `$valueFactoryFunc` must follow this interface `callable(TRight):TLeft`
-    *  - Returns `Either<TLeft, TRight>`
+    *  - `$alternativeFactory` must follow this interface `callable(TRight):TTLeft`
+    *  - Returns `Either<TLeft|TTLeft, never>`, always a Left
     *
     * @template TTLeft
     * @psalm-param callable(TRight):TTLeft $alternativeFactory
@@ -378,17 +378,17 @@ final readonly class Either {
    }
 
    /**
-    * Returns a `Either::right($value)` iff the the either orginally was `Either::left($leftValue)`
+    * Returns `Either::right()` of what `$alternativeFactory` returns iff the either is `Either::left`, otherwise this one
     *
-    * The `$alternativeFactory` is called lazily - iff the either orginally was `Either::left($leftValue)`
+    * `$alternativeFactory` is handed the left value, and runs only on a Left
     *
     * _Notes:_
     *
-    *  - `$alternativeFactory` must follow this interface `callable(TRight):TLeft`
-    *  - Returns `Either<TLeft, TRight>`
+    *  - `$alternativeFactory` must follow this interface `callable(TLeft):TTRight`
+    *  - Returns `Either<never, TRight|TTRight>`, always a Right
     *
     * ```php
-    * $build = function($leftValue) { return "built from {$leftValue}"; };
+    * $build = fn($leftValue) => "built from {$leftValue}";
     *
     * echo (string) Either::left(1)->orCreateRight($build), "\n";       // Right(built from 1)
     * echo (string) Either::right("keep")->orCreateRight($build), "\n"; // Right(keep)
@@ -406,7 +406,7 @@ final readonly class Either {
    }
 
    /**
-    * iff `Either::right($rightValue)` return `$otherEither`, otherwise return the orginal `$either`
+    * Returns `$alternativeEither` iff this either is `Either::right`, otherwise this one
     *
     * ```php
     * $right = Either::right("Some Error Message");
@@ -416,8 +416,8 @@ final readonly class Either {
     *
     * _Notes:_
     *
-    *  - `$alternativeEither` must be of type `Either<TLeft, TRight>`
-    *  - Returns `Either<TLeft, TRight>`
+    *  - `$alternativeEither` can be any `Either<TLeftOther, TRightOther>`
+    *  - Returns `Either<TLeft|TLeftOther, TRightOther>`
     *
     * @psalm-mutation-free
     * @template TLeftOther
@@ -433,12 +433,12 @@ final readonly class Either {
    }
 
    /**
-    * iff `Either::left($leftValue)` return `$otherEither`, otherwise return the orginal `$either`
+    * Returns `$alternativeEither` iff this either is `Either::left`, otherwise this one
     *
     * _Notes:_
     *
-    *  - `$alternativeEither` must be of type `Either<TLeft, TRight>`
-    *  - Returns `Either<TLeft, TRight>`
+    *  - `$alternativeEither` can be any `Either<TLeftOther, TRightOther>`
+    *  - Returns `Either<TLeftOther, TRight|TRightOther>`
     *
     * ```php
     * echo (string) Either::left(1)->elseRight(Either::right("e")), "\n";       // Right(e)
@@ -459,20 +459,20 @@ final readonly class Either {
    }
 
    /**
-    * iff `Either::right` return the `Either` returned by `$otherEitherFactoryFunc`, otherwise return the orginal `$either`
+    * Returns the either `$alternativeEitherFactory` builds from the right value iff this one is `Either::right`, otherwise this one
     *
-    * `$otherEitherFactoryFunc` is run lazily
+    * `$alternativeEitherFactory` runs only on a Right
     *
     * ```php
     * $right = Either::right("no value");
     *
-    * $myVar = $right->elseCreateLeft(function($rightValue) { return Either::left(10); }); // A left instance, with value 10, but lazy
+    * $myVar = $right->elseCreateLeft(fn($rightValue) => Either::left(10)); // A left instance, with value 10, but lazy
     * ```
     *
     * _Notes:_
     *
-    *  - `$alternativeEither` must be of type `callable(TRight):Either<TLeft, TRight> `
-    *  - Returns `Either<TLeft, TRight>`
+    *  - `$alternativeEitherFactory` must follow this interface `callable(TRight):Either<TLeftOther, TRightOther>`
+    *  - Returns `Either<TLeft|TLeftOther, TRightOther>`
     *
     * @template TLeftOther
     * @template TRightOther
@@ -487,15 +487,15 @@ final readonly class Either {
    }
 
    /**
-    * iff `Either::left` return the `Either` returned by `$otherEitherFactoryFunc`, otherwise return the orginal `$either`
+    * Returns the either `$alternativeEitherFactory` builds from the left value iff this one is `Either::left`, otherwise this one
     *
     * _Notes:_
     *
-    *  - `$alternativeEither` must be of type `callable(TLeft):Either<TLeft, TRight> `
-    *  - Returns `Either<TLeft, TRight>`
+    *  - `$alternativeEitherFactory` must follow this interface `callable(TLeft):Either<TLeftOther, TRightOther>`
+    *  - Returns `Either<TLeftOther, TRight|TRightOther>`
     *
     * ```php
-    * $build = function($leftValue) { return Either::right("built from {$leftValue}"); };
+    * $build = fn($leftValue) => Either::right("built from {$leftValue}");
     *
     * echo (string) Either::left(1)->elseCreateRight($build), "\n";       // Right(built from 1)
     * echo (string) Either::right("keep")->elseCreateRight($build), "\n"; // Right(keep)
@@ -514,33 +514,29 @@ final readonly class Either {
    }
 
    /**
-    * Runs only 1 function:
+    * Runs `$left` with the left value iff the either is `Either::left`, or `$right`
+    * with the right value iff it is `Either::right`, and returns what that one returned
     *
-    *  - `$left` iff the either is `Either::left`
-    *  - `$right` iff the either is `Either::right`
+    * Name the arguments and the call reads like the two cases it handles.
     *
     * ```php
-    * $leftThing = Either::left(1);
-    *
-    * $leftThingSquared = $leftThing->match(
-    *    function($x) { return $x * $x; },               // runs iff $leftThing == Either::left
-    *    function($rightValue) { return $rightValue; }     // runs iff $leftThing == Either::right
+    * $message = Either::left(4)->match(
+    *    left: fn(int $x) => "squared: " . ($x * $x),
+    *    right: fn(string $error) => "failed: {$error}",
     * );
+    * echo $message, "\n"; // "squared: 16"
     *
-    *
-    * $config = null; // whatever your config loader handed back
-    * $configEither = Either::left($config)->leftNotNull("Config was missing!");
-    *
-    * $configEither->match(
-    *    function($x) { var_dump("Your config: {$x}"); },
-    *    function($errorMessage) { var_dump($errorMessage); }
+    * $message = Either::right('timeout')->match(
+    *    left: fn(int $x) => "squared: " . ($x * $x),
+    *    right: fn(string $error) => "failed: {$error}",
     * );
+    * echo $message, "\n"; // "failed: timeout"
     * ```
     *
     * _Notes:_
     *
-    *  - `$left` must follow this interface `callable(TLeft):U`
-    *  - `$right` must follow this interface `callable(TRight):U`
+    *  - `$left` must follow this interface `callable(TLeft):ULeft`
+    *  - `$right` must follow this interface `callable(TRight):URight`
     *
     * @template ULeft
     * @template URight
@@ -555,20 +551,19 @@ final readonly class Either {
    }
 
    /**
-    * Side effect function: Runs the function iff the either is `Either::left`
+    * Runs `$left` with the left value iff the either is `Either::left`, for a side effect
+    *
+    * It returns `void`, so it ends a chain. `tapLeft()` is the same thing
+    * mid-chain.
     *
     * ```php
-    * $config = null; // whatever your config loader handed back
-    * $configEither = Either::left($config)->leftNotNull("Config was missing!");
-    *
-    * $configEither->matchLeft(
-    *    function($x) { var_dump("Your config: {$x}"); }
-    * );
+    * Either::left(5)->matchLeft(function(int $n) { echo "got {$n}\n"; });    // "got 5"
+    * Either::right('e')->matchLeft(function(int $n) { echo "got {$n}\n"; }); // prints nothing
     * ```
     *
     * _Notes:_
     *
-    *  - `$left` must follow this interface `callable(TLeft):U`
+    *  - `$left` must follow this interface `callable(TLeft)`
     *
     * @psalm-param callable(TLeft) $left
     **/
@@ -581,20 +576,19 @@ final readonly class Either {
    }
 
    /**
-    * Side effect function: Runs the function iff the either is `Either::right`
+    * Runs `$right` with the right value iff the either is `Either::right`, for a side effect
+    *
+    * It returns `void`, so it ends a chain. `tapRight()` is the same thing
+    * mid-chain.
     *
     * ```php
-    * $config = null; // whatever your config loader handed back
-    * $configEither = Either::left($config)->leftNotNull("Config was missing!");
-    *
-    * $configEither->matchRight(
-    *    function($errorMessage) { var_dump($errorMessage); }
-    * );
+    * Either::right('timeout')->matchRight(function(string $error) { echo "failed: {$error}\n"; }); // "failed: timeout"
+    * Either::left(5)->matchRight(function(string $error) { echo "failed: {$error}\n"; });        // prints nothing
     * ```
     *
     * _Notes:_
     *
-    *  - `$right` must follow this interface `callable(TRight):U`
+    *  - `$right` must follow this interface `callable(TRight)`
     *
     * @psalm-param callable(TRight) $right
     **/
@@ -609,21 +603,20 @@ final readonly class Either {
    /**
     * Maps the `$value` of a `Either::left($value)`
     *
-    * The `map` function runs iff the either is a `Either::left`
-    * Otherwise the `Either:right($rightValue)` is propagated
+    * `$mapFunc` runs only iff the either is `Either::left`. A `Either::right` passes through.
     *
     * ```php
     * $right = Either::right("Some Error Message");
-    * $stillRight = $right->mapLeft(function($x) { return $x * $x; });
+    * $stillRight = $right->mapLeft(fn($x) => $x * $x);
     *
     * $left = Either::left(5);
-    * $leftSquared = $left->mapLeft(function($x) { return $x * $x; });
+    * $leftSquared = $left->mapLeft(fn($x) => $x * $x);
     * ```
     *
     * _Notes:_
     *
     *  - `$mapFunc` must follow this interface `callable(TLeft):ULeft`
-    *  - Returns `Either<TLeft, TRight>`
+    *  - Returns `Either<ULeft, TRight>`
     *
     * @template ULeft
     * @psalm-param callable(TLeft):ULeft $mapFunc
@@ -638,8 +631,7 @@ final readonly class Either {
    /**
     * Maps the `$value` of a `Either::right($value)`
     *
-    * The `map` function runs iff the either is a `Either::right`
-    * Otherwise the `Either:left($leftValue)` is propagated
+    * `$mapFunc` runs only iff the either is `Either::right`. A `Either::left` passes through.
     *
     * _Notes:_
     *
@@ -647,7 +639,7 @@ final readonly class Either {
     *  - Returns `Either<TLeft, URight>`
     *
     * ```php
-    * $shout = function(string $error) { return strtoupper($error); };
+    * $shout = fn(string $error) => strtoupper($error);
     *
     * echo (string) Either::right("nope")->mapRight($shout), "\n"; // Right(NOPE)
     * echo (string) Either::left(1)->mapRight($shout), "\n";       // Left(1), $shout never runs
@@ -689,7 +681,7 @@ final readonly class Either {
     *    signature lands on the right rather than escaping. That is safe here and
     *    not in `Option::mapSafely`, because this box keeps what it caught
     *  - A subclass of `$catch` is caught too, the same as a `catch` clause
-    *  - Returns `Either<ULeft, TRight>`, or `Either<never, E>` holding what it caught
+    *  - Returns `Either<ULeft, TRight|E>`, with what it caught on the right
     *
     * @template ULeft
     * @template E of Throwable
@@ -713,7 +705,7 @@ final readonly class Either {
     * `mapRight`, but if the map function throws, the `Throwable` becomes the new right
     *
     * ```php
-    * $parse = function(string $error): string { throw new \Exception("could not parse: {$error}"); };
+    * $parse = fn(string $error): string => throw new \Exception("could not parse: {$error}");
     *
     * $either = Either::right('{bad json}')->mapRightSafely($parse);
     * echo $either->isRight() ? "right\n" : "left\n";  // "right", holding the Exception
@@ -751,8 +743,7 @@ final readonly class Either {
    }
 
    /**
-    * A passthrough for FlatMap.
-    * A nicer name through
+    * The same as `flatMapLeft`, under the name most people guess first
     *
     * ```php
     * $leftPerson = [
@@ -764,9 +755,7 @@ final readonly class Either {
     *
     * $person = Either::fromArray($leftPerson, 'name', 'name was missing');
     *
-    * $name = $person->andThen(function(array $person): Either {
-    *    return Either::left($person['first'] . $person['last']);
-    * });
+    * $name = $person->andThen(fn(array $person): Either => Either::left($person['first'] . $person['last']));
     *
     * echo (string) $name, "\n"; // Left(FirstLast)
     * ```
@@ -782,32 +771,32 @@ final readonly class Either {
     *  - The callback may change the right type as well. Deciding a value is
     *    bad is the point of this method, and that produces a right value the
     *    original box never had. Its `flatMapRight` twin is widened the same way
-    *  - Returns `Either<TLeft, TRight>`
+    *  - Returns `Either<ULeft, TRight|URight>`
     *
     * @template ULeft
     * @template URight
     * @psalm-param callable(TLeft):Either<ULeft, URight> $mapFunc
     * @psalm-return Either<ULeft, TRight|URight>
     **/
-    public function andThen(callable $mapFunc): self {
+   public function andThen(callable $mapFunc): self {
       return $this->flatMapLeft($mapFunc);
-    }
+   }
 
    /**
     * Allows a function to map over the internal value, the function returns an Either
     *
     * ```php
     * $right = Either::right(null);
-    * $rightNotNull = $right->flatMapLeft(function($rightValue) { return Either::left($rightValue)->leftNotNull("was null"); });
+    * $rightNotNull = $right->flatMapLeft(fn($rightValue) => Either::left($rightValue)->leftNotNull("was null"));
     *
     * $left = Either::left(null);
-    * $leftNotNull = $left->flatMapLeft(function($leftValue) { return Either::left($leftValue)->leftNotNull("was null"); });
+    * $leftNotNull = $left->flatMapLeft(fn($leftValue) => Either::left($leftValue)->leftNotNull("was null"));
     * ```
     *
     * _Notes:_
     *
-    *  - `$alternativeFactory` must follow this interface `callable(TLeft):Either<ULeft, TRight>`
-    *  - Returns `Either<ULeft, TRight>`
+    *  - `$mapFunc` must follow this interface `callable(TLeft):Either<ULeft, URight>`
+    *  - Returns `Either<ULeft, TRight|URight>`
     *
     * @template ULeft
     * @template URight
@@ -827,8 +816,8 @@ final readonly class Either {
     * decide it is not an error after all.
     *
     * ```php
-    * $useDefault = function(string $_error): Either { return Either::left('default'); };
-    * $keep = function(string $error): Either { return Either::right("still {$error}"); };
+    * $useDefault = fn(string $_error): Either => Either::left('default');
+    * $keep = fn(string $error): Either => Either::right("still {$error}");
     *
     * echo (string) Either::right('not found')->flatMapRight($useDefault), "\n"; // Left(default)
     * echo (string) Either::right('on fire')->flatMapRight($keep), "\n";         // Right(still on fire)
@@ -968,7 +957,7 @@ final readonly class Either {
     *
     * _Notes:_
     *
-    *  - Returns `Either<TLeft, TRight>`
+    *  - Returns `Either<TLeft, TRight|TTRight>`, with `null` dropped from the left type
     *
     * @psalm-mutation-free
     * @template TTRight
@@ -988,7 +977,7 @@ final readonly class Either {
     *
     * _Notes:_
     *
-    *  - Returns `Either<TLeft, TRight>`
+    *  - Returns `Either<TLeft|TTLeft, TRight>`, with `null` dropped from the right type
     *
     * ```php
     * echo (string) Either::right(null)->rightNotNull("was null"), "\n"; // Left(was null)
@@ -1021,7 +1010,7 @@ final readonly class Either {
     *
     * _Notes:_
     *
-    *  - Returns `Either<TLeft, TRight>`
+    *  - Returns `Either<TLeft, TRight|TTRight>`, with `null` and `false` dropped from the left type
     *
     * @psalm-mutation-free
     * @template TTRight
@@ -1042,7 +1031,7 @@ final readonly class Either {
     *
     * _Notes:_
     *
-    *  - Returns `Either<TLeft, TRight>`
+    *  - Returns `Either<TLeft|TTLeft, TRight>`, with `null` and `false` dropped from the right type
     *
     * ```php
     * echo (string) Either::right("")->rightNotFalsy("was falsy"), "\n";  // Left(was falsy)
@@ -1077,7 +1066,7 @@ final readonly class Either {
     *
     * _Notes:_
     *
-    *  - Returns `Either<TLeft, TRight>`, with `false` dropped from the left type
+    *  - Returns `Either<TLeft, TRight|TTRight>`, with `false` dropped from the left type
     *
     * @psalm-mutation-free
     * @template TTRight
@@ -1105,7 +1094,7 @@ final readonly class Either {
     *
     * _Notes:_
     *
-    *  - Returns `Either<TLeft, TRight>`, with `false` dropped from the right type
+    *  - Returns `Either<TLeft|TTLeft, TRight>`, with `false` dropped from the right type
     *
     * @psalm-mutation-free
     * @template TTLeft
@@ -1169,16 +1158,16 @@ final readonly class Either {
     *
     * ```php
     * $right = Either::right("Some Error Message");
-    * $false = $right->existsLeft(function($x) { return $x == 10; });
+    * $false = $right->existsLeft(fn($x) => $x == 10);
     *
     * $left = Either::left(10);
-    * $true = $left->existsLeft(function($x) { return $x >= 10; });
-    * $false = $left->existsLeft(function($x) { return $x == "Thing"; });
+    * $true = $left->existsLeft(fn($x) => $x >= 10);
+    * $false = $left->existsLeft(fn($x) => $x == "Thing");
     * ```
     *
     * _Notes:_
     *
-    *  - `$filterFunc` must follow this interface `callable(TLeft):bool`
+    *  - `$existsFunc` must follow this interface `callable(TLeft):bool`
     *
     * @psalm-param callable(TLeft):bool $existsFunc
     **/
@@ -1195,10 +1184,10 @@ final readonly class Either {
     *
     * _Notes:_
     *
-    *  - `$filterFunc` must follow this interface `callable(TRight):bool`
+    *  - `$existsFunc` must follow this interface `callable(TRight):bool`
     *
     * ```php
-    * $isLong = function(string $error) { return strlen($error) > 3; };
+    * $isLong = fn(string $error) => strlen($error) > 3;
     *
     * echo Either::right("nope")->existsRight($isLong) ? "yes\n" : "no\n"; // "yes"
     * echo Either::right("no")->existsRight($isLong) ? "yes\n" : "no\n";   // "no"
@@ -1349,10 +1338,10 @@ final readonly class Either {
     * Transforms the value of a success, the same as `mapLeft`
     *
     * ```php
-    * $doubled = Either::success(21)->mapSuccess(function(int $n) { return $n * 2; });
+    * $doubled = Either::success(21)->mapSuccess(fn(int $n) => $n * 2);
     * echo (string) $doubled, "\n"; // Left(42)
     *
-    * echo (string) Either::failure("no")->mapSuccess(function(int $n) { return $n * 2; }), "\n"; // Right(no)
+    * echo (string) Either::failure("no")->mapSuccess(fn(int $n) => $n * 2), "\n"; // Right(no)
     * ```
     *
     * @template ULeft
@@ -1367,10 +1356,10 @@ final readonly class Either {
     * Transforms the error of a failure, the same as `mapRight`
     *
     * ```php
-    * $described = Either::failure("timeout")->mapFailure(function(string $e) { return "request {$e}"; });
+    * $described = Either::failure("timeout")->mapFailure(fn(string $e) => "request {$e}");
     * echo (string) $described, "\n"; // Right(request timeout)
     *
-    * echo (string) Either::success(1)->mapFailure(function(string $e) { return "x"; }), "\n"; // Left(1)
+    * echo (string) Either::success(1)->mapFailure(fn(string $e) => "x"), "\n"; // Left(1)
     * ```
     *
     * @template URight
@@ -1421,12 +1410,10 @@ final readonly class Either {
     * The factory is handed the error, so it can become the cause.
     *
     * ```php
-    * echo Either::success(42)->successOrThrow(function($error) { return new \RuntimeException("no id"); }), "\n"; // 42
+    * echo Either::success(42)->successOrThrow(fn($error) => new \RuntimeException("no id")), "\n"; // 42
     *
     * try {
-    *    Either::failure("the api said no")->successOrThrow(function(string $error) {
-    *       return new \RuntimeException("could not load: {$error}");
-    *    });
+    *    Either::failure("the api said no")->successOrThrow(fn(string $error) => new \RuntimeException("could not load: {$error}"));
     * } catch (\RuntimeException $e) {
     *    echo $e->getMessage(), "\n"; // "could not load: the api said no"
     * }
@@ -1489,14 +1476,12 @@ final readonly class Either {
    }
 
    /**
-    * Take a value, turn it a `Either::left($leftValue)` iff the `$filterFunc` returns true
-    * otherwise an `Either::right($rightValue)`
+    * Returns `Either::left($leftValue)` iff `$filterFunc` returns true for it, otherwise `Either::right($rightValue)`
     *
     * ```php
-    * $positiveOne = Either::leftWhen(1, -1, function($x) { return $x > 0; });
-    * $negativeOne = Either::leftWhen(1, -1, function($x) { return $x < 0; });
+    * $positiveOne = Either::leftWhen(1, -1, fn($x) => $x > 0);
+    * $negativeOne = Either::leftWhen(1, -1, fn($x) => $x < 0);
     * ```
-    * Note: `$filterFunc` must follow this interface `function filterFunc(mixed $value): bool`
     *
     * _Notes:_
     *
@@ -1518,12 +1503,11 @@ final readonly class Either {
    }
 
    /**
-    * Take a value, turn it a `Either::right($rightValue)` iff the `$filterFunc` returns true
-    * otherwise an `Either::left($leftValue)`
+    * Returns `Either::right($rightValue)` iff `$filterFunc` returns true for `$leftValue`, otherwise `Either::left($leftValue)`
     *
     * ```php
-    * $positiveOne = Either::rightWhen(1, -1, function($x) { return $x < 0; });
-    * $negativeOne = Either::rightWhen(1, -1, function($x) { return $x > 0; });
+    * $positiveOne = Either::rightWhen(1, -1, fn($x) => $x < 0);
+    * $negativeOne = Either::rightWhen(1, -1, fn($x) => $x > 0);
     * ```
     *
     * _Notes:_
@@ -1546,7 +1530,7 @@ final readonly class Either {
    }
 
    /**
-    * Take a value, turn it a `Either::left($leftValue)` iff `!is_null($leftValue)`, otherwise returns `Either::right($rightValue)`
+    * Returns `Either::left($leftValue)` unless it is `null`, otherwise `Either::right($rightValue)`
     *
     * ```php
     * $left = Either::left(null); // Valid, returns left(null)
@@ -1567,10 +1551,10 @@ final readonly class Either {
    public static function notNullLeft($leftValue, $rightValue): self {
       /** @var self<TTLeft, TTRight> */
       return self::left($leftValue)->leftNotNull($rightValue);
-    }
+   }
 
    /**
-    * Take a value, turn it a `Either::right($rightValue)` iff `!is_null($rightValue)`, otherwise `Either::left($leftValue)`
+    * Returns `Either::right($rightValue)` unless it is `null`, otherwise `Either::left($leftValue)`
     *
     * The mirror of `notNullLeft`. The value being checked comes first in both.
     *
@@ -1592,7 +1576,7 @@ final readonly class Either {
    }
 
    /**
-    * Take a value, turn it a `Either::left($leftValue)` iff `(bool) $leftValue`, otherwise `Either::right($rightValue)`
+    * Returns `Either::left($leftValue)` unless it is falsy, otherwise `Either::right($rightValue)`
     *
     * The falsy counterpart to `Either::notNullLeft`. Reach for it when PHP hands
     * you the usual "nothing found" value rather than null.
@@ -1621,7 +1605,7 @@ final readonly class Either {
    }
 
    /**
-    * Take a value, turn it a `Either::right($rightValue)` iff `(bool) $rightValue`, otherwise `Either::left($leftValue)`
+    * Returns `Either::right($rightValue)` unless it is falsy, otherwise `Either::left($leftValue)`
     *
     * The mirror of `notFalsyLeft`. The value being checked comes first in both.
     *
@@ -1749,7 +1733,7 @@ final readonly class Either {
    }
 
    /**
-    * Creates a either if the `$key` exists in `$array`
+    * Returns `Either::left($array[$key])` iff the key exists, even when it holds `null`, otherwise `Either::right($rightValue)`
     *
     * ```php
     * $left = Either::fromArray(['hello' => 'world'], 'hello', 'oh no'); // left('world')
@@ -1759,7 +1743,8 @@ final readonly class Either {
     * ```
     * _Notes:_
     *
-    * - Returns `Either<TTLeft, TTRight>`
+    * - Returns `Either<value-of<TArray>, TTRight>`, or `Either<value-of<TArray>, Exception>`
+    *   when `$rightValue` is null
     *
     * @psalm-mutation-free
     * @template TTRight
@@ -1775,7 +1760,7 @@ final readonly class Either {
     *
     * @psalm-return self<value-of<TArray>, (TTRight is null ? Exception : TTRight)>
     **/
-    public static function fromArray(array $array, $key, $rightValue = null): self {
+   public static function fromArray(array $array, $key, $rightValue = null): self {
       if (array_key_exists($key, $array)) {
          /** @psalm-var value-of<TArray> $value psalm does not narrow $array[$key] on its own */
          $value = $array[$key];
@@ -1798,7 +1783,7 @@ final readonly class Either {
     * https://github.com/vimeo/psalm/issues/1982
     * @psalm-mutation-free
     */
-    public function __toString() {
+   public function __toString() {
       if ($this->isLeft) {
          if ($this->leftValue === null) {
             return "Left(null)";

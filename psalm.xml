@@ -70,9 +70,6 @@
         <MissingClosureParamType>
             <errorLevel type="suppress"><file name="tests/generated/DocblockExamples.php"/></errorLevel>
         </MissingClosureParamType>
-        <ForbiddenCode>
-            <errorLevel type="suppress"><file name="tests/generated/DocblockExamples.php"/></errorLevel>
-        </ForbiddenCode>
         <InvalidCast>
             <errorLevel type="suppress"><file name="tests/generated/DocblockExamples.php"/></errorLevel>
         </InvalidCast>
