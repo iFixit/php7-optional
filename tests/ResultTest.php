@@ -245,6 +245,19 @@ final class ResultTest extends TestCase {
       $this->assertSame('no age', $untouched->errOr('x'), 'an Err keeps its own error');
    }
 
+   /**
+    * The same rule as Option::filter: a callback's result counts the way `if`
+    * counts it, so a flag of 1 or '1' keeps the value.
+    *
+    * @psalm-suppress InvalidArgument these callbacks break callable(T):bool on purpose
+    */
+   public function testFilterReadsTheCallbackResultTheWayIfDoes(): void {
+      $this->assertSame(5, Result::ok(5)->filter(fn() => 1, 'e')->valueOr(-1));
+      $this->assertSame(5, Result::ok(5)->filter(fn() => '1', 'e')->valueOr(-1));
+      $this->assertSame('e', Result::ok(5)->filter(fn() => '0', 'e')->errOr('x'));
+      $this->assertSame('e', Result::ok(5)->filter(fn() => null, 'e')->errOr('x'));
+   }
+
    public function testOrAndOrCreateRecoverOnlyAnErr(): void {
       $this->assertSame(0, Result::err('timeout')->or(0)->valueOr(-1));
 

@@ -472,6 +472,20 @@ final class OptionTest extends TestCase {
    }
 
    /**
+    * A callback's result counts the way `if` counts it, as filterIf's did in
+    * 3.x. A flag read back from a database as 1 or '1' has to keep the value,
+    * not drop it because it is not the bool true.
+    *
+    * @psalm-suppress InvalidArgument these callbacks break callable(T):bool on purpose
+    */
+   public function testFilterReadsTheCallbackResultTheWayIfDoes(): void {
+      $this->assertSame(5, Option::some(5)->filter(fn() => 1)->valueOr(-1));
+      $this->assertSame(5, Option::some(5)->filter(fn() => '1')->valueOr(-1));
+      $this->assertFalse(Option::some(5)->filter(fn() => '0')->hasValue());
+      $this->assertFalse(Option::some(5)->filter(fn() => null)->hasValue());
+   }
+
+   /**
     * filterIf is deprecated, not removed, so it has to keep working until a
     * major version takes it away.
     *

@@ -603,6 +603,8 @@ final readonly class Option {
     *    runs, so an expensive or throwing expression happens even on a
     *    `Option::none`. Pass the callable instead and it only runs on a
     *    `Option::some`. That is what the deprecated `filterIf()` was for
+    *  - A callable's result counts the way `if` counts it, so a callback that
+    *    returns `1` or `'1'` keeps the value, as `array_filter` would
     *  - This method is not `@psalm-mutation-free`, because it may call code you
     *    supplied. That is the cost of taking a callable at all
     *  - Returns `Option<T>`
@@ -628,7 +630,7 @@ final readonly class Option {
 
       $keep = is_callable($condition) ? $condition($this->value) : $condition;
 
-      return $keep === true ? $this : self::none();
+      return $keep ? $this : self::none();
    }
 
    /**

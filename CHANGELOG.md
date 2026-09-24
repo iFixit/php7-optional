@@ -169,9 +169,10 @@ Shorthands for shapes callers otherwise spell out by hand:
   single type (see Fixed). A psalm baseline in your own code that recorded the
   old types may need regenerating
 * `Option::filter` takes `bool|callable` rather than `bool`, so the short,
-  guessable name has the lazy option. Passing a bool is unchanged. It loses
-  `@psalm-mutation-free`, because a method that may call code you supplied is
-  not mutation-free
+  guessable name has the lazy option. Passing a bool is unchanged, and a
+  callable's result counts the way `if` counts it, as `filterIf`'s did. It
+  loses `@psalm-mutation-free`, because a method that may call code you
+  supplied is not mutation-free
 
 ### Deprecated
 

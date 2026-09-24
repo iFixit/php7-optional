@@ -125,6 +125,10 @@ Option::none()->filter($expensive());   // $expensive() still runs
 Option::none()->filter($expensive);     // callback never runs
 ```
 
+A callable's result counts the way `if` counts it, as `array_filter` and 3.x's
+`filterIf` do. Do not tighten it to `=== true`: a flag read back from a
+database as `1` would then drop the value, with nothing to say why.
+
 `Option::filterIf()` did the lazy form under a longer name and carries
 `#[\Deprecated]` now. Keep it working until a major version removes it, and
 add no new calls.

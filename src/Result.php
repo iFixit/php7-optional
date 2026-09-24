@@ -466,6 +466,8 @@ final readonly class Result {
     *    call site, before this method runs, so an expensive or throwing
     *    expression happens even on a `Result::err`
     *  - `$error` is evaluated at the call site too, whether or not it is used
+    *  - A callable's result counts the way `if` counts it, so a callback that
+    *    returns `1` or `'1'` keeps the value, as `array_filter` would
     *
     * @template TE
     * @psalm-param bool|callable(T):bool $condition
@@ -480,7 +482,7 @@ final readonly class Result {
 
       $keep = is_callable($condition) ? $condition($this->value) : $condition;
 
-      return $keep === true ? $this : self::err($error);
+      return $keep ? $this : self::err($error);
    }
 
    /**
