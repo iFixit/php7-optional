@@ -125,13 +125,18 @@ The discoverable spelling is the costly one across the whole API: `valueOr`,
 
 ### Exception or Throwable, and why they differ
 
-| Call | Catches | Because |
+| Call | Catches by default | Because |
 |---|---|---|
 | `Option::fromCallable`, `Option::mapSafely` | `Exception` | the box discards it, so swallowing an `Error` erases a bug |
-| `Either::fromCallable`, `Either::mapLeftSafely` | `Throwable` | the box keeps it, so nothing is lost |
+| `Either::fromCallable`, `Either::mapLeftSafely`, `Either::mapRightSafely` | `Throwable` | the box keeps it, so nothing is lost |
 
 This asymmetry is deliberate and both halves have a test. Do not "fix" it by
 making them agree.
+
+Each of the five takes the class to catch as its last argument, `$catch`, and
+the defaults above are only its default values. The body catches `Throwable`
+and rethrows anything that is not an instance of `$catch`, so narrowing that
+`catch` block would silently stop a caller from naming an `Error` class.
 
 A PHP 8 warning is not a throwable either, so a missing array key inside a
 `mapSafely` callback yields `Some(null)`, not a None.

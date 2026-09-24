@@ -706,46 +706,47 @@ final class Either {
 
 
    /**
-    * `map`, but if an exception occurs, return `Either::right(exception)`
+    * `mapLeft`, but a throw from `$mapFunc` becomes the new right instead of escaping
     *
-    * Maps the `$value` of a `Either::left($value)`
-    *
-    * The map function runs iff the either's is a `Either::left`
-    * Otherwise the `Either:right($rightValue)` is propagated
+    * The map function runs iff the either is a `Either::left`. Otherwise the
+    * `Either::right($rightValue)` is propagated.
     *
     * ```php
     * $left = Either::left(['key' => 'value']);
-    * $right = $left->mapLeftSafely(function(array $array) { throw new \Exception("boom"); }); // Right(Exception("boom"))
+    * $right = $left->mapLeftSafely(fn(array $array) => throw new \Exception("boom")); // Right(Exception("boom"))
+    *
+    * // Name the class you expect: only that is caught, and the right side is typed as it
+    * $parsed = Either::left('{bad')->mapLeftSafely(
+    *    fn(string $json) => json_decode($json, flags: JSON_THROW_ON_ERROR),
+    *    \JsonException::class
+    * );
+    * echo $parsed->rightOr(null)?->getMessage(), "\n"; // "Syntax error"
     * ```
     *
     * _Notes:_
     *
-    *  - `$mapFunc` must follow this interface `callable(TLeft):Either<ULeft, URight>`
-    *  - When your callback returns a `Either::left` on one branch and a
-    *    `Either::right` on another, psalm infers a union of two Either types
-    *    and cannot bind it to the templates. Give the callback an explicit
-    *    `@psalm-return Either<L, R>`, or use a named function with a declared
-    *    return type, and it binds
-    *  - The callback may change the right type as well. Deciding a value is
-    *    bad is the point of this method, and that produces a right value the
-    *    original box never had. Its `flatMapRight` twin is widened the same way
-    *  - Returns `Either<TLeft, TRight>`
-    *
-    * _Notes:_
-    *
-    *  - Catches `Throwable`, so a `TypeError` from a bad callable signature lands
-    *    on the right rather than escaping. That is safe here and not in
-    *    `Option::mapSafely`, because this box keeps what it caught
+    *  - `$mapFunc` must follow this interface `callable(TLeft):ULeft`
+    *  - `$catch` defaults to `Throwable`, so a `TypeError` from a bad callable
+    *    signature lands on the right rather than escaping. That is safe here and
+    *    not in `Option::mapSafely`, because this box keeps what it caught
+    *  - A subclass of `$catch` is caught too, the same as a `catch` clause
+    *  - Returns `Either<ULeft, TRight>`, or `Either<never, E>` holding what it caught
     *
     * @template ULeft
+    * @template E of Throwable
     * @psalm-param callable(TLeft):ULeft $mapFunc
-    * @psalm-return Either<ULeft, TRight>|Either<never, Throwable>
+    * @psalm-param class-string<E> $catch
+    * @psalm-return Either<ULeft, TRight>|Either<never, E>
     **/
-   public function mapLeftSafely(callable $mapFunc): self {
+   public function mapLeftSafely(callable $mapFunc, string $catch = Throwable::class): self {
       try {
          return $this->mapLeft($mapFunc);
       } catch (Throwable $e) {
-         return self::right($e);
+         if ($e instanceof $catch) {
+            return self::right($e);
+         }
+
+         throw $e;
       }
    }
 
@@ -763,7 +764,8 @@ final class Either {
     *
     * _Notes:_
     *
-    *  - Catches `Throwable`, like `mapLeftSafely`, because the box keeps what it caught
+    *  - `$catch` defaults to `Throwable`, like `mapLeftSafely`, because the box
+    *    keeps what it caught. Name a class to catch only that one
     *  - The thrown value replaces the original right. If you need both, map to a
     *    type that holds them
     *  - The return is a three-way union where `mapLeftSafely`'s is two. That is
@@ -772,14 +774,20 @@ final class Either {
     *    `mapLeft`'s does. Narrowing it to two makes psalm reject the body
     *
     * @template URight
+    * @template E of Throwable
     * @psalm-param callable(TRight):URight $mapFunc
-    * @psalm-return Either<TLeft, TRight>|Either<TLeft, URight>|Either<never, Throwable>
+    * @psalm-param class-string<E> $catch
+    * @psalm-return Either<TLeft, TRight>|Either<TLeft, URight>|Either<never, E>
     **/
-   public function mapRightSafely(callable $mapFunc): self {
+   public function mapRightSafely(callable $mapFunc, string $catch = Throwable::class): self {
       try {
          return $this->mapRight($mapFunc);
       } catch (Throwable $e) {
-         return self::right($e);
+         if ($e instanceof $catch) {
+            return self::right($e);
+         }
+
+         throw $e;
       }
    }
 
@@ -1663,36 +1671,52 @@ final class Either {
     * Runs `$valueFactory`, boxing what it returns as a Left, or whatever it threw as a Right
     *
     * This is how a chain starts from code that signals failure by throwing, and
-    * it is the piece that lets the failure keep travelling with the value.
+    * it is the piece that lets the failure keep travelling with the value. Pass
+    * `$catch` to catch only the failure you expect, the way a `catch` clause
+    * would, and the right side is typed as that class.
     *
     * ```php
-    * $left = Either::fromCallable(function() { return 7; });                     // Left(7)
-    * $right = Either::fromCallable(function() { throw new \Exception("boom"); }); // Right(Exception("boom"))
+    * $left = Either::fromCallable(fn() => 7);                             // Left(7)
+    * $right = Either::fromCallable(fn() => throw new \Exception("boom")); // Right(Exception("boom"))
     *
     * $message = $right
-    *    ->mapRight(function(\Throwable $e) { return $e->getMessage(); })
+    *    ->mapRight(fn(\Throwable $e) => $e->getMessage())
     *    ->rightOr("no error"); // "boom"
+    *
+    * // psalm types this Either<mixed, JsonException>, and any other throw propagates
+    * $parsed = Either::fromCallable(
+    *    fn() => json_decode('{bad', flags: JSON_THROW_ON_ERROR),
+    *    \JsonException::class
+    * );
+    * echo $parsed->mapRight(fn(\JsonException $e) => $e->getMessage())->rightOr(''), "\n"; // "Syntax error"
     * ```
     *
     * _Notes:_
     *
     *  - `$valueFactory` must follow this interface `callable():TTLeft`
-    *  - Catches `Throwable`, so a `TypeError` from a bad callable signature lands
-    *    on the right rather than escaping. That is safe here and not in
-    *    `Option::fromCallable`, because this box keeps what it caught
-    *  - Returns `Either<TTLeft, Throwable>`
+    *  - `$catch` defaults to `Throwable`, so a `TypeError` from a bad callable
+    *    signature lands on the right rather than escaping. That is safe here and
+    *    not in `Option::fromCallable`, because this box keeps what it caught
+    *  - A subclass of `$catch` is caught too, the same as a `catch` clause
+    *  - Returns `Either<TTLeft, E>`, where `E` is `$catch`
     *
     * @template TTLeft
+    * @template E of Throwable
     *
     * @psalm-param callable():TTLeft $valueFactory
+    * @psalm-param class-string<E> $catch
     *
-    * @psalm-return self<TTLeft, Throwable>
+    * @psalm-return self<TTLeft, E>
     */
-   public static function fromCallable(callable $valueFactory): self {
+   public static function fromCallable(callable $valueFactory, string $catch = Throwable::class): self {
       try {
          return self::left($valueFactory());
       } catch (Throwable $e) {
-         return self::right($e);
+         if ($e instanceof $catch) {
+            return self::right($e);
+         }
+
+         throw $e;
       }
    }
 

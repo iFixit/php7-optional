@@ -710,6 +710,39 @@ final class EitherTest extends TestCase
       $this->assertInstanceOf(\TypeError::class, $either->rightOr(new \Exception('x')));
    }
 
+   public function testFromCallableCatchesTheNamedClassAndItsSubclasses(): void {
+      $named = Either::fromCallable(function(): int { throw new \OutOfBoundsException('no user 5'); }, \OutOfBoundsException::class);
+      $this->assertSame('no user 5', $named->mapRight(fn(\OutOfBoundsException $e) => $e->getMessage())->rightOr('x'));
+
+      $subclass = Either::fromCallable(function(): int { throw new \OutOfBoundsException('no user 5'); }, \RuntimeException::class);
+      $this->assertTrue($subclass->isRight(), 'a subclass of the named class is caught, as a catch clause would');
+   }
+
+   public function testFromCallableLetsAnyOtherClassThrough(): void {
+      $this->expectException(\LogicException::class);
+      Either::fromCallable(function(): int { throw new \LogicException('a bug'); }, \OutOfBoundsException::class);
+   }
+
+   public function testMapLeftSafelyCatchesTheNamedClass(): void {
+      $right = Either::left(1)->mapLeftSafely(function(int $_x): int { throw new \OutOfBoundsException('x'); }, \OutOfBoundsException::class);
+      $this->assertTrue($right->isRight(), 'the named class lands on the right');
+   }
+
+   public function testMapLeftSafelyLetsAnyOtherClassThrough(): void {
+      $this->expectException(\LogicException::class);
+      Either::left(1)->mapLeftSafely(function(int $_x): int { throw new \LogicException('a bug'); }, \OutOfBoundsException::class);
+   }
+
+   public function testMapRightSafelyCatchesTheNamedClass(): void {
+      $right = Either::right('e')->mapRightSafely(function(string $_e): string { throw new \OutOfBoundsException('x'); }, \OutOfBoundsException::class);
+      $this->assertTrue($right->isRight(), 'the named class replaces the right');
+   }
+
+   public function testMapRightSafelyLetsAnyOtherClassThrough(): void {
+      $this->expectException(\LogicException::class);
+      Either::right('e')->mapRightSafely(function(string $_e): string { throw new \LogicException('a bug'); }, \OutOfBoundsException::class);
+   }
+
    /**
     * Either::fromArray used isset() while Option::fromArray used
     * array_key_exists(), so the two disagreed about a key holding null. They

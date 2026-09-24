@@ -92,6 +92,13 @@ function eitherTypes(): void {
 
    $getLeftOrThrowReturnsTheLeft = Either::left(42)->getLeftOrThrow(function(): Exception { return new RuntimeException('x'); });
    /** @psalm-trace $getLeftOrThrowReturnsTheLeft */
+
+   // naming the class to catch types the right side as that class
+   $fromCallableTypesTheNamedClass = Either::fromCallable(function(): int { return 7; }, InvalidArgumentException::class);
+   /** @psalm-trace $fromCallableTypesTheNamedClass */
+
+   $mapLeftSafelyTypesTheNamedClass = Either::left(5)->mapLeftSafely(function(int $n): string { return "n{$n}"; }, JsonException::class);
+   /** @psalm-trace $mapLeftSafelyTypesTheNamedClass */
 }
 
 function aliasTypes(): void {

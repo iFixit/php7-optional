@@ -44,6 +44,17 @@ Getting out of one with a message, which `value()`'s fixed
 * `Option::valueOrThrow()`
 * `Either::getLeftOrThrow()` and `Either::getRightOrThrow()`
 
+Catching only the failure you expect, the way a `catch` clause names its
+class:
+
+* A `$catch` argument on `Option::fromCallable()`, `Option::mapSafely()`,
+  `Either::fromCallable()`, `Either::mapLeftSafely()` and
+  `Either::mapRightSafely()`. Only that class and its subclasses are caught,
+  and anything else propagates. On `Either` the right side is typed as that
+  class, so `Either::fromCallable($fn, JsonException::class)` is an
+  `Either<T, JsonException>`. Leaving it out keeps the defaults: `Exception`
+  on `Option`, `Throwable` on `Either`
+
 Staying in one through a side effect, since the `match*` methods return `void`
 and so end a chain:
 

@@ -225,12 +225,26 @@ echo Option::some(null)->notNull()->hasValue() ? "some\n" : "none\n"; // "none"
 
 ## What each box catches
 
-`Either::fromCallable` and `Either::mapLeftSafely` catch `Throwable`, because
-the box keeps what it caught: a `TypeError` from a bad callable signature lands
-on the right, where you can still find it. `Option::fromCallable` and
-`Option::mapSafely` catch `Exception` only, because those discard what they
-caught, and swallowing an `Error` would erase a real bug with nothing left to
-trace it by.
+`Either::fromCallable`, `Either::mapLeftSafely` and `Either::mapRightSafely`
+catch `Throwable` by default, because the box keeps what it caught: a
+`TypeError` from a bad callable signature lands on the right, where you can
+still find it. `Option::fromCallable` and `Option::mapSafely` catch `Exception`
+by default, because those discard what they caught, and swallowing an `Error`
+would erase a real bug with nothing left to trace it by.
+
+Every one of them takes the class to catch as its last argument, the way a
+`catch` clause names one. Only that class and its subclasses are caught, and
+anything else propagates. On `Either` the right side is then typed as that
+class, so psalm knows what you are holding:
+
+```php
+$user = Either::fromCallable(
+   fn() => throw new OutOfBoundsException("no user 5"),
+   OutOfBoundsException::class
+);
+
+echo $user->rightOr(null)?->getMessage() . "\n"; // "no user 5"
+```
 
 ## What it costs
 

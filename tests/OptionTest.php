@@ -563,6 +563,34 @@ final class OptionTest extends TestCase {
       Option::fromCallable(function(): int { throw new \TypeError("not an exception"); });
    }
 
+   public function testFromCallableCatchesTheNamedClassAndItsSubclasses(): void {
+      $named = Option::fromCallable(function(): int { throw new \OutOfBoundsException('no user 5'); }, \OutOfBoundsException::class);
+      $this->assertFalse($named->hasValue(), 'the named class becomes a None');
+
+      $subclass = Option::fromCallable(function(): int { throw new \OutOfBoundsException('no user 5'); }, \RuntimeException::class);
+      $this->assertFalse($subclass->hasValue(), 'a subclass of the named class is caught, as a catch clause would');
+   }
+
+   public function testFromCallableLetsAnyOtherClassThrough(): void {
+      $this->expectException(\LogicException::class);
+      Option::fromCallable(function(): int { throw new \LogicException('a bug'); }, \OutOfBoundsException::class);
+   }
+
+   public function testFromCallableCatchesAnErrorOnlyWhenNamed(): void {
+      $none = Option::fromCallable(function(): int { throw new \TypeError('x'); }, \TypeError::class);
+      $this->assertFalse($none->hasValue(), 'naming an Error class opts into catching it');
+   }
+
+   public function testMapSafelyCatchesTheNamedClass(): void {
+      $none = Option::some(1)->mapSafely(function(int $_x): int { throw new \OutOfBoundsException('x'); }, \OutOfBoundsException::class);
+      $this->assertFalse($none->hasValue(), 'the named class becomes a None');
+   }
+
+   public function testMapSafelyLetsAnyOtherClassThrough(): void {
+      $this->expectException(\LogicException::class);
+      Option::some(1)->mapSafely(function(int $_x): int { throw new \LogicException('a bug'); }, \OutOfBoundsException::class);
+   }
+
 }
 
 final class SomeObject {}

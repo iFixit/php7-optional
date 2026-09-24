@@ -217,7 +217,14 @@ function example16_map(): void {
  */
 function example17_mapSafely(): void {
    $some = Option::some(['key' => 'value']);
-   $none = $some->mapSafely(function(array $array) { throw new \Exception("boom"); }); // Option::none()
+   $none = $some->mapSafely(fn(array $array) => throw new \Exception("boom")); // None
+
+   // Name the class you expect, and anything else still throws
+   $parsed = Option::some('{bad')->mapSafely(
+      fn(string $json) => json_decode($json, flags: JSON_THROW_ON_ERROR),
+      \JsonException::class
+   );
+   echo (string) $parsed, "\n"; // None
 }
 
 /**
@@ -392,8 +399,21 @@ function example32_someNotFalsy(): void {
  * src/Option.php #33, fromCallable()
  */
 function example33_fromCallable(): void {
-   $some = Option::fromCallable(function() { return 7; });                       // Some(7)
-   $none = Option::fromCallable(function() { throw new \Exception("boom"); });   // None
+   $some = Option::fromCallable(fn() => 7);                            // Some(7)
+   $none = Option::fromCallable(fn() => throw new \Exception("boom")); // None
+
+   // A missing record means None. Any other failure is a real error.
+   $missing = Option::fromCallable(
+      fn() => throw new \OutOfBoundsException("no user 5"),
+      \OutOfBoundsException::class
+   );
+   echo (string) $missing, "\n"; // None
+
+   try {
+      $user = Option::fromCallable(fn() => throw new \LogicException("a bug"), \OutOfBoundsException::class);
+   } catch (\LogicException $e) {
+      echo $e->getMessage(), "\n"; // "a bug"
+   }
 }
 
 /**
@@ -703,7 +723,14 @@ function example60_mapRight(): void {
  */
 function example61_mapLeftSafely(): void {
    $left = Either::left(['key' => 'value']);
-   $right = $left->mapLeftSafely(function(array $array) { throw new \Exception("boom"); }); // Right(Exception("boom"))
+   $right = $left->mapLeftSafely(fn(array $array) => throw new \Exception("boom")); // Right(Exception("boom"))
+
+   // Name the class you expect: only that is caught, and the right side is typed as it
+   $parsed = Either::left('{bad')->mapLeftSafely(
+      fn(string $json) => json_decode($json, flags: JSON_THROW_ON_ERROR),
+      \JsonException::class
+   );
+   echo $parsed->rightOr(null)?->getMessage(), "\n"; // "Syntax error"
 }
 
 /**
@@ -1050,12 +1077,19 @@ function example96_notFalsyRight(): void {
  * src/Either.php #62, fromCallable()
  */
 function example97_fromCallable(): void {
-   $left = Either::fromCallable(function() { return 7; });                     // Left(7)
-   $right = Either::fromCallable(function() { throw new \Exception("boom"); }); // Right(Exception("boom"))
+   $left = Either::fromCallable(fn() => 7);                             // Left(7)
+   $right = Either::fromCallable(fn() => throw new \Exception("boom")); // Right(Exception("boom"))
 
    $message = $right
-      ->mapRight(function(\Throwable $e) { return $e->getMessage(); })
+      ->mapRight(fn(\Throwable $e) => $e->getMessage())
       ->rightOr("no error"); // "boom"
+
+   // psalm types this Either<mixed, JsonException>, and any other throw propagates
+   $parsed = Either::fromCallable(
+      fn() => json_decode('{bad', flags: JSON_THROW_ON_ERROR),
+      \JsonException::class
+   );
+   echo $parsed->mapRight(fn(\JsonException $e) => $e->getMessage())->rightOr(''), "\n"; // "Syntax error"
 }
 
 /**
@@ -1232,5 +1266,17 @@ function example109_unknown(): void {
 function example110_unknown(): void {
    echo Option::some(null)->hasValue() ? "some\n" : "none\n";            // "some"
    echo Option::some(null)->notNull()->hasValue() ? "some\n" : "none\n"; // "none"
+}
+
+/**
+ * README.md #13, unknown()
+ */
+function example111_unknown(): void {
+   $user = Either::fromCallable(
+      fn() => throw new OutOfBoundsException("no user 5"),
+      OutOfBoundsException::class
+   );
+
+   echo $user->rightOr(null)?->getMessage() . "\n"; // "no user 5"
 }
 

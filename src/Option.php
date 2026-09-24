@@ -484,38 +484,50 @@ final class Option {
    }
 
    /**
-    * `map`, but if an exception occurs, return `Option::none`
+    * `map`, but a throw from `$mapFunc` gives you `Option::none()` instead of escaping
     *
-    * Maps the `$value` of a `Option::some($value)`
-    *
-    * The map function runs iff the options is a `Option::some`
-    * Otherwise the `Option:none` is propagated
+    * The map function runs iff the option is a `Option::some`. Otherwise the
+    * `Option::none` is propagated.
     *
     * ```php
     * $some = Option::some(['key' => 'value']);
-    * $none = $some->mapSafely(function(array $array) { throw new \Exception("boom"); }); // Option::none()
+    * $none = $some->mapSafely(fn(array $array) => throw new \Exception("boom")); // None
+    *
+    * // Name the class you expect, and anything else still throws
+    * $parsed = Option::some('{bad')->mapSafely(
+    *    fn(string $json) => json_decode($json, flags: JSON_THROW_ON_ERROR),
+    *    \JsonException::class
+    * );
+    * echo (string) $parsed, "\n"; // None
     * ```
     *
     * _Notes:_
     *
     *  - `$mapFunc` must follow this interface `callable(T):U`
     *  - Returns `Option<U>`
-    *  - Catches `Exception`, not `Throwable`. An `Error` is a bug in your code,
-    *    and this box discards what it caught, so swallowing one would erase the
-    *    bug with nothing left to find it by. `Either::mapLeftSafely` does catch
-    *    `Throwable`, because it keeps it
+    *  - `$catch` defaults to `Exception`, not `Throwable`. An `Error` is a bug in
+    *    your code, and this box discards what it caught, so swallowing one would
+    *    erase the bug with nothing left to find it by. Name an `Error` class in
+    *    `$catch` to catch one anyway. `Either::mapLeftSafely` defaults to
+    *    `Throwable`, because it keeps what it caught
+    *  - A subclass of `$catch` is caught too, the same as a `catch` clause
     *
     * @template U
     *
     * @psalm-param callable(T):U $mapFunc
+    * @psalm-param class-string<Throwable> $catch
     *
     * @psalm-return self<U>
     */
-   public function mapSafely(callable $mapFunc): self {
+   public function mapSafely(callable $mapFunc, string $catch = Exception::class): self {
       try {
          return $this->map($mapFunc);
-      } catch (Exception $_e) {
-         return self::none();
+      } catch (Throwable $e) {
+         if ($e instanceof $catch) {
+            return self::none();
+         }
+
+         throw $e;
       }
    }
 
@@ -915,33 +927,55 @@ final class Option {
    /**
     * Runs `$valueFactory`, boxing what it returns, or returning `Option::none()` if it throws
     *
-    * This is how a chain starts from code that signals failure by throwing.
+    * This is how a chain starts from code that signals failure by throwing. Pass
+    * `$catch` to say which throw means "there isn't one", the way a `catch`
+    * clause would, and let every other failure propagate.
     *
     * ```php
-    * $some = Option::fromCallable(function() { return 7; });                       // Some(7)
-    * $none = Option::fromCallable(function() { throw new \Exception("boom"); });   // None
+    * $some = Option::fromCallable(fn() => 7);                            // Some(7)
+    * $none = Option::fromCallable(fn() => throw new \Exception("boom")); // None
+    *
+    * // A missing record means None. Any other failure is a real error.
+    * $missing = Option::fromCallable(
+    *    fn() => throw new \OutOfBoundsException("no user 5"),
+    *    \OutOfBoundsException::class
+    * );
+    * echo (string) $missing, "\n"; // None
+    *
+    * try {
+    *    $user = Option::fromCallable(fn() => throw new \LogicException("a bug"), \OutOfBoundsException::class);
+    * } catch (\LogicException $e) {
+    *    echo $e->getMessage(), "\n"; // "a bug"
+    * }
     * ```
     *
     * _Notes:_
     *
     *  - `$valueFactory` must follow this interface `callable():TT`
-    *  - Catches `Exception`, not `Throwable`. An `Error` is a bug in your code,
-    *    and this box discards what it caught, so swallowing one would erase the
-    *    bug with nothing left to find it by. Use `Either::fromCallable` when you
-    *    need the failure itself, which does catch `Throwable` because it keeps it.
+    *  - `$catch` defaults to `Exception`, not `Throwable`. An `Error` is a bug in
+    *    your code, and this box discards what it caught, so swallowing one would
+    *    erase the bug with nothing left to find it by. Name an `Error` class in
+    *    `$catch` to catch one anyway. Use `Either::fromCallable` when you need the
+    *    failure itself; it defaults to `Throwable`, because it keeps it
+    *  - A subclass of `$catch` is caught too, the same as a `catch` clause
     *  - A factory returning null still gives you `Some(null)`. Chain `notNull()`
     *
     * @template TT
     *
     * @psalm-param callable():TT $valueFactory
+    * @psalm-param class-string<Throwable> $catch
     *
     * @psalm-return self<TT>
     */
-   public static function fromCallable(callable $valueFactory): self {
+   public static function fromCallable(callable $valueFactory, string $catch = Exception::class): self {
       try {
          return self::some($valueFactory());
-      } catch (Exception $_e) {
-         return self::none();
+      } catch (Throwable $e) {
+         if ($e instanceof $catch) {
+            return self::none();
+         }
+
+         throw $e;
       }
    }
 

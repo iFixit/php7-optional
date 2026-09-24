@@ -59,6 +59,8 @@ final class TypeInferenceTest extends TestCase {
          'notFalsyLeftNarrowsOnFalsy' => "Optional\\Either<never, 'was falsy'>",
          'eitherFromCallableCarriesTheThrowable' => 'Optional\\Either<7, Throwable>',
          'getLeftOrThrowReturnsTheLeft' => '42',
+         'fromCallableTypesTheNamedClass' => 'Optional\\Either<7, InvalidArgumentException>',
+         'mapLeftSafelyTypesTheNamedClass' => "Optional\\Either<'n5', never>|Optional\\Either<never, JsonException>",
 
          // an alias must infer exactly what its target infers
          'viaMapSuccess' => "Optional\\Either<'n21', never>|Optional\\Either<never, never>",
