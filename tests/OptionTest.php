@@ -367,11 +367,19 @@ final class OptionTest extends TestCase {
       $this->assertSame($name->valueOr('oh no'), 'oh no');
    }
 
-   public function testToString(): void {
-      $this->assertEquals("Some(null)", (string)Option::some(null));
-      $this->assertEquals("Some(10)", (string)Option::some(10));
-
-      $this->assertEquals("None", (string)Option::none());
+   /**
+    * 3.x interpolated the value, so an array printed a warning and
+    * "Some(Array)", an object with no __toString threw an Error, and false
+    * printed "Some()".
+    */
+   public function testToStringShowsAnyValueWithoutWarning(): void {
+      $this->assertSame('Some(10)', (string) Option::some(10));
+      $this->assertSame('None', (string) Option::none());
+      $this->assertSame('Some(null)', (string) Option::some(null));
+      $this->assertSame('Some(false)', (string) Option::some(false));
+      $this->assertSame('Some(array)', (string) Option::some([1, 2]), 'an array is shown by its type');
+      $this->assertSame('Some(stdClass)', (string) Option::some(new \stdClass()), 'an object with no string form is shown by its class');
+      $this->assertSame('Some(RuntimeException: boom)', (string) Option::some(new \RuntimeException('boom')), 'an exception by its class and message, not its trace');
    }
 
    public function testValueOrThrowUsesTheSuppliedException(): void {

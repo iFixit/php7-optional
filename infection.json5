@@ -26,15 +26,7 @@
         "text": "php://stdout"
     },
     "mutators": {
-        "@default": true,
-        // __toString is a debugging convenience. Mutating its string literals
-        // produces mutants no behavioral test should be written to catch.
-        "CastString": {
-            "ignore": [
-                "Optional\\Option::__toString",
-                "Optional\\Result::__toString"
-            ]
-        }
+        "@default": true
     },
     "minMsi": 80,
     "minCoveredMsi": 85,

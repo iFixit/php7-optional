@@ -36,13 +36,14 @@
 
         The suppressions below are the ways an example is legitimately unlike
         production code, and nothing more. An example assigns $myVar to show a
-        result and never reads it, echoes to show output, casts a box to string,
-        and leaves closure types off for brevity.
+        result and never reads it, echoes to show output, and leaves closure
+        types off for brevity.
 
-        ReservedWord, NoValue and InvalidOperand have one shape: an example
-        that shows nothing happens on the empty side calls a method on a box it
-        just built empty, and psalm, correctly, types that callback's parameter
-        as never. DocblockTypeContradiction is the same shape once more: an
+        ReservedWord, NoValue, InvalidOperand and InvalidCast have one shape:
+        an example that shows nothing happens on the empty side calls a method
+        on a box it just built empty, and psalm, correctly, types that
+        callback's parameter as never. InvalidCast is that never put into a
+        string. DocblockTypeContradiction is the same shape once more: an
         annotation good enough to prove the outcome makes the example
         demonstrating it look redundant.
 

@@ -169,6 +169,14 @@ Shorthands for shapes callers otherwise spell out by hand:
   which on PHP 8 is a warning that nothing catches. The README's only complete
   example called `SimpleResult::okay()`, from a class deleted in the 2.x line
 
+* **`(string)` on an `Option` warned or threw for some values.** 3.x
+  interpolated the value, so an array printed `Some(Array)` with an
+  "Array to string conversion" warning, and an object with no `__toString`
+  threw an `Error`. Both boxes now show a value with no string form by its
+  type (`Some(array)`, `Some(stdClass)`) and an exception by its class and
+  message. `false` and `true` print as `Some(false)` and `Some(true)` rather
+  than `Some()` and `Some(1)`
+
 ### Changed
 
 * Every method that returns a new box has PHP 8.5's `#[\NoDiscard]`, so

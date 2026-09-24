@@ -85,7 +85,7 @@ The docblocks are the only API documentation, and four suites hold them to it.
 - `DocumentedApiTest` walks every class under `src/` with reflection and
   requires that every public method has a fence, that the fence calls the
   method it sits above, and that the method appears in README.md's list.
-  `__toString` and anything marked `#[\Deprecated]` are exempt.
+  `__toString` is exempt.
 
 Together: a new public method needs an example, the example has to be about
 that method, it has to run and type-check, and the method has to be listed.
@@ -171,9 +171,10 @@ it.
 - `Result::valueOrThrow()` with no factory rethrows the error itself when the
   error is a `Throwable`, so the trace still points where the failure
   happened. Any other error becomes a `MissingValueException` naming it.
-- `__toString()` interpolates the boxed value, so a non-stringable value gives
-  a PHP warning and `"Some(Array)"` rather than a throw. The
-  `@psalm-suppress InvalidCast` is intentional (vimeo/psalm#1982).
+- `__toString()` never warns or throws. Both boxes show what they hold through
+  `Internal\DescribesValues`: an array or object with no string form by its
+  type, an exception by its class and message. 3.x interpolated the value, so
+  an array warned and an object with no `__toString` threw.
 - `Option::none()` builds a new object every call. Compare with `==`.
 
 ## The serialized form is API

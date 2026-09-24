@@ -6,6 +6,7 @@ namespace Optional;
 
 use Exception;
 use Optional\Exceptions\MissingValueException;
+use Optional\Internal\DescribesValues;
 use Throwable;
 
 /**
@@ -21,6 +22,8 @@ use Throwable;
  * @template T
  */
 final readonly class Option {
+   use DescribesValues;
+
    /**
     * Finishes PHP 8.5's warning when a call below has its result dropped:
     * "The return value of method ... should either be used or intentionally
@@ -979,20 +982,18 @@ final readonly class Option {
    }
 
    /**
-    * @psalm-suppress InvalidCast
+    * Shows the option for debugging, as `Some(value)` or `None`
     *
-    * This is due to this class being a box.
-    * I can't ensure the boxed value is stringable.
-    * https://github.com/vimeo/psalm/issues/1982
-    * @psalm-mutation-free
+    * A value with no string form is shown by its type, and an exception by its
+    * class and message, so this never warns and never throws.
+    *
+    * ```php
+    * echo (string) Option::some(5), "\n";      // Some(5)
+    * echo (string) Option::some([1, 2]), "\n"; // Some(array)
+    * echo (string) Option::none(), "\n";       // None
+    * ```
     */
-   public function __toString() {
-      if ($this->hasValue) {
-         if ($this->value === null) {
-            return "Some(null)";
-         }
-         return "Some({$this->value})";
-      }
-      return "None";
+   public function __toString(): string {
+      return $this->hasValue ? 'Some(' . self::describe($this->value) . ')' : 'None';
    }
 }
