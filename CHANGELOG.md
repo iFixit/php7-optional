@@ -158,6 +158,11 @@ Shorthands for shapes callers otherwise spell out by hand:
   and called a correct `?->` redundant. `valueOrCreate()` and `errOr()` had the
   same fault. The `T is never` conditionals behind it are gone: a plain `T|TT`
   gives psalm the same types and PHPStan the right ones
+* **PHPStan rejected the tap family's own examples.** The callbacks were typed
+  `callable(T): void`, and an arrow function returns its expression, so
+  `->tap(fn($x) => error_log(...))` failed at level 5 and up because
+  `error_log()` returns a bool. They take `callable(T): mixed` now, and the
+  return value is ignored as before
 * **psalm lost the type of every chain through `Option::map`.** On 3.0 it
   typed each one `Option<never>`, a box it believes is always empty, so
   `$opt->map($f)->valueOr(0)` traced as the literal `0`. `map`'s

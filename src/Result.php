@@ -614,10 +614,11 @@ final readonly class Result {
     *
     * _Notes:_
     *
-    *  - `$sideEffect` must follow this interface `callable(T):void`
+    *  - `$sideEffect` must follow this interface `callable(T):mixed`. What it
+    *    returns is ignored, so an arrow function around `error_log()` is fine
     *  - Returns `Result<T, E>`, always this one
     *
-    * @psalm-param callable(T):void $sideEffect
+    * @psalm-param callable(T):mixed $sideEffect
     * @psalm-return Result<T, E>
     */
    public function tap(callable $sideEffect): self {
@@ -642,10 +643,11 @@ final readonly class Result {
     *
     * _Notes:_
     *
-    *  - `$sideEffect` must follow this interface `callable(E):void`
+    *  - `$sideEffect` must follow this interface `callable(E):mixed`. What it
+    *    returns is ignored, so an arrow function around `error_log()` is fine
     *  - Returns `Result<T, E>`, always this one
     *
-    * @psalm-param callable(E):void $sideEffect
+    * @psalm-param callable(E):mixed $sideEffect
     * @psalm-return Result<T, E>
     */
    public function tapErr(callable $sideEffect): self {

@@ -183,10 +183,11 @@ final readonly class Option {
     *
     * _Notes:_
     *
-    *  - `$sideEffect` must follow this interface `callable(T):void`
+    *  - `$sideEffect` must follow this interface `callable(T):mixed`. What it
+    *    returns is ignored, so an arrow function around `error_log()` is fine
     *  - Returns `Option<T>`, always the original one
     *
-    * @psalm-param callable(T):void $sideEffect
+    * @psalm-param callable(T):mixed $sideEffect
     * @psalm-return self<T>
     **/
    public function tap(callable $sideEffect): self {
@@ -213,10 +214,11 @@ final readonly class Option {
     *
     * _Notes:_
     *
-    *  - `$sideEffect` takes no argument, because a `Option::none` holds nothing
+    *  - `$sideEffect` takes no argument, because a `Option::none` holds nothing.
+    *    What it returns is ignored
     *  - Returns `Option<T>`, always the original one
     *
-    * @psalm-param callable():void $sideEffect
+    * @psalm-param callable():mixed $sideEffect
     * @psalm-return self<T>
     **/
    public function tapNone(callable $sideEffect): self {
