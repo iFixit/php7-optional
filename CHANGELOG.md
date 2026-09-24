@@ -137,6 +137,10 @@ Completing the left and right mirror, which was 17 pairs out of 21:
 
 ### Changed
 
+* `Option` and `Either` are `readonly` classes, so PHP enforces the
+  immutability the docblocks only promised. Setting a property on a box, even
+  a new dynamic one, is now an `Error` rather than a deprecation notice
+
 * `filter`, `filterLeft` and `filterRight` take `bool|callable` rather than
   `bool`, so the short, guessable name has the lazy option. Passing a bool is
   unchanged. The three lose `@psalm-mutation-free`, because a method that may

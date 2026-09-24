@@ -124,8 +124,9 @@ final class DocumentedApiTest extends TestCase {
             continue;
          }
 
-         // Anchored, because an unanchored match finds "class is" in a docblock
-         if (preg_match('/^(?:final\s+|abstract\s+)?class\s+(\w+)/m', $source, $cls) !== 1) {
+         // Anchored, because an unanchored match finds "class is" in a docblock.
+         // Any run of modifiers, because `final readonly class` has two.
+         if (preg_match('/^(?:(?:final|abstract|readonly)\s+)*class\s+(\w+)/m', $source, $cls) !== 1) {
             continue;
          }
 

@@ -80,6 +80,10 @@ final class EitherTest extends TestCase
       $this->assertSame($rightThing4->rightOr(-5), 100);
    }
 
+   public function testTheBoxIsAReadonlyClass(): void {
+      $this->assertTrue((new \ReflectionClass(Either::class))->isReadOnly(), 'PHP enforces the immutability only while the class is readonly');
+   }
+
    public function testTheThrowingGettersWithNoFactoryReturnTheValue(): void {
       $this->assertSame(1, Either::left(1)->getLeftOrThrow());
       $this->assertSame("e", Either::right("e")->getRightOrThrow());

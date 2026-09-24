@@ -35,6 +35,10 @@ final class OptionTest extends TestCase {
       $this->assertTrue($some->hasValue());
    }
 
+   public function testTheBoxIsAReadonlyClass(): void {
+      $this->assertTrue((new \ReflectionClass(Option::class))->isReadOnly(), 'PHP enforces the immutability only while the class is readonly');
+   }
+
    public function testValueOrThrowWithNoFactoryReturnsTheValue(): void {
       $this->assertSame(1, Option::some(1)->valueOrThrow());
    }

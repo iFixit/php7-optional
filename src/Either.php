@@ -13,31 +13,22 @@ use Throwable;
  *
  * Never both, never neither. The same transformations are available on each side.
  *
- * The class is final because the static factories build with `new self`, so a
+ * The class is readonly, so PHP itself refuses to change a box once it is
+ * built. It is final because the static factories build with `new self`, so a
  * subclass would be silently downgraded to an `Either` by the first `mapLeft`.
  *
  * @api
  * @template TLeft
  * @template TRight
  */
-final class Either {
-   /**
-    * @psalm-var bool
-    * @psalm-readonly
-    */
-   private $isLeft;
+final readonly class Either {
+   private bool $isLeft;
 
-   /**
-    * @psalm-var TLeft
-    * @psalm-readonly
-    */
-    private $leftValue;
+   /** @psalm-var TLeft */
+   private mixed $leftValue;
 
-    /**
-     * @psalm-var TRight
-     * @psalm-readonly
-     */
-   private $rightValue;
+   /** @psalm-var TRight */
+   private mixed $rightValue;
 
    /**
     * @psalm-param TLeft $leftValue

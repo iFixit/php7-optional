@@ -13,24 +13,18 @@ use Throwable;
  *
  * Use it in place of a nullable return so a caller cannot forget the empty case.
  *
- * The class is final because the static factories build with `new self`, so a
+ * The class is readonly, so PHP itself refuses to change a box once it is
+ * built. It is final because the static factories build with `new self`, so a
  * subclass would be silently downgraded to an `Option` by the first `map` call.
  *
  * @api
  * @template T
  */
-final class Option {
-   /**
-    * @psalm-var bool
-    * @psalm-readonly
-    */
-   private $hasValue;
+final readonly class Option {
+   private bool $hasValue;
 
-   /**
-    * @psalm-var T
-    * @psalm-readonly
-    */
-   private $value;
+   /** @psalm-var T */
+   private mixed $value;
 
    /**
     * @psalm-param T $value

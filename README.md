@@ -14,8 +14,9 @@ isn't one.
 * `Optional\Either` is Left or Right. Use it when the failure has something to
   say for itself.
 
-Both are immutable. Nothing you call can change a box you already hold, so a
-method either hands you a new one or hands back the one you gave it.
+Both are immutable, and PHP enforces it: they are `readonly` classes. Nothing
+you call can change a box you already hold, so a method either hands you a new
+one or hands back the one you gave it.
 
 Every example in this file runs as part of the test suite, so if one of them is
 wrong the build goes red.
