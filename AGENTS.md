@@ -182,11 +182,12 @@ it.
 - `Result::valueOrThrow()` with no factory rethrows the error itself when the
   error is a `Throwable`, so the trace still points where the failure
   happened. Any other error becomes a `MissingValueException` naming it.
-- `__toString()` never warns or throws. Both boxes show what they hold through
-  `Internal\DescribesValues`. An array, or an object with no string form,
-  shows as its type, and an exception as its class and message. Before 4.0 it
-  interpolated the value, so an array warned and an object with no
-  `__toString` threw.
+- `__toString()` never warns or throws, and never shows two different values
+  the same way. Both boxes go through `Internal\DescribesValues`: strings are
+  quoted with control characters escaped, floats keep their point, an enum
+  case shows as `Class::Case`, an exception as its class and message, and
+  anything else with no string form as its type. Before 4.0 it interpolated
+  the value, so an array warned and an object with no `__toString` threw.
 - `Option::none()` builds a new object every call. Compare with `==`.
 
 ## The serialized form is API

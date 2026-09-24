@@ -509,7 +509,7 @@ final readonly class Option {
     *
     * $name = $person->flatMap(fn(array $person): Option => Option::someNotFalsy($person['first'] . $person['last']));
     *
-    * echo (string) $name, "\n"; // Some(FirstLast)
+    * echo (string) $name, "\n"; // Some('FirstLast')
     * ```
     *
     * _Notes:_
@@ -610,7 +610,7 @@ final readonly class Option {
     *
     * echo (string) Option::some($row)->notFalsy(), "\n";  // None
     * echo (string) Option::some('')->notFalsy(), "\n";    // None
-    * echo (string) Option::some('0.0')->notFalsy(), "\n"; // Some(0.0), truthy in PHP
+    * echo (string) Option::some('0.0')->notFalsy(), "\n"; // Some('0.0'), truthy in PHP
     * ```
     *
     * _Notes:_
@@ -721,7 +721,7 @@ final readonly class Option {
     * $row = ['id' => 7];
     *
     * echo (string) Option::fromArray($row, 'id')->toResult('no id'), "\n";       // Ok(7)
-    * echo (string) Option::fromArray($row, 'email')->toResult('no email'), "\n"; // Err(no email)
+    * echo (string) Option::fromArray($row, 'email')->toResult('no email'), "\n"; // Err('no email')
     * ```
     *
     * _Notes:_
@@ -939,11 +939,11 @@ final readonly class Option {
     * drained into an array first.
     *
     * ```php
-    * echo (string) Option::first(['a', 'b']), "\n"; // Some(a)
+    * echo (string) Option::first(['a', 'b']), "\n"; // Some('a')
     * echo (string) Option::first([]), "\n";         // None
     *
     * // keys are ignored, it is the first value in iteration order
-    * echo (string) Option::first(['x' => 'a']), "\n"; // Some(a)
+    * echo (string) Option::first(['x' => 'a']), "\n"; // Some('a')
     *
     * // with a predicate, the first value it accepts
     * $users = [['name' => 'Ada', 'admin' => false], ['name' => 'Grace', 'admin' => true]];

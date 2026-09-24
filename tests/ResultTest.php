@@ -121,7 +121,7 @@ final class ResultTest extends TestCase {
 
    public function testValueOrThrowWithNoFactoryNamesAPlainError(): void {
       $this->expectException(MissingValueException::class);
-      $this->expectExceptionMessage('Result is an Err: timeout');
+      $this->expectExceptionMessage("Result is an Err: 'timeout'");
 
       Result::err('timeout')->valueOrThrow();
    }
@@ -379,7 +379,7 @@ final class ResultTest extends TestCase {
 
    public function testToStringShowsAnyValueWithoutWarning(): void {
       $this->assertSame('Ok(5)', (string) Result::ok(5));
-      $this->assertSame('Err(no)', (string) Result::err('no'));
+      $this->assertSame("Err('no')", (string) Result::err('no'));
       $this->assertSame('Ok(null)', (string) Result::ok(null));
       $this->assertSame('Ok(false)', (string) Result::ok(false));
       $this->assertSame('Ok(array)', (string) Result::ok([1, 2]), 'an array is shown by its type');

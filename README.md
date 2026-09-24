@@ -133,7 +133,7 @@ echo $kept->mapErr(fn(Throwable $e) => $e->getMessage())->errOr('') . "\n";
 // "the api said no"
 
 $row = false; // what a row fetch hands back when it finds nothing
-echo (string) Option::someNotFalsy($row)->toResult('row not found') . "\n"; // "Err(row not found)"
+echo (string) Option::someNotFalsy($row)->toResult('row not found') . "\n"; // "Err('row not found')"
 ```
 
 There is also `Option::some`, `Option::none`, `Option::someNotNull`,
@@ -219,7 +219,7 @@ the same, and you can cross between them:
 
 ```php
 $value = Result::ok(10)->toOption();          // Some(10), drops any error
-$error = Option::none()->toResult('no id');   // Err(no id), gains a reason
+$error = Option::none()->toResult('no id');   // Err('no id'), gains a reason
 
 echo $value->valueOr(-1) . " " . $error->errOr('') . "\n"; // "10 no id"
 ```

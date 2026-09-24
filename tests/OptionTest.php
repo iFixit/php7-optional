@@ -416,6 +416,46 @@ final class OptionTest extends TestCase {
       $this->assertSame('Some(RuntimeException: boom)', (string) Option::some(new \RuntimeException('boom')), 'an exception by its class and message, not its trace');
    }
 
+   /**
+    * Two different values never print the same way. Before strings were
+    * quoted, Some('null') printed as Some(null), and Some('1'), Some(1) and
+    * Some(1.0) all printed as Some(1).
+    */
+   public function testToStringTellsDifferentValuesApart(): void {
+      $shown = [
+         'null' => Option::some(null),
+         "'null'" => Option::some('null'),
+         '1' => Option::some(1),
+         "'1'" => Option::some('1'),
+         '1.0' => Option::some(1.0),
+         '0.30000000000000004' => Option::some(0.1 + 0.2),
+         "''" => Option::some(''),
+         'false' => Option::some(false),
+         "'it\\'s'" => Option::some("it's"),
+         "'two\\nlines'" => Option::some("two\nlines"),
+         'NAN' => Option::some(NAN),
+         'INF' => Option::some(INF),
+         'Optional\\Tests\\OptionTestSuit::Hearts' => Option::some(OptionTestSuit::Hearts),
+         'Optional\\Tests\\OptionTestCode::NotFound' => Option::some(OptionTestCode::NotFound),
+      ];
+
+      foreach ($shown as $expected => $box) {
+         $this->assertSame("Some({$expected})", (string) $box);
+      }
+   }
+
+   public function testToStringNeverThrowsForAValueThatDoes(): void {
+      $throws = new class implements \Stringable {
+         #[\Override]
+         public function __toString(): string {
+            throw new \LogicException('no string form');
+         }
+      };
+
+      $this->assertSame('Some(Stringable@anonymous)', (string) Option::some($throws));
+      $this->assertSame('Some(RuntimeException@anonymous: disk full)', (string) Option::some(new class('disk full') extends \RuntimeException {}));
+   }
+
    public function testValueOrThrowUsesTheSuppliedException(): void {
       $some = Option::some(1);
       $this->assertSame(1, $some->valueOrThrow(function(): \Exception {
@@ -670,4 +710,12 @@ final class SomeComplexThing {
 
       return $thing;
    }
+}
+
+enum OptionTestSuit {
+   case Hearts;
+}
+
+enum OptionTestCode: int {
+   case NotFound = 404;
 }

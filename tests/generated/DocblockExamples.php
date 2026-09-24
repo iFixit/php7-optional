@@ -197,7 +197,7 @@ function example15_flatMap(): void {
 
    $name = $person->flatMap(fn(array $person): Option => Option::someNotFalsy($person['first'] . $person['last']));
 
-   echo (string) $name, "\n"; // Some(FirstLast)
+   echo (string) $name, "\n"; // Some('FirstLast')
 }
 
 /**
@@ -240,7 +240,7 @@ function example19_notFalsy(): void {
 
    echo (string) Option::some($row)->notFalsy(), "\n";  // None
    echo (string) Option::some('')->notFalsy(), "\n";    // None
-   echo (string) Option::some('0.0')->notFalsy(), "\n"; // Some(0.0), truthy in PHP
+   echo (string) Option::some('0.0')->notFalsy(), "\n"; // Some('0.0'), truthy in PHP
 }
 
 /**
@@ -278,7 +278,7 @@ function example23_toResult(): void {
    $row = ['id' => 7];
 
    echo (string) Option::fromArray($row, 'id')->toResult('no id'), "\n";       // Ok(7)
-   echo (string) Option::fromArray($row, 'email')->toResult('no email'), "\n"; // Err(no email)
+   echo (string) Option::fromArray($row, 'email')->toResult('no email'), "\n"; // Err('no email')
 }
 
 /**
@@ -351,11 +351,11 @@ function example29_fromCallable(): void {
  * src/Option.php #30, first()
  */
 function example30_first(): void {
-   echo (string) Option::first(['a', 'b']), "\n"; // Some(a)
+   echo (string) Option::first(['a', 'b']), "\n"; // Some('a')
    echo (string) Option::first([]), "\n";         // None
 
    // keys are ignored, it is the first value in iteration order
-   echo (string) Option::first(['x' => 'a']), "\n"; // Some(a)
+   echo (string) Option::first(['x' => 'a']), "\n"; // Some('a')
 
    // with a predicate, the first value it accepts
    $users = [['name' => 'Ada', 'admin' => false], ['name' => 'Grace', 'admin' => true]];
@@ -437,7 +437,7 @@ function example37_valueOrThrow(): void {
    try {
       Result::err("timeout")->valueOrThrow();
    } catch (\Optional\Exceptions\MissingValueException $e) {
-      echo $e->getMessage(), "\n"; // "Result is an Err: timeout"
+      echo $e->getMessage(), "\n"; // "Result is an Err: 'timeout'"
    }
 }
 
@@ -512,7 +512,7 @@ function example44_map(): void {
    $square = fn(int $x) => $x * $x;
 
    echo (string) Result::ok(5)->map($square), "\n";     // Ok(25)
-   echo (string) Result::err('no')->map($square), "\n"; // Err(no), $square never ran
+   echo (string) Result::err('no')->map($square), "\n"; // Err('no'), $square never ran
 }
 
 /**
@@ -521,7 +521,7 @@ function example44_map(): void {
 function example45_mapErr(): void {
    $describe = fn(string $error) => "request failed: {$error}";
 
-   echo (string) Result::err('timeout')->mapErr($describe), "\n"; // Err(request failed: timeout)
+   echo (string) Result::err('timeout')->mapErr($describe), "\n"; // Err('request failed: timeout')
    echo (string) Result::ok(1)->mapErr($describe), "\n";          // Ok(1), $describe never ran
 }
 
@@ -546,8 +546,8 @@ function example47_flatMap(): void {
       ->toResult("not a number: {$input}");
 
    echo (string) Result::ok('42')->flatMap($parseAge), "\n";       // Ok(42)
-   echo (string) Result::ok('old')->flatMap($parseAge), "\n";      // Err(not a number: old)
-   echo (string) Result::err('no input')->flatMap($parseAge), "\n"; // Err(no input), never parsed
+   echo (string) Result::ok('old')->flatMap($parseAge), "\n";      // Err('not a number: old')
+   echo (string) Result::err('no input')->flatMap($parseAge), "\n"; // Err('no input'), never parsed
 }
 
 /**
@@ -557,7 +557,7 @@ function example48_filter(): void {
    $adult = Result::ok(30)->filter(fn(int $age) => $age >= 18, 'too young');
    $minor = Result::ok(12)->filter(fn(int $age) => $age >= 18, 'too young');
 
-   echo (string) $adult, " ", (string) $minor, "\n"; // "Ok(30) Err(too young)"
+   echo (string) $adult, " ", (string) $minor, "\n"; // "Ok(30) Err('too young')"
 }
 
 /**
@@ -574,8 +574,8 @@ function example49_or(): void {
 function example50_orCreate(): void {
    $fallback = fn(string $error) => "default, after {$error}";
 
-   echo (string) Result::err('timeout')->orCreate($fallback), "\n"; // Ok(default, after timeout)
-   echo (string) Result::ok('found')->orCreate($fallback), "\n";    // Ok(found)
+   echo (string) Result::err('timeout')->orCreate($fallback), "\n"; // Ok('default, after timeout')
+   echo (string) Result::ok('found')->orCreate($fallback), "\n";    // Ok('found')
 }
 
 /**
@@ -584,8 +584,8 @@ function example50_orCreate(): void {
 function example51_else(): void {
    $fromDisk = Result::ok('settings from disk');
 
-   echo (string) Result::err('cache miss')->else($fromDisk), "\n";       // Ok(settings from disk)
-   echo (string) Result::ok('settings from cache')->else($fromDisk), "\n"; // Ok(settings from cache)
+   echo (string) Result::err('cache miss')->else($fromDisk), "\n";       // Ok('settings from disk')
+   echo (string) Result::ok('settings from cache')->else($fromDisk), "\n"; // Ok('settings from cache')
 }
 
 /**
@@ -594,8 +594,8 @@ function example51_else(): void {
 function example52_elseCreate(): void {
    $retry = fn(string $error) => Result::ok("second try, after {$error}");
 
-   echo (string) Result::err('timeout')->elseCreate($retry), "\n"; // Ok(second try, after timeout)
-   echo (string) Result::ok('first try')->elseCreate($retry), "\n"; // Ok(first try)
+   echo (string) Result::err('timeout')->elseCreate($retry), "\n"; // Ok('second try, after timeout')
+   echo (string) Result::ok('first try')->elseCreate($retry), "\n"; // Ok('first try')
 }
 
 /**
@@ -606,7 +606,7 @@ function example53_tap(): void {
       ->tap(fn(int $x) => error_log("about to double {$x}"))
       ->map(fn(int $x) => $x * 2); // Ok(10), and the log line ran
 
-   $untouched = Result::err('no')->tap(fn(int $x) => error_log("never runs")); // Err(no)
+   $untouched = Result::err('no')->tap(fn(int $x) => error_log("never runs")); // Err('no')
 }
 
 /**
@@ -614,7 +614,7 @@ function example53_tap(): void {
  */
 function example54_tapErr(): void {
    $failed = Result::err('timeout')
-      ->tapErr(fn(string $error) => error_log("request failed: {$error}")); // Err(timeout), and the log line ran
+      ->tapErr(fn(string $error) => error_log("request failed: {$error}")); // Err('timeout'), and the log line ran
 
    $fine = Result::ok(5)->tapErr(fn(string $error) => error_log("never runs")); // Ok(5)
 }
@@ -630,7 +630,7 @@ function example55_ok(): void {
  * src/Result.php #24, err()
  */
 function example56_err(): void {
-   echo (string) Result::err('not found'), "\n"; // Err(not found)
+   echo (string) Result::err('not found'), "\n"; // Err('not found')
 }
 
 /**
@@ -746,7 +746,7 @@ function example65_unknown(): void {
    // "the api said no"
 
    $row = false; // what a row fetch hands back when it finds nothing
-   echo (string) Option::someNotFalsy($row)->toResult('row not found') . "\n"; // "Err(row not found)"
+   echo (string) Option::someNotFalsy($row)->toResult('row not found') . "\n"; // "Err('row not found')"
 }
 
 /**
@@ -817,7 +817,7 @@ function example69_unknown(): void {
  */
 function example70_unknown(): void {
    $value = Result::ok(10)->toOption();          // Some(10), drops any error
-   $error = Option::none()->toResult('no id');   // Err(no id), gains a reason
+   $error = Option::none()->toResult('no id');   // Err('no id'), gains a reason
 
    echo $value->valueOr(-1) . " " . $error->errOr('') . "\n"; // "10 no id"
 }

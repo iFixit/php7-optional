@@ -196,11 +196,19 @@ Shorthands for shapes callers otherwise spell out by hand:
   interpolated the value, so an array printed `Some(Array)` with an
   "Array to string conversion" warning, and an object with no `__toString`
   threw an `Error`. Both boxes now show a value with no string form by its
-  type (`Some(array)`, `Some(stdClass)`) and an exception by its class and
-  message. `false` and `true` print as `Some(false)` and `Some(true)` rather
-  than `Some()` and `Some(1)`
+  type (`Some(array)`, `Some(stdClass)`), an exception by its class and
+  message, and an enum case as `Suit::Hearts`. A value whose own
+  `__toString()` throws shows by its type, and `NAN` no longer warns on 8.5
 
 ### Changed
+
+* `(string)` on a box never shows two different values the same way. Strings
+  are quoted, so `Some('Ada')` rather than 3.x's `Some(Ada)`, and `'null'`
+  and `null` differ. Floats keep their point (`Some(1.0)`, not `Some(1)`),
+  and booleans print as `true` and `false` rather than `1` and nothing. A
+  string's control characters are escaped, so the result stays on one line.
+  `MissingValueException` messages use the same form: `Result is an Err:
+  'timeout'`
 
 * Every method that returns a new box has PHP 8.5's `#[\NoDiscard]`, so
   `$option->map($f);` on its own line, which does nothing, warns on 8.5. psalm

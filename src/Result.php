@@ -181,7 +181,7 @@ final readonly class Result {
     * try {
     *    Result::err("timeout")->valueOrThrow();
     * } catch (\Optional\Exceptions\MissingValueException $e) {
-    *    echo $e->getMessage(), "\n"; // "Result is an Err: timeout"
+    *    echo $e->getMessage(), "\n"; // "Result is an Err: 'timeout'"
     * }
     * ```
     *
@@ -358,7 +358,7 @@ final readonly class Result {
     * $square = fn(int $x) => $x * $x;
     *
     * echo (string) Result::ok(5)->map($square), "\n";     // Ok(25)
-    * echo (string) Result::err('no')->map($square), "\n"; // Err(no), $square never ran
+    * echo (string) Result::err('no')->map($square), "\n"; // Err('no'), $square never ran
     * ```
     *
     * _Notes:_
@@ -386,7 +386,7 @@ final readonly class Result {
     * ```php
     * $describe = fn(string $error) => "request failed: {$error}";
     *
-    * echo (string) Result::err('timeout')->mapErr($describe), "\n"; // Err(request failed: timeout)
+    * echo (string) Result::err('timeout')->mapErr($describe), "\n"; // Err('request failed: timeout')
     * echo (string) Result::ok(1)->mapErr($describe), "\n";          // Ok(1), $describe never ran
     * ```
     *
@@ -459,8 +459,8 @@ final readonly class Result {
     *    ->toResult("not a number: {$input}");
     *
     * echo (string) Result::ok('42')->flatMap($parseAge), "\n";       // Ok(42)
-    * echo (string) Result::ok('old')->flatMap($parseAge), "\n";      // Err(not a number: old)
-    * echo (string) Result::err('no input')->flatMap($parseAge), "\n"; // Err(no input), never parsed
+    * echo (string) Result::ok('old')->flatMap($parseAge), "\n";      // Err('not a number: old')
+    * echo (string) Result::err('no input')->flatMap($parseAge), "\n"; // Err('no input'), never parsed
     * ```
     *
     * _Notes:_
@@ -489,7 +489,7 @@ final readonly class Result {
     * $adult = Result::ok(30)->filter(fn(int $age) => $age >= 18, 'too young');
     * $minor = Result::ok(12)->filter(fn(int $age) => $age >= 18, 'too young');
     *
-    * echo (string) $adult, " ", (string) $minor, "\n"; // "Ok(30) Err(too young)"
+    * echo (string) $adult, " ", (string) $minor, "\n"; // "Ok(30) Err('too young')"
     * ```
     *
     * _Notes:_
@@ -554,8 +554,8 @@ final readonly class Result {
     * ```php
     * $fallback = fn(string $error) => "default, after {$error}";
     *
-    * echo (string) Result::err('timeout')->orCreate($fallback), "\n"; // Ok(default, after timeout)
-    * echo (string) Result::ok('found')->orCreate($fallback), "\n";    // Ok(found)
+    * echo (string) Result::err('timeout')->orCreate($fallback), "\n"; // Ok('default, after timeout')
+    * echo (string) Result::ok('found')->orCreate($fallback), "\n";    // Ok('found')
     * ```
     *
     * _Notes:_
@@ -583,8 +583,8 @@ final readonly class Result {
     * ```php
     * $fromDisk = Result::ok('settings from disk');
     *
-    * echo (string) Result::err('cache miss')->else($fromDisk), "\n";       // Ok(settings from disk)
-    * echo (string) Result::ok('settings from cache')->else($fromDisk), "\n"; // Ok(settings from cache)
+    * echo (string) Result::err('cache miss')->else($fromDisk), "\n";       // Ok('settings from disk')
+    * echo (string) Result::ok('settings from cache')->else($fromDisk), "\n"; // Ok('settings from cache')
     * ```
     *
     * _Notes:_
@@ -613,8 +613,8 @@ final readonly class Result {
     * ```php
     * $retry = fn(string $error) => Result::ok("second try, after {$error}");
     *
-    * echo (string) Result::err('timeout')->elseCreate($retry), "\n"; // Ok(second try, after timeout)
-    * echo (string) Result::ok('first try')->elseCreate($retry), "\n"; // Ok(first try)
+    * echo (string) Result::err('timeout')->elseCreate($retry), "\n"; // Ok('second try, after timeout')
+    * echo (string) Result::ok('first try')->elseCreate($retry), "\n"; // Ok('first try')
     * ```
     *
     * _Notes:_
@@ -645,7 +645,7 @@ final readonly class Result {
     *    ->tap(fn(int $x) => error_log("about to double {$x}"))
     *    ->map(fn(int $x) => $x * 2); // Ok(10), and the log line ran
     *
-    * $untouched = Result::err('no')->tap(fn(int $x) => error_log("never runs")); // Err(no)
+    * $untouched = Result::err('no')->tap(fn(int $x) => error_log("never runs")); // Err('no')
     * ```
     *
     * _Notes:_
@@ -674,7 +674,7 @@ final readonly class Result {
     *
     * ```php
     * $failed = Result::err('timeout')
-    *    ->tapErr(fn(string $error) => error_log("request failed: {$error}")); // Err(timeout), and the log line ran
+    *    ->tapErr(fn(string $error) => error_log("request failed: {$error}")); // Err('timeout'), and the log line ran
     *
     * $fine = Result::ok(5)->tapErr(fn(string $error) => error_log("never runs")); // Ok(5)
     * ```
@@ -727,7 +727,7 @@ final readonly class Result {
     * case, an exception.
     *
     * ```php
-    * echo (string) Result::err('not found'), "\n"; // Err(not found)
+    * echo (string) Result::err('not found'), "\n"; // Err('not found')
     * ```
     *
     * @psalm-pure
