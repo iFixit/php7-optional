@@ -355,6 +355,14 @@ Shorthands for shapes callers otherwise spell out by hand:
   code, and one equivalent mutant, now skipped by name. Every mutant is killed
   now, and the threshold is 100%.
 * `bin/benchmark.php` measures what the box costs. The README publishes it.
+* The package holds only what users need: `src/`, `static-analysis/`,
+  `extension.neon`, the README, CHANGELOG, LICENSE and `composer.json`.
+  `.gitattributes` keeps the tests and tooling out, which takes the archive
+  from 666 KB to 164 KB, and `PackageContentsTest` checks the list.
+* `composer.json` names the psalm plugin and the PHPStan extension, so
+  `psalm-plugin enable ifixit/php7-optional` and PHPStan's
+  extension-installer find them. It also keeps `static-analysis/` out of an
+  optimized classmap, since loading those classes needs psalm or PHPStan
 * CI is five jobs: the test matrix, coverage, psalm, PHPStan, and
   `composer validate --strict`. Static analysis and coverage are out of the
   matrix, because pinning psalm to the oldest PHP in it is what froze the

@@ -33,10 +33,11 @@ that shows a bug, and one in PHP 8.5 syntax.
 ## Installation
 
 ```sh
-composer require ifixit/php7-optional
+composer require ifixit/php7-optional:^4.0
 ```
 
-Requires PHP 8.4. For PHP 7, stay on the 3.x line.
+Requires PHP 8.4. On PHP 7.2 to 8.3, use 3.x, which has `Option` but not
+`Result`.
 
 ## Why not just null?
 
@@ -350,6 +351,11 @@ its own line, the way Rust's `#[must_use]` does:
 includes:
     - vendor/ifixit/php7-optional/extension.neon
 ```
+
+`vendor/bin/psalm-plugin enable ifixit/php7-optional` writes the psalm lines
+for you, and PHPStan's extension-installer includes the extension without
+them. The plugin needs psalm 6. The extension is checked in CI with PHPStan
+2, and runs on 1.12 too.
 
 Assign a result to `$_` to drop it on purpose. A chain ending in `tapErr()` has
 looked at the error, so it is not reported. The same plugin and extension also

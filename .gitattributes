@@ -1,0 +1,18 @@
+# Packagist builds the package with git archive, so everything below stays
+# out of it: the tests, tooling and notes for working on the library itself.
+# PackageContentsTest checks what is left.
+/.gitattributes export-ignore
+/.github export-ignore
+/.gitignore export-ignore
+/AGENTS.md export-ignore
+/CLAUDE.md export-ignore
+/bin export-ignore
+/composer.lock export-ignore
+/examples export-ignore
+/infection.json5 export-ignore
+/phpstan.neon export-ignore
+/phpunit.xml export-ignore
+/psalm-types.xml export-ignore
+/psalm.xml export-ignore
+/stubs export-ignore
+/tests export-ignore

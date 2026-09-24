@@ -23,11 +23,20 @@
       "psr-4": {
          "Optional\\": "src/",
          "Optional\\StaticAnalysis\\": "static-analysis/"
-      }
+      },
+      "exclude-from-classmap": ["static-analysis/"]
    },
    "autoload-dev": {
       "psr-4": {
          "Optional\\Tests\\": "tests/"
+      }
+   },
+   "extra": {
+      "phpstan": {
+         "includes": ["extension.neon"]
+      },
+      "psalm": {
+         "pluginClass": "Optional\\StaticAnalysis\\Psalm\\Plugin"
       }
    },
    "config": {
