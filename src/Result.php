@@ -371,11 +371,14 @@ final readonly class Result {
     */
    #[\NoDiscard(self::DISCARDED)]
    public function map(callable $mapFunc): self {
+      if (!$this->isOk) {
+         /** @var Result<U, E> an Err holds no value, so it stands in for any value type */
+         return $this;
+      }
+
       $value = $this->value;
 
-      return $this->isOk
-         ? self::ok($mapFunc($value))
-         : self::err($this->error);
+      return self::ok($mapFunc($value));
    }
 
    /**
@@ -400,11 +403,14 @@ final readonly class Result {
     */
    #[\NoDiscard(self::DISCARDED)]
    public function mapErr(callable $mapFunc): self {
+      if ($this->isOk) {
+         /** @var Result<T, F> an Ok holds no error, so it stands in for any error type */
+         return $this;
+      }
+
       $error = $this->error;
 
-      return $this->isOk
-         ? self::ok($this->value)
-         : self::err($mapFunc($error));
+      return self::err($mapFunc($error));
    }
 
    /**
@@ -474,11 +480,14 @@ final readonly class Result {
     */
    #[\NoDiscard(self::DISCARDED)]
    public function flatMap(callable $mapFunc): self {
+      if (!$this->isOk) {
+         /** @var Result<U, E|F> an Err holds no value, so it stands in for any value type */
+         return $this;
+      }
+
       $value = $this->value;
 
-      return $this->isOk
-         ? $mapFunc($value)
-         : self::err($this->error);
+      return $mapFunc($value);
    }
 
    /**

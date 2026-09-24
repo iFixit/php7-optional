@@ -75,6 +75,15 @@ $plainChain = measure('null checks by hand', static function() use ($counts, $do
 $boxChain = measure('->map()->map()->valueOr()', static fn(): int
    => Option::fromArray($counts, 'count')->map($double)->map($double)->valueOr(0), $iterations);
 
+echo "\nThe same chain on a key that is absent\n";
+$plainEmptyChain = measure('null checks by hand', static function() use ($counts, $double): int {
+   $value = $counts['nope'] ?? null;
+
+   return $value === null ? 0 : $double($double($value));
+}, $iterations);
+$boxEmptyChain = measure('->map()->map()->valueOr()', static fn(): int
+   => Option::fromArray($counts, 'nope')->map($double)->map($double)->valueOr(0), $iterations);
+
 echo "\nConstruction alone\n";
 measure('Option::some(1)', static fn(): Option => Option::some(1), $iterations);
 measure('Option::none()', static fn(): Option => Option::none(), $iterations);
@@ -97,9 +106,10 @@ measure('file_get_contents() of a 1 KB file', static fn(): string|false => file_
 unlink($file);
 
 printf(
-   "\nOverhead: %.1fx on a hit, %.1fx on a miss, %.1fx on the two step chain.\n",
+   "\nOverhead: %.1fx on a hit, %.1fx on a miss, %.1fx on the two step chain, %.1fx on it with the key absent.\n",
    $plainHit > 0.0 ? $boxHit / $plainHit : 0.0,
    $plainMiss > 0.0 ? $boxMiss / $plainMiss : 0.0,
-   $plainChain > 0.0 ? $boxChain / $plainChain : 0.0
+   $plainChain > 0.0 ? $boxChain / $plainChain : 0.0,
+   $plainEmptyChain > 0.0 ? $boxEmptyChain / $plainEmptyChain : 0.0
 );
 printf("In absolute terms the box adds about %.0f ns per call.\n", $boxHit - $plainHit);

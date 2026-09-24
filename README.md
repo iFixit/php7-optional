@@ -327,12 +327,14 @@ it, and on PHP 8.4 with no opcache it reports:
 
 | | plain PHP | boxed | overhead |
 |---|---|---|---|
-| read a key that is present | 23 ns | 130 ns | 5.7x |
-| read a key that is absent | 19 ns | 116 ns | 6.0x |
-| two step chain | 63 ns | 350 ns | 5.6x |
+| read a key that is present | 21 ns | 130 ns | 6.2x |
+| read a key that is absent | 20 ns | 118 ns | 5.9x |
+| two step chain | 64 ns | 348 ns | 5.4x |
+| the same chain, key absent | 29 ns | 178 ns | 6.1x |
 
-So the box costs roughly 100 ns per call. Read the ratio and the absolute
-number together: 5.7x sounds alarming and 100 ns usually is not. On the same
+So the box costs roughly 100 ns per call, and a chain on an empty box skips
+its steps without building a new box for each. Read the ratio and the absolute
+number together: 6x sounds alarming and 100 ns usually is not. On the same
 machine, decoding a small JSON object takes about 590 ns and reading a 1 KB
 file about 5.5 µs. A box adds about a sixth to the first and under 2% to the
 second, and a database query or an HTTP call is slower again.

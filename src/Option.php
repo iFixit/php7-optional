@@ -444,11 +444,14 @@ final readonly class Option {
     **/
    #[\NoDiscard(self::DISCARDED)]
    public function map(callable $mapFunc): self {
+      if (!$this->hasValue) {
+         /** @var Option<U> an empty box holds no value, so it stands in for any type */
+         return $this;
+      }
+
       $value = $this->value;
 
-      return $this->hasValue
-         ? self::some($mapFunc($value))
-         : self::none();
+      return self::some($mapFunc($value));
    }
 
    /**
@@ -527,11 +530,14 @@ final readonly class Option {
     **/
    #[\NoDiscard(self::DISCARDED)]
    public function flatMap(callable $mapFunc): self {
+      if (!$this->hasValue) {
+         /** @var Option<U> an empty box holds no value, so it stands in for any type */
+         return $this;
+      }
+
       $value = $this->value;
 
-      return $this->hasValue
-         ? $mapFunc($value)
-         : self::none();
+      return $mapFunc($value);
    }
 
    /**
