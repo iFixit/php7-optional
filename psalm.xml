@@ -13,6 +13,7 @@
         <directory name="tests"/>
         <directory name="bin"/>
         <directory name="static-analysis"/>
+        <directory name="examples"/>
         <ignoreFiles>
             <directory name="vendor"/>
             <!--

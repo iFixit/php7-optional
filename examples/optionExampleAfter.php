@@ -1,6 +1,8 @@
 <?php
 declare(strict_types = 1);
 
+namespace OptionExample\After;
+
 require_once dirname(__DIR__) . '/vendor/autoload.php';
 
 use Optional\Option;
@@ -19,6 +21,7 @@ final class User {
    public function __construct(public readonly string $name) {}
 }
 
+/** @var array<string, array{first: string, last: string}|null> $somePerson a row that may lack the name */
 $somePerson = [
    'name' => [
       'first' => 'First',

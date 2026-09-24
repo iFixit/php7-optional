@@ -3,6 +3,11 @@ declare(strict_types = 1);
 
 // Read a nested name, run it through something that can throw, and build a
 // user from it, in plain PHP. optionExampleAfter.php does the same with the box.
+// Each script has its own namespace, since both define the same two classes.
+
+namespace OptionExample\Before;
+
+use Exception;
 
 final class SomeComplexThing {
    public static function doWork(string $thing): string {
@@ -14,6 +19,7 @@ final class User {
    public function __construct(public readonly string $name) {}
 }
 
+/** @var array<string, array{first: string, last: string}|null> $somePerson a row that may lack the name */
 $somePerson = [
    'name' => [
       'first' => 'First',

@@ -495,7 +495,8 @@ The CHANGELOG lists every change, with the rest of the `Either` table.
 
 Every one has a worked example in its docblock, and every one of those
 examples is executed by the test suite. Read them in `src/Option.php` and
-`src/Result.php`.
+`src/Result.php`. `examples/` has three longer scripts that run on their own:
+the same lookup in plain PHP and with a box, and a config reader.
 
 There is no generated API site. The old one at `php7-optional.surge.sh` is
 still up but nothing has rebuilt it in years: it still serves pages for 2.x

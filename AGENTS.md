@@ -92,7 +92,9 @@ The docblocks are the only API documentation, and four suites hold them to it.
   `php bin/generate-example-checks.php` after editing an example;
   `GeneratedExamplesAreCurrentTest` fails until you do.
 - `ExampleScriptTest` runs each script in `examples/` in a subprocess, failing
-  on any Fatal, Warning, Notice or Deprecated.
+  on any Fatal, Warning, Notice or Deprecated. psalm and PHPStan analyse them
+  too. The before and after scripts define the same two classes, so each has
+  its own namespace.
 - `DocumentedApiTest` walks every class under `src/` with reflection and
   requires that every public method has a fence, and that the fence calls the
   method it sits above on its own class: a factory as `Result::ok(`, a method

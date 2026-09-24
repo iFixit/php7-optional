@@ -6,6 +6,7 @@ parameters:
     paths:
         - src
         - static-analysis
+        - examples
         - tests/TypeInference/Assignability.php
     ignoreErrors:
         # notNull(), notFalsy() and notFalse() narrow a box's type for psalm with
