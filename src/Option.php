@@ -85,7 +85,7 @@ final readonly class Option {
     * @psalm-mutation-free
     * @template TT
     * @psalm-param TT $alternative
-    * @psalm-return (T is never ? TT : T)
+    * @psalm-return T|TT
     **/
    public function valueOr(mixed $alternative): mixed {
       return $this->hasValue
@@ -116,7 +116,7 @@ final readonly class Option {
     *    not of this method
     *
     * @psalm-mutation-free
-    * @psalm-return (T is never ? null : T|null)
+    * @psalm-return T|null
     **/
    public function toNullable(): mixed {
       return $this->hasValue
@@ -155,7 +155,7 @@ final readonly class Option {
     *    unguarded call to it is the one mistake psalm cannot catch for you
     *
     * @psalm-param null|callable():Throwable $exceptionFactory
-    * @psalm-return (T is never ? never : T)
+    * @psalm-return T
     **/
    public function valueOrThrow(?callable $exceptionFactory = null): mixed {
       if (!$this->hasValue) {
@@ -247,7 +247,7 @@ final readonly class Option {
     *
     * @template TT
     * @psalm-param callable():TT $alternativeFactory
-    * @psalm-return (T is never ? TT : T)
+    * @psalm-return T|TT
     **/
    public function valueOrCreate(callable $alternativeFactory): mixed {
       return $this->hasValue

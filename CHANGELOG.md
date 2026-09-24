@@ -153,6 +153,11 @@ Shorthands for shapes callers otherwise spell out by hand:
   type through, which is why nothing noticed. Both boxes are covariant now,
   which also lets a `flatMap` or `elseCreate` callback return a Some on one
   branch and a None on the other with no annotation
+* **PHPStan dropped the fallback from `valueOr()`.** It typed
+  `$user->valueOr(null)` as `User`, so it missed a null dereference after it
+  and called a correct `?->` redundant. `valueOrCreate()` and `errOr()` had the
+  same fault. The `T is never` conditionals behind it are gone: a plain `T|TT`
+  gives psalm the same types and PHPStan the right ones
 * **psalm lost the type of every chain through `Option::map`.** On 3.0 it
   typed each one `Option<never>`, a box it believes is always empty, so
   `$opt->map($f)->valueOr(0)` traced as the literal `0`. `map`'s

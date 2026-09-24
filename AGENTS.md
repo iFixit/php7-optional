@@ -229,9 +229,9 @@ has a handler attached to a test. That is how an implicitly nullable parameter
 only thing that catches those is running the file in a subprocess, which is
 what `ExampleScriptTest` does.
 
-**psalm proves the throws, so code after one is unreachable.** The conditional
-return types (`(T is never ? never : T)`) let psalm prove that
-`valueOrThrow()` on a `None` cannot return. Anything written after such a call
+**psalm proves the throws, so code after one is unreachable.**
+`valueOrThrow()` returns `T`, and `T` is `never` on an `Option::none()`, so
+psalm and PHPStan both prove the call cannot return. Anything written after such a call
 is reported as `UnevaluatedCode`, and a `$threw` flag read afterwards as
 `RedundantCondition`. Use one `expectException` per test rather than fighting
 it. One throw per test is what makes that safe. `expectException` ends a test
@@ -256,15 +256,17 @@ reporting the test classes themselves as unused.
   That suppression would also hide the one real mistake: a public method with
   a bare `T` or `E` parameter. Never add one. Take a new template instead, the
   way `valueOr(TT $alternative)` does.
-- **A method that returns a box never gets a conditional return type.**
-  psalm cannot decide `T is never` for an ordinary `T`, so it returns both
-  branches, and `(T is never ? Option<never> : Option<U>)` becomes
-  `Option<U>|Option<never>`. The next call with a typed callback meets the
-  empty half and fails with `ReservedWord` and `NoValue`; that once broke 11
-  of 20 everyday two-call chains. Write one type instead (`Option<T|TT>`,
-  `Result<T, E|TE>`), and state the class invariant in the body with a
-  `/** @var ... */` where psalm cannot see it. A conditional on a method that
-  returns a plain value is fine, since psalm drops `never` from a value union.
+- **Never write a `T is never` conditional return type.** A plain union
+  already does the job, because a union with `never` in it reduces: on an
+  `Option::none()`, `T|TT` is `TT` and `T` is `never`. The conditional only
+  did harm. psalm cannot decide `T is never` for an ordinary `T`, so on a
+  method that returns a box it returned both branches:
+  `Option<U>|Option<never>`. The next typed callback then failed with
+  `ReservedWord` and `NoValue`, which once broke 11 of 20 everyday two-call
+  chains. PHPStan does decide it, always false, so `valueOr(null)` lost its
+  `null` and a caller's null check was called redundant. Write one type
+  (`Option<T|TT>`, `Result<T, E|TE>`, `T|null`), and state the class
+  invariant in the body with a `/** @var ... */` where psalm cannot see it.
 - To drop `null` or `false` from a box's type, bind a template through
   `@psalm-if-this-is Option<TNotNull|null>`. Two or three members bind; a
   longer union of literals does not, and fails on an array shape.

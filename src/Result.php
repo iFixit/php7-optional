@@ -105,7 +105,7 @@ final readonly class Result {
     * @psalm-mutation-free
     * @template TT
     * @psalm-param TT $alternative
-    * @psalm-return (T is never ? TT : T)
+    * @psalm-return T|TT
     */
    public function valueOr(mixed $alternative): mixed {
       return $this->isOk
@@ -132,7 +132,7 @@ final readonly class Result {
     *
     * @template TT
     * @psalm-param callable(E):TT $alternativeFactory
-    * @psalm-return (T is never ? TT : T)
+    * @psalm-return T|TT
     */
    public function valueOrCreate(callable $alternativeFactory): mixed {
       return $this->isOk
@@ -177,7 +177,7 @@ final readonly class Result {
     *  - It is called lazily, so building the exception costs nothing on a success
     *
     * @psalm-param null|callable(E):Throwable $exceptionFactory
-    * @psalm-return (T is never ? never : T)
+    * @psalm-return T
     */
    public function valueOrThrow(?callable $exceptionFactory = null): mixed {
       if ($this->isOk) {
@@ -206,7 +206,7 @@ final readonly class Result {
     * @psalm-mutation-free
     * @template TT
     * @psalm-param TT $alternative
-    * @psalm-return (E is never ? TT : E)
+    * @psalm-return E|TT
     */
    public function errOr(mixed $alternative): mixed {
       return $this->isOk
@@ -229,7 +229,7 @@ final readonly class Result {
     * ```
     *
     * @psalm-mutation-free
-    * @psalm-return (T is never ? null : T|null)
+    * @psalm-return T|null
     */
    public function toNullable(): mixed {
       return $this->isOk
