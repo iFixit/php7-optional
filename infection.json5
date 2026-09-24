@@ -32,7 +32,8 @@
         "CastString": {
             "ignore": [
                 "Optional\\Option::__toString",
-                "Optional\\Either::__toString"
+                "Optional\\Either::__toString",
+                "Optional\\Result::__toString"
             ]
         }
     },

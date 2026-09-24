@@ -6,6 +6,7 @@ namespace Optional\Tests;
 
 use Optional\Either;
 use Optional\Option;
+use Optional\Result;
 use PHPUnit\Framework\Attributes\RequiresPhp;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
@@ -29,14 +30,14 @@ final class NoDiscardTest extends TestCase {
    public function testEveryMethodThatReturnsABoxIsMarked(): void {
       $checked = 0;
 
-      foreach ([Option::class, Either::class] as $class) {
+      foreach ([Option::class, Either::class, Result::class] as $class) {
          foreach ((new ReflectionClass($class))->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
             if ($method->isStatic()) {
                continue;
             }
 
             // PHP 8.4 renders a `self` return type as "self", 8.5 as the class name
-            $returnsABox = in_array((string) $method->getReturnType(), ['self', $class, Option::class], true);
+            $returnsABox = in_array((string) $method->getReturnType(), ['self', $class, Option::class, Result::class], true);
             $expected = $returnsABox && !str_starts_with($method->getName(), 'tap');
             $marked = $method->getAttributes(\NoDiscard::class) !== [];
 

@@ -789,6 +789,35 @@ final readonly class Option {
       return $existsFunc($this->value);
    }
 
+   /**
+    * Turns the option into a `Result`: its value as `Result::ok`, or `Result::err($error)` for a `Option::none`
+    *
+    * This is how a missing value gets a reason, and it is how a `Result` starts
+    * from a null, a falsy value or a missing key: any entrance here, then this.
+    *
+    * ```php
+    * $row = ['id' => 7];
+    *
+    * echo (string) Option::fromArray($row, 'id')->toResult('no id'), "\n";       // Ok(7)
+    * echo (string) Option::fromArray($row, 'email')->toResult('no email'), "\n"; // Err(no email)
+    * ```
+    *
+    * _Notes:_
+    *
+    *  - `$error` is evaluated at the call site, whether or not it is used
+    *
+    * @psalm-mutation-free
+    * @template TE
+    * @psalm-param TE $error
+    * @psalm-return Result<T, TE>
+    */
+   #[\NoDiscard(self::DISCARDED)]
+   public function toResult(mixed $error): Result {
+      return $this->hasValue
+         ? Result::ok($this->value)
+         : Result::err($error);
+   }
+
    //////////////////////////////
    // STATIC FACTORY FUNCTIONS //
    //////////////////////////////

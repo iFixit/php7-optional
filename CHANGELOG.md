@@ -32,6 +32,11 @@ still resolves to 3.0.
 
 ### Added
 
+* `Optional\Result`, the outcome of something that can fail: `Result::ok()` or
+  `Result::err()`. It uses `Option`'s method names wherever the idea is the
+  same, and `mapErr`, `errOr` and `tapErr` for the error. `Option::toResult()`
+  and `Result::toOption()` cross between the two
+
 Getting into a chain, which nothing in 3.x could do from a throwing or falsy
 call:
 

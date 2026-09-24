@@ -15,6 +15,7 @@ declare(strict_types = 1);
 
 use Optional\Either;
 use Optional\Option;
+use Optional\Result;
 
 function optionTypes(): void {
    // map used to erase the mapped type entirely and report Option<never>
@@ -238,4 +239,63 @@ function chainsTypeCheck(?string $maybe, bool $flag, string $text, Option $opt, 
       ->flatMapLeft(fn(int $n): Either => Either::left("n{$n}"))
       ->mapLeft(fn(string $s): int => strlen($s));
    /** @psalm-trace $flatMapLeftThenMapLeft */
+}
+
+function resultTypes(): void {
+   $resultMapKeepsTheMappedType = Result::ok(5)->map(function(int $n): string { return "n{$n}"; });
+   /** @psalm-trace $resultMapKeepsTheMappedType */
+
+   $resultFromCallableCarriesTheThrowable = Result::fromCallable(function(): int { return 7; });
+   /** @psalm-trace $resultFromCallableCarriesTheThrowable */
+
+   // naming the class to catch types the error as that class
+   $resultFromCallableTypesTheNamedClass = Result::fromCallable(function(): int { return 7; }, InvalidArgumentException::class);
+   /** @psalm-trace $resultFromCallableTypesTheNamedClass */
+
+   $resultMapSafelyTypesTheNamedClass = Result::ok(5)->mapSafely(function(int $n): string { return "n{$n}"; }, JsonException::class);
+   /** @psalm-trace $resultMapSafelyTypesTheNamedClass */
+
+   $resultValueOrThrowReturnsTheValue = Result::ok(41)->valueOrThrow();
+   /** @psalm-trace $resultValueOrThrowReturnsTheValue */
+
+   $resultToOptionKeepsTheValue = Result::ok(10)->toOption();
+   /** @psalm-trace $resultToOptionKeepsTheValue */
+
+   $optionToResultCarriesTheError = Option::fromArray(['hello' => 'world'], 'hello')->toResult('missing');
+   /** @psalm-trace $optionToResultCarriesTheError */
+
+   $resultOrIsAlwaysOk = Result::err('no')->or(0);
+   /** @psalm-trace $resultOrIsAlwaysOk */
+
+   // the step's error joins the chain's error type
+   $resultFlatMapJoinsTheErrors = Result::ok(1)->flatMap(function(int $n): Result { return Result::err("rejected {$n}"); });
+   /** @psalm-trace $resultFlatMapJoinsTheErrors */
+}
+
+/**
+ * The same two-call chains as chainsTypeCheck(), for Result.
+ *
+ * @param Result<int, string> $result
+ */
+function resultChainsTypeCheck(?string $maybe, Result $result): void {
+   $twoResultMaps = $result->map(fn(int $n): string => "n{$n}")->map(fn(string $s): int => strlen($s));
+   /** @psalm-trace $twoResultMaps */
+
+   $twoMapErrs = $result->mapErr(fn(string $e): int => strlen($e))->mapErr(fn(int $n): int => $n * 2);
+   /** @psalm-trace $twoMapErrs */
+
+   $resultFilterThenMap = $result->filter(fn(int $x) => $x > 5, 'small')->map(fn(int $n): int => $n + 1);
+   /** @psalm-trace $resultFilterThenMap */
+
+   $resultOrThenMap = $result->or(0)->map(fn(int $n): int => $n + 1);
+   /** @psalm-trace $resultOrThenMap */
+
+   $resultElseThenMap = $result->else(Result::ok(0))->map(fn(int $n): int => $n + 1);
+   /** @psalm-trace $resultElseThenMap */
+
+   $resultFlatMapThenMap = $result->flatMap(fn(int $n) => Result::ok("n{$n}"))->map(fn(string $s): int => strlen($s));
+   /** @psalm-trace $resultFlatMapThenMap */
+
+   $toResultThenMap = Option::someNotNull($maybe)->toResult('missing')->map(fn(string $s): int => strlen($s));
+   /** @psalm-trace $toResultThenMap */
 }

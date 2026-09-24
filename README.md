@@ -390,7 +390,7 @@ with the PHP version and the opcache.
 `someNotFalsy` `someNotFalse` `fromCallable` `fromArray` `first`
 
 `Option` methods: `hasValue` `valueOr` `valueOrThrow` `valueOrCreate`
-`toNullable`
+`toNullable` `toResult`
 `or` `orCreate` `else` `elseCreate` `match` `matchSome` `matchNone` `map`
 `mapSafely` `flatMap` `andThen` `tap` `tapNone` `filter` `notNull`
 `notFalsy` `notFalse` `contains` `exists`
@@ -410,6 +410,13 @@ with the PHP version and the opcache.
 `rightNotNull` `leftNotFalsy` `rightNotFalsy` `leftNotFalse` `rightNotFalse`
 `leftContains` `rightContains`
 `existsLeft` `existsRight` `toOptionFromLeft` `toOptionFromRight`
+
+`Result` factories: `ok` `err` `fromCallable`
+
+`Result` methods: `isOk` `isErr` `valueOr` `valueOrCreate` `valueOrThrow`
+`errOr` `toNullable` `toOption` `match` `contains` `exists` `map` `mapErr`
+`mapSafely` `flatMap` `filter` `or` `orCreate` `else` `elseCreate` `tap`
+`tapErr`
 
 Deprecated in 4.0, and still working until a major version removes them:
 `filterIf`, `filterLeftIf` and `filterRightIf`. Pass the callable to `filter`,

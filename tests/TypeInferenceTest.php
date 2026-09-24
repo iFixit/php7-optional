@@ -104,6 +104,24 @@ final class TypeInferenceTest extends TestCase {
          'notNullLeftThenMapLeft' => "Optional\\Either<int<0, max>, 'missing'>",
          'twoMapSuccesses' => 'Optional\\Either<int<1, max>, string>',
          'flatMapLeftThenMapLeft' => 'Optional\\Either<int<1, max>, string>',
+
+         // Result
+         'resultMapKeepsTheMappedType' => "Optional\\Result<'n5', never>",
+         'resultFromCallableCarriesTheThrowable' => 'Optional\\Result<7, Throwable>',
+         'resultFromCallableTypesTheNamedClass' => 'Optional\\Result<7, InvalidArgumentException>',
+         'resultMapSafelyTypesTheNamedClass' => "Optional\\Result<'n5', JsonException>",
+         'resultValueOrThrowReturnsTheValue' => '41',
+         'resultToOptionKeepsTheValue' => 'Optional\\Option<10>',
+         'optionToResultCarriesTheError' => "Optional\\Result<'world', 'missing'>",
+         'resultOrIsAlwaysOk' => 'Optional\\Result<0, never>',
+         'resultFlatMapJoinsTheErrors' => "Optional\\Result<never, 'rejected 1'>",
+         'twoResultMaps' => 'Optional\\Result<int<1, max>, string>',
+         'twoMapErrs' => 'Optional\\Result<int, int<0, max>>',
+         'resultFilterThenMap' => 'Optional\\Result<int, string>',
+         'resultOrThenMap' => 'Optional\\Result<int, never>',
+         'resultElseThenMap' => 'Optional\\Result<int, never>',
+         'resultFlatMapThenMap' => 'Optional\\Result<int<1, max>, string>',
+         'toResultThenMap' => "Optional\\Result<int<0, max>, 'missing'>",
       ];
 
       foreach ($expected as $variable => $type) {
