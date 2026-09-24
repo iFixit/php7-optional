@@ -16,7 +16,8 @@ covers only what reading them will not tell you, or will tell you wrong.
 The released package and the code in front of you are different APIs, and the
 gap is now a whole major version. Tag `3.0` is PHP 7 compatible, has `Either`
 where master has `Result`, has no `tap()`, `fromCallable()`, `valueOrThrow()`
-or `first()`, and it is what a consumer on `^3.0` resolves to.
+or `first()`, still has the six `Option` aliases master removed, and it is
+what a consumer on `^3.0` resolves to.
 
 Before telling anyone a method is available, or writing code elsewhere that
 calls one:
@@ -56,12 +57,12 @@ than no step. `tests/CoverageGateTest.php` covers every one of its outcomes.
 `composer mutation` breaks the source on purpose and checks a test notices. It
 runs in the coverage job, because it needs the same driver. It exists because
 review found behavior that a docblock and this file both described and that no
-test would notice being deleted: the catch types of both `mapSafely` methods,
-and a fallback exception nothing asserted.
+test would notice being deleted, such as which class `Option::mapSafely`
+catches.
 
 `composer benchmark` measures what the box costs against the plain PHP it
 replaces, and against `json_decode()` and a small file read for scale. The
-README carries the numbers.
+README has the numbers.
 
 `.github/workflows/test.yaml` is four jobs: the phpunit matrix on 8.4 and 8.5,
 then coverage plus mutation testing, psalm, and `composer validate --strict`
@@ -131,8 +132,8 @@ database as `1` would then drop the value, with nothing to say why.
 
 Elsewhere the short name is still the costly one: `valueOr`, `or` and `else`
 are eager, while `valueOrCreate`, `orCreate` and `elseCreate` are lazy. They
-cannot take a callable the way `filter` did, because their argument is a value,
-and a value can be a callable.
+cannot take a callable the way `filter` does, because their argument is a
+value, and a value can be a callable.
 
 ### Exception or Throwable, and why they differ
 

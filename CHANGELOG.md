@@ -171,7 +171,6 @@ Shorthands for shapes callers otherwise spell out by hand:
   never existed, and showed a caught exception using a missing array key,
   which on PHP 8 is a warning that nothing catches. The README's only complete
   example called `SimpleResult::okay()`, from a class deleted in the 2.x line
-
 * **`(string)` on an `Option` warned or threw for some values.** 3.x
   interpolated the value, so an array printed `Some(Array)` with an
   "Array to string conversion" warning, and an object with no `__toString`

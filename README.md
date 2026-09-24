@@ -141,8 +141,8 @@ There is also `Option::some`, `Option::none`, `Option::someNotNull`,
 ## The middle of a chain
 
 `map` transforms the value. `flatMap` is for a step that hands back a box of
-its own. `filter` drops a value that fails a test.
-`tap` runs a side effect without ending the chain.
+its own. `filter` drops a value that fails a test. `tap` runs a side effect
+without ending the chain.
 
 ```php
 $total = Option::some(['price' => 5, 'qty' => 3])
@@ -251,10 +251,11 @@ echo Option::some(null)->notNull()->hasValue() ? "some\n" : "none\n"; // "none"
 ## What each box catches
 
 `Result::fromCallable` and `Result::mapSafely` catch `Throwable` by default,
-because the box keeps what it caught: a `TypeError` from a bad callable
-signature lands in the error, where you can still find it. `Option::fromCallable` and `Option::mapSafely` catch `Exception`
-by default, because those discard what they caught, and swallowing an `Error`
-would erase a real bug with nothing left to trace it by.
+because the box keeps what it caught. A `TypeError` from a bad callable
+signature lands in the error, where you can still find it.
+`Option::fromCallable` and `Option::mapSafely` catch `Exception` by default.
+They discard what they caught, and swallowing an `Error` would erase a real
+bug with nothing left to trace it by.
 
 Every one of them takes the class to catch as its last argument, the way a
 `catch` clause names one. Only that class and its subclasses are caught, and
@@ -284,7 +285,7 @@ each call, and the entrances drop what they exist to drop:
 * `$option->map($f)->map($g)` is an `Option` of whatever `$g` returns
 
 `tests/TypeInference` records what psalm infers for expressions like these,
-including twenty two-call chains, and fails when one changes. PHPStan was
+including 18 two-call chains, and fails when one changes. PHPStan was
 checked against the same expressions at level max. Its one quirk: it widens a
 `false` passed to `Option::some()` into `bool`, so drop `false` with the
 factories (`someNotFalse()`, `someNotFalsy()`) rather than
@@ -349,11 +350,17 @@ with the PHP version and the opcache.
   | `matchSome($f)`, `matchNone($f)` | `tap($f)`, `tapNone($f)` |
   | `Option::someWhen($v, $f)` | `Option::some($v)->filter($f)` |
   | `Option::noneWhen($v, $f)` | `Option::some($v)->filter(fn($x) => !$f($x))` |
+* `contains()` compares with `===` on both boxes, where 3.x used `==`, so
+  `Option::some(1)->contains('1')` is false now.
+* `Option::fromArray()` takes an `int|string` key, so a `null` key throws a
+  `TypeError`.
 * `Option`, `Result` and `MissingValueException` are `final`. Extending a box
   never worked: the static factories build with `new self`, so a subclass came
   back as a plain box on the first `map`.
 * This `Optional\Result` is new in 4.0. It is not the 2.x class of the same
   name, which earlier versions of this README documented by mistake.
+
+The CHANGELOG lists every change, with the rest of the `Either` table.
 
 ## Full method list
 
