@@ -334,7 +334,8 @@ Shorthands for shapes callers otherwise spell out by hand:
   analyses all of them through a generated file. Every public method must carry
   one, the example must call the method it documents rather than mention it in
   a comment or a string, and the method must appear in the README's list. Each
-  gate was verified by reintroducing the bug it catches.
+  gate was verified by reintroducing the bug it catches, and the check that an
+  example calls its method has test cases of its own.
 * `SerializationTest` pins the serialized bytes of both boxes, in both
   directions: pinned payloads read back unchanged, and this version writes
   them byte for byte. `Option`'s are the bytes tag 3.0 writes. The payload
