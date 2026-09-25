@@ -46,8 +46,8 @@ docker run --rm --user "$(id -u):$(id -g)" -v "$PWD":/app -w /app php:8.5-cli ve
 ```
 
 **Check psalm's exit code, not its output.** `vendor/bin/psalm | grep error`
-matches neither "No errors found!" nor a clean run's silence, so it reports
-success for both. That mistake has put a psalm failure into a commit before.
+matches both "No errors found!" and "2 errors found", so its exit status says
+nothing, and the pipe hides psalm's own. That mistake has put a psalm failure into a commit before.
 
 There is no `psalm-baseline.xml` and there should not be one. `src/` and
 `tests/` are clean at errorLevel 1. Fix the type rather than baselining it.
@@ -62,7 +62,7 @@ step. `tests/CoverageGateTest.php` covers every one of its outcomes.
 runs in the coverage job, because it needs the same driver. Both gates are at
 100: every line of `src/` is covered, and every mutant is killed. A mutant left
 alive is a missing test or code that does nothing; `infection.json5` names
-the one equivalent mutant it skips, and why. It exists because
+the two equivalent mutants it skips, and why. It exists because
 review found behavior that a docblock and this file both described and that no
 test would notice being deleted, such as which class `Option::mapSafely`
 catches.

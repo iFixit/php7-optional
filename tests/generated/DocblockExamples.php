@@ -1001,6 +1001,14 @@ function example82_unknown(): void {
  * README.md #17, unknown()
  */
 function example83_unknown(): void {
+   echo Option::some(1) == Option::some('1') ? "equal\n" : "different\n"; // "equal"
+   echo Option::some(1)->contains('1') ? "equal\n" : "different\n";       // "different"
+}
+
+/**
+ * README.md #18, unknown()
+ */
+function example84_unknown(): void {
    $user = Result::fromCallable(
       fn() => throw new OutOfBoundsException("no user 5"),
       OutOfBoundsException::class

@@ -102,8 +102,8 @@ change below that breaks a caller says what to write instead.
   `TypeError` where 3.x looked up the `""` key, and so do float and bool keys
   in a file with `strict_types`. psalm already typed the key `array-key`.
 * **`Option` is `final`, as the new `Result` and `MissingValueException` are.**
-  Extending a box never worked: the static factories build with `new self`, so a subclass
-  came back as a plain box on the first `map`.
+  Extending a box never worked: the static factories build with `new self`, so
+  on 3.0 a subclass's own factory already handed back a plain `Option`.
 * **psalm's pure code can call only the methods that run none of your code.**
   3.0 marked each box `@psalm-immutable`, which told psalm that every method,
   `map()` included, was safe to call from a `@psalm-pure` function or a
@@ -357,13 +357,15 @@ Shorthands for shapes callers otherwise spell out by hand:
   with a docblock, a line in AGENTS.md, and no test that would fail if it were
   deleted, such as which class `Option::mapSafely` catches. The first full run
   killed 272 of 276 mutants; the four survivors were two missing tests, dead
-  code, and one equivalent mutant, now skipped by name. Every mutant is killed
-  now, and the threshold is 100%.
+  code, and one equivalent mutant. Every mutant is killed now apart from two
+  equivalent ones, each skipped by name with the reason, and the threshold is
+  100%.
 * `bin/benchmark.php` measures what the box costs. The README publishes it.
 * The package holds only what users need: `src/`, `static-analysis/`,
   `extension.neon`, the README, CHANGELOG, LICENSE and `composer.json`.
-  `.gitattributes` keeps the tests and tooling out, which takes the archive
-  from 666 KB to 164 KB, and `PackageContentsTest` checks the list.
+  `.gitattributes` keeps the tests and tooling out, so the zip Packagist
+  serves is about 50 KB of the repo's 160 KB, and `PackageContentsTest`
+  checks the list.
 * `composer.json` names the psalm plugin and the PHPStan extension, so
   `psalm-plugin enable ifixit/php7-optional` and PHPStan's
   extension-installer find them

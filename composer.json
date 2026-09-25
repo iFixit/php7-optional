@@ -66,7 +66,7 @@
    "scripts-descriptions": {
       "test": "Run the test suite, which also executes every docblock and README example",
       "psalm": "Run psalm at errorLevel 1; it must exit 0, there is no baseline",
-      "phpstan": "Run PHPStan at level max over src/, the static-analysis code and examples/",
+      "phpstan": "Run PHPStan at level max over src/, the static-analysis code, examples/ and a type fixture",
       "types": "Assert what psalm and PHPStan infer for the expressions in tests/TypeInference",
       "benchmark": "Measure what the box costs against the plain PHP it replaces",
       "mutation": "Break the source on purpose and check a test notices; needs xdebug or pcov",

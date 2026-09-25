@@ -265,7 +265,7 @@ echo Result::ok(10)->toOption(), "\n";        // Some(10), drops any error
 echo Option::none()->toResult('no id'), "\n"; // Err('no id'), gains a reason
 ```
 
-## Three things that catch people out
+## Four things that catch people out
 
 **Pass `filter` the closure, not its result.** `filter` takes a bool or a
 closure. PHP evaluates an argument at the call site, so `filter(expensive())`
@@ -288,6 +288,16 @@ Collapse it when you want to.
 ```php
 echo Option::some(null)->hasValue() ? "some\n" : "none\n";            // "some"
 echo Option::some(null)->notNull()->hasValue() ? "some\n" : "none\n"; // "none"
+```
+
+**`==` compares boxes loosely.** It compares the values inside with `==`, so
+`Option::some(1) == Option::some('1')` is true, and so is PHPUnit's
+`assertEquals()` on the two. Compare what they hold with `===`, or use
+`contains()`, which does.
+
+```php
+echo Option::some(1) == Option::some('1') ? "equal\n" : "different\n"; // "equal"
+echo Option::some(1)->contains('1') ? "equal\n" : "different\n";       // "different"
 ```
 
 **Your callbacks are called under strict types.** This library declares
@@ -506,7 +516,7 @@ with the PHP version and the opcache.
   `TypeError`.
 * `Option` is `final`, as the new `Result` and `MissingValueException` are.
   Extending a box never worked: the static factories build with `new self`,
-  so a subclass came back as a plain box on the first `map`.
+  so a subclass's own factory handed back a plain `Option`.
 * `(string)` on a box quotes strings and shows an object's class, so
   `Some(Ada)` is now `Some('Ada')`. Code that parses that text has to change.
 * 3.x's `matchLeft($f)` was `void`. Its rewrite, `tap($f)`, returns the

@@ -20,7 +20,7 @@ use TypeError;
  *
  * The class is readonly, so PHP itself refuses to change a box once it is
  * built. It is final because the static factories build with `new self`, so a
- * subclass would be silently downgraded to an `Option` by the first `map` call.
+ * subclass's own factory would hand back a plain `Option`, as it did in 3.0.
  *
  * Its type is covariant: an `Option<Dog>` is an `Option<Animal>`, and
  * `Option::none()` is an `Option` of anything. That is safe because nothing

@@ -60,7 +60,18 @@ $double = static fn(int $n): int => $n * 2;
 /** @var array<string, int> $counts */
 $counts = ['count' => 21];
 
-echo "php7-optional, {$iterations} iterations per case, PHP " . PHP_VERSION . "\n\n";
+// opcache and its JIT change every figure, so a pasted run says which it had
+$opcache = extension_loaded('Zend OPcache') && ini_get('opcache.enable_cli') === '1';
+$jit = $opcache && (int) ini_get('opcache.jit_buffer_size') > 0
+   && !in_array(ini_get('opcache.jit'), ['disable', 'off', '0', ''], true);
+
+printf(
+   "php7-optional, %d iterations per case, PHP %s, opcache %s, JIT %s\n\n",
+   $iterations,
+   PHP_VERSION,
+   $opcache ? 'on' : 'off',
+   $jit ? 'on' : 'off'
+);
 
 echo "The closure call each case runs in, taken off every case below\n";
 $floor = measure('an empty closure call', static fn(): null => null, $iterations);
