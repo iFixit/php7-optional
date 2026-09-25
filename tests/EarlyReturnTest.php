@@ -144,7 +144,10 @@ final class EarlyReturnTest extends TestCase {
 
    public function testValueOrReturnOutsideABlockSaysSo(): void {
       $this->expectException(Error::class);
-      $this->expectExceptionMessage('Result::valueOrReturn() found no value, and nothing caught the early exit');
+      $this->expectExceptionMessage(
+         'Result::valueOrReturn() found no value, and nothing caught the early exit: '
+         . 'there is no Result::do() around it, or a catch in between kept it'
+      );
 
       $_ = self::failed('nowhere to go')->valueOrReturn();
    }

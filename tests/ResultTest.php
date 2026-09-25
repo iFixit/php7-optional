@@ -144,7 +144,9 @@ final class ResultTest extends TestCase {
       $this->assertSame(1, Result::ok(1)->valueOrThrow(\RuntimeException::class));
 
       $this->expectException(\InvalidArgumentException::class);
-      $this->expectExceptionMessage('valueOrThrow() takes a message, and RuntimeException is an exception class');
+      $this->expectExceptionMessage(
+         'valueOrThrow() takes a message, and RuntimeException is an exception class. To throw one, pass a closure that builds it'
+      );
 
       self::failure('timeout')->valueOrThrow(\RuntimeException::class);
    }

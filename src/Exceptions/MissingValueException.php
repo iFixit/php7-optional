@@ -26,6 +26,6 @@ final class MissingValueException extends Exception {
     * @internal only valueOrThrow() builds one
     */
    public function __construct(string $message, public readonly mixed $error = null, ?Throwable $previous = null) {
-      parent::__construct($message, 0, $previous);
+      parent::__construct($message, previous: $previous);
    }
 }

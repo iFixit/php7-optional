@@ -575,7 +575,9 @@ final class OptionTest extends TestCase {
       }
 
       $this->expectException(\InvalidArgumentException::class);
-      $this->expectExceptionMessage('valueOrThrow() takes a message, and DomainException is an exception class');
+      $this->expectExceptionMessage(
+         'valueOrThrow() takes a message, and DomainException is an exception class. To throw one, pass a closure that builds it'
+      );
 
       Option::none()->valueOrThrow(\DomainException::class);
    }
