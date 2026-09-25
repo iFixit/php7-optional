@@ -44,6 +44,14 @@ function optionTypes(): void {
    $tapReturnsTheSameBox = Option::some(5)->tap(function(int $_n): void {});
    /** @psalm-trace $tapReturnsTheSameBox */
 
+   // PHPStan once rejected a callback that returns something, such as a log call
+   $tapTakesACallbackThatReturns = Option::some(5)->tap(fn(int $n): bool => error_log((string) $n));
+   /** @psalm-trace $tapTakesACallbackThatReturns */
+
+   // PHPStan once dropped the fallback, so a later null check looked redundant
+   $valueOrKeepsTheFallback = Option::some(5)->valueOr(null);
+   /** @psalm-trace $valueOrKeepsTheFallback */
+
    $someNotFalsyKeepsTheType = Option::someNotFalsy('Ada');
    /** @psalm-trace $someNotFalsyKeepsTheType */
 

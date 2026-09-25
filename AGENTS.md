@@ -34,7 +34,7 @@ git show 3.0:src/Option.php | grep "public function valueOrThrow"
 
 ```bash
 composer install
-composer check       # what CI runs: phpunit, psalm and PHPStan
+composer check       # phpunit, psalm and PHPStan; CI also runs 8.5, coverage, mutation and validate
 composer test        # phpunit alone
 composer psalm       # psalm alone, errorLevel 1, no baseline
 composer phpstan     # PHPStan alone, level max, no baseline
@@ -281,12 +281,15 @@ share by reflection and fails when one's parameters differ. `match()` is the
 one exception, since its arguments are named after each box's cases. A new
 method on either box should take the other's name if the other has the idea.
 
-There is also one name per operation. `Either` reached 66 methods by spelling
-every operation twice, left and right, and then adding success and failure
-aliases on top. `Option` had six second names of its own, which 4.0 removed:
-`andThen` for `flatMap`, `filterIf` for `filter`, `matchSome` and `matchNone`
-beside `tap` and `tapNone`, and the `someWhen` and `noneWhen` factories. Do not
-add an alias back. No test catches one, so this rule is on review.
+There is also one name per operation. `Either` had 42 public methods in 3.0,
+most of them one operation spelled twice, left and right. `Option` had six
+second names of its own, which 4.0 removed: `andThen` for `flatMap`,
+`filterIf` for `filter`, `matchSome` and `matchNone` beside `tap` and
+`tapNone`, and the `someWhen` and `noneWhen` factories. Do not add an alias
+back. A shorthand that fills in a common argument is fine, and is not an
+alias: `toNullable()` is `valueOr(null)`, and `someNotNull($v)` is
+`some($v)->notNull()`. A second name for the same call with the same
+arguments is an alias. No test catches one, so this rule is on review.
 
 ## The psalm plugin and PHPStan extension
 
@@ -429,8 +432,10 @@ does not.
 ## Releasing
 
 Tags are plain versions with no `v` prefix. Packagist picks them up from
-GitHub. A release is a tag on master, after which a consumer picks it up with
-`composer update ifixit/php7-optional`.
+GitHub. A release is a tag on master. A consumer picks up a minor or patch
+release with `composer update ifixit/php7-optional`, but not a new major
+version: `composer update` stays inside the constraint they have, so 4.0
+needs `composer require ifixit/php7-optional:^4.0`.
 
 The package keeps the name `ifixit/php7-optional` even though it now requires
 PHP 8.4. Renaming a published Packagist package costs every consumer an edit,

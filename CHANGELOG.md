@@ -11,11 +11,12 @@ change below that breaks a caller says what to write instead.
 
 ### Breaking
 
-* **PHP 8.4 is required.** 3.x claimed `^7.2` while CI had tested nothing below
-  7.4 since 2021. The toolchain had rotted with it. psalm was pinned to 5.2.0
-  from December 2022, and no release in the 5.x line runs on a PHP newer than
-  8.3. So the level-1 badge described a check nobody could reproduce.
-  If you are on PHP 7, stay on 3.x.
+* **PHP 8.4 is required.** 3.0 claimed `^7.2 || ^8.0`, but its CI tested
+  nothing below 7.4: the commit 3.0 is tagged on dropped 7.3 from the test
+  matrix, and the one before it dropped 7.2. The toolchain had rotted with it.
+  psalm was pinned to 5.2.0 from December 2022, and no release in the 5.x
+  line runs on a PHP newer than 8.3. So the level-1 badge described a check
+  nobody could reproduce. On PHP 7.2 to 8.3, stay on 3.x.
 * **`Either` is replaced by `Result`.** `Either` held a left or a right value
   and never said which one meant success. The library treated left as success,
   and callers passed `left:` and `right:` to `match()` by name to keep the two
@@ -97,8 +98,8 @@ change below that breaks a caller says what to write instead.
 * **`Option::fromArray()` takes an `int|string` key.** A `null` key throws a
   `TypeError` where 3.x looked up the `""` key, and so do float and bool keys
   in a file with `strict_types`. psalm already typed the key `array-key`.
-* **`Option`, `Result` and `MissingValueException` are `final`.** Extending a
-  box never worked: the static factories build with `new self`, so a subclass
+* **`Option` is `final`, as the new `Result` and `MissingValueException` are.**
+  Extending a box never worked: the static factories build with `new self`, so a subclass
   came back as a plain box on the first `map`.
 * **psalm's pure code can call only the methods that run none of your code.**
   3.0 marked each box `@psalm-immutable`, which told psalm that every method,
@@ -164,7 +165,7 @@ Catching a `Result` that is dropped, the way Rust's `#[must_use]` does:
   extension, `extension.neon`. Each reports a call whose `Result` is dropped
   on its own line, from any function, including a missing `return` before a
   `Result::err()`. `#[\NoDiscard]` covers only the library's own methods, and
-  only on PHP 8.5
+  PHP itself only warns on 8.5, though PHPStan 2 reports it on any version
 * The same plugin and extension type a box built in two branches as one box.
   Without them, `$flag ? Result::ok($id) : Result::err('no')` is a
   `Result<int, never>|Result<never, string>`, psalm reports `ReservedWord` on
@@ -244,7 +245,8 @@ Shorthands for shapes callers otherwise spell out by hand:
 * **`Option::mapSafely`'s example did not run.** It called `safeMap()`, which
   never existed, and showed a caught exception using a missing array key,
   which on PHP 8 is a warning that nothing catches. The README's only complete
-  example called `SimpleResult::okay()`, from a class deleted in the 2.x line
+  example called `SimpleResult::okay()`, from a class that shipped in 2.0 and
+  2.1 and was deleted in 3.0
 * **`(string)` on an `Option` warned or threw for some values.** 3.x
   interpolated the value, so an array printed `Some(Array)` with an
   "Array to string conversion" warning, and an object with no `__toString`
@@ -312,8 +314,6 @@ Shorthands for shapes callers otherwise spell out by hand:
   unguarded call to it is the one mistake psalm cannot catch. Java made the
   same call: the documentation for `Optional.get()` names `orElseThrow()` as
   the preferred alternative
-* `psalm-baseline.xml`. Every entry in it was already unused, and `src/` and
-  `tests/` are clean at errorLevel 1 without it.
 * `sami-config.php`. It configured Sami, which is not a dependency, is not
   installed, and has not been maintained for years. Nothing in CI built or
   deployed the docs it described. The generated site at `php7-optional.surge.sh`

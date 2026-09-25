@@ -17,13 +17,7 @@ isn't one.
 Both are immutable, and PHP enforces it: they are `readonly` classes. Nothing
 you call can change a box you already hold, so a method either hands you a new
 one or hands back the one you gave it. On PHP 8.5, dropping that result warns,
-since the call did nothing:
-
-```text
-Warning: The return value of method Optional\Option::map() should either be used
-or intentionally ignored by casting it as (void), a box never changes after it
-is built, so this call only made a new one
-```
+since the call did nothing.
 
 Every example in this file runs as part of the test suite, and every line one
 prints is checked against the comment on its `echo`. If one of them is wrong,
@@ -357,6 +351,12 @@ for you, and PHPStan's extension-installer includes the extension without
 them. The plugin needs psalm 6. The extension is checked in CI with PHPStan
 2, and runs on 1.12 too.
 
+PHPStan 2 reports some of these lines on its own: a dropped call to the
+library's methods as `method.resultDiscarded`, and a call it can tell has no
+side effects as `method.resultUnused`. So a line can be reported twice. The
+extension is for the rest, such as a function that writes to the database and
+then returns its `Result`.
+
 Assign a result to `$_` to drop it on purpose. A chain ending in `tapErr()` has
 looked at the error, so it is not reported. The same plugin and extension also
 type a box built in two branches as one box, as the next section explains.
@@ -376,6 +376,11 @@ each call, and the entrances drop what they exist to drop:
 * a box is covariant, so a function declared `Option<Animal>` can return
   `Option::some(new Dog())`, and `Option::none()` fits any `Option`
 
+Declare what your own functions return, such as `@return Option<User>` above
+a function declared `: Option`. A bare `Option` says nothing about what is in
+it: psalm types the call as a bare `Option` and stops checking what it holds,
+and PHPStan reports `missingType.generics` from level 6.
+
 One shape neither tool follows on its own: a box built in two branches, such
 as `$flag ? Result::ok($id) : Result::err('no')`, is a union of two boxes,
 `Result<int, never>|Result<never, string>`. psalm then reports `ReservedWord`
@@ -393,8 +398,16 @@ Neither tool infers `mixed` anywhere the library knows the type.
 
 ## On PHP 8.5
 
-Two things work with no change to your code. A dropped result warns, as shown
-at the top. And the pipe operator can feed a box, because a static factory is a
+Two things work with no change to your code. A dropped result warns, since a
+box never changes and the call did nothing:
+
+```text
+Warning: The return value of method Optional\Option::map() should either be used
+or intentionally ignored by casting it as (void), a box never changes after it
+is built, so this call only made a new one
+```
+
+And the pipe operator can feed a box, because a static factory is a
 one-argument callable:
 
 ```text
@@ -464,9 +477,14 @@ with the PHP version and the opcache.
   `Option::some(1)->contains('1')` is false now.
 * `Option::fromArray()` takes an `int|string` key, so a `null` key throws a
   `TypeError`.
-* `Option`, `Result` and `MissingValueException` are `final`. Extending a box
-  never worked: the static factories build with `new self`, so a subclass came
+* `Option` is `final`, as the new `Result` and `MissingValueException` are.
+  Extending a box never worked: the static factories build with `new self`, so a subclass came
   back as a plain box on the first `map`.
+* `(string)` on a box quotes strings and shows an object's class, so
+  `Some(Ada)` is now `Some('Ada')`. Code that parses that text has to change.
+* 3.x's `matchLeft($f)` was `void`. Its rewrite, `tap($f)`, returns the
+  `Result`, so on its own line the dropped-Result check reports it: the error
+  goes unread. Chain `tapErr()` to handle it, or assign the result to `$_`.
 * psalm lets a `@psalm-pure` function or a `@psalm-immutable` class call only
   the methods that run none of your code, so `map()`, `flatMap()`, `match()`
   and the other callback methods report `ImpureMethodCall` there. 3.0 allowed
