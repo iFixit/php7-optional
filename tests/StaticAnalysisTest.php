@@ -67,6 +67,35 @@ final class StaticAnalysisTest extends TestCase {
    ];
 
    /**
+    * Every issue each tool reports in the still-reported fixture, by line.
+    * psalm reports the wrong type count on the docblock and PHPStan on the
+    * method, which it also says returns the wrong type. On line 37 psalm
+    * checks the callback against the box that did not merge, its usual report
+    * on such a union. PHPStan 1.12 reports the same as 2.2.
+    */
+   private const STILL_REPORTED_ISSUES = [
+      'psalm' => [
+         '28 MissingTemplateParam',
+         '37 NoValue',
+         '37 ReservedWord',
+         '46 PossiblyNullReference',
+         '51 ImplicitToStringCast',
+         '56 InvalidArgument',
+         '59 InvalidArgument',
+         '62 InvalidArgument',
+      ],
+      'phpstan' => [
+         '29 generics.lessTypes',
+         '30 return.type',
+         '46 method.nonObject',
+         '51 argument.type',
+         '56 argument.type',
+         '59 argument.type',
+         '62 argument.type',
+      ],
+   ];
+
+   /**
     * CI runs this test on PHPStan 1.12 too, which prints three of the types
     * above without 2.2's refinements
     */
@@ -131,25 +160,31 @@ final class StaticAnalysisTest extends TestCase {
 
    /**
     * The merge used to crash psalm on a box with the wrong number of types, and
-    * a crash loses every issue in the run. Getting any issues back at all is
-    * the first check; psalm's own report on the docblock is the second. The
-    * third is the call on a template that may be null, which merging it as a
-    * box would hide, and the last is an exception object in valueOrThrow().
+    * a crash loses every issue in the run. A template that may be null must
+    * not merge as a box, which would hide the call on null, and a callback
+    * typed for the wrong side of a box built in two branches is reported only
+    * while the merge runs where a method is called.
     */
    public function testThePsalmPluginLeavesPsalmItsOwnReports(): void {
-      $types = array_map(fn(array $issue): string => $issue[0], self::psalm()[self::STILL_REPORTED] ?? []);
+      $reported = array_map(fn(array $issue): string => "{$issue[1]} {$issue[0]}", self::psalm()[self::STILL_REPORTED] ?? []);
 
-      $this->assertContains('MissingTemplateParam', $types);
-      $this->assertContains('PossiblyNullReference', $types);
-      $this->assertContains('ImplicitToStringCast', $types);
+      $this->assertSame(self::sorted(self::STILL_REPORTED_ISSUES['psalm']), self::sorted($reported));
    }
 
    public function testThePhpstanExtensionLeavesPhpstanItsOwnReports(): void {
-      $identifiers = array_map(fn(array $message): string => $message[0], self::phpstan()[self::STILL_REPORTED] ?? []);
+      $reported = array_map(fn(array $message): string => "{$message[1]} {$message[0]}", self::phpstan()[self::STILL_REPORTED] ?? []);
 
-      $this->assertContains('generics.lessTypes', $identifiers);
-      $this->assertContains('method.nonObject', $identifiers);
-      $this->assertContains('argument.type', $identifiers);
+      $this->assertSame(self::sorted(self::STILL_REPORTED_ISSUES['phpstan']), self::sorted($reported));
+   }
+
+   /**
+    * @param list<string> $items
+    * @return list<string>
+    */
+   private static function sorted(array $items): array {
+      sort($items);
+
+      return $items;
    }
 
    public function testThePhpstanExtensionTypesABoxBuiltInTwoBranchesAsOne(): void {

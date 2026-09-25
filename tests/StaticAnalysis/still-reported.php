@@ -14,10 +14,14 @@
  * An exception object passed to valueOrThrow(), which takes a closure that
  * builds one. PHPStan let it through while the method's PHP type named
  * Throwable.
+ *
+ * Callbacks typed for the wrong side of a box built in two branches. Neither
+ * tool checks them against the right box without the merge.
  */
 
 declare(strict_types = 1);
 
+use Optional\Option;
 use Optional\Result;
 
 final class StillReportedRepository {
@@ -45,4 +49,15 @@ function stillReportedNullable(bool $flag, ?Result $found, Result $fallback): st
 /** @param Result<int, string> $found */
 function stillReportedExceptionObject(Result $found): int {
    return $found->valueOrThrow(new RuntimeException('no row'));
+}
+
+function stillReportedWrongCallbacks(bool $flag, int $id): void {
+   $found = $flag ? Result::ok($id) : Result::err('no');
+   $_ = $found->map(fn(string $s): int => strlen($s));
+
+   $mixed = $flag ? Option::some(1) : Option::some('a');
+   $_ = $mixed->map(fn(int $x): int => $x);
+
+   $maybe = $flag ? Result::ok($id) : ($id > 0 ? Result::err('no') : null);
+   $_ = $maybe?->map(fn(string $s): int => strlen($s));
 }
