@@ -42,13 +42,18 @@ final class UnusedResultHook implements AfterStatementAnalysisInterface {
 
       $call = $statement->expr;
 
-      // `@$repo->save()` on its own line drops the call's Result too
-      while ($call instanceof Expr\ErrorSuppress) {
-         $call = $call->expr;
+      // `$ok && $repo->save()` and `@$repo->save()` on their own line drop the call's
+      // Result too. psalm also analyses the call of a bare `&&` as a statement of its
+      // own, and keeps one report per issue and place, so that call is reported once.
+      while ($call instanceof Expr\BinaryOp\BooleanAnd || $call instanceof Expr\BinaryOp\BooleanOr
+         || $call instanceof Expr\BinaryOp\LogicalAnd || $call instanceof Expr\BinaryOp\LogicalOr
+         || $call instanceof Expr\ErrorSuppress) {
+         $call = $call instanceof Expr\ErrorSuppress ? $call->expr : $call->right;
       }
 
       if ($call instanceof Expr\MethodCall || $call instanceof Expr\NullsafeMethodCall || $call instanceof Expr\StaticCall) {
-         if ($call->name instanceof Identifier && $call->name->name === 'tapErr') {
+         // PHP matches a method name in any case
+         if ($call->name instanceof Identifier && $call->name->toLowerString() === 'taperr') {
             return null;
          }
       } elseif (!$call instanceof Expr\FuncCall && !self::choosesAValue($call)) {

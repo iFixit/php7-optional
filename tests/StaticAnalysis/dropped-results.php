@@ -97,6 +97,7 @@ function droppedResultsCallers(DroppedResultsRepository $repository, ?DroppedRes
    $repository->save(5)->map(fn(int $x): int => $x + 1); // dropped
    $repository->save(6)->tap(fn(int $x) => error_log("saved {$x}")); // dropped, tap() does not look at the error
    $repository->save(7)->tapErr(fn(string $error) => error_log($error));
+   $repository->save(32)->taperr(fn(string $error) => error_log($error)); // PHP matches a method name in any case
    droppedResultsWrite(12); // dropped, a function with side effects PHPStan's own checks let through
    droppedResultsOrFalse(13); // dropped, a Result is one of the things it returns
    droppedResultsOrCount(14); // dropped
@@ -106,6 +107,7 @@ function droppedResultsCallers(DroppedResultsRepository $repository, ?DroppedRes
    $repository->save(30)->isOk() or droppedResultsSave(31); // dropped
    droppedResultsSame(droppedResultsSave(17)); // dropped, a template bounded by Result
    @droppedResultsSave(19); // dropped, the @ hides warnings, not the Result
+   @($maybe === null && droppedResultsOrFalse(33)); // dropped
    match (true) { $maybe === null => droppedResultsSave(20), default => droppedResultsSave(21) }; // dropped, whichever arm runs
    $maybe === null ? droppedResultsSave(22) : null; // dropped
    $maybe?->save(23) ?? droppedResultsSave(24); // dropped

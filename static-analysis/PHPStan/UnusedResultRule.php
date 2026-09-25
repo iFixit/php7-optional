@@ -50,7 +50,8 @@ final class UnusedResultRule implements Rule {
       }
 
       if ($call instanceof Expr\MethodCall || $call instanceof Expr\NullsafeMethodCall || $call instanceof Expr\StaticCall) {
-         if ($call->name instanceof Identifier && $call->name->name === 'tapErr') {
+         // PHP matches a method name in any case
+         if ($call->name instanceof Identifier && $call->name->toLowerString() === 'taperr') {
             return [];
          }
       } elseif (!$call instanceof Expr\FuncCall && !self::choosesAValue($call)) {
