@@ -137,7 +137,8 @@ Getting out of one, throwing if the value is missing:
   description to a message, keeps a `Throwable` error as the cause, and keeps
   any error as the exception's `$error`, so a catch can still read an enum.
   A message that is exactly the name of an exception class, such as
-  `DomainException::class`, gets a hint that says to pass a closure
+  `DomainException::class`, gets a hint that says to pass a closure, and an
+  exception object throws a `TypeError` rather than becoming the message
 
 Catching only the failure you expect, the way a `catch` clause names its
 class:

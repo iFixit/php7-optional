@@ -11,6 +11,7 @@ use Optional\Exceptions\MissingValueException;
 use Optional\Internal\ChecksItems;
 use Optional\Internal\DescribesValues;
 use Throwable;
+use TypeError;
 
 /**
  * A box that optionally holds a value: `Option::some($value)` or `Option::none()`.
@@ -40,7 +41,7 @@ final readonly class Option {
     * "The return value of method ... should either be used or intentionally
     * ignored by casting it as (void), " followed by this.
     */
-   private const DISCARDED = 'a box never changes after it is built, so this call changed nothing';
+   private const DISCARDED = 'a box never changes after it is built, so this call left it as it was; tap() runs a callback just for its side effect';
 
    /**
     * The same, for the static factories. A factory's result dropped on its
@@ -173,6 +174,9 @@ final readonly class Option {
     *  - `$orThrow` is a message, or a closure that follows the interface
     *    `callable():Throwable`. It takes a closure rather than any callable,
     *    because a string naming a function is also a message
+    *  - An exception object throws a `TypeError`, on either side, since it would
+    *    otherwise be turned into its own text in a file without strict types.
+    *    Pass a closure that builds it
     *  - A message that is exactly the name of an exception class, such as
     *    `DomainException::class`, gets a hint added, since you almost
     *    certainly meant to throw that class. Pass
@@ -185,7 +189,15 @@ final readonly class Option {
     * @psalm-param null|string|Closure():Throwable $orThrow
     * @psalm-return T
     **/
-   public function valueOrThrow(string|Closure|null $orThrow = null): mixed {
+   public function valueOrThrow(string|Closure|Throwable|null $orThrow = null): mixed {
+      if ($orThrow instanceof Throwable) {
+         // an exception object in a file without strict types would otherwise become its own __toString() text
+         throw new TypeError(
+            'valueOrThrow() takes a closure that builds the exception, such as fn() => new '
+            . get_debug_type($orThrow) . '(...), not the exception itself'
+         );
+      }
+
       if (!$this->hasValue) {
          throw $orThrow instanceof Closure
             ? $orThrow()

@@ -170,6 +170,16 @@ final class ResultTest extends TestCase {
       $this->assertSame($ok, $ok->mapErr(fn(string $e): string => "{$e}!"));
    }
 
+   /**
+    * @psalm-suppress ImplicitToStringCast an exception object is the mistake under test
+    */
+   public function testValueOrThrowRejectsAnExceptionObject(): void {
+      $this->expectException(\TypeError::class);
+      $this->expectExceptionMessage('such as fn() => new DomainException(...), not the exception itself');
+
+      $_ = Result::ok(1)->valueOrThrow(new \DomainException('no id'));
+   }
+
    public function testValueOrThrowWithNoFactoryNamesAPlainError(): void {
       $this->expectException(MissingValueException::class);
       $this->expectExceptionMessage("Result is an Err: 'timeout'");

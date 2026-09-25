@@ -563,6 +563,34 @@ final class OptionTest extends TestCase {
       $this->assertNotFalse(json_encode($shown));
    }
 
+   /**
+    * getMessage() converts whatever a subclass stored in the untyped property,
+    * which warns for an array and throws for an object. The message is read
+    * as it was stored instead.
+    *
+    * @psalm-suppress InvalidPropertyAssignmentValue a malformed subclass is the point
+    */
+   public function testToStringNeverWarnsForAnExceptionWithAnOddMessage(): void {
+      $this->assertSame('Some(RuntimeException@anonymous(stdClass))', (string) Option::some(new class() extends \RuntimeException {
+         public function __construct() {
+            parent::__construct();
+            $this->message = new \stdClass();
+         }
+      }));
+      $this->assertSame('Some(RuntimeException@anonymous(array))', (string) Option::some(new class() extends \RuntimeException {
+         public function __construct() {
+            parent::__construct();
+            $this->message = ['a'];
+         }
+      }));
+      $this->assertSame('Some(RuntimeException@anonymous())', (string) Option::some(new class() extends \RuntimeException {
+         public function __construct() {
+            parent::__construct();
+            unset($this->message);
+         }
+      }));
+   }
+
    public function testToStringNeverThrowsForAValueThatDoes(): void {
       $throws = new class implements \Stringable {
          #[\Override]
@@ -602,7 +630,7 @@ final class OptionTest extends TestCase {
 
       $messages = [];
 
-      foreach ([\DomainException::class, '\\DomainException', 'stdClass', 'error', 'DomainExceptionn'] as $message) {
+      foreach ([\DomainException::class, '\\DomainException', 'App\\PaymentFailedException', 'stdClass', 'error', 'DomainExceptionn'] as $message) {
          try {
             self::nothing()->valueOrThrow($message);
          } catch (MissingValueException $e) {
@@ -613,10 +641,11 @@ final class OptionTest extends TestCase {
       $this->assertSame([
          'DomainException (a class name: pass valueOrThrow() a closure to throw one)',
          '\\DomainException (a class name: pass valueOrThrow() a closure to throw one)',
+         'App\\PaymentFailedException (a class name: pass valueOrThrow() a closure to throw one)',
          'stdClass',
          'error',
          'DomainExceptionn',
-      ], $messages, 'only an exception class, spelled with its own case, gets the hint');
+      ], $messages, 'only an exception class gets the hint: a loaded one spelled with its own case, or one spelled like it');
    }
 
    /**
@@ -639,6 +668,23 @@ final class OptionTest extends TestCase {
       }
 
       $this->assertSame([], $asked, 'a message is not a class to load');
+   }
+
+   /**
+    * In a file without strict types, PHP would turn the exception object into
+    * its own __toString() text, stack trace and all, and throw that as the
+    * message of a MissingValueException, which a catch for the real class
+    * misses. It is rejected even with a value, so the mistake shows up there.
+    *
+    * @psalm-suppress ImplicitToStringCast an exception object is the mistake under test
+    */
+   public function testValueOrThrowRejectsAnExceptionObject(): void {
+      $this->expectException(\TypeError::class);
+      $this->expectExceptionMessage(
+         'valueOrThrow() takes a closure that builds the exception, such as fn() => new DomainException(...), not the exception itself'
+      );
+
+      $_ = Option::some(1)->valueOrThrow(new \DomainException('no id'));
    }
 
    public function testValueOrThrowUsesTheSuppliedException(): void {

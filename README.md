@@ -17,7 +17,9 @@ isn't one.
 Both are immutable, and PHP enforces it: they are `readonly` classes. Nothing
 you call can change a box you already hold, so a method either hands you a new
 one or hands back the one you gave it. On PHP 8.5, dropping that result warns,
-since the call did nothing.
+since the call did nothing. One PHP rule reaches through: an array holding a
+PHP reference (`&`) keeps sharing it, so a change made through that reference
+shows in the box.
 
 Every example in this file runs as part of the test suite, and every line one
 prints is checked against the comment on its `echo`. If one of them is wrong,
@@ -419,7 +421,8 @@ box never changes and the call did nothing:
 ```text
 Warning: The return value of method Optional\Option::map() should either be used
 or intentionally ignored by casting it as (void), a box never changes after it
-is built, so this call changed nothing
+is built, so this call left it as it was; tap() runs a callback just for its
+side effect
 ```
 
 And the pipe operator can feed a box, because a static factory is a

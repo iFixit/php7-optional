@@ -7,7 +7,10 @@ namespace Optional\Internal;
 use Optional\Exceptions\EarlyReturn;
 use Optional\Option;
 use Optional\Result;
+use Error;
+use Exception;
 use ReflectionClass;
+use ReflectionProperty;
 use Stringable;
 use Throwable;
 use UnitEnum;
@@ -35,7 +38,7 @@ trait DescribesValues {
          is_string($value) => "'" . self::oneLine($value, "'\\") . "'",
          $value instanceof Option, $value instanceof Result => (string) $value,
          $value instanceof UnitEnum => self::oneLine($value::class . '::' . $value->name),
-         $value instanceof Throwable => self::oneLine(get_debug_type($value) . '(' . $value->getMessage() . ')'),
+         $value instanceof Throwable => self::oneLine(get_debug_type($value) . '(' . self::messageOf($value) . ')'),
          $value instanceof Stringable => self::describeStringable($value),
          default => self::oneLine(get_debug_type($value)), // null is 'null' here too
       };
@@ -69,8 +72,10 @@ trait DescribesValues {
     *
     * A message that is exactly the name of an exception class was almost
     * always meant as the exception to throw, so the message says how to throw
-    * one. Only a class PHP has already loaded counts, so no autoloader runs,
-    * and the case has to match, so a message such as `'error'` is left alone.
+    * one. A class PHP has already loaded counts if its case matches, so a
+    * message such as `'error'` is left alone. One that is not loaded counts if
+    * it is spelled like a class whose name ends in `Exception` or `Error`. No
+    * autoloader runs either way.
     */
    private static function missingMessage(?string $message, string $otherwise): string {
       if ($message === null) {
@@ -79,10 +84,24 @@ trait DescribesValues {
 
       $class = ltrim($message, '\\');
       $namesAnException = class_exists($class, false)
-         && is_a($class, Throwable::class, true)
-         && (new ReflectionClass($class))->getName() === $class;
+         ? is_a($class, Throwable::class, true) && (new ReflectionClass($class))->getName() === $class
+         // a project's own exception is usually not loaded yet, so judge it by its spelling alone
+         : preg_match('/^(?:[A-Za-z_\x80-\xff][\w\x80-\xff]*\\\\)*[A-Z][\w\x80-\xff]*(?:Exception|Error)$/D', $class) === 1;
 
       return $namesAnException ? "{$message} (a class name: pass valueOrThrow() a closure to throw one)" : $message;
+   }
+
+   /**
+    * An exception's message, read without `getMessage()`, which converts
+    * whatever a subclass stored in the untyped property: an array there warns
+    * and an object throws
+    */
+   private static function messageOf(Throwable $exception): string {
+      $property = new ReflectionProperty($exception instanceof Exception ? Exception::class : Error::class, 'message');
+      /** @var mixed $message a subclass can store anything there */
+      $message = $property->isInitialized($exception) ? $property->getValue($exception) : null;
+
+      return is_scalar($message) || $message === null ? (string) $message : get_debug_type($message);
    }
 
    /**
