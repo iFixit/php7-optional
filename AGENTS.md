@@ -336,8 +336,11 @@ a case there before changing what the check reports.
 `tests/StaticAnalysis/branch-built.php` traces boxes built in two branches, and
 `StaticAnalysisTest` compares each trace with the type it records for each
 tool. Turning either merge off fails it, with `ReservedWord` from psalm and
-`Result<never, string>` from PHPStan. Measured on this repo, neither merge
-changes how long the tool takes. `tests/StaticAnalysis/still-reported.php`
+`Result<never, string>` from PHPStan. Neither merge makes a tool slower. On a
+generated file of 16,505 lines of such shapes, three runs each, PHPStan 2.2
+took 26.4 to 26.7 s with the extension and 26.3 to 26.5 s without, and psalm
+took 9.7 to 9.9 s with the plugin and 13.5 to 13.7 s without, when it reports
+7,500 issues there against none. `tests/StaticAnalysis/still-reported.php`
 holds what each tool must go on reporting with the merge on: a box with the
 wrong number of types, which once crashed psalm, and a method called on a
 template that may be null.
