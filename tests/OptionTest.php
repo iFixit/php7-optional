@@ -374,6 +374,73 @@ final class OptionTest extends TestCase {
       $_ = Option::some(5)->filter(self::text('is_numeric'));
    }
 
+   /**
+    * Each callback runs only on the side it is for, which the docblocks promise
+    * and which makes an expensive or throwing callback safe to pass. They count
+    * rather than call fail(), since mapSafely() would catch what fail() throws.
+    */
+   public function testNoCallbackRunsOnTheSideItIsNotFor(): void {
+      $ran = 0;
+      $value = function() use (&$ran): int {
+         $ran++;
+
+         return 1;
+      };
+      $box = function() use (&$ran): Option {
+         $ran++;
+
+         return Option::none();
+      };
+      $bool = function() use (&$ran): bool {
+         $ran++;
+
+         return true;
+      };
+      $throwable = function() use (&$ran): \LogicException {
+         $ran++;
+
+         return new \LogicException('never thrown');
+      };
+      $none = self::nothing();
+      $some = Option::some(1);
+
+      $_ = $none->map($value);
+      $_ = $none->mapSafely($value);
+      $_ = $none->flatMap($box);
+      $_ = $none->filter($bool);
+      $_ = $none->exists($bool);
+      $_ = $none->tap($value);
+      $_ = $none->match(some: $value, none: fn(): int => 0);
+      $_ = $some->tapNone($value);
+      $_ = $some->valueOrCreate($value);
+      $_ = $some->orCreate($value);
+      $_ = $some->elseCreate($box);
+      $_ = $some->valueOrThrow($throwable);
+      $_ = $some->match(some: fn(): int => 0, none: $value);
+
+      $this->assertSame(0, $ran);
+   }
+
+   /**
+    * The library calls a callback from its own file, which has strict types,
+    * so a callback typed int that is given '7' throws even when the calling
+    * file has no strict types. The README says so.
+    */
+   public function testCallbacksRunUnderTheLibrarysStrictTypes(): void {
+      $this->expectException(\TypeError::class);
+
+      $_ = eval('return \\Optional\\Option::some("7")->map(fn(int $id) => $id);');
+   }
+
+   public function testFirstTakesAnyIterable(): void {
+      $key = new \stdClass();
+      /** @var \WeakMap<\stdClass, int> $ages */
+      $ages = new \WeakMap();
+      $ages[$key] = 41;
+
+      $this->assertSame(41, Option::first($ages)->valueOr(0), 'a WeakMap has object keys, which first() ignores');
+   }
+
    public function testFlatMapNeverRunsItsCallbackOnANone(): void {
       $ran = false;
 

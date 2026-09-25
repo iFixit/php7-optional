@@ -180,6 +180,64 @@ final class ResultTest extends TestCase {
       $_ = Result::ok(1)->valueOrThrow(new \DomainException('no id'));
    }
 
+   /**
+    * Each callback runs only on the side it is for. They count rather than
+    * call fail(), since mapSafely() would catch what fail() throws.
+    */
+   public function testNoCallbackRunsOnTheSideItIsNotFor(): void {
+      $ran = 0;
+      $value = function() use (&$ran): int {
+         $ran++;
+
+         return 1;
+      };
+      $box = function() use (&$ran): Result {
+         $ran++;
+
+         return Result::ok(1);
+      };
+      $bool = function() use (&$ran): bool {
+         $ran++;
+
+         return true;
+      };
+      $throwable = function() use (&$ran): \LogicException {
+         $ran++;
+
+         return new \LogicException('never thrown');
+      };
+      $err = self::failure('no');
+      /** @var Result<int, string> $ok typed as a caller would hold it, so psalm allows the err-side callbacks */
+      $ok = Result::ok(1);
+
+      $_ = $err->map($value);
+      $_ = $err->mapSafely($value);
+      $_ = $err->flatMap($box);
+      $_ = $err->filter($bool, 'rejected');
+      $_ = $err->exists($bool);
+      $_ = $err->tap($value);
+      $_ = $err->match(ok: $value, err: fn(): int => 0);
+      $_ = $ok->mapErr($value);
+      $_ = $ok->tapErr($value);
+      $_ = $ok->valueOrCreate($value);
+      $_ = $ok->orCreate($value);
+      $_ = $ok->elseCreate($box);
+      $_ = $ok->valueOrThrow($throwable);
+      $_ = $ok->match(ok: fn(): int => 0, err: $value);
+
+      $this->assertSame(0, $ran);
+   }
+
+   /**
+    * Result.php has strict types too, so a callback typed int that is given
+    * '7' throws even when the calling file has none
+    */
+   public function testCallbacksRunUnderTheLibrarysStrictTypes(): void {
+      $this->expectException(\TypeError::class);
+
+      $_ = eval('return \\Optional\\Result::ok("7")->map(fn(int $id) => $id);');
+   }
+
    public function testValueOrThrowWithNoFactoryNamesAPlainError(): void {
       $this->expectException(MissingValueException::class);
       $this->expectExceptionMessage("Result is an Err: 'timeout'");

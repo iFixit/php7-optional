@@ -6,9 +6,13 @@ namespace Optional\Tests;
 
 use PhpParser\Node;
 use PhpParser\Node\Expr;
+use PhpParser\Node\FunctionLike;
 use PhpParser\Node\Identifier;
 use PhpParser\Node\Name;
+use PhpParser\Node\Stmt;
 use PhpParser\NodeFinder;
+use PhpParser\NodeTraverser;
+use PhpParser\NodeVisitor\ParentConnectingVisitor;
 use PhpParser\ParserFactory;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -109,23 +113,26 @@ final class DocumentedApiTest extends TestCase {
     * A factory counts as `Class::method(`. A method counts when the box it is
     * called on comes from `$class`: a chain that starts at `Class::`, a
     * variable assigned one, or a closure parameter typed as one. `toResult()`
-    * and `toOption()` switch a chain to the other class.
+    * and `toOption()` switch a chain to the other class. A variable is looked
+    * up in the function or closure it is used in, then in the ones around it,
+    * so a closure's parameter does not stand in for a variable outside it.
     */
    private static function callsItOn(string $code, string $class, string $method, bool $isStatic): bool {
       $code = (string) preg_replace('/^\s*\*\s?/m', '', $code);
       $nodes = (new ParserFactory())->createForHostVersion()->parse("<?php\n{$code}") ?? [];
+      (new NodeTraverser(new ParentConnectingVisitor()))->traverse($nodes);
       $finder = new NodeFinder();
       $origins = [];
 
       foreach ($finder->findInstanceOf($nodes, Expr\Assign::class) as $assign) {
          if ($assign->var instanceof Expr\Variable && is_string($assign->var->name)) {
-            $origins[$assign->var->name] = $assign->expr;
+            $origins[self::scopeId($assign)][$assign->var->name] = $assign->expr;
          }
       }
 
       foreach ($finder->findInstanceOf($nodes, Node\Param::class) as $param) {
          if ($param->var instanceof Expr\Variable && is_string($param->var->name) && $param->type instanceof Name) {
-            $origins[$param->var->name] = $param->type->getLast();
+            $origins[self::scopeId($param)][$param->var->name] = $param->type->getLast();
          }
       }
 
@@ -152,7 +159,8 @@ final class DocumentedApiTest extends TestCase {
    /**
     * The class of the box `$expr` holds, or null when the example does not say
     *
-    * @param array<string, Expr|string> $origins what each variable was assigned, or its parameter type
+    * @param array<int, array<string, Expr|string>> $origins for each scope, what each variable was
+    *    assigned, or its parameter type
     */
    private static function classOf(Expr|string $expr, array $origins, int $depth = 0): ?string {
       if (is_string($expr)) {
@@ -177,11 +185,43 @@ final class DocumentedApiTest extends TestCase {
          };
       }
 
-      if ($expr instanceof Expr\Variable && is_string($expr->name) && isset($origins[$expr->name])) {
-         return self::classOf($origins[$expr->name], $origins, $depth + 1);
+      if ($expr instanceof Expr\Variable && is_string($expr->name)) {
+         for ($scope = self::scopeOf($expr); ; $scope = self::scopeOf($scope)) {
+            $found = $origins[$scope === null ? 0 : spl_object_id($scope)][$expr->name] ?? null;
+
+            if ($found !== null) {
+               return self::classOf($found, $origins, $depth + 1);
+            }
+
+            // a named function sees nothing outside it, and the top has nothing above it
+            if ($scope === null || $scope instanceof Stmt\Function_) {
+               return null;
+            }
+         }
       }
 
       return null;
+   }
+
+   /**
+    * The function or closure `$node` is in, or null at the top of the example
+    */
+   private static function scopeOf(Node $node): ?FunctionLike {
+      /** @var mixed $parent ParentConnectingVisitor set it, and an attribute can hold anything */
+      $parent = $node->getAttribute('parent');
+
+      while ($parent instanceof Node && !$parent instanceof FunctionLike) {
+         /** @var mixed $parent */
+         $parent = $parent->getAttribute('parent');
+      }
+
+      return $parent instanceof FunctionLike ? $parent : null;
+   }
+
+   private static function scopeId(Node $node): int {
+      $scope = self::scopeOf($node);
+
+      return $scope === null ? 0 : spl_object_id($scope);
    }
 
    /**

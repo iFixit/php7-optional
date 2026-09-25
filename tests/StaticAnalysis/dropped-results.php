@@ -101,6 +101,9 @@ function droppedResultsCallers(DroppedResultsRepository $repository, ?DroppedRes
    droppedResultsOrFalse(13); // dropped, a Result is one of the things it returns
    droppedResultsOrCount(14); // dropped
    $repository->save(15)->isOk() && droppedResultsSave(16); // dropped, the right side of && is dropped too
+   $repository->save(26)->isOk() || droppedResultsSave(27); // dropped
+   $repository->save(28)->isOk() and droppedResultsSave(29); // dropped
+   $repository->save(30)->isOk() or droppedResultsSave(31); // dropped
    droppedResultsSame(droppedResultsSave(17)); // dropped, a template bounded by Result
    @droppedResultsSave(19); // dropped, the @ hides warnings, not the Result
    match (true) { $maybe === null => droppedResultsSave(20), default => droppedResultsSave(21) }; // dropped, whichever arm runs

@@ -29,6 +29,7 @@ final class CoverageGateTest extends TestCase {
       yield 'nothing measured' => [$metrics('0', '0'), 2];
       yield 'negative statements' => [$metrics('-100', '-97'), 2];
       yield 'more covered than exist' => [$metrics('100', '150'), 2];
+      yield 'fewer than none covered' => [$metrics('100', '-5'), 2];
       yield 'no metrics element' => ['<coverage><project/></coverage>', 2];
       yield 'two project elements' => [
          '<coverage><project><metrics statements="1" coveredstatements="1"/></project>'
