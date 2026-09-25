@@ -274,10 +274,11 @@ Shorthands for shapes callers otherwise spell out by hand:
   nothing. A box inside a box shows as `Some(Some('a'))`. An object with a
   string form shows its class too, so `Some(SplFileInfo(5))` is not
   `Some(5)`, and an exception shows as `RuntimeException(boom)`. Control
-  characters and Unicode line breaks are escaped, and so are high bytes in
-  text that is not valid UTF-8, so the result is one line that
-  `json_encode()` can take. `MissingValueException` messages use the same
-  form: `Result is an Err: 'timeout'`
+  characters, Unicode line breaks and bidirectional controls are escaped, and
+  so are high bytes in text that is not valid UTF-8, so the result is one line
+  that `json_encode()` can take and that displays as it reads.
+  `MissingValueException` messages use the same form:
+  `Result is an Err: 'timeout'`
 
 * Every method that returns a new box has PHP 8.5's `#[\NoDiscard]`, so
   `$option->map($f);` on its own line, which does nothing, warns on 8.5. psalm

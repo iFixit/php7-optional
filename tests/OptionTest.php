@@ -589,6 +589,27 @@ final class OptionTest extends TestCase {
       }
    }
 
+   /**
+    * Each of the twelve characters Unicode lists as a bidirectional control can
+    * make a log line display differently from what it holds, so each is
+    * escaped. Some("\u{200F}1 2\u{200F}") used to display as Some('2 1').
+    */
+   public function testToStringEscapesEveryBidirectionalControl(): void {
+      $controls = [
+         "\u{061C}", "\u{200E}", "\u{200F}",
+         "\u{202A}", "\u{202B}", "\u{202C}", "\u{202D}", "\u{202E}",
+         "\u{2066}", "\u{2067}", "\u{2068}", "\u{2069}",
+      ];
+
+      foreach ($controls as $control) {
+         $this->assertSame(
+            "Some('1" . addcslashes($control, "\200..\377") . "2')",
+            (string) Option::some("1{$control}2"),
+            'the UTF-8 bytes ' . bin2hex($control)
+         );
+      }
+   }
+
    public function testToStringShowsAStringableByItsStringForm(): void {
       $id = new class implements \Stringable {
          #[\Override]

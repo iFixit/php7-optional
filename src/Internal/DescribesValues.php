@@ -48,9 +48,10 @@ trait DescribesValues {
     * `$text` as one line of valid UTF-8, which a log line or `json_encode()`
     * can take
     *
-    * Control characters, Unicode line breaks and the bidirectional controls that
-    * can make a log line display differently from what it holds are escaped,
-    * and so is every high byte when `$text` is not valid UTF-8. `$also` names more characters
+    * Control characters, Unicode line breaks and the twelve characters Unicode
+    * lists as bidirectional controls, which can make a log line display
+    * differently from what it holds, are escaped, and so is every high byte
+    * when `$text` is not valid UTF-8. `$also` names more characters
     * to escape, the quote and the backslash in a quoted string. Text an object
     * gives itself keeps both, so a box whose value's `__toString()` prints
     * another box is not escaped again at every level. Escaping them there made
@@ -62,7 +63,7 @@ trait DescribesValues {
       }
 
       return (string) preg_replace_callback(
-         '/[\x{80}-\x{9F}\x{2028}\x{2029}\x{202A}-\x{202E}\x{2066}-\x{2069}]/u',
+         '/[\x{80}-\x{9F}\x{061C}\x{200E}\x{200F}\x{2028}\x{2029}\x{202A}-\x{202E}\x{2066}-\x{2069}]/u',
          static fn(array $char): string => addcslashes($char[0], "\200..\377"),
          addcslashes($text, "\0..\37\177{$also}")
       );
