@@ -409,7 +409,8 @@ The repository's `tests/TypeInference` records what psalm and PHPStan (level
 max) infer for expressions like these, including 18 two-call chains, and fails
 when either changes. PHPStan's types are sometimes less literal than psalm's:
 it widens a literal passed through a generic method, so `Option<5>` becomes
-`Option<int>`. Neither tool infers `mixed` for any of them.
+`Option<int>`. Neither tool infers `mixed` for any of them, apart from a
+`do()` block's error type, as above.
 
 A few things to know about each tool:
 
@@ -425,6 +426,12 @@ A few things to know about each tool:
 * PHPStan does not read `@psalm-mutation-free`, so it calls every method on a
   box possibly impure from a function marked `@pure`, `@phpstan-pure` or
   `@psalm-pure`. PHPStan 1.12 reports none of these calls.
+* psalm reads a template bounded by a union of classes as its first class
+  alone, boxes included, and the plugin cannot change how psalm reads a
+  template. Bound it by one box instead, `R of Result<int, string>`. With
+  `R of Result<int, never>|Result<never, string>`:
+  * `$found->errOr('none')` comes out as `'none'`
+  * with the two the other way round, a typed callback gets `ReservedWord`
 * psalm loses a box's types in a first-class callable of its method, such as
   `$result->map(...)` or `$option->valueOr(...)`, and then reports
   `MixedArgumentTypeCoercion` or `InvalidArgument` where it is called. PHPStan
@@ -442,6 +449,9 @@ A few things to know about each tool:
   So in `[$row, $row->map(...)]`, or in a call right after `echo $row`, both
   uses of `$row` get the same type. The call still comes out as one box, but:
   * a callback there with no parameter type gets `never` for it, so type it
+  * a callback typed for the wrong side may not be reported. psalm reports it,
+    and so does PHPStan once `$row` is declared as one box, with
+    `/** @var Result<int, string> $row */`
   * the plain `$row` can come out as the merged box, which a type declared as
     the union rejects, so declare that type as one box, `Result<int, string>`
 
@@ -546,7 +556,9 @@ default mode. The first line the benchmark prints says which it had.
   the methods that run none of your code, so `map()`, `flatMap()`, `match()`
   and the other callback methods report `ImpureMethodCall` there, and so do
   `all()`, `partition()` and `first()`, which may run a generator, and
-  `valueOrThrow()`, which may run a closure. 3.0 allowed the ones it had.
+  `valueOrThrow()`, which may run a closure. psalm judges the method, not the
+  call, so `valueOrThrow('no id')` and `filter($keep)` with a bool report it
+  too. 3.0 allowed the ones it had.
 * This `Optional\Result` is new in 4.0. It is not the 2.x class of the same
   name, which earlier versions of this README documented by mistake.
 
