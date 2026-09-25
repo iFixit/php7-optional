@@ -35,6 +35,7 @@ final class StaticAnalysisTest extends TestCase {
       'psalm' => [
          'templated' => 'Optional\\Result<int, string>',
          'afterEcho' => "Optional\\Result<int, 'no'>",
+         'keptMixed' => 'Optional\\Option<mixed>',
          'ternary' => "Optional\\Result<int, never>|Optional\\Result<never, 'no'>",
          'maybeFound' => "Optional\\Result<int, never>|Optional\\Result<never, 'no'>|null",
          'maybeMapped' => "Optional\\Result<int, 'no'>|null",
@@ -50,6 +51,7 @@ final class StaticAnalysisTest extends TestCase {
       'phpstan' => [
          'templated' => 'Optional\\Result<int, string>',
          'afterEcho' => 'Optional\\Result<int, string>',
+         'keptMixed' => 'Optional\\Option<mixed~null>',
          'ternary' => 'Optional\\Result<int, never>|Optional\\Result<never, string>',
          'maybeFound' => 'Optional\\Result<int, never>|Optional\\Result<never, string>|null',
          'maybeMapped' => 'Optional\\Result<int, string>|null',
@@ -62,6 +64,16 @@ final class StaticAnalysisTest extends TestCase {
          'cached' => 'Optional\\Result<int, string>',
          'parsed' => 'Optional\\Result<int, non-falsy-string>',
       ],
+   ];
+
+   /**
+    * CI runs this test on PHPStan 1.12 too, which prints three of the types
+    * above without 2.2's refinements
+    */
+   private const PHPSTAN_1_TYPES = [
+      'length' => 'Optional\\Result<int, RuntimeException>',
+      'described' => 'Optional\\Result<float, string>',
+      'parsed' => 'Optional\\Result<int, string>',
    ];
 
    public function testThePsalmPluginReportsExactlyTheDroppedResults(): void {
@@ -153,8 +165,12 @@ final class StaticAnalysisTest extends TestCase {
          }
       }
 
+      $expected = str_starts_with(self::phpstanVersion(), '1.')
+         ? array_replace(self::BRANCH_BUILT_TYPES['phpstan'], self::PHPSTAN_1_TYPES)
+         : self::BRANCH_BUILT_TYPES['phpstan'];
+
       $this->assertSame([], $other, 'PHPStan reports issues in the branch-built fixture besides its dumps');
-      $this->assertSame(self::BRANCH_BUILT_TYPES['phpstan'], $traced);
+      $this->assertSame($expected, $traced);
    }
 
    /**
@@ -249,6 +265,26 @@ final class StaticAnalysisTest extends TestCase {
    }
 
    /**
+    * vendor/bin/phpstan, or the PHPStan that PHPSTAN_BINARY names. CI names a
+    * 1.12 installed on its own there, since this project's dev tools need 2.
+    */
+   private static function phpstanBinary(): string {
+      $binary = getenv('PHPSTAN_BINARY');
+
+      return is_string($binary) && $binary !== '' ? $binary : dirname(__DIR__) . '/vendor/bin/phpstan';
+   }
+
+   private static function phpstanVersion(): string {
+      $output = [];
+      exec(sprintf('%s %s --version', escapeshellarg(PHP_BINARY), escapeshellarg(self::phpstanBinary())), $output);
+
+      /** @var list<string> $output */
+      self::assertSame(1, preg_match('/ (\d+\.\d+\.\d+)/', implode("\n", $output), $version), 'PHPStan printed no version');
+
+      return $version[1];
+   }
+
+   /**
     * Every message PHPStan reports in the fixtures, by file, with the library's
     * extension.neon included. The branch-built fixture is copied with each
     * trace turned into a dumpType() on the same line, and filed under its own
@@ -274,9 +310,9 @@ final class StaticAnalysisTest extends TestCase {
       $command = sprintf(
          '%s %s analyse --no-progress --error-format=json --level=max --configuration=%s --autoload-file=%s %s %s %s 2>/dev/null',
          escapeshellarg(PHP_BINARY),
-         escapeshellarg("{$root}/vendor/bin/phpstan"),
+         escapeshellarg(self::phpstanBinary()),
          escapeshellarg("{$root}/extension.neon"),
-         escapeshellarg("{$root}/vendor/autoload.php"),
+         escapeshellarg(__DIR__ . '/StaticAnalysis/autoload-library.php'),
          escapeshellarg(self::DROPPED),
          escapeshellarg(self::STILL_REPORTED),
          escapeshellarg($copy)

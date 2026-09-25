@@ -48,6 +48,17 @@ function branchBuiltAfterEcho(bool $flag, int $id): void {
    /** @psalm-trace $afterEcho */
 }
 
+/**
+ * Not built in two branches: this is the fixture CI also runs on PHPStan
+ * 1.12, which takes a conditional return type's first branch when T is
+ * mixed. notNull() lists the kept branch first, and the other order typed
+ * this box as Option<never>.
+ */
+function branchBuiltMixed(mixed $row): void {
+   $keptMixed = Option::some($row)->notNull();
+   /** @psalm-trace $keptMixed */
+}
+
 function branchBuilt(bool $flag, int $id, ?BranchBuiltUser $maybe, string $input, int $kind): void {
    $ternary = $flag ? Result::ok($id) : Result::err('no');
    /** @psalm-trace $ternary */

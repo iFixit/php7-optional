@@ -93,6 +93,27 @@ jobs:
       - uses: ramsey/composer-install@v3
       - run: vendor/bin/phpstan analyse --no-progress
 
+  # The README says the extension runs on PHPStan 1.12, which reads a
+  # conditional return type differently from 2.2 (see AGENTS.md)
+  phpstan-1:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    name: Extension on PHPStan 1.12
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+          tools: composer:v2
+      - uses: ramsey/composer-install@v3
+      # installed on its own, since this project's dev tools need PHPStan 2
+      - run: composer global require --no-interaction --no-progress 'phpstan/phpstan:1.12.*'
+      - run: PHPSTAN_BINARY="$(composer global config bin-dir --absolute --quiet)/phpstan" vendor/bin/phpunit --filter StaticAnalysisTest
+
   composer-validate:
     runs-on: ubuntu-latest
     timeout-minutes: 10

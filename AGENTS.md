@@ -422,7 +422,11 @@ as `lowercase-string`.
 `notNull()`, `notFalsy()` and `notFalse()` write their `@phpstan-return` with
 the kept branch first, `(T is not null ? self<T> : self<never>)`. PHPStan 1.12
 takes the first branch when `T` is `mixed`, and the other order typed a
-`mixed` box as `Option<never>`. CI runs 2.2, so no test catches a swap.
+`mixed` box as `Option<never>`. 2.2 reads it the same either way, so CI also
+runs `StaticAnalysisTest` on 1.12, where a swap fails the `keptMixed` trace.
+To do that locally, point `PHPSTAN_BINARY` at a 1.12 installed on its own,
+such as with `composer global require 'phpstan/phpstan:1.12.*'`: this
+project's dev tools need 2, so Composer will not put 1.12 next to them.
 
 The two tools disagree in three places. `phpstan.neon` names the first two with
 a count, so a new case fails, and the third is ignored line by line:

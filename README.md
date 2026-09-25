@@ -362,8 +362,8 @@ includes:
 
 `vendor/bin/psalm-plugin enable ifixit/php7-optional` writes the psalm lines
 for you, and PHPStan's extension-installer includes the extension without
-them. The plugin needs psalm 6. The extension is checked in CI with PHPStan
-2, and runs on 1.12 too.
+them. The plugin needs psalm 6. CI checks the extension with PHPStan 2 and
+with 1.12.
 
 PHPStan 2 reports some of these lines on its own: a dropped call to the
 library's methods as `method.resultDiscarded`, and a call it can tell has no
