@@ -353,8 +353,6 @@ final class OptionTest extends TestCase {
     * filter() takes a Closure, not any callable, so a string is never called.
     * Code without strict types, which eval'd code is, coerces one to true, as
     * 3.x did. A callable parameter would have called var_dump() here.
-    *
-    * @psalm-suppress ForbiddenCode the point is code without strict types
     */
    public function testFilterNeverCallsAString(): void {
       ob_start();
@@ -418,7 +416,7 @@ final class OptionTest extends TestCase {
     * Without the check, a number gave a warning and a None, and a null key is
     * deprecated on PHP 8.5.
     *
-    * @psalm-suppress InvalidArgument, MixedArgumentTypeCoercion these items are wrong on purpose
+    * @psalm-suppress InvalidArgument these items are wrong on purpose
     */
    public function testAllRejectsWhatItCannotCollect(): void {
       $cases = [
@@ -552,8 +550,8 @@ final class OptionTest extends TestCase {
    }
 
    /**
-    * @psalm-suppress ForbiddenCode, InvalidStringClass a class name that is not
-    *    UTF-8 can only be declared, and so named, from a string
+    * @psalm-suppress InvalidStringClass a class name that is not UTF-8 can only
+    *    be declared, and so named, from a string
     */
    public function testToStringEscapesAClassNameThatIsNotUtf8(): void {
       $class = "OptionTestCaf\xe9";

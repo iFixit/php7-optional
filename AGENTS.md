@@ -92,13 +92,14 @@ The docblocks are the only API documentation, and four suites hold them to it.
   `php bin/generate-example-checks.php` after editing an example;
   `GeneratedExamplesAreCurrentTest` fails until you do.
 - `ExampleScriptTest` runs each script in `examples/` in a subprocess, failing
-  on any Fatal, Warning, Notice or Deprecated. psalm and PHPStan analyse them
-  too. The before and after scripts define the same two classes, so each has
+  on any Fatal, Warning, Notice or Deprecated, and compares what it prints with
+  the output the test records for it. psalm and PHPStan analyse them too. The before and after scripts define the same two classes, so each has
   its own namespace.
 - `DocumentedApiTest` walks every class under `src/` with reflection and
   requires that every public method has a fence, and that the fence calls the
   method it sits above on its own class: a factory as `Result::ok(`, a method
-  on a box the example builds from `Result::`. README.md's lists of factories
+  on a box whose chain, variable or typed closure parameter leads back to
+  `Result::`. It parses the example with nikic/php-parser to follow that. README.md's lists of factories
   and methods have to match reflection exactly, both ways. `__toString` and
   `@internal` methods are exempt. The examples come from every PHP file under
   `src/` plus README.md, found by listing the directory.

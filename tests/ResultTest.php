@@ -12,14 +12,10 @@ use PHPUnit\Framework\TestCase;
 final class ResultTest extends TestCase {
    /**
     * Result takes Option's names wherever the idea is the same, down to the
-    * parameter names, which PHP 8 callers can pass by name. A reader who has
-    * learned one box can guess the other. else, elseCreate and match are left
-    * out on purpose: their parameters name the box or the side they take.
-    */
-   /**
-    * Every method the two boxes share takes Option's parameters, by the same
-    * names and in order, so a named argument works on either box. match() is
-    * the one exception: its arguments are named after each box's two cases.
+    * parameter names, so a reader who has learned one box can guess the other
+    * and a named argument works on either. Every method the two share takes
+    * Option's parameters, in order. match() is the one exception: its
+    * arguments are named after each box's two cases.
     */
    public function testSharesOptionsParameterNames(): void {
       $names = fn(\ReflectionMethod $method): array => array_map(
@@ -362,8 +358,6 @@ final class ResultTest extends TestCase {
 
    /**
     * The same rule as Option::filter(): a string is never called.
-    *
-    * @psalm-suppress ForbiddenCode the point is code without strict types
     */
    public function testFilterNeverCallsAString(): void {
       ob_start();
@@ -416,7 +410,7 @@ final class ResultTest extends TestCase {
    }
 
    /**
-    * @psalm-suppress InvalidArgument, MixedArgumentTypeCoercion these items are wrong on purpose
+    * @psalm-suppress InvalidArgument these items are wrong on purpose
     */
    public function testAllAndPartitionRejectWhatTheyCannotCollect(): void {
       $cases = [

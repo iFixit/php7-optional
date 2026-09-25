@@ -123,9 +123,6 @@ final class ExampleSource {
       return $printed;
    }
 
-   /**
-    * @psalm-suppress ForbiddenCode running the examples is the entire point
-    */
    private static function evaluate(string $code): void {
       eval(self::PRELUDE . "\n" . $code);
    }

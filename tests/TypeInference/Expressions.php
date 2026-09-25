@@ -60,6 +60,12 @@ function optionTypes(): void {
 
    $firstWithAPredicateKeepsTheType = Option::first(['a', 'bb'], function(string $s): bool { return strlen($s) > 1; });
    /** @psalm-trace $firstWithAPredicateKeepsTheType */
+
+   $orCreateJoinsTheFallback = Option::some(5)->orCreate(fn(): string => 'six');
+   /** @psalm-trace $orCreateJoinsTheFallback */
+
+   $tapNoneReturnsTheSameBox = Option::some(5)->tapNone(function(): void {});
+   /** @psalm-trace $tapNoneReturnsTheSameBox */
 }
 
 /**
@@ -177,6 +183,15 @@ function resultTypes(): void {
 
    $resultOrIsAlwaysOk = Result::err('no')->or(0);
    /** @psalm-trace $resultOrIsAlwaysOk */
+
+   $resultOrCreateIsAlwaysOk = Result::err('no')->orCreate(fn(string $e): int => strlen($e));
+   /** @psalm-trace $resultOrCreateIsAlwaysOk */
+
+   $resultTapReturnsTheSameBox = Result::ok(5)->tap(function(int $_n): void {});
+   /** @psalm-trace $resultTapReturnsTheSameBox */
+
+   $resultTapErrReturnsTheSameBox = Result::err('no')->tapErr(function(string $_e): void {});
+   /** @psalm-trace $resultTapErrReturnsTheSameBox */
 
    // the step's error joins the chain's error type
    $resultFlatMapJoinsTheErrors = Result::ok(1)->flatMap(function(int $n): Result { return Result::err("rejected {$n}"); });

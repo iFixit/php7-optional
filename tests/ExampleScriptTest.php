@@ -8,7 +8,8 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Runs the scripts in examples/ and checks they exit clean.
+ * Runs the scripts in examples/ and checks they exit clean and print what
+ * PRINTS records.
  *
  * README points readers at this directory, so these are documentation too.
  * They are run in a subprocess for two reasons: several of them declare a
@@ -17,6 +18,17 @@ use PHPUnit\Framework\TestCase;
  * raises while its file is being compiled.
  */
 final class ExampleScriptTest extends TestCase {
+   /**
+    * What each script prints. The before and after scripts do the same work,
+    * with and without the box, so they print the same line.
+    */
+   private const PRINTS = [
+      'optionExampleAfter.php' => "The user is First Last\n",
+      'optionExampleBefore.php' => "The user is First Last\n",
+      'optionExampleComplex.php' => "Will connect to Sample App with: Server=10.0.0.120;Port=3128;Uid=root;Pwd=toor;\n"
+         . "Cache: no cache configured\n",
+   ];
+
    /**
     * @return iterable<string, array{string}>
     */
@@ -45,7 +57,8 @@ final class ExampleScriptTest extends TestCase {
       $text = implode("\n", $output);
 
       $this->assertSame(0, $status, sprintf("%s exited %d:\n%s", basename($path), $status, $text));
-      $this->assertNotSame('', trim($text), basename($path) . ' printed nothing, so it demonstrates nothing');
+      $this->assertArrayHasKey(basename($path), self::PRINTS, 'every script needs its output recorded above');
+      $this->assertSame(rtrim(self::PRINTS[basename($path)], "\n"), $text, basename($path) . ' printed something else');
 
       foreach (['Fatal error', 'Warning:', 'Notice:', 'Deprecated:'] as $bad) {
          $this->assertStringNotContainsString(

@@ -4,6 +4,12 @@ declare(strict_types = 1);
 
 namespace Optional\Tests;
 
+use PhpParser\Node;
+use PhpParser\Node\Expr;
+use PhpParser\Node\Identifier;
+use PhpParser\Node\Name;
+use PhpParser\NodeFinder;
+use PhpParser\ParserFactory;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
@@ -88,19 +94,94 @@ final class DocumentedApiTest extends TestCase {
          . "because a skipped test fails nothing."
       );
 
-      $code = self::stripCommentsAndStrings($m[1]);
+      $this->assertTrue(
+         self::callsItOn($m[1], $class, $method, $isStatic),
+         "{$label}'s example never calls it on a {$class}, so it is documenting some other method. "
+         . 'A factory has to be called by its class name, and a method on a box that its chain, or '
+         . 'the variable it was assigned to, starts from that class. A call in a comment or a string '
+         . 'does not count.'
+      );
+   }
 
-      $this->assertMatchesRegularExpression(
-         $isStatic ? '/\b' . $class . '::' . $method . '\s*\(/' : '/->' . $method . '\s*\(/',
-         $code,
-         "{$label}'s example never calls it, so it is documenting some other method. A call "
-         . "inside a comment or a string literal does not count."
-      );
-      $this->assertMatchesRegularExpression(
-         '/\b' . $class . '::/',
-         $code,
-         "{$label}'s example never builds a {$class}, so the {$method}() it calls belongs to another class."
-      );
+   /**
+    * Whether `$code` calls `$method` on a `$class`, found by parsing it
+    *
+    * A factory counts as `Class::method(`. A method counts when the box it is
+    * called on comes from `$class`: a chain that starts at `Class::`, a
+    * variable assigned one, or a closure parameter typed as one. `toResult()`
+    * and `toOption()` switch a chain to the other class.
+    */
+   private static function callsItOn(string $code, string $class, string $method, bool $isStatic): bool {
+      $code = (string) preg_replace('/^\s*\*\s?/m', '', $code);
+      $nodes = (new ParserFactory())->createForHostVersion()->parse("<?php\n{$code}") ?? [];
+      $finder = new NodeFinder();
+      $origins = [];
+
+      foreach ($finder->findInstanceOf($nodes, Expr\Assign::class) as $assign) {
+         if ($assign->var instanceof Expr\Variable && is_string($assign->var->name)) {
+            $origins[$assign->var->name] = $assign->expr;
+         }
+      }
+
+      foreach ($finder->findInstanceOf($nodes, Node\Param::class) as $param) {
+         if ($param->var instanceof Expr\Variable && is_string($param->var->name) && $param->type instanceof Name) {
+            $origins[$param->var->name] = $param->type->getLast();
+         }
+      }
+
+      $calls = $isStatic
+         ? $finder->findInstanceOf($nodes, Expr\StaticCall::class)
+         : [
+            ...$finder->findInstanceOf($nodes, Expr\MethodCall::class),
+            ...$finder->findInstanceOf($nodes, Expr\NullsafeMethodCall::class),
+         ];
+
+      foreach ($calls as $call) {
+         if (!$call->name instanceof Identifier || $call->name->name !== $method) {
+            continue;
+         }
+
+         if (self::classOf($call instanceof Expr\StaticCall ? $call : $call->var, $origins) === $class) {
+            return true;
+         }
+      }
+
+      return false;
+   }
+
+   /**
+    * The class of the box `$expr` holds, or null when the example does not say
+    *
+    * @param array<string, Expr|string> $origins what each variable was assigned, or its parameter type
+    */
+   private static function classOf(Expr|string $expr, array $origins, int $depth = 0): ?string {
+      if (is_string($expr)) {
+         return $expr;
+      }
+
+      if ($depth > 20) {
+         return null;
+      }
+
+      if ($expr instanceof Expr\StaticCall) {
+         return $expr->class instanceof Name ? $expr->class->getLast() : null;
+      }
+
+      if ($expr instanceof Expr\MethodCall || $expr instanceof Expr\NullsafeMethodCall) {
+         $name = $expr->name instanceof Identifier ? $expr->name->name : '';
+
+         return match ($name) {
+            'toResult' => 'Result',
+            'toOption' => 'Option',
+            default => self::classOf($expr->var, $origins, $depth + 1),
+         };
+      }
+
+      if ($expr instanceof Expr\Variable && is_string($expr->name) && isset($origins[$expr->name])) {
+         return self::classOf($origins[$expr->name], $origins, $depth + 1);
+      }
+
+      return null;
    }
 
    /**
@@ -203,27 +284,6 @@ final class DocumentedApiTest extends TestCase {
       $end = strpos($readme, "\n## ", $start + 1);
 
       return $end === false ? substr($readme, $start) : substr($readme, $start, $end - $start);
-   }
-
-   /**
-    * Removes comments and string literals, so a method name mentioned in either
-    * does not count as the example calling the method.
-    */
-   private static function stripCommentsAndStrings(string $code): string {
-      $stripped = '';
-
-      foreach (token_get_all('<?php ' . $code) as $token) {
-         if (!is_array($token)) {
-            $stripped .= $token;
-            continue;
-         }
-
-         $stripped .= in_array($token[0], [T_COMMENT, T_DOC_COMMENT, T_CONSTANT_ENCAPSED_STRING, T_ENCAPSED_AND_WHITESPACE], true)
-            ? ' '
-            : $token[1];
-      }
-
-      return $stripped;
    }
 
    public function testProviderSeesTheWholeApi(): void {

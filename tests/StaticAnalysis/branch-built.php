@@ -22,6 +22,10 @@ final class BranchBuiltUser {
 function branchBuilt(bool $flag, int $id, ?BranchBuiltUser $maybe, string $input, int $kind): void {
    $ternary = $flag ? Result::ok($id) : Result::err('no');
    /** @psalm-trace $ternary */
+
+   // the boxes merge, and everything else in the union stays
+   $maybeFound = $flag ? Result::ok($id) : ($kind > 0 ? Result::err('no') : null);
+   /** @psalm-trace $maybeFound */
    $mapped = $ternary->map(fn(int $x): int => $x * 2);
    /** @psalm-trace $mapped */
 
