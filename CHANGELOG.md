@@ -1,7 +1,9 @@
 # Changelog
 
-This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
-and [Semantic Versioning](https://semver.org/).
+This file is laid out like [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+with two sections of its own: Breaking, first, for what a 3.x caller has to
+change, and Infrastructure, for the tests and tooling. The project follows
+[Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
@@ -379,6 +381,9 @@ Shorthands for shapes callers otherwise spell out by hand:
   matrix, because pinning psalm to the oldest PHP in it is what froze the
   toolchain for years.
 
-## [3.0]
+## [3.0] - 2022-12-15
 
 See the git history. This file starts here.
+
+[Unreleased]: https://github.com/iFixit/php7-optional/compare/3.0...HEAD
+[3.0]: https://github.com/iFixit/php7-optional/releases/tag/3.0
