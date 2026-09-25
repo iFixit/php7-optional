@@ -75,8 +75,7 @@ README has the numbers.
 then coverage plus mutation testing, psalm, PHPStan, and
 `composer validate --strict` once each on 8.4. Static analysis is out of the matrix because pinning psalm to
 the oldest PHP in it is what kept this repo on a 2022 psalm for years. Coverage
-is out because xdebug roughly triples the run, and measuring the same lines
-once per PHP version teaches nothing.
+is out because measuring the same lines once per PHP version teaches nothing.
 
 ## The docs are tested, and that is the point
 
@@ -299,7 +298,10 @@ arguments is an alias. No test catches one, so this rule is on review.
 
 ## The psalm plugin and PHPStan extension
 
-`static-analysis/` holds a psalm plugin and a PHPStan extension. Each does two
+`static-analysis/` holds a psalm plugin and a PHPStan extension. Its classes
+stay in the production autoload and classmap: psalm and PHPStan load them
+through the project's autoloader, and an authoritative classmap
+(`composer dump-autoload -a`) finds nothing it does not list. Each does two
 things: it reports a call whose `Result` is dropped on its own line, and it
 types a box built in two branches (`Result<A, never>|Result<never, B>`) as one
 box (`Result<A, B>`). The merge is exact only because a box holds one value and
@@ -399,15 +401,15 @@ psalm ignores that tag, and PHPStan merges the `Option<never>` half back into
 the other, which psalm will not do. Keep both when you touch one.
 
 PHPStan is a dev dependency, and `composer phpstan` runs it at level max over
-`src/`, `static-analysis/` and `tests/TypeInference/Assignability.php`, with
-the dropped-Result rule on. `TypeInferenceTest` also runs it over the traced
+`src/`, `static-analysis/`, `examples/` and
+`tests/TypeInference/Assignability.php`, with the library's extension on. `TypeInferenceTest` also runs it over the traced
 expressions, each trace turned into a `dumpType()`, and compares every type
 with a second recorded list. PHPStan's types differ from psalm's in style: it
 widens a literal passed through a method's template, and adds refinements such
 as `lowercase-string`.
 
-The two tools disagree in three places, and `phpstan.neon` names each one with
-a count, so a new case fails:
+The two tools disagree in three places. `phpstan.neon` names the first two with
+a count, so a new case fails, and the third is ignored line by line:
 
 - `notNull()`, `notFalsy()` and `notFalse()` bind a template only psalm
   understands, so PHPStan reports the template unused and the cast in the body

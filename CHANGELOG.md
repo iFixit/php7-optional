@@ -13,10 +13,10 @@ change below that breaks a caller says what to write instead.
 
 * **PHP 8.4 is required.** 3.0 claimed `^7.2 || ^8.0`, but its CI tested
   nothing below 7.4: the commit 3.0 is tagged on dropped 7.3 from the test
-  matrix, and the one before it dropped 7.2. The toolchain had rotted with it.
-  psalm was pinned to 5.2.0 from December 2022, and no release in the 5.x
-  line runs on a PHP newer than 8.3. So the level-1 badge described a check
-  nobody could reproduce. On PHP 7.2 to 8.3, stay on 3.x.
+  matrix, and the one before it dropped 7.2. The toolchain aged with it: five
+  days after 3.0, the lock file pinned psalm 5.2.0, which runs on PHP 7.4 to
+  8.2, and no psalm 5 release runs on PHP 8.4, so the level-1 check could not
+  run on a current PHP. On PHP 7.2 to 8.3, stay on 3.x.
 * **`Either` is replaced by `Result`.** `Either` held a left or a right value
   and never said which one meant success. The library treated left as success,
   and callers passed `left:` and `right:` to `match()` by name to keep the two
@@ -109,8 +109,8 @@ change below that breaks a caller says what to write instead.
   `map()` included, was safe to call from a `@psalm-pure` function or a
   `@psalm-immutable` class. A method that runs your callback cannot promise
   that, since the callback may have side effects. 4.0 marks only the others:
-  the factories, `valueOr()`, `or()`, `notNull()`, `contains()`,
-  `valueOrReturn()` and the rest. `map()`, `flatMap()`, `match()`, `filter()`
+  `some()`, `none()`, `fromArray()`, the `someNot*()` factories, `valueOr()`,
+  `or()`, `notNull()`, `contains()`, `valueOrReturn()` and the rest. `map()`, `flatMap()`, `match()`, `filter()`
   and the other callback methods now report `ImpureMethodCall` from pure
   code, as do the new `all()`, `partition()` and `first()`, which may run a
   generator. Run the chain before the pure function and pass it the value.
@@ -216,11 +216,6 @@ Shorthands for shapes callers otherwise spell out by hand:
   and called a correct `?->` redundant. `valueOrCreate()` and `errOr()` had the
   same fault. The `T is never` conditionals behind it are gone: a plain `T|TT`
   gives psalm the same types and PHPStan the right ones
-* **PHPStan rejected the tap family's own examples.** The callbacks were typed
-  `callable(T): void`, and an arrow function returns its expression, so
-  `->tap(fn($x) => error_log(...))` failed at level 5 and up because
-  `error_log()` returns a bool. They take `callable(T): mixed` now, and the
-  return value is ignored as before
 * **psalm lost the type of every chain through `Option::map`.** On 3.0 it
   typed each one `Option<never>`, a box it believes is always empty, so
   `$opt->map($f)->valueOr(0)` traced as the literal `0`. `map`'s
@@ -258,9 +253,9 @@ Shorthands for shapes callers otherwise spell out by hand:
   type (`Some(array)`, `Some(stdClass)`), an exception by its class and
   message, and an enum case as `Suit::Hearts`. A value whose own
   `__toString()` throws shows by its type, and `NAN` no longer warns on 8.5
-* **`someNotFalsy(NAN)` and `notFalsy()` on a `NAN` warned on PHP 8.5**,
-  which warns whenever `NAN` is turned into a bool. `NAN` is truthy, so the
-  box keeps it, and now without the warning
+* **`notFalsy()` on a `NAN` warned on PHP 8.5**, which warns whenever `NAN`
+  is turned into a bool. `NAN` is truthy, so the box keeps it, and now
+  without the warning
 
 ### Changed
 
@@ -369,8 +364,7 @@ Shorthands for shapes callers otherwise spell out by hand:
   from 666 KB to 164 KB, and `PackageContentsTest` checks the list.
 * `composer.json` names the psalm plugin and the PHPStan extension, so
   `psalm-plugin enable ifixit/php7-optional` and PHPStan's
-  extension-installer find them. It also keeps `static-analysis/` out of an
-  optimized classmap, since loading those classes needs psalm or PHPStan
+  extension-installer find them
 * CI is five jobs: the test matrix, coverage, psalm, PHPStan, and
   `composer validate --strict`. Static analysis and coverage are out of the
   matrix, because pinning psalm to the oldest PHP in it is what froze the

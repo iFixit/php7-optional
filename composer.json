@@ -24,8 +24,7 @@
       "psr-4": {
          "Optional\\": "src/",
          "Optional\\StaticAnalysis\\": "static-analysis/"
-      },
-      "exclude-from-classmap": ["static-analysis/"]
+      }
    },
    "autoload-dev": {
       "psr-4": {
@@ -67,11 +66,11 @@
    "scripts-descriptions": {
       "test": "Run the test suite, which also executes every docblock and README example",
       "psalm": "Run psalm at errorLevel 1; it must exit 0, there is no baseline",
-      "phpstan": "Run PHPStan at level max over src/ and the static-analysis code",
+      "phpstan": "Run PHPStan at level max over src/, the static-analysis code and examples/",
       "types": "Assert what psalm and PHPStan infer for the expressions in tests/TypeInference",
       "benchmark": "Measure what the box costs against the plain PHP it replaces",
       "mutation": "Break the source on purpose and check a test notices; needs xdebug or pcov",
       "coverage": "Measure line coverage and fail below the floor; needs xdebug or pcov",
-      "check": "Run everything CI runs"
+      "check": "Run phpunit, psalm and PHPStan; CI also runs PHP 8.5, coverage, mutation testing and composer validate"
    }
 }
