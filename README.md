@@ -503,7 +503,10 @@ about 2 µs. A block that often ends early inside a tight loop is the place to
 write the `flatMap()` chain instead.
 
 Run it on your own machine rather than trusting this table; the numbers move
-with the PHP version and the opcache.
+with the PHP version and the opcache. Run it without a coverage extension,
+too. In the php:8.4-cli image, the box added about 110 ns to a read with
+neither loaded, about 280 ns with pcov and 770 to 780 ns with xdebug in its
+default mode. The first line the benchmark prints says which it had.
 
 ## Upgrading from 3.x
 

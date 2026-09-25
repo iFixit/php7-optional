@@ -60,17 +60,27 @@ $double = static fn(int $n): int => $n * 2;
 /** @var array<string, int> $counts */
 $counts = ['count' => 21];
 
-// opcache and its JIT change every figure, so a pasted run says which it had
-$opcache = extension_loaded('Zend OPcache') && ini_get('opcache.enable_cli') === '1';
-$jit = $opcache && (int) ini_get('opcache.jit_buffer_size') > 0
-   && !in_array(ini_get('opcache.jit'), ['disable', 'off', '0', ''], true);
+// opcache, its JIT and a coverage extension each change every figure, so a
+// pasted run says which it had. The ini settings can say on while opcache is
+// off, so ask opcache itself.
+$opcache = function_exists('opcache_get_status') ? opcache_get_status(false) : false;
+$jit = is_array($opcache) && is_array($opcache['jit'] ?? null) && ($opcache['jit']['on'] ?? false) === true;
+// the XDEBUG_MODE environment variable overrides the ini setting
+$xdebugMode = getenv('XDEBUG_MODE');
+$coverage = match (true) {
+   extension_loaded('xdebug') => 'xdebug in mode '
+      . (is_string($xdebugMode) && $xdebugMode !== '' ? $xdebugMode : (string) ini_get('xdebug.mode')),
+   extension_loaded('pcov') && ini_get('pcov.enabled') === '1' => 'pcov',
+   default => 'none',
+};
 
 printf(
-   "php7-optional, %d iterations per case, PHP %s, opcache %s, JIT %s\n\n",
+   "php7-optional, %d iterations per case, PHP %s, opcache %s, JIT %s, coverage %s\n\n",
    $iterations,
    PHP_VERSION,
-   $opcache ? 'on' : 'off',
-   $jit ? 'on' : 'off'
+   is_array($opcache) ? 'on' : 'off',
+   $jit ? 'on' : 'off',
+   $coverage
 );
 
 echo "The closure call each case runs in, taken off every case below\n";
