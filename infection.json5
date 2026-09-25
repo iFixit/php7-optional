@@ -11,9 +11,12 @@
     //
     //     composer mutation
     //
-    // Both thresholds are 100. Measured on PHP 8.5 with pcov, every mutant is
-    // killed, so one that survives from now on fails the build. It means one of two things, both worth a look: a test is
-    // missing, or the code it changed does nothing.
+    // Both thresholds are 100. Every mutant is killed on PHP 8.4 with xdebug,
+    // as CI runs it, and on 8.5 with pcov, so one that survives from now on
+    // fails the build. It means one of two things, both worth a look: a test
+    // is missing, or the code it changed does nothing. A test that fails on
+    // one PHP version only, such as for a warning 8.5 added, kills its mutant
+    // there and nowhere else, so check a new one on 8.4 too.
     "$schema": "vendor/infection/infection/resources/schema.json",
     "source": {
         "directories": [
