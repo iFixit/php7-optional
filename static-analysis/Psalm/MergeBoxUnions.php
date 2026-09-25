@@ -51,6 +51,12 @@ final class MergeBoxUnions implements AfterExpressionAnalysisInterface {
             continue;
          }
 
+         // a docblock with the wrong number of types, such as Result<User>, is psalm's to report
+         if (count($atomic->type_params) !== count($boxes[$class]->type_params)) {
+            $others[] = $atomic;
+            continue;
+         }
+
          $boxes[$class] = $boxes[$class]->setTypeParams(array_map(
             fn(Union $held, Union $more): Union => Type::combineUnionTypes($held, $more, $event->getCodebase()),
             $boxes[$class]->type_params,

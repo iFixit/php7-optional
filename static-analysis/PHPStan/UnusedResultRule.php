@@ -34,6 +34,12 @@ final class UnusedResultRule implements Rule {
    public function processNode(Node $node, Scope $scope): array {
       $call = $node->expr;
 
+      // `$ok && $repo->save()` on its own line drops the call's Result too, as psalm reports
+      while ($call instanceof Expr\BinaryOp\BooleanAnd || $call instanceof Expr\BinaryOp\BooleanOr
+         || $call instanceof Expr\BinaryOp\LogicalAnd || $call instanceof Expr\BinaryOp\LogicalOr) {
+         $call = $call->right;
+      }
+
       if ($call instanceof Expr\MethodCall || $call instanceof Expr\NullsafeMethodCall || $call instanceof Expr\StaticCall) {
          if ($call->name instanceof Identifier && $call->name->name === 'tapErr') {
             return [];

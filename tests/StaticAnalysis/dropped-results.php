@@ -72,6 +72,15 @@ function droppedResultsMissingReturn(string $input): Result {
    return Result::ok($input);
 }
 
+/**
+ * @template R of Result<int, string>
+ * @param R $result
+ * @return R
+ */
+function droppedResultsSame(Result $result): Result {
+   return $result;
+}
+
 function droppedResultsCallers(DroppedResultsRepository $repository, ?DroppedResultsRepository $maybe): int {
    droppedResultsSave(1); // dropped
    $repository->save(2); // dropped
@@ -83,6 +92,8 @@ function droppedResultsCallers(DroppedResultsRepository $repository, ?DroppedRes
    droppedResultsWrite(12); // dropped, a function with side effects PHPStan's own checks let through
    droppedResultsOrFalse(13); // dropped, a Result is one of the things it returns
    droppedResultsOrCount(14); // dropped
+   $repository->save(15)->isOk() && droppedResultsSave(16); // dropped, the right side of && is dropped too
+   droppedResultsSame(droppedResultsSave(17)); // dropped, a template bounded by Result
    droppedResultsNothing();
    $kept = droppedResultsSave(8);
    $_ = droppedResultsSave(9);

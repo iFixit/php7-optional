@@ -112,7 +112,8 @@ change below that breaks a caller says what to write instead.
   the factories, `valueOr()`, `or()`, `notNull()`, `contains()`,
   `valueOrReturn()` and the rest. `map()`, `flatMap()`, `match()`, `filter()`
   and the other callback methods now report `ImpureMethodCall` from pure
-  code. Run the chain before the pure function and pass it the value.
+  code, as do the new `all()`, `partition()` and `first()`, which may run a
+  generator. Run the chain before the pure function and pass it the value.
 
 ### Added
 

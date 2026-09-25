@@ -21,6 +21,8 @@ final class StaticAnalysisTest extends TestCase {
 
    private const BRANCH_BUILT = __DIR__ . '/StaticAnalysis/branch-built.php';
 
+   private const WRONG_TYPE_COUNT = __DIR__ . '/StaticAnalysis/wrong-type-count.php';
+
    /**
     * What each tool infers for the traced variables. psalm keeps literal
     * types where PHPStan widens them, as in tests/TypeInference.
@@ -33,6 +35,8 @@ final class StaticAnalysisTest extends TestCase {
          'described' => 'Optional\\Result<float(1.5), non-empty-literal-string>',
          'name' => 'Optional\\Option<string>',
          'direct' => 'int',
+         'cached' => "Optional\\Result<int, 'missing'>",
+         'parsed' => 'Optional\\Result<int, non-empty-string>',
       ],
       'phpstan' => [
          'ternary' => 'Optional\\Result<int, string>',
@@ -41,6 +45,8 @@ final class StaticAnalysisTest extends TestCase {
          'described' => 'Optional\\Result<float, non-falsy-string>',
          'name' => 'Optional\\Option<string>',
          'direct' => 'int',
+         'cached' => 'Optional\\Result<int, string>',
+         'parsed' => 'Optional\\Result<int, non-falsy-string>',
       ],
    ];
 
@@ -95,6 +101,17 @@ final class StaticAnalysisTest extends TestCase {
 
       $this->assertSame([], $other, 'psalm reports issues in the branch-built fixture besides its traces');
       $this->assertSame(self::BRANCH_BUILT_TYPES['psalm'], $traced);
+   }
+
+   /**
+    * The merge used to crash psalm on a box with the wrong number of types, and
+    * a crash loses every issue in the run. Getting any issues back at all is
+    * the first check; psalm's own report on the docblock is the second.
+    */
+   public function testThePsalmPluginLetsPsalmReportAWrongTypeCount(): void {
+      $types = array_map(fn(array $issue): string => $issue[0], self::psalm()[self::WRONG_TYPE_COUNT] ?? []);
+
+      $this->assertContains('MissingTemplateParam', $types);
    }
 
    public function testThePhpstanExtensionTypesABoxBuiltInTwoBranchesAsOne(): void {

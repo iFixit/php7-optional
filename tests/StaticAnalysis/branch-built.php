@@ -48,4 +48,20 @@ function branchBuilt(bool $flag, int $id, ?BranchBuiltUser $maybe, string $input
 
    $direct = ($flag ? Result::ok($id) : Result::err('no'))->valueOrThrow();
    /** @psalm-trace $direct */
+
+   /** @var array<string, Result<int, never>> $cache */
+   $cache = [];
+   $cached = ($cache[$input] ?? Result::err('missing'))->map(fn(int $x): int => $x + 1);
+   /** @psalm-trace $cached */
+
+   /** @psalm-suppress MissingClosureReturnType the type comes from its two returns */
+   $parse = function(string $s) {
+      if (is_numeric($s)) {
+         return Result::ok((int) $s);
+      }
+
+      return Result::err("not a number: {$s}");
+   };
+   $parsed = $parse($input)->map(fn(int $x): int => $x * 2);
+   /** @psalm-trace $parsed */
 }

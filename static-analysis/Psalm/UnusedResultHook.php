@@ -12,6 +12,7 @@ use Psalm\IssueBuffer;
 use Psalm\Plugin\EventHandler\AfterStatementAnalysisInterface;
 use Psalm\Plugin\EventHandler\Event\AfterStatementAnalysisEvent;
 use Psalm\Type\Atomic\TNamedObject;
+use Psalm\Type\Atomic\TTemplateParam;
 
 /**
  * Finds a call whose `Result` is dropped on its own line
@@ -45,6 +46,11 @@ final class UnusedResultHook implements AfterStatementAnalysisInterface {
       $type = $source->getNodeTypeProvider()->getType($call);
 
       foreach ($type?->getAtomicTypes() ?? [] as $atomic) {
+         // a template such as `R of Result<int, string>` is a Result too, as PHPStan reports
+         while ($atomic instanceof TTemplateParam && count($atomic->as->getAtomicTypes()) === 1) {
+            $atomic = array_values($atomic->as->getAtomicTypes())[0];
+         }
+
          if ($atomic instanceof TNamedObject && strtolower($atomic->value) === 'optional\result') {
             IssueBuffer::maybeAdd(
                new UnusedResult(

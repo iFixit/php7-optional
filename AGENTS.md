@@ -418,8 +418,16 @@ a count, so a new case fails:
   PHPStan cannot follow. Those lines carry a same-line `@phpstan-ignore` with
   the reason.
 
-PHPStan 1.12 widened a `false` passed to `Option::some()` into `bool`; 2.x
-does not.
+PHPStan widens a type made only of fixed values when it binds a method's
+template, `false` into `bool` included. So on 2.2, `Option::some($row)`, with
+`$row` an `array{id: int}|false`, is `Option<array{id: int}|bool>`, and
+`->notFalse()` on it leaves `Option<array{id: int}|true>`. An `int|false` is
+not widened, since `int` is not a fixed value. `someNotFalse()` and
+`someNotFalsy()` take the `false` off before binding, so they give the exact
+type, and the README points PHPStan users at them. A method-level
+`@phpstan-template-covariant` stops the widening, but PHPStan reports it as
+`method.variance` ("only allowed for type parameters of classes"), so the
+library does not rely on it.
 
 ## Style
 

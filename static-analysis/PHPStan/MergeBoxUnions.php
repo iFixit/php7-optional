@@ -20,8 +20,12 @@ use PHPStan\Type\UnionType;
  * on it loses the value type: `->map(fn(int $x): int => $x * 2)` comes out as
  * `Result<never, string>`. A box holds one value and its type parameters are
  * covariant, so `Result<A, never>|Result<never, B>` holds exactly what
- * `Result<A, B>` holds, and this rewrites the one as the other wherever such a
- * union can appear: a variable, a ternary or a `match`.
+ * `Result<A, B>` holds, and this rewrites the one as the other on every
+ * expression: a variable, a ternary, a `match`, a `??`, a call that returns
+ * one from a closure's two `return`s, a property.
+ *
+ * It resolves each expression itself, so it always hands that type back,
+ * merged or not. Returning null would make PHPStan resolve it a second time.
  */
 final class MergeBoxUnions implements ExpressionTypeResolverExtension {
    /**
@@ -34,10 +38,6 @@ final class MergeBoxUnions implements ExpressionTypeResolverExtension {
 
    #[\Override]
    public function getType(Expr $expr, Scope $scope): ?Type {
-      if (!$expr instanceof Expr\Variable && !$expr instanceof Expr\Ternary && !$expr instanceof Expr\Match_) {
-         return null;
-      }
-
       $id = spl_object_id($expr);
 
       if (isset($this->resolving[$id])) {
@@ -53,7 +53,7 @@ final class MergeBoxUnions implements ExpressionTypeResolverExtension {
       }
 
       if (!$type instanceof UnionType) {
-         return null;
+         return $type;
       }
 
       /** @var array<string, list<Type>> $params */
@@ -85,7 +85,7 @@ final class MergeBoxUnions implements ExpressionTypeResolverExtension {
       }
 
       if (!$merged) {
-         return null;
+         return $type;
       }
 
       foreach ($params as $class => $types) {

@@ -396,6 +396,21 @@ changes. PHPStan's types are sometimes less literal than psalm's: it widens a
 literal passed through a generic method, so `Option<5>` becomes `Option<int>`.
 Neither tool infers `mixed` anywhere the library knows the type.
 
+A few things to know about each tool:
+
+* PHPStan widens `false` to `bool` the same way, so `Option::some($row)` on a
+  row fetch's `array{id: int}|false` is an `Option<array{id: int}|bool>`, and
+  `->notFalse()` leaves a `true` in it. Write `Option::someNotFalse($row)`,
+  which both tools type as `Option<array{id: int}>`.
+* psalm accepts an object with a `__toString()` where a type says `string`, so
+  the `Result<int, Throwable>` that `fromCallable()` returns by default passes
+  as a `Result<int, string>`. PHPStan reports it.
+* PHPStan does not read `@psalm-mutation-free`, so from a `@phpstan-pure`
+  function it calls every method on a box possibly impure.
+* With the plugin or extension on, a union of boxes you declare yourself, such
+  as `@return Result<int, never>|Result<never, string>`, is merged like any
+  other. Declare `Result<int, string>`.
+
 ## On PHP 8.5
 
 Two things work with no change to your code. A dropped result warns, since a
@@ -487,8 +502,9 @@ with the PHP version and the opcache.
   goes unread. Chain `tapErr()` to handle it, or assign the result to `$_`.
 * psalm lets a `@psalm-pure` function or a `@psalm-immutable` class call only
   the methods that run none of your code, so `map()`, `flatMap()`, `match()`
-  and the other callback methods report `ImpureMethodCall` there. 3.0 allowed
-  them.
+  and the other callback methods report `ImpureMethodCall` there, and so do
+  `all()`, `partition()` and `first()`, which may run a generator. 3.0 allowed
+  the ones it had.
 * This `Optional\Result` is new in 4.0. It is not the 2.x class of the same
   name, which earlier versions of this README documented by mistake.
 
