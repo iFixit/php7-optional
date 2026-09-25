@@ -12,20 +12,26 @@ declare(strict_types = 1);
  *
  *     php bin/benchmark.php [iterations]
  *
- * These are nanoseconds per operation on one machine with no opcache. Read the
- * ratio, not the absolute number.
+ * These are nanoseconds per operation on one machine with no opcache. Each case
+ * runs inside a closure call, so the cost of an empty closure call is measured
+ * first and taken off every case: it belongs to neither the plain PHP nor the
+ * box. Read the time the box adds rather than a ratio. Against a few
+ * nanoseconds of plain PHP, any ratio looks alarming.
  */
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
 use Optional\Option;
+use Optional\Result;
 
 $iterations = max(1000, (int) ($argv[1] ?? '200000'));
 
 /**
+ * Nanoseconds per call of `$subject`, less `$floor`
+ *
  * @param callable():mixed $subject
  */
-function measure(string $label, callable $subject, int $iterations): float {
+function measure(string $label, callable $subject, int $iterations, float $floor = 0.0): float {
    // one warm pass, so the first call's autoload and JIT work is not counted
    $subject();
 
@@ -35,7 +41,7 @@ function measure(string $label, callable $subject, int $iterations): float {
       $subject();
    }
 
-   $nanoseconds = (hrtime(true) - $start) / $iterations;
+   $nanoseconds = (float) ((hrtime(true) - $start) / $iterations) - $floor;
    printf("  %-44s %8.1f ns\n", $label, $nanoseconds);
 
    return $nanoseconds;
@@ -56,33 +62,36 @@ $counts = ['count' => 21];
 
 echo "php7-optional, {$iterations} iterations per case, PHP " . PHP_VERSION . "\n\n";
 
+echo "The closure call each case runs in, taken off every case below\n";
+$floor = measure('an empty closure call', static fn(): null => null, $iterations);
+
 echo "Reading a value that is present\n";
-$plainHit = measure('$a["name"] ?? "none"', static fn(): string => $haystack['name'] ?? 'none', $iterations);
+$plainHit = measure('$a["name"] ?? "none"', static fn(): string => $haystack['name'] ?? 'none', $iterations, $floor);
 $boxHit = measure('Option::fromArray(...)->valueOr("none")', static fn(): string
-   => Option::fromArray($haystack, 'name')->valueOr('none'), $iterations);
+   => Option::fromArray($haystack, 'name')->valueOr('none'), $iterations, $floor);
 
 echo "\nReading a value that is absent\n";
-$plainMiss = measure('$a["nope"] ?? "none"', static fn(): string => $haystack['nope'] ?? 'none', $iterations);
+$plainMiss = measure('$a["nope"] ?? "none"', static fn(): string => $haystack['nope'] ?? 'none', $iterations, $floor);
 $boxMiss = measure('Option::fromArray(...)->valueOr("none")', static fn(): string
-   => Option::fromArray($haystack, 'nope')->valueOr('none'), $iterations);
+   => Option::fromArray($haystack, 'nope')->valueOr('none'), $iterations, $floor);
 
 echo "\nA two step chain\n";
 $plainChain = measure('null checks by hand', static function() use ($counts, $double): int {
    $value = $counts['count'] ?? null;
 
    return $value === null ? 0 : $double($double($value));
-}, $iterations);
+}, $iterations, $floor);
 $boxChain = measure('->map()->map()->valueOr()', static fn(): int
-   => Option::fromArray($counts, 'count')->map($double)->map($double)->valueOr(0), $iterations);
+   => Option::fromArray($counts, 'count')->map($double)->map($double)->valueOr(0), $iterations, $floor);
 
 echo "\nThe same chain on a key that is absent\n";
 $plainEmptyChain = measure('null checks by hand', static function() use ($counts, $double): int {
    $value = $counts['nope'] ?? null;
 
    return $value === null ? 0 : $double($double($value));
-}, $iterations);
+}, $iterations, $floor);
 $boxEmptyChain = measure('->map()->map()->valueOr()', static fn(): int
-   => Option::fromArray($counts, 'nope')->map($double)->map($double)->valueOr(0), $iterations);
+   => Option::fromArray($counts, 'nope')->map($double)->map($double)->valueOr(0), $iterations, $floor);
 
 // do() leaves the block by throwing, and PHP records the whole call stack in
 // every exception it builds, so the early exit costs more the deeper it runs.
@@ -109,20 +118,29 @@ $block = static fn(): int => Option::do(static function() use ($config, $ports):
 function deep(int $depth, callable $subject): int {
    return $depth === 0 ? $subject() : deep($depth - 1, $subject);
 }
-$flatMapSteps = measure('->flatMap()->flatMap()', $steps, $iterations);
-$doSteps = measure('do() with valueOrReturn()', $block, $iterations);
-$flatMapDeep = measure('->flatMap()->flatMap(), 50 calls deep', static fn(): int => deep(50, $steps), $iterations);
-$doDeep = measure('do() with valueOrReturn(), 50 calls deep', static fn(): int => deep(50, $block), $iterations);
+$flatMapSteps = measure('->flatMap()->flatMap()', $steps, $iterations, $floor);
+$doSteps = measure('do() with valueOrReturn()', $block, $iterations, $floor);
+$flatMapDeep = measure('->flatMap()->flatMap(), 50 calls deep', static fn(): int => deep(50, $steps), $iterations, $floor);
+$doDeep = measure('do() with valueOrReturn(), 50 calls deep', static fn(): int => deep(50, $block), $iterations, $floor);
+
+// A method on an empty box hands back that box rather than building a new one
+echo "\nThree maps on an empty box\n";
+/** @var Option<int> $none */
+$none = Option::none();
+/** @var Result<int, string> $err */
+$err = Result::err('no');
+measure('Option: ->map()->map()->map()', static fn(): Option => $none->map($double)->map($double)->map($double), $iterations, $floor);
+measure('Result: ->map()->map()->map()', static fn(): Result => $err->map($double)->map($double)->map($double), $iterations, $floor);
 
 echo "\nConstruction alone\n";
-measure('Option::some(1)', static fn(): Option => Option::some(1), $iterations);
-measure('Option::none()', static fn(): Option => Option::none(), $iterations);
+measure('Option::some(1)', static fn(): Option => Option::some(1), $iterations, $floor);
+measure('Option::none()', static fn(): Option => Option::none(), $iterations, $floor);
 
 // Work of the size a box usually wraps, so the overhead has something to be
 // compared against that anyone can reproduce.
 echo "\nFor scale, work a box typically wraps\n";
 $json = '{"id":7,"name":"Ada","tags":["a","b","c"],"meta":{"active":true,"score":9.5}}';
-measure('json_decode() of a small object', static fn(): mixed => json_decode($json, true), $iterations);
+measure('json_decode() of a small object', static fn(): mixed => json_decode($json, true), $iterations, $floor);
 
 $file = tempnam(sys_get_temp_dir(), 'php7-optional-benchmark');
 
@@ -132,17 +150,16 @@ if ($file === false) {
 }
 
 file_put_contents($file, str_repeat('x', 1024));
-measure('file_get_contents() of a 1 KB file', static fn(): string|false => file_get_contents($file), $iterations);
+measure('file_get_contents() of a 1 KB file', static fn(): string|false => file_get_contents($file), $iterations, $floor);
 unlink($file);
 
 printf(
-   "\nOverhead: %.1fx on a hit, %.1fx on a miss, %.1fx on the two step chain, %.1fx on it with the key absent.\n",
-   $plainHit > 0.0 ? $boxHit / $plainHit : 0.0,
-   $plainMiss > 0.0 ? $boxMiss / $plainMiss : 0.0,
-   $plainChain > 0.0 ? $boxChain / $plainChain : 0.0,
-   $plainEmptyChain > 0.0 ? $boxEmptyChain / $plainEmptyChain : 0.0
+   "\nThe box adds %.0f ns on a hit, %.0f ns on a miss, %.0f ns on the two step chain, %.0f ns on it with the key absent.\n",
+   $boxHit - $plainHit,
+   $boxMiss - $plainMiss,
+   $boxChain - $plainChain,
+   $boxEmptyChain - $plainEmptyChain
 );
-printf("In absolute terms the box adds about %.0f ns per call.\n", $boxHit - $plainHit);
 printf(
    "do()'s early exit costs %.0f ns more than flatMap() at the top of the stack, and %.0f ns more 50 calls down.\n",
    $doSteps - $flatMapSteps,

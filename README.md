@@ -439,21 +439,22 @@ parse `|>`, so the suite does not run it.
 
 A library that asks you to allocate an object where you used to write `??`
 should say what that buys and what it costs. `php bin/benchmark.php` measures
-it, and on PHP 8.4 with no opcache it reports:
+it, and on PHP 8.4 with no opcache, averaged over three runs, it reports:
 
-| | plain PHP | boxed | overhead |
+| | plain PHP | boxed | added |
 |---|---|---|---|
-| read a key that is present | 21 ns | 130 ns | 6.2x |
-| read a key that is absent | 20 ns | 118 ns | 5.9x |
-| two step chain | 64 ns | 348 ns | 5.4x |
-| the same chain, key absent | 29 ns | 178 ns | 6.1x |
+| read a key that is present | 13 ns | 123 ns | 109 ns |
+| read a key that is absent | 11 ns | 107 ns | 96 ns |
+| two step chain | 57 ns | 349 ns | 292 ns |
+| the same chain, key absent | 20 ns | 165 ns | 144 ns |
 
-So the box costs roughly 100 ns per call, and a chain on an empty box skips
-its steps without building a new box for each. Read the ratio and the absolute
-number together: 6x sounds alarming and 100 ns usually is not. On the same
-machine, decoding a small JSON object takes about 590 ns and reading a 1 KB
-file about 5.5 µs. A box adds about a sixth to the first and under 2% to the
-second, and a database query or an HTTP call is slower again.
+Each figure has the cost of the closure call the benchmark wraps it in, about
+9 ns, taken off. So the box adds roughly 100 ns per call, and a chain on an
+empty box skips its steps without building a new box for each. As a ratio
+against 13 ns of plain PHP that looks alarming, and 100 ns usually is not. On
+the same machine, decoding a small JSON object takes about 590 ns and reading
+a 1 KB file about 5.6 µs. A box adds about a sixth to the first and under 2%
+to the second, and a database query or an HTTP call is slower again.
 
 Where it does matter is a tight loop over a large array. Boxing a million
 elements adds about a tenth of a second. Reach for plain PHP there and keep
@@ -461,7 +462,7 @@ the box for the boundaries.
 
 `do()` costs more when it ends early, because its early exit is an exception
 and PHP records the whole call stack in each one. Three steps with the last
-key absent take about 560 ns as a `flatMap()` chain and 1.1 µs in a `do()`
+key absent take about 550 ns as a `flatMap()` chain and 1.1 µs in a `do()`
 block. Fifty calls further down the stack, the gap grows from about 0.5 µs to
 about 2 µs. A block that often ends early inside a tight loop is the place to
 write the `flatMap()` chain instead.
