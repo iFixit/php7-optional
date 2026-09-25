@@ -26,6 +26,10 @@ final class MergeBoxUnions implements AfterExpressionAnalysisInterface {
 
    #[\Override]
    public static function afterExpressionAnalysis(AfterExpressionAnalysisEvent $event): ?bool {
+      if ($event->getExpr()->getAttribute(MarkBoxReceivers::ATTRIBUTE) !== true) {
+         return null;
+      }
+
       $types = $event->getStatementsSource()->getNodeTypeProvider();
       $type = $types->getType($event->getExpr());
 

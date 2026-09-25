@@ -110,10 +110,11 @@ change below that breaks a caller says what to write instead.
   `@psalm-immutable` class. A method that runs your callback cannot promise
   that, since the callback may have side effects. 4.0 marks only the others:
   `some()`, `none()`, `fromArray()`, the `someNot*()` factories, `valueOr()`,
-  `or()`, `notNull()`, `contains()`, `valueOrReturn()` and the rest. `map()`, `flatMap()`, `match()`, `filter()`
-  and the other callback methods now report `ImpureMethodCall` from pure
-  code, as do the new `all()`, `partition()` and `first()`, which may run a
-  generator. Run the chain before the pure function and pass it the value.
+  `or()`, `notNull()`, `contains()`, `valueOrReturn()` and the rest. `map()`,
+  `flatMap()`, `match()`, `filter()` and the other callback methods now report
+  `ImpureMethodCall` from pure code, as do the new `all()`, `partition()` and
+  `first()`, which may run a generator, and `valueOrThrow()`, which may run a
+  closure. Run the chain before the pure function and pass it the value.
 
 ### Added
 

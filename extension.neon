@@ -12,3 +12,7 @@ services:
         class: Optional\StaticAnalysis\PHPStan\MergeBoxUnions
         tags:
             - phpstan.broker.expressionTypeResolverExtension
+    -
+        class: Optional\StaticAnalysis\PHPStan\MarkBoxReceivers
+        tags:
+            - phpstan.parser.richParserNodeVisitor

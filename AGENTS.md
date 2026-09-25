@@ -304,7 +304,10 @@ through the project's autoloader, and an authoritative classmap
 (`composer dump-autoload -a`) finds nothing it does not list. Each does two
 things: it reports a call whose `Result` is dropped on its own line, and it
 types a box built in two branches (`Result<A, never>|Result<never, B>`) as one
-box (`Result<A, B>`). The merge is exact only because a box holds one value and
+box (`Result<A, B>`), but only where a method is called on it: each tool marks
+the receiver of every method call (`MarkBoxReceivers`) and merges only a
+marked expression. Merging every expression made a property, parameter or
+return declared as such a union reject its own values. The merge is exact only because a box holds one value and
 its type parameters are covariant, so never extend it to a class that can hold
 several values, where `List<A>|List<B>` is not `List<A|B>`. They live outside
 `src/` because they are tooling, not the library's API, and the PHPStan half
@@ -407,6 +410,11 @@ expressions, each trace turned into a `dumpType()`, and compares every type
 with a second recorded list. PHPStan's types differ from psalm's in style: it
 widens a literal passed through a method's template, and adds refinements such
 as `lowercase-string`.
+
+`notNull()`, `notFalsy()` and `notFalse()` write their `@phpstan-return` with
+the kept branch first, `(T is not null ? self<T> : self<never>)`. PHPStan 1.12
+takes the first branch when `T` is `mixed`, and the other order typed a
+`mixed` box as `Option<never>`. CI runs 2.2, so no test catches a swap.
 
 The two tools disagree in three places. `phpstan.neon` names the first two with
 a count, so a new case fails, and the third is ignored line by line:

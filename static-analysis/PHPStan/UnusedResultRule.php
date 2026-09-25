@@ -31,20 +31,29 @@ final class UnusedResultRule implements Rule {
       return Node\Stmt\Expression::class;
    }
 
+   /**
+    * A `match`, a ternary or a `??` used as a statement drops whichever value it
+    * picks, and that can be a call's Result
+    */
+   private static function choosesAValue(Expr $expr): bool {
+      return $expr instanceof Expr\Match_ || $expr instanceof Expr\Ternary || $expr instanceof Expr\BinaryOp\Coalesce;
+   }
+
    public function processNode(Node $node, Scope $scope): array {
       $call = $node->expr;
 
-      // `$ok && $repo->save()` on its own line drops the call's Result too, as psalm reports
+      // `$ok && $repo->save()` and `@$repo->save()` on their own line drop the call's Result too
       while ($call instanceof Expr\BinaryOp\BooleanAnd || $call instanceof Expr\BinaryOp\BooleanOr
-         || $call instanceof Expr\BinaryOp\LogicalAnd || $call instanceof Expr\BinaryOp\LogicalOr) {
-         $call = $call->right;
+         || $call instanceof Expr\BinaryOp\LogicalAnd || $call instanceof Expr\BinaryOp\LogicalOr
+         || $call instanceof Expr\ErrorSuppress) {
+         $call = $call instanceof Expr\ErrorSuppress ? $call->expr : $call->right;
       }
 
       if ($call instanceof Expr\MethodCall || $call instanceof Expr\NullsafeMethodCall || $call instanceof Expr\StaticCall) {
          if ($call->name instanceof Identifier && $call->name->name === 'tapErr') {
             return [];
          }
-      } elseif (!$call instanceof Expr\FuncCall) {
+      } elseif (!$call instanceof Expr\FuncCall && !self::choosesAValue($call)) {
          return [];
       }
 

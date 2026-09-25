@@ -81,6 +81,14 @@ function droppedResultsSame(Result $result): Result {
    return $result;
 }
 
+/**
+ * @template R of Result<int, string>|null
+ * @param callable(): R $save
+ */
+function droppedResultsThroughATemplate(callable $save): void {
+   $save(); // dropped, a template bounded by Result|null
+}
+
 function droppedResultsCallers(DroppedResultsRepository $repository, ?DroppedResultsRepository $maybe): int {
    droppedResultsSave(1); // dropped
    $repository->save(2); // dropped
@@ -94,6 +102,10 @@ function droppedResultsCallers(DroppedResultsRepository $repository, ?DroppedRes
    droppedResultsOrCount(14); // dropped
    $repository->save(15)->isOk() && droppedResultsSave(16); // dropped, the right side of && is dropped too
    droppedResultsSame(droppedResultsSave(17)); // dropped, a template bounded by Result
+   @droppedResultsSave(19); // dropped, the @ hides warnings, not the Result
+   match (true) { $maybe === null => droppedResultsSave(20), default => droppedResultsSave(21) }; // dropped, whichever arm runs
+   $maybe === null ? droppedResultsSave(22) : null; // dropped
+   $maybe?->save(23) ?? droppedResultsSave(24); // dropped
    droppedResultsNothing();
    $kept = droppedResultsSave(8);
    $_ = droppedResultsSave(9);

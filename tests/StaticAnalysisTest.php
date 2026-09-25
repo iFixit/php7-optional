@@ -13,8 +13,9 @@ use PHPUnit\Framework\TestCase;
  * check has to report with "// dropped". Every other line is a way of using or
  * handling a Result that must not be reported.
  *
- * tests/StaticAnalysis/branch-built.php traces boxes built in two branches,
- * which each tool types as one box only with the plugin or extension on.
+ * tests/StaticAnalysis/branch-built.php traces boxes built in two branches. A
+ * variable holding one stays a union, and a method called on it sees one box,
+ * but only with the plugin or extension on.
  */
 final class StaticAnalysisTest extends TestCase {
    private const DROPPED = __DIR__ . '/StaticAnalysis/dropped-results.php';
@@ -29,8 +30,10 @@ final class StaticAnalysisTest extends TestCase {
     */
    private const BRANCH_BUILT_TYPES = [
       'psalm' => [
-         'ternary' => "Optional\\Result<int, 'no'>",
-         'maybeFound' => "Optional\\Result<int, 'no'>|null",
+         'ternary' => "Optional\\Result<int, never>|Optional\\Result<never, 'no'>",
+         'maybeFound' => "Optional\\Result<int, never>|Optional\\Result<never, 'no'>|null",
+         'maybeMapped' => "Optional\\Result<int, 'no'>|null",
+         'declared' => 'Optional\\Result<int, string>',
          'mapped' => "Optional\\Result<int, 'no'>",
          'length' => 'Optional\\Result<int<0, max>, RuntimeException>',
          'described' => 'Optional\\Result<float(1.5), non-empty-literal-string>',
@@ -40,8 +43,10 @@ final class StaticAnalysisTest extends TestCase {
          'parsed' => 'Optional\\Result<int, non-empty-string>',
       ],
       'phpstan' => [
-         'ternary' => 'Optional\\Result<int, string>',
-         'maybeFound' => 'Optional\\Result<int, string>|null',
+         'ternary' => 'Optional\\Result<int, never>|Optional\\Result<never, string>',
+         'maybeFound' => 'Optional\\Result<int, never>|Optional\\Result<never, string>|null',
+         'maybeMapped' => 'Optional\\Result<int, string>|null',
+         'declared' => 'Optional\\Result<int, string>',
          'mapped' => 'Optional\\Result<int, string>',
          'length' => 'Optional\\Result<int<0, max>, RuntimeException>',
          'described' => 'Optional\\Result<float, non-falsy-string>',

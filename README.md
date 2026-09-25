@@ -355,7 +355,8 @@ them. The plugin needs psalm 6. The extension is checked in CI with PHPStan
 
 PHPStan 2 reports some of these lines on its own: a dropped call to the
 library's methods as `method.resultDiscarded`, and a call it can tell has no
-side effects as `method.resultUnused`. So a line can be reported twice. The
+side effects as `method.resultUnused` (`staticMethod.` for a factory). So a
+line can be reported two or three times. The
 extension is for the rest, such as a function that writes to the database and
 then returns its `Result`.
 
@@ -402,16 +403,23 @@ A few things to know about each tool:
 
 * PHPStan widens `false` to `bool` the same way, so `Option::some($row)` on a
   row fetch's `array{id: int}|false` is an `Option<array{id: int}|bool>`, and
-  `->notFalse()` leaves a `true` in it. Write `Option::someNotFalse($row)`,
-  which both tools type as `Option<array{id: int}>`.
+  `->notFalse()` or `->notFalsy()` leaves a `true` in it. PHPStan 1.12 does
+  this to every `X|false`, `int|false` included. Write
+  `Option::someNotFalse($row)`, which both tools type as
+  `Option<array{id: int}>`.
 * psalm accepts an object with a `__toString()` where a type says `string`, so
   the `Result<int, Throwable>` that `fromCallable()` returns by default passes
   as a `Result<int, string>`. PHPStan reports it.
 * PHPStan does not read `@psalm-mutation-free`, so from a `@phpstan-pure`
   function it calls every method on a box possibly impure.
-* With the plugin or extension on, a union of boxes you declare yourself, such
-  as `@return Result<int, never>|Result<never, string>`, is merged like any
-  other. Declare `Result<int, string>`.
+* In a file without strict types, a box passed where a string is expected, as
+  in `strlen($email)`, becomes its string form, `Some('ada@example.com')`.
+  psalm reports it as `ImplicitToStringCast`, and PHPStan does not. Strict
+  types make it a `TypeError`.
+* The plugin and extension merge a box built in two branches only where a
+  method is called on it. A variable keeps the union, so a type you declare
+  as that union, such as `@return Result<int, never>|Result<never, string>`,
+  still takes it.
 
 ## On PHP 8.5
 
@@ -497,8 +505,8 @@ with the PHP version and the opcache.
 * `Option::fromArray()` takes an `int|string` key, so a `null` key throws a
   `TypeError`.
 * `Option` is `final`, as the new `Result` and `MissingValueException` are.
-  Extending a box never worked: the static factories build with `new self`, so a subclass came
-  back as a plain box on the first `map`.
+  Extending a box never worked: the static factories build with `new self`,
+  so a subclass came back as a plain box on the first `map`.
 * `(string)` on a box quotes strings and shows an object's class, so
   `Some(Ada)` is now `Some('Ada')`. Code that parses that text has to change.
 * 3.x's `matchLeft($f)` was `void`. Its rewrite, `tap($f)`, returns the
@@ -507,8 +515,8 @@ with the PHP version and the opcache.
 * psalm lets a `@psalm-pure` function or a `@psalm-immutable` class call only
   the methods that run none of your code, so `map()`, `flatMap()`, `match()`
   and the other callback methods report `ImpureMethodCall` there, and so do
-  `all()`, `partition()` and `first()`, which may run a generator. 3.0 allowed
-  the ones it had.
+  `all()`, `partition()` and `first()`, which may run a generator, and
+  `valueOrThrow()`, which may run a closure. 3.0 allowed the ones it had.
 * This `Optional\Result` is new in 4.0. It is not the 2.x class of the same
   name, which earlier versions of this README documented by mistake.
 

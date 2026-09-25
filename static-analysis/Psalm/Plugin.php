@@ -23,7 +23,7 @@ final class Plugin implements PluginEntryPointInterface {
    #[\Override]
    public function __invoke(PluginRegistrationSocket $registration, ?SimpleXMLElement $config = null): void {
       // psalm only registers a class that is already loaded, so load each first
-      foreach ([UnusedResultHook::class, MergeBoxUnions::class] as $hook) {
+      foreach ([UnusedResultHook::class, MarkBoxReceivers::class, MergeBoxUnions::class] as $hook) {
          class_exists($hook);
          $registration->registerHooksFromClass($hook);
       }

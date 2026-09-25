@@ -8,6 +8,7 @@ use PhpParser\Node\Expr;
 use PHPStan\Analyser\Scope;
 use PHPStan\Type\ExpressionTypeResolverExtension;
 use PHPStan\Type\Generic\GenericObjectType;
+use PHPStan\Type\Generic\TemplateType;
 use PHPStan\Type\Type;
 use PHPStan\Type\TypeCombinator;
 use PHPStan\Type\UnionType;
@@ -38,6 +39,10 @@ final class MergeBoxUnions implements ExpressionTypeResolverExtension {
 
    #[\Override]
    public function getType(Expr $expr, Scope $scope): ?Type {
+      if ($expr->getAttribute(MarkBoxReceivers::ATTRIBUTE) !== true) {
+         return null;
+      }
+
       $id = spl_object_id($expr);
 
       if (isset($this->resolving[$id])) {
@@ -62,6 +67,12 @@ final class MergeBoxUnions implements ExpressionTypeResolverExtension {
       $merged = false;
 
       foreach ($type->getTypes() as $member) {
+         // a template bounded by a box stands for one exact box, and merging it would lose that
+         if ($member instanceof TemplateType) {
+            $others[] = $member;
+            continue;
+         }
+
          $classes = $member->getObjectClassNames();
          $held = match ($classes) {
             ['Optional\Option'] => [$member->getTemplateType('Optional\Option', 'T')],

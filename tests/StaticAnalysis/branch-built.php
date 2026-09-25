@@ -3,7 +3,9 @@
 /**
  * Boxes built in two branches, with the plugin and extension turned on.
  * StaticAnalysisTest compares each trace with the type it records for psalm
- * and for PHPStan, and fails on any other issue.
+ * and for PHPStan, and fails on any other issue. A variable keeps its union,
+ * so a type declared as that union still accepts it, and a method called on
+ * it sees one box.
  *
  * Without them, psalm reports ReservedWord on every typed callback below,
  * and PHPStan types $mapped as Result<never, string>.
@@ -19,13 +21,24 @@ final class BranchBuiltUser {
    }
 }
 
+/** @return Result<int, never>|Result<never, string> */
+function branchBuiltDeclaredUnion(bool $flag, int $id): Result {
+   return $flag ? Result::ok($id) : Result::err('no');
+}
+
 function branchBuilt(bool $flag, int $id, ?BranchBuiltUser $maybe, string $input, int $kind): void {
    $ternary = $flag ? Result::ok($id) : Result::err('no');
    /** @psalm-trace $ternary */
 
-   // the boxes merge, and everything else in the union stays
+   // the boxes merge where a method is called on them, and everything else in the union stays
    $maybeFound = $flag ? Result::ok($id) : ($kind > 0 ? Result::err('no') : null);
    /** @psalm-trace $maybeFound */
+   $maybeMapped = $maybeFound?->map(fn(int $x): int => $x + 1);
+   /** @psalm-trace $maybeMapped */
+
+   // a union declared as such still takes its own values, since only a method call merges
+   $declared = branchBuiltDeclaredUnion($flag, $id)->map(fn(int $x): int => $x);
+   /** @psalm-trace $declared */
    $mapped = $ternary->map(fn(int $x): int => $x * 2);
    /** @psalm-trace $mapped */
 

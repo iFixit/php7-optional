@@ -24,6 +24,14 @@ use Psalm\Type\Atomic\TTemplateParam;
  * as `Result|false`, is reported too, as long as it can return a `Result`.
  */
 final class UnusedResultHook implements AfterStatementAnalysisInterface {
+   /**
+    * A `match`, a ternary or a `??` used as a statement drops whichever value it
+    * picks, and that can be a call's Result
+    */
+   private static function choosesAValue(Expr $expr): bool {
+      return $expr instanceof Expr\Match_ || $expr instanceof Expr\Ternary || $expr instanceof Expr\BinaryOp\Coalesce;
+   }
+
    #[\Override]
    public static function afterStatementAnalysis(AfterStatementAnalysisEvent $event): ?bool {
       $statement = $event->getStmt();
@@ -34,21 +42,29 @@ final class UnusedResultHook implements AfterStatementAnalysisInterface {
 
       $call = $statement->expr;
 
+      // `@$repo->save()` on its own line drops the call's Result too
+      while ($call instanceof Expr\ErrorSuppress) {
+         $call = $call->expr;
+      }
+
       if ($call instanceof Expr\MethodCall || $call instanceof Expr\NullsafeMethodCall || $call instanceof Expr\StaticCall) {
          if ($call->name instanceof Identifier && $call->name->name === 'tapErr') {
             return null;
          }
-      } elseif (!$call instanceof Expr\FuncCall) {
+      } elseif (!$call instanceof Expr\FuncCall && !self::choosesAValue($call)) {
          return null;
       }
 
       $source = $event->getStatementsSource();
       $type = $source->getNodeTypeProvider()->getType($call);
 
-      foreach ($type?->getAtomicTypes() ?? [] as $atomic) {
-         // a template such as `R of Result<int, string>` is a Result too, as PHPStan reports
-         while ($atomic instanceof TTemplateParam && count($atomic->as->getAtomicTypes()) === 1) {
-            $atomic = array_values($atomic->as->getAtomicTypes())[0];
+      $atomics = array_values($type?->getAtomicTypes() ?? []);
+
+      while (($atomic = array_shift($atomics)) !== null) {
+         // a template such as `R of Result<int, string>|null` can be a Result too, as PHPStan reports
+         if ($atomic instanceof TTemplateParam) {
+            array_push($atomics, ...array_values($atomic->as->getAtomicTypes()));
+            continue;
          }
 
          if ($atomic instanceof TNamedObject && strtolower($atomic->value) === 'optional\result') {
