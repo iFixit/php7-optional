@@ -409,7 +409,7 @@ return that type.
 expressions like these, including 18 two-call chains, and fails when either
 changes. PHPStan's types are sometimes less literal than psalm's: it widens a
 literal passed through a generic method, so `Option<5>` becomes `Option<int>`.
-Neither tool infers `mixed` anywhere the library knows the type.
+Neither tool infers `mixed` for any of them.
 
 A few things to know about each tool:
 
@@ -422,8 +422,14 @@ A few things to know about each tool:
 * psalm accepts an object with a `__toString()` where a type says `string`, so
   the `Result<int, Throwable>` that `fromCallable()` returns by default passes
   as a `Result<int, string>`. PHPStan reports it.
-* PHPStan does not read `@psalm-mutation-free`, so from a `@phpstan-pure`
-  function it calls every method on a box possibly impure.
+* PHPStan does not read `@psalm-mutation-free`, so it calls every method on a
+  box possibly impure from a function marked `@pure`, `@phpstan-pure` or
+  `@psalm-pure`. PHPStan 1.12 reports none of these calls.
+* psalm loses a box's types in a first-class callable of its method, such as
+  `$result->map(...)` or `$option->valueOr(...)`, and then reports
+  `MixedArgumentTypeCoercion` or `InvalidArgument` where it is called. PHPStan
+  types it fully. A closure keeps the types in psalm too:
+  `fn(int $fallback): int => $option->valueOr($fallback)`.
 * In a file without strict types, a box passed where a string is expected, as
   in `strlen($email)`, becomes its string form, `Some('ada@example.com')`.
   psalm reports it as `ImplicitToStringCast`, and PHPStan does not. Strict
