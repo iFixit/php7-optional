@@ -657,6 +657,13 @@ final class OptionTest extends TestCase {
             unset($this->message);
          }
       }));
+      // a float prints the way describe() prints one, so 1.0 keeps its point
+      $this->assertSame('Some(RuntimeException@anonymous(1.0))', (string) Option::some(new class() extends \RuntimeException {
+         public function __construct() {
+            parent::__construct();
+            $this->message = 1.0;
+         }
+      }));
       // PHP 8.5 warns when NAN is turned into a string, which this suite fails on
       $this->assertSame('Some(RuntimeException@anonymous(NAN))', (string) Option::some(new class() extends \RuntimeException {
          public function __construct() {

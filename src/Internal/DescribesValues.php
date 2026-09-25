@@ -107,7 +107,8 @@ trait DescribesValues {
       $message = $property->isInitialized($exception) ? $property->getRawValue($exception) : null;
 
       return match (true) {
-         // var_export(), because PHP 8.5 warns when NAN is turned into a string
+         // var_export(), as describe() prints a float: 1.0 keeps its point, and
+         // NAN does not warn, as a string cast of it does on PHP 8.5
          is_float($message) => var_export($message, true),
          is_scalar($message) || $message === null => (string) $message,
          default => get_debug_type($message),
