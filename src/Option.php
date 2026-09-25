@@ -40,7 +40,7 @@ final readonly class Option {
     * "The return value of method ... should either be used or intentionally
     * ignored by casting it as (void), " followed by this.
     */
-   private const DISCARDED = 'a box never changes after it is built, so this call only made a new one';
+   private const DISCARDED = 'a box never changes after it is built, so this call changed nothing';
 
    /**
     * The same, for the static factories. A factory's result dropped on its
@@ -534,6 +534,9 @@ final readonly class Option {
     *    `$catch` to catch one anyway. `Result::mapSafely` defaults to
     *    `Throwable`, because it keeps what it caught
     *  - A subclass of `$catch` is caught too, the same as a `catch` clause
+    *  - A generator function returns its generator without running it, so this
+    *    boxes the generator, and a throw inside it happens later, when you
+    *    iterate it, where nothing catches it
     *
     * @template U
     *
@@ -766,7 +769,7 @@ final readonly class Option {
    }
 
    /**
-    * Returns true iff the option is `Option::some` and `$existsFunc` accepts its value
+    * Returns true iff the option is `Option::some` and `$predicate` accepts its value
     *
     * ```php
     * $isAdult = fn(int $age) => $age >= 18;
@@ -778,15 +781,15 @@ final readonly class Option {
     *
     * _Notes:_
     *
-    *  - `$existsFunc` must follow this interface `callable(T):bool`
+    *  - `$predicate` must follow this interface `callable(T):bool`
     *  - Its result counts the way `if` counts it, as in `filter()`
     *
-    * @psalm-param callable(T):bool $existsFunc
+    * @psalm-param callable(T):bool $predicate
     **/
-   public function exists(callable $existsFunc): bool {
+   public function exists(callable $predicate): bool {
       $value = $this->value;
 
-      return $this->hasValue && $existsFunc($value);
+      return $this->hasValue && $predicate($value);
    }
 
    /**
@@ -823,7 +826,7 @@ final readonly class Option {
    //////////////////////////////
 
    /**
-    * Creates an option holding `$someValue`
+    * Creates an option holding `$value`
     *
     * ```php
     * echo (string) Option::some(1), "\n";    // Some(1)
@@ -836,12 +839,12 @@ final readonly class Option {
     *
     * @psalm-pure
     * @template TT
-    * @psalm-param TT $someValue
+    * @psalm-param TT $value
     * @psalm-return Option<TT>
     **/
    #[\NoDiscard(self::UNREAD)]
-   public static function some(mixed $someValue): self {
-      return new self($someValue, true);
+   public static function some(mixed $value): self {
+      return new self($value, true);
    }
 
    /**
@@ -865,7 +868,7 @@ final readonly class Option {
    }
 
    /**
-    * Boxes `$someValue` unless it is `null`, otherwise `Option::none()`
+    * Boxes `$value` unless it is `null`, otherwise `Option::none()`
     *
     * ```php
     * echo (string) Option::someNotNull('Ada'), "\n"; // Some('Ada')
@@ -879,17 +882,17 @@ final readonly class Option {
     * @psalm-pure
     * @template TT
     *
-    * @psalm-param TT|null $someValue
+    * @psalm-param TT|null $value
     *
     * @psalm-return self<TT>
     */
    #[\NoDiscard(self::UNREAD)]
-   public static function someNotNull(mixed $someValue): self {
-      return $someValue === null ? self::none() : self::some($someValue);
+   public static function someNotNull(mixed $value): self {
+      return $value === null ? self::none() : self::some($value);
    }
 
    /**
-    * Boxes `$someValue` unless it is falsy, otherwise `Option::none()`
+    * Boxes `$value` unless it is falsy, otherwise `Option::none()`
     *
     * The falsy counterpart to `Option::someNotNull`. Reach for it when PHP hands
     * you the usual "nothing found" value rather than null: `false` from a db
@@ -910,14 +913,14 @@ final readonly class Option {
     * @psalm-pure
     * @template TT
     *
-    * @psalm-param TT|null|false $someValue
+    * @psalm-param TT|null|false $value
     *
     * @psalm-return self<TT>
     */
    #[\NoDiscard(self::UNREAD)]
-   public static function someNotFalsy(mixed $someValue): self {
+   public static function someNotFalsy(mixed $value): self {
       /** @var self<TT> a falsy value never gets a box */
-      return self::isFalsy($someValue) ? self::none() : self::some($someValue);
+      return self::isFalsy($value) ? self::none() : self::some($value);
    }
 
    /**
@@ -943,13 +946,13 @@ final readonly class Option {
     * @psalm-pure
     * @template TT
     *
-    * @psalm-param TT|false $someValue
+    * @psalm-param TT|false $value
     *
     * @psalm-return self<TT>
     */
    #[\NoDiscard(self::UNREAD)]
-   public static function someNotFalse(mixed $someValue): self {
-      return $someValue === false ? self::none() : self::some($someValue);
+   public static function someNotFalse(mixed $value): self {
+      return $value === false ? self::none() : self::some($value);
    }
 
    /**
@@ -986,6 +989,9 @@ final readonly class Option {
     *    `$catch` to catch one anyway. Use `Result::fromCallable` when you need the
     *    failure itself; it defaults to `Throwable`, because it keeps it
     *  - A subclass of `$catch` is caught too, the same as a `catch` clause
+    *  - A generator function returns its generator without running it, so this
+    *    boxes the generator, and a throw inside it happens later, when you
+    *    iterate it, where nothing catches it
     *  - A factory returning null still gives you `Some(null)`. Chain `notNull()`
     *
     * @template TT

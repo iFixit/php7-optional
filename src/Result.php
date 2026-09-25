@@ -49,7 +49,7 @@ final readonly class Result {
     * "The return value of method ... should either be used or intentionally
     * ignored by casting it as (void), " followed by this.
     */
-   private const DISCARDED = 'a box never changes after it is built, so this call only made a new one';
+   private const DISCARDED = 'a box never changes after it is built, so this call changed nothing';
 
    /**
     * The same, for the static factories. A factory's result dropped on its
@@ -386,7 +386,7 @@ final readonly class Result {
    }
 
    /**
-    * Returns true iff the result is `Result::ok` and `$existsFunc` accepts its value
+    * Returns true iff the result is `Result::ok` and `$predicate` accepts its value
     *
     * ```php
     * $isAdult = fn(int $age) => $age >= 18;
@@ -398,15 +398,15 @@ final readonly class Result {
     *
     * _Notes:_
     *
-    *  - `$existsFunc` must follow this interface `callable(T):bool`
+    *  - `$predicate` must follow this interface `callable(T):bool`
     *  - Its result counts the way `if` counts it, as in `filter()`
     *
-    * @psalm-param callable(T):bool $existsFunc
+    * @psalm-param callable(T):bool $predicate
     */
-   public function exists(callable $existsFunc): bool {
+   public function exists(callable $predicate): bool {
       $value = $this->value;
 
-      return $this->isOk && $existsFunc($value);
+      return $this->isOk && $predicate($value);
    }
 
    /**
@@ -493,6 +493,9 @@ final readonly class Result {
     *    signature lands in the error rather than escaping. That is safe here and
     *    not in `Option::mapSafely`, because this box keeps what it caught
     *  - A subclass of `$catch` is caught too, the same as a `catch` clause
+    *  - A generator function returns its generator without running it, so this
+    *    boxes the generator, and a throw inside it happens later, when you
+    *    iterate it, where nothing catches it
     *  - A `Result::err` passes through, and `$mapFunc` never runs on it
     *
     * @template U
@@ -843,6 +846,9 @@ final readonly class Result {
     *    signature lands in the error rather than escaping. That is safe here and
     *    not in `Option::fromCallable`, because this box keeps what it caught
     *  - A subclass of `$catch` is caught too, the same as a `catch` clause
+    *  - A generator function returns its generator without running it, so this
+    *    boxes the generator, and a throw inside it happens later, when you
+    *    iterate it, where nothing catches it
     *
     * @template TT
     * @template C of Throwable

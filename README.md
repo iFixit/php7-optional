@@ -404,7 +404,7 @@ box never changes and the call did nothing:
 ```text
 Warning: The return value of method Optional\Option::map() should either be used
 or intentionally ignored by casting it as (void), a box never changes after it
-is built, so this call only made a new one
+is built, so this call changed nothing
 ```
 
 And the pipe operator can feed a box, because a static factory is a

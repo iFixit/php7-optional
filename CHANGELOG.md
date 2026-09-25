@@ -91,9 +91,12 @@ change below that breaks a caller says what to write instead.
   `Option::some('1e1')->contains('10')` and `Option::some(null)->contains(false)`
   were all true, and two separate but equal objects matched. For a looser
   test, pass your own comparison to `exists()`.
-* **Two `Option` parameters are renamed**, so each has the same name on both
-  boxes: `else($alternativeOption)` is `else($alternative)`, and
-  `elseCreate($alternativeOptionFactory)` is `elseCreate($alternativeFactory)`.
+* **Some `Option` parameters are renamed**, so a parameter that means the same
+  thing has the same name everywhere, on both boxes: `else($alternativeOption)`
+  is `else($alternative)`, `elseCreate($alternativeOptionFactory)` is
+  `elseCreate($alternativeFactory)`, `exists($existsFunc)` is
+  `exists($predicate)`, as `first()` names it, and the `$someValue` of
+  `some()` and the `someNot*()` factories is `$value`, as on `Result::ok()`.
   Only a call that passes the argument by name notices.
 * **`Option::fromArray()` takes an `int|string` key.** A `null` key throws a
   `TypeError` where 3.x looked up the `""` key, and so do float and bool keys
