@@ -25,7 +25,8 @@ final class NoDiscardTest extends TestCase {
     * Every method that hands back a new box carries the attribute, factories
     * included, and nothing else does. The tap family returns a box too, but
     * running it for the side effect and dropping the box is the whole point of
-    * calling it.
+    * calling it. A factory's warning says a return is probably missing, and a
+    * method's says the call only made a new box, so each has to carry its own.
     */
    public function testEveryMethodThatReturnsABoxIsMarked(): void {
       $checked = 0;
@@ -35,7 +36,8 @@ final class NoDiscardTest extends TestCase {
             // PHP 8.4 renders a `self` return type as "self", 8.5 as the class name
             $returnsABox = in_array((string) $method->getReturnType(), ['self', $class, Option::class, Result::class], true);
             $expected = $returnsABox && !str_starts_with($method->getName(), 'tap');
-            $marked = $method->getAttributes(\NoDiscard::class) !== [];
+            $attributes = $method->getAttributes(\NoDiscard::class);
+            $marked = $attributes !== [];
 
             $this->assertSame(
                $expected,
@@ -47,6 +49,14 @@ final class NoDiscardTest extends TestCase {
                   $expected ? 'returns a new box, so it needs' : 'does not return a new box, so it must not carry'
                )
             );
+
+            foreach ($attributes as $attribute) {
+               $this->assertSame(
+                  (new \ReflectionClassConstant($class, $method->isStatic() ? 'UNREAD' : 'DISCARDED'))->getValue(),
+                  $attribute->getArguments()[0] ?? null,
+                  sprintf('%s::%s() carries the other kind of #[\NoDiscard] message', $class, $method->getName())
+               );
+            }
 
             $checked++;
          }

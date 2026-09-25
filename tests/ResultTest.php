@@ -338,11 +338,15 @@ final class ResultTest extends TestCase {
       $_ = $ok->tap(function(array &$values): void { end($values); });
       $_ = $err->tapErr(function(array &$values): void { end($values); });
 
+      $thrown = [];
+
       try {
          $err->valueOrThrow(function(array &$values): \RuntimeException { return new \RuntimeException((string) end($values)); });
       } catch (\RuntimeException $e) {
-         $this->assertSame('6', $e->getMessage());
+         $thrown[] = $e->getMessage();
       }
+
+      $this->assertSame(['6'], $thrown, 'valueOrThrow() on an Err throws what the closure built');
 
       $this->assertSame([1, 2, 3], $ok->valueOr([]), 'the callbacks changed a copy, never the box');
       $this->assertSame([4, 5, 6], $err->errOr([]), 'the callbacks changed a copy, never the box');

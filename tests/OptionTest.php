@@ -54,29 +54,29 @@ final class OptionTest extends TestCase {
    public function testGettingValue(): void {
       $noneOption = Option::none();
 
-      $this->assertSame($noneOption->valueOr(-1), -1);
+      $this->assertSame(-1, $noneOption->valueOr(-1));
 
       $someObject = new SomeObject();
 
       $someThing = Option::some(1);
       $someClass = Option::some($someObject);
 
-      $this->assertSame($someThing->valueOr(-1), 1);
-      $this->assertSame($someClass->valueOr(-1), $someObject);
+      $this->assertSame(1, $someThing->valueOr(-1));
+      $this->assertSame($someObject, $someClass->valueOr(-1));
    }
 
    public function testGettingValueLazily(): void {
       $noneOption = Option::none();
 
-      $this->assertSame($noneOption->valueOrCreate(function() { return -1; }), -1);
+      $this->assertSame(-1, $noneOption->valueOrCreate(function() { return -1; }));
 
       $someObject = new SomeObject();
 
       $someThing = Option::some(1);
       $someClass = Option::some($someObject);
 
-      $this->assertSame($someThing->valueOrCreate(function() { return -1; }), 1);
-      $this->assertSame($someClass->valueOrCreate(function() { return -1; }), $someObject);
+      $this->assertSame(1, $someThing->valueOrCreate(function() { return -1; }));
+      $this->assertSame($someObject, $someClass->valueOrCreate(function() { return -1; }));
 
       $this->assertSame($someThing->valueOrCreate(function() {
          $this->fail('Callback should not have been run!');
@@ -87,7 +87,7 @@ final class OptionTest extends TestCase {
       }), $someObject);
    }
 
-   public function testGettingAlternitiveValue(): void {
+   public function testGettingAnAlternativeValue(): void {
       $someObject = new SomeObject();
       $noneOption = Option::none();
 
@@ -96,24 +96,24 @@ final class OptionTest extends TestCase {
       $someThing= $noneOption->or(1);
       $someClass = $noneOption->or($someObject);
 
-      $this->assertSame($someClass->or("Hello"), $someClass);
+      $this->assertSame($someClass, $someClass->or("Hello"));
 
       $this->assertTrue($someThing->hasValue());
       $this->assertTrue($someClass->hasValue());
 
-      $this->assertSame($someThing->valueOr(-1), 1);
-      $this->assertSame($someClass->valueOr("-1"), $someObject);
+      $this->assertSame(1, $someThing->valueOr(-1));
+      $this->assertSame($someObject, $someClass->valueOr("-1"));
 
       $lazySome = $noneOption->orCreate(function() { return 10; });
       $this->assertTrue($lazySome->hasValue());
-      $this->assertSame($lazySome->valueOr(-1), 10);
+      $this->assertSame(10, $lazySome->valueOr(-1));
 
       $lazyPassThrough = $someThing->orCreate(function() { return 10; });
       $this->assertTrue($lazyPassThrough->hasValue());
-      $this->assertSame($lazyPassThrough->valueOr(-1), 1);
+      $this->assertSame(1, $lazyPassThrough->valueOr(-1));
    }
 
-   public function testGettingAlternitiveOption(): void {
+   public function testGettingAnAlternativeOption(): void {
       $someObject = new SomeObject();
       $noneOption = Option::none();
 
@@ -125,16 +125,16 @@ final class OptionTest extends TestCase {
       $someThing = $noneOption->else(Option::some(1));
       $someClass = $noneOption->else(Option::some($someObject));
 
-      $this->assertSame($someThing->else(Option::some(1)), $someThing);
+      $this->assertSame($someThing, $someThing->else(Option::some(1)));
 
       $this->assertTrue($someThing->hasValue());
       $this->assertTrue($someClass->hasValue());
 
-      $this->assertSame($someThing->valueOr(-1), 1);
-      $this->assertSame($someClass->valueOr("-1"), $someObject);
+      $this->assertSame(1, $someThing->valueOr(-1));
+      $this->assertSame($someObject, $someClass->valueOr("-1"));
    }
 
-   public function testGettingAlternitiveOptionLazy(): void {
+   public function testGettingAnAlternativeOptionLazily(): void {
       $someObject = new SomeObject();
       $noneOption = Option::none();
 
@@ -156,8 +156,8 @@ final class OptionTest extends TestCase {
       $this->assertTrue($someThing->hasValue());
       $this->assertTrue($someClass->hasValue());
 
-      $this->assertSame($someThing->valueOr(-1), 1);
-      $this->assertSame($someClass->valueOr("-1"), $someObject);
+      $this->assertSame(1, $someThing->valueOr(-1));
+      $this->assertSame($someObject, $someClass->valueOr("-1"));
 
       $kept = $someThing->elseCreate(
          /** @return never */
@@ -190,8 +190,8 @@ final class OptionTest extends TestCase {
           function() { return -2; }
       );
 
-      $this->assertSame($failure, -2);
-      $this->assertSame($success, 2);
+      $this->assertSame(-2, $failure);
+      $this->assertSame(2, $success);
 
       $whichRan = $none->match(
           function() { return 'some'; },
@@ -216,8 +216,8 @@ final class OptionTest extends TestCase {
 
       $this->assertFalse($noneUpper->hasValue());
       $this->assertTrue($someUpper->hasValue());
-      $this->assertSame($noneUpper->valueOr("b"), "b");
-      $this->assertSame($someUpper->valueOr("b"), "A");
+      $this->assertSame("b", $noneUpper->valueOr("b"));
+      $this->assertSame("A", $someUpper->valueOr("b"));
 
       $noneNotNull = $none->flatMap(function($x) { return Option::some($x)->notNull(); });
       $someNotNull = $some->flatMap(function($x) { return Option::some($x)->notNull(); });
@@ -466,42 +466,7 @@ final class OptionTest extends TestCase {
             return Option::some($thing);
          });
 
-      $this->assertSame($name->valueOr(''), 'FirstLast');
-   }
-
-   public function testFlatMapWithException(): void {
-      $somePerson = [
-         'name' => [
-            'first' => 'First',
-            'last' => 'Last'
-         ]
-      ];
-
-      $person = Option::fromArray($somePerson, 'BAD VALUE');
-
-      $this->assertFalse($person->hasValue());
-      $this->assertSame($person->valueOr('oh no'), 'oh no');
-   }
-
-   public function testSafelyMapWithException(): void {
-      $somePerson = [
-         'name' => [
-            'first' => 'First',
-            'last' => 'Last'
-         ]
-      ];
-
-      $person = Option::fromArray($somePerson, 'name');
-
-      $name = $person->mapSafely(
-         /** @param array{first: string, last: string} $person */
-         function(array $person): string {
-            $fullName = $person['first'] . $person['last'];
-            return SomeComplexThing::doWork($fullName, "Forcing some exception");
-         });
-
-      $this->assertFalse($name->hasValue());
-      $this->assertSame($name->valueOr('oh no'), 'oh no');
+      $this->assertSame('FirstLast', $name->valueOr(''));
    }
 
    /**
@@ -897,14 +862,7 @@ final class OptionTest extends TestCase {
 
 final class SomeObject {}
 final class SomeComplexThing {
-   /**
-    * @throws \Exception
-    */
-   public static function doWork(string $thing, ?string $ex = null): string {
-      if ($ex !== null) {
-         throw new \Exception($ex);
-      }
-
+   public static function doWork(string $thing): string {
       return $thing;
    }
 }

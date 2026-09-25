@@ -18,6 +18,7 @@ concurrency:
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     strategy:
       fail-fast: false
@@ -40,6 +41,7 @@ jobs:
 
   coverage:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     name: Coverage
 
     steps:
@@ -59,6 +61,7 @@ jobs:
 
   static-analysis:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     name: Psalm
 
     steps:
@@ -75,6 +78,7 @@ jobs:
 
   phpstan:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     name: PHPStan
 
     steps:
@@ -91,6 +95,7 @@ jobs:
 
   composer-validate:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     name: Composer validate
 
     steps:

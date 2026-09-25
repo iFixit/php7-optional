@@ -34,6 +34,5 @@
     },
     "minMsi": 100,
     "minCoveredMsi": 100,
-    "testFramework": "phpunit",
-    "testFrameworkOptions": "--testsuite='PHP Optional Test Suite'"
+    "testFramework": "phpunit"
 }
