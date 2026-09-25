@@ -740,16 +740,26 @@ final class OptionTest extends TestCase {
    }
 
    /**
-    * A class name meant as the exception to throw used to become the message.
-    * Only the empty path checks, so a value costs no autoload.
-    */
-   /**
     * A message that is exactly the name of an exception class gets a hint,
     * since it was almost certainly meant as the class to throw. It is still a
-    * MissingValueException, so a catch for one still works.
+    * MissingValueException, so a catch for one still works, and only the
+    * empty path checks, so a value costs nothing.
+    *
+    * An alias made with class_alias() has no case of its own to compare, so
+    * it is judged by its spelling, and only an alias of an exception counts.
     */
    public function testValueOrThrowHintsWhenTheMessageNamesAnExceptionClass(): void {
       $this->assertSame(1, Option::some(1)->valueOrThrow(\DomainException::class));
+
+      foreach ([
+         'Optional\\Tests\\AliasedFailureException' => \DomainException::class,
+         'AliasedFailureException' => \DomainException::class,
+         'Optional\\Tests\\AliasedPlainError' => \stdClass::class,
+      ] as $alias => $class) {
+         if (!class_exists($alias, false)) {
+            class_alias($class, $alias);
+         }
+      }
 
       $messages = [];
       $sent = [
@@ -763,6 +773,9 @@ final class OptionTest extends TestCase {
          "App\\PaymentFailedException\n",
          'League\\Csv\\Exception',
          'NotFoundError',
+         'Optional\\Tests\\AliasedFailureException',
+         'AliasedFailureException',
+         'Optional\\Tests\\AliasedPlainError',
       ];
 
       foreach ($sent as $message) {
@@ -784,6 +797,9 @@ final class OptionTest extends TestCase {
          "App\\PaymentFailedException\n",
          'League\\Csv\\Exception (a class name: pass valueOrThrow() a closure to throw one)',
          'NotFoundError',
+         'Optional\\Tests\\AliasedFailureException (a class name: pass valueOrThrow() a closure to throw one)',
+         'AliasedFailureException',
+         'Optional\\Tests\\AliasedPlainError',
       ], $messages, 'only an exception class gets the hint: a loaded one spelled with its own case, or a namespaced one spelled like it');
    }
 

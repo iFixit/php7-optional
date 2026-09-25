@@ -80,7 +80,8 @@ trait DescribesValues {
     * message such as `'error'` is left alone. One that is not loaded counts if
     * it is spelled like a namespaced class whose name ends in `Exception` or
     * `Error`, such as `'App\NotFoundError'`; a bare `'NotFoundError'` may be an
-    * error code. No autoloader runs either way.
+    * error code. A `class_alias()` name has no case of its own to match, so an
+    * alias of an exception counts if it is spelled that way. No autoloader runs.
     */
    private static function missingMessage(?string $message, string $otherwise): string {
       if ($message === null) {
@@ -88,13 +89,17 @@ trait DescribesValues {
       }
 
       $class = ltrim($message, '\\');
-      $namesAnException = class_exists($class, false)
-         ? is_a($class, Throwable::class, true) && (new ReflectionClass($class))->getName() === $class
-         // a project's own exception is namespaced and usually not loaded yet, so
-         // judge a namespaced name by its spelling; a bare word such as
-         // 'NotFoundError' may be an error code the caller compares against
-         // (\x5c is the namespace separator, spelled so Infection can print a diff of the line)
-         : preg_match('/^(?:[A-Za-z_\x80-\xff][\w\x80-\xff]*\x5c)+(?=[A-Z])[\w\x80-\xff]*(?:Exception|Error)$/D', $class) === 1;
+      $loadedAs = class_exists($class, false) ? (new ReflectionClass($class))->getName() : null;
+      // a project's own exception is namespaced and usually not loaded yet, so a
+      // namespaced name is judged by its spelling; a bare word such as
+      // 'NotFoundError' may be an error code the caller compares against
+      // (\x5c is the namespace separator, spelled so Infection can print a diff of the line)
+      $spelledLikeOne = preg_match('/^(?:[A-Za-z_\x80-\xff][\w\x80-\xff]*\x5c)+(?=[A-Z])[\w\x80-\xff]*(?:Exception|Error)$/D', $class) === 1;
+      // a loaded exception also counts under its own name in its own case, and
+      // an alias of one, which has neither, by that spelling
+      $namesAnException = $loadedAs === null
+         ? $spelledLikeOne
+         : is_a($class, Throwable::class, true) && ($loadedAs === $class || $spelledLikeOne);
 
       return $namesAnException ? "{$message} (a class name: pass valueOrThrow() a closure to throw one)" : $message;
    }
