@@ -231,10 +231,12 @@ echo $owes(13), "\n"; // Err('cart for user13 is locked')
 unwrapped value exactly, so `$user` is a `string`, but the block's error type
 is `mixed` unless you annotate it.
 
-The early exit is thrown, so it reaches the nearest `do()` from inside any
-function the block calls, the way a throw reaches the nearest catch. A
-`catch (Throwable)` in between catches it too; catch
-`Optional\Exceptions\EarlyReturn` first and rethrow it. Return the plain
+The early exit is thrown, so it reaches the nearest `do()` for its kind of
+box from inside any function the block calls, the way a throw reaches the
+nearest catch. An `Option`'s goes straight through a `Result::do()` in
+between, and a `Result`'s through an `Option::do()`. A `catch (Throwable)` in
+between catches it too; catch `Optional\Exceptions\EarlyReturn` first and
+rethrow it. Return the plain
 value from the block: a box returned from it ends up inside another box.
 
 ## Many boxes at once
