@@ -516,7 +516,9 @@ with the PHP version and the opcache.
   `TypeError`.
 * `Option` is `final`, as the new `Result` and `MissingValueException` are.
   Extending a box never worked: the static factories build with `new self`,
-  so a subclass's own factory handed back a plain `Option`.
+  so a subclass's own factory handed back a plain `Option`. A test that mocks
+  one breaks, though: PHPUnit's `createMock(Option::class)` throws
+  `ClassIsFinalException`. Pass a real box, built with `some()` or `none()`.
 * `(string)` on a box quotes strings and shows an object's class, so
   `Some(Ada)` is now `Some('Ada')`. Code that parses that text has to change.
 * 3.x's `matchLeft($f)` was `void`. Its rewrite, `tap($f)`, returns the

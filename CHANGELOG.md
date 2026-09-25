@@ -103,7 +103,9 @@ change below that breaks a caller says what to write instead.
   in a file with `strict_types`. psalm already typed the key `array-key`.
 * **`Option` is `final`, as the new `Result` and `MissingValueException` are.**
   Extending a box never worked: the static factories build with `new self`, so
-  on 3.0 a subclass's own factory already handed back a plain `Option`.
+  on 3.0 a subclass's own factory already handed back a plain `Option`. A test
+  that mocks one breaks, though: PHPUnit's `createMock(Option::class)` throws
+  `ClassIsFinalException`. Pass a real box, built with `some()` or `none()`.
 * **psalm's pure code can call only the methods that run none of your code.**
   3.0 marked each box `@psalm-immutable`, which told psalm that every method,
   `map()` included, was safe to call from a `@psalm-pure` function or a
