@@ -351,7 +351,7 @@ final class StaticAnalysisTest extends TestCase {
          escapeshellarg(PHP_BINARY),
          escapeshellarg(self::phpstanBinary()),
          escapeshellarg("{$root}/extension.neon"),
-         escapeshellarg(__DIR__ . '/StaticAnalysis/autoload-library.php'),
+         escapeshellarg("{$root}/vendor/autoload.php"),
          escapeshellarg(self::DROPPED),
          escapeshellarg(self::STILL_REPORTED),
          escapeshellarg($copy)
