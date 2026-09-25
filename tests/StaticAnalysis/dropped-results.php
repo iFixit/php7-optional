@@ -108,6 +108,9 @@ function droppedResultsCallers(DroppedResultsRepository $repository, ?DroppedRes
    droppedResultsSame(droppedResultsSave(17)); // dropped, a template bounded by Result
    @droppedResultsSave(19); // dropped, the @ hides warnings, not the Result
    @($maybe === null && droppedResultsOrFalse(33)); // dropped
+   @($maybe === null || droppedResultsOrFalse(34)); // dropped
+   @($maybe === null and droppedResultsOrFalse(35)); // dropped
+   @($maybe === null or droppedResultsOrFalse(36)); // dropped
    match (true) { $maybe === null => droppedResultsSave(20), default => droppedResultsSave(21) }; // dropped, whichever arm runs
    $maybe === null ? droppedResultsSave(22) : null; // dropped
    $maybe?->save(23) ?? droppedResultsSave(24); // dropped
