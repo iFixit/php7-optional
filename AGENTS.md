@@ -9,7 +9,7 @@ someone cuts a tag.
 The whole library is `src/Option.php`, `src/Result.php`, two exceptions in
 `src/Exceptions/` (`MissingValueException` and `EarlyReturn`) and two internal
 traits in `src/Internal/`: `DescribesValues` for the string form and
-`ChecksItems` for what `all()` and `partition()` accept. The psalm plugin and PHPStan
+`ChecksArguments` for what `all()`, `partition()` and `valueOrThrow()` accept. The psalm plugin and PHPStan
 extension, which report a dropped `Result` and type a box built in two branches
 as one box, are in `static-analysis/`. Read them directly. This document
 covers only what reading them will not tell you, or will tell you wrong.

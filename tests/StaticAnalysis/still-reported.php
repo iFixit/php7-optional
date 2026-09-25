@@ -10,6 +10,10 @@
  *
  * A template bounded by a box or null. It may be null, so it is not merged
  * as a box, and the method called on it is reported.
+ *
+ * An exception object passed to valueOrThrow(), which takes a closure that
+ * builds one. PHPStan let it through while the method's PHP type named
+ * Throwable.
  */
 
 declare(strict_types = 1);
@@ -36,4 +40,9 @@ function stillReportedTypeCount(StillReportedRepository $repository, ?int $id): 
  */
 function stillReportedNullable(bool $flag, ?Result $found, Result $fallback): string {
    return (string) ($flag ? $found : $fallback)->map(fn(int $x): int => $x);
+}
+
+/** @param Result<int, string> $found */
+function stillReportedExceptionObject(Result $found): int {
+   return $found->valueOrThrow(new RuntimeException('no row'));
 }

@@ -122,13 +122,14 @@ final class StaticAnalysisTest extends TestCase {
     * a crash loses every issue in the run. Getting any issues back at all is
     * the first check; psalm's own report on the docblock is the second. The
     * third is the call on a template that may be null, which merging it as a
-    * box would hide.
+    * box would hide, and the last is an exception object in valueOrThrow().
     */
    public function testThePsalmPluginLeavesPsalmItsOwnReports(): void {
       $types = array_map(fn(array $issue): string => $issue[0], self::psalm()[self::STILL_REPORTED] ?? []);
 
       $this->assertContains('MissingTemplateParam', $types);
       $this->assertContains('PossiblyNullReference', $types);
+      $this->assertContains('ImplicitToStringCast', $types);
    }
 
    public function testThePhpstanExtensionLeavesPhpstanItsOwnReports(): void {
@@ -136,6 +137,7 @@ final class StaticAnalysisTest extends TestCase {
 
       $this->assertContains('generics.lessTypes', $identifiers);
       $this->assertContains('method.nonObject', $identifiers);
+      $this->assertContains('argument.type', $identifiers);
    }
 
    public function testThePhpstanExtensionTypesABoxBuiltInTwoBranchesAsOne(): void {

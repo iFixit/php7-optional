@@ -805,6 +805,19 @@ final class OptionTest extends TestCase {
       $_ = Option::some(1)->valueOrThrow(new \DomainException('no id'));
    }
 
+   /**
+    * Its PHP type takes any object, so that PHPStan reads the docblock, and a
+    * closure is the only object it keeps
+    *
+    * @psalm-suppress InvalidArgument any other object is the mistake under test
+    */
+   public function testValueOrThrowRejectsAnyOtherObject(): void {
+      $this->expectException(\TypeError::class);
+      $this->expectExceptionMessage('valueOrThrow() takes a message or a closure that builds the exception, got stdClass');
+
+      $_ = Option::some(1)->valueOrThrow(new \stdClass());
+   }
+
    public function testValueOrThrowUsesTheSuppliedException(): void {
       $some = Option::some(1);
       $this->assertSame(1, $some->valueOrThrow(function(): \Exception {

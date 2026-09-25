@@ -181,6 +181,19 @@ final class ResultTest extends TestCase {
    }
 
    /**
+    * Its PHP type takes any object, so that PHPStan reads the docblock, and a
+    * closure is the only object it keeps
+    *
+    * @psalm-suppress InvalidArgument any other object is the mistake under test
+    */
+   public function testValueOrThrowRejectsAnyOtherObject(): void {
+      $this->expectException(\TypeError::class);
+      $this->expectExceptionMessage('valueOrThrow() takes a message or a closure that builds the exception, got stdClass');
+
+      $_ = Result::ok(1)->valueOrThrow(new \stdClass());
+   }
+
+   /**
     * Each callback runs only on the side it is for. They count rather than
     * call fail(), since mapSafely() would catch what fail() throws.
     */

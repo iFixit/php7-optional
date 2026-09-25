@@ -8,10 +8,9 @@ use Closure;
 use Exception;
 use Optional\Exceptions\EarlyReturn;
 use Optional\Exceptions\MissingValueException;
-use Optional\Internal\ChecksItems;
+use Optional\Internal\ChecksArguments;
 use Optional\Internal\DescribesValues;
 use Throwable;
-use TypeError;
 
 /**
  * A box that optionally holds a value: `Option::some($value)` or `Option::none()`.
@@ -33,7 +32,7 @@ use TypeError;
  *    PHPStan checks those positions properly and accepts them.
  */
 final readonly class Option {
-   use ChecksItems;
+   use ChecksArguments;
    use DescribesValues;
 
    /**
@@ -174,9 +173,10 @@ final readonly class Option {
     *  - `$orThrow` is a message, or a closure that follows the interface
     *    `callable():Throwable`. It takes a closure rather than any callable,
     *    because a string naming a function is also a message
-    *  - An exception object throws a `TypeError`, on either side, since it would
-    *    otherwise be turned into its own text in a file without strict types.
-    *    Pass a closure that builds it
+    *  - An exception object, or any object but a closure, throws a
+    *    `TypeError` on either side. In a file without strict types, an exception
+    *    would otherwise be turned into its own text. Pass a closure that builds
+    *    it
     *  - A message that is exactly the name of an exception class, such as
     *    `DomainException::class`, gets a hint added, since you almost
     *    certainly meant to throw that class. Pass
@@ -189,14 +189,8 @@ final readonly class Option {
     * @psalm-param null|string|Closure():Throwable $orThrow
     * @psalm-return T
     **/
-   public function valueOrThrow(string|Closure|Throwable|null $orThrow = null): mixed {
-      if ($orThrow instanceof Throwable) {
-         // an exception object in a file without strict types would otherwise become its own __toString() text
-         throw new TypeError(
-            'valueOrThrow() takes a closure that builds the exception, such as fn() => new '
-            . get_debug_type($orThrow) . '(...), not the exception itself'
-         );
-      }
+   public function valueOrThrow(string|object|null $orThrow = null): mixed {
+      self::checkOrThrow($orThrow);
 
       if (!$this->hasValue) {
          throw $orThrow instanceof Closure
