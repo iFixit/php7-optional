@@ -86,7 +86,8 @@ trait DescribesValues {
       $namesAnException = class_exists($class, false)
          ? is_a($class, Throwable::class, true) && (new ReflectionClass($class))->getName() === $class
          // a project's own exception is usually not loaded yet, so judge it by its spelling alone
-         : preg_match('/^(?:[A-Za-z_\x80-\xff][\w\x80-\xff]*\\\\)*[A-Z][\w\x80-\xff]*(?:Exception|Error)$/D', $class) === 1;
+         // (\x5c is the namespace separator, spelled so Infection can print a diff of the line)
+         : preg_match('/^(?:[A-Za-z_\x80-\xff][\w\x80-\xff]*\x5c)*[A-Z][\w\x80-\xff]*(?:Exception|Error)$/D', $class) === 1;
 
       return $namesAnException ? "{$message} (a class name: pass valueOrThrow() a closure to throw one)" : $message;
    }

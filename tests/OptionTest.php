@@ -696,8 +696,18 @@ final class OptionTest extends TestCase {
       $this->assertSame(1, Option::some(1)->valueOrThrow(\DomainException::class));
 
       $messages = [];
+      $sent = [
+         \DomainException::class,
+         '\\DomainException',
+         'App\\PaymentFailedException',
+         'stdClass',
+         'error',
+         'DomainExceptionn',
+         'lookup failed with App\\PaymentFailedException',
+         "App\\PaymentFailedException\n",
+      ];
 
-      foreach ([\DomainException::class, '\\DomainException', 'App\\PaymentFailedException', 'stdClass', 'error', 'DomainExceptionn'] as $message) {
+      foreach ($sent as $message) {
          try {
             self::nothing()->valueOrThrow($message);
          } catch (MissingValueException $e) {
@@ -712,6 +722,8 @@ final class OptionTest extends TestCase {
          'stdClass',
          'error',
          'DomainExceptionn',
+         'lookup failed with App\\PaymentFailedException',
+         "App\\PaymentFailedException\n",
       ], $messages, 'only an exception class gets the hint: a loaded one spelled with its own case, or one spelled like it');
    }
 
