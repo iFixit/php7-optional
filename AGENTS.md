@@ -307,9 +307,11 @@ types a box built in two branches (`Result<A, never>|Result<never, B>`) as one
 box (`Result<A, B>`), but only where a method is called on it: each tool marks
 the receiver of every method call (`MarkBoxReceivers`) and merges only a
 marked expression. Merging every expression made a property, parameter or
-return declared as such a union reject its own values. The merge is exact only because a box holds one value and
-its type parameters are covariant, so never extend it to a class that can hold
-several values, where `List<A>|List<B>` is not `List<A|B>`. They live outside
+return declared as such a union reject its own values. A template bounded by
+one box merges as that box, and one bounded by a box or null does not. The
+merge is exact only because a box holds one value and its type parameters are
+covariant, so never extend it to a class that can hold several values, where
+`List<A>|List<B>` is not `List<A|B>`. They live outside
 `src/` because they are tooling, not the library's API, and the PHPStan half
 names classes psalm cannot see inside PHPStan's phar, so `psalm.xml` skips that
 directory.
@@ -329,7 +331,10 @@ a case there before changing what the check reports.
 `StaticAnalysisTest` compares each trace with the type it records for each
 tool. Turning either merge off fails it, with `ReservedWord` from psalm and
 `Result<never, string>` from PHPStan. Measured on this repo, neither merge
-changes how long the tool takes.
+changes how long the tool takes. `tests/StaticAnalysis/still-reported.php`
+holds what each tool must go on reporting with the merge on: a box with the
+wrong number of types, which once crashed psalm, and a method called on a
+template that may be null.
 
 ## Two traps in the tooling itself
 

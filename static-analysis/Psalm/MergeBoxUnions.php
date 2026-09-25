@@ -8,6 +8,7 @@ use Psalm\Plugin\EventHandler\AfterExpressionAnalysisInterface;
 use Psalm\Plugin\EventHandler\Event\AfterExpressionAnalysisEvent;
 use Psalm\Type;
 use Psalm\Type\Atomic\TGenericObject;
+use Psalm\Type\Atomic\TTemplateParam;
 use Psalm\Type\Union;
 
 /**
@@ -43,20 +44,24 @@ final class MergeBoxUnions implements AfterExpressionAnalysisInterface {
       $merged = false;
 
       foreach ($type->getAtomicTypes() as $atomic) {
-         if (!$atomic instanceof TGenericObject || !in_array(strtolower($atomic->value), self::BOXES, true)) {
+         // a template bounded by one box calls that box's methods, so it merges as one;
+         // a bound such as Result|null is not one box
+         $box = $atomic instanceof TTemplateParam && $atomic->as->isSingle() ? $atomic->as->getSingleAtomic() : $atomic;
+
+         if (!$box instanceof TGenericObject || !in_array(strtolower($box->value), self::BOXES, true)) {
             $others[] = $atomic;
             continue;
          }
 
-         $class = strtolower($atomic->value);
+         $class = strtolower($box->value);
 
          if (!isset($boxes[$class])) {
-            $boxes[$class] = $atomic;
+            $boxes[$class] = $box;
             continue;
          }
 
          // a docblock with the wrong number of types, such as Result<User>, is psalm's to report
-         if (count($atomic->type_params) !== count($boxes[$class]->type_params)) {
+         if (count($box->type_params) !== count($boxes[$class]->type_params)) {
             $others[] = $atomic;
             continue;
          }
@@ -64,7 +69,7 @@ final class MergeBoxUnions implements AfterExpressionAnalysisInterface {
          $boxes[$class] = $boxes[$class]->setTypeParams(array_map(
             fn(Union $held, Union $more): Union => Type::combineUnionTypes($held, $more, $event->getCodebase()),
             $boxes[$class]->type_params,
-            $atomic->type_params,
+            $box->type_params,
          ));
          $merged = true;
       }

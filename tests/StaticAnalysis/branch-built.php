@@ -26,6 +26,17 @@ function branchBuiltDeclaredUnion(bool $flag, int $id): Result {
    return $flag ? Result::ok($id) : Result::err('no');
 }
 
+/**
+ * A template bounded by one box calls that box's methods, so it merges too
+ *
+ * @template R of Result<int, string>
+ * @param R $found
+ */
+function branchBuiltTemplate(bool $flag, Result $found): void {
+   $templated = ($flag ? $found : Result::err('no'))->map(fn(int $x): int => $x * 2);
+   /** @psalm-trace $templated */
+}
+
 function branchBuilt(bool $flag, int $id, ?BranchBuiltUser $maybe, string $input, int $kind): void {
    $ternary = $flag ? Result::ok($id) : Result::err('no');
    /** @psalm-trace $ternary */

@@ -16,13 +16,16 @@ use PHPUnit\Framework\TestCase;
  * tests/StaticAnalysis/branch-built.php traces boxes built in two branches. A
  * variable holding one stays a union, and a method called on it sees one box,
  * but only with the plugin or extension on.
+ *
+ * tests/StaticAnalysis/still-reported.php holds mistakes each tool has to go
+ * on reporting with them on.
  */
 final class StaticAnalysisTest extends TestCase {
    private const DROPPED = __DIR__ . '/StaticAnalysis/dropped-results.php';
 
    private const BRANCH_BUILT = __DIR__ . '/StaticAnalysis/branch-built.php';
 
-   private const WRONG_TYPE_COUNT = __DIR__ . '/StaticAnalysis/wrong-type-count.php';
+   private const STILL_REPORTED = __DIR__ . '/StaticAnalysis/still-reported.php';
 
    /**
     * What each tool infers for the traced variables. psalm keeps literal
@@ -30,6 +33,7 @@ final class StaticAnalysisTest extends TestCase {
     */
    private const BRANCH_BUILT_TYPES = [
       'psalm' => [
+         'templated' => 'Optional\\Result<int, string>',
          'ternary' => "Optional\\Result<int, never>|Optional\\Result<never, 'no'>",
          'maybeFound' => "Optional\\Result<int, never>|Optional\\Result<never, 'no'>|null",
          'maybeMapped' => "Optional\\Result<int, 'no'>|null",
@@ -43,6 +47,7 @@ final class StaticAnalysisTest extends TestCase {
          'parsed' => 'Optional\\Result<int, non-empty-string>',
       ],
       'phpstan' => [
+         'templated' => 'Optional\\Result<int, string>',
          'ternary' => 'Optional\\Result<int, never>|Optional\\Result<never, string>',
          'maybeFound' => 'Optional\\Result<int, never>|Optional\\Result<never, string>|null',
          'maybeMapped' => 'Optional\\Result<int, string>|null',
@@ -113,12 +118,22 @@ final class StaticAnalysisTest extends TestCase {
    /**
     * The merge used to crash psalm on a box with the wrong number of types, and
     * a crash loses every issue in the run. Getting any issues back at all is
-    * the first check; psalm's own report on the docblock is the second.
+    * the first check; psalm's own report on the docblock is the second. The
+    * third is the call on a template that may be null, which merging it as a
+    * box would hide.
     */
-   public function testThePsalmPluginLetsPsalmReportAWrongTypeCount(): void {
-      $types = array_map(fn(array $issue): string => $issue[0], self::psalm()[self::WRONG_TYPE_COUNT] ?? []);
+   public function testThePsalmPluginLeavesPsalmItsOwnReports(): void {
+      $types = array_map(fn(array $issue): string => $issue[0], self::psalm()[self::STILL_REPORTED] ?? []);
 
       $this->assertContains('MissingTemplateParam', $types);
+      $this->assertContains('PossiblyNullReference', $types);
+   }
+
+   public function testThePhpstanExtensionLeavesPhpstanItsOwnReports(): void {
+      $identifiers = array_map(fn(array $message): string => $message[0], self::phpstan()[self::STILL_REPORTED] ?? []);
+
+      $this->assertContains('generics.lessTypes', $identifiers);
+      $this->assertContains('method.nonObject', $identifiers);
    }
 
    public function testThePhpstanExtensionTypesABoxBuiltInTwoBranchesAsOne(): void {
@@ -253,12 +268,13 @@ final class StaticAnalysisTest extends TestCase {
       file_put_contents($copy, (string) preg_replace('#/\*\* @psalm-trace (\$\w+) \*/#', '\\PHPStan\\dumpType($1);', $source));
 
       $command = sprintf(
-         '%s %s analyse --no-progress --error-format=json --level=max --configuration=%s --autoload-file=%s %s %s 2>/dev/null',
+         '%s %s analyse --no-progress --error-format=json --level=max --configuration=%s --autoload-file=%s %s %s %s 2>/dev/null',
          escapeshellarg(PHP_BINARY),
          escapeshellarg("{$root}/vendor/bin/phpstan"),
          escapeshellarg("{$root}/extension.neon"),
          escapeshellarg("{$root}/vendor/autoload.php"),
          escapeshellarg(self::DROPPED),
+         escapeshellarg(self::STILL_REPORTED),
          escapeshellarg($copy)
       );
 

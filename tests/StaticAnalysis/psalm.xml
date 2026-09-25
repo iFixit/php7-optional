@@ -16,7 +16,7 @@
     <projectFiles>
         <file name="dropped-results.php"/>
         <file name="branch-built.php"/>
-        <file name="wrong-type-count.php"/>
+        <file name="still-reported.php"/>
     </projectFiles>
 
     <plugins>

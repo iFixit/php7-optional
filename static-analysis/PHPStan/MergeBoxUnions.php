@@ -8,7 +8,6 @@ use PhpParser\Node\Expr;
 use PHPStan\Analyser\Scope;
 use PHPStan\Type\ExpressionTypeResolverExtension;
 use PHPStan\Type\Generic\GenericObjectType;
-use PHPStan\Type\Generic\TemplateType;
 use PHPStan\Type\Type;
 use PHPStan\Type\TypeCombinator;
 use PHPStan\Type\UnionType;
@@ -21,12 +20,14 @@ use PHPStan\Type\UnionType;
  * on it loses the value type: `->map(fn(int $x): int => $x * 2)` comes out as
  * `Result<never, string>`. A box holds one value and its type parameters are
  * covariant, so `Result<A, never>|Result<never, B>` holds exactly what
- * `Result<A, B>` holds, and this rewrites the one as the other on every
- * expression: a variable, a ternary, a `match`, a `??`, a call that returns
- * one from a closure's two `return`s, a property.
+ * `Result<A, B>` holds, and this rewrites the one as the other where a method
+ * is called on it: a variable, a ternary, a `match`, a `??`, a call that
+ * returns one from a closure's two `return`s, a property. MarkBoxReceivers
+ * marks those expressions. Anywhere else a box keeps its union, so a
+ * parameter or return declared as one still accepts it.
  *
- * It resolves each expression itself, so it always hands that type back,
- * merged or not. Returning null would make PHPStan resolve it a second time.
+ * It resolves a marked expression itself, so it hands that type back, merged
+ * or not. Returning null would make PHPStan resolve it a second time.
  */
 final class MergeBoxUnions implements ExpressionTypeResolverExtension {
    /**
@@ -67,12 +68,7 @@ final class MergeBoxUnions implements ExpressionTypeResolverExtension {
       $merged = false;
 
       foreach ($type->getTypes() as $member) {
-         // a template bounded by a box stands for one exact box, and merging it would lose that
-         if ($member instanceof TemplateType) {
-            $others[] = $member;
-            continue;
-         }
-
+         // a template bounded by one box names that box's class; one that may be null names none
          $classes = $member->getObjectClassNames();
          $held = match ($classes) {
             ['Optional\Option'] => [$member->getTemplateType('Optional\Option', 'T')],
