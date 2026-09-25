@@ -87,6 +87,8 @@ final class StaticAnalysisTest extends TestCase {
          '56 InvalidArgument',
          '59 InvalidArgument',
          '62 InvalidArgument',
+         '69 InvalidClass',
+         '72 InvalidArgument',
       ],
       'phpstan' => [
          '29 generics.lessTypes',
@@ -96,6 +98,9 @@ final class StaticAnalysisTest extends TestCase {
          '56 argument.type',
          '59 argument.type',
          '62 argument.type',
+         '71 class.nameCase',
+         '71 class.nameCase',
+         '72 argument.type',
       ],
    ];
 

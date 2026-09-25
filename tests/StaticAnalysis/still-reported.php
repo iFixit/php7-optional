@@ -61,3 +61,13 @@ function stillReportedWrongCallbacks(bool $flag, int $id): void {
    $maybe = $flag ? Result::ok($id) : ($id > 0 ? Result::err('no') : null);
    $_ = $maybe?->map(fn(string $s): int => strlen($s));
 }
+
+/**
+ * The same, with the class spelled in the wrong case, which PHP and both
+ * tools accept for a class name
+ *
+ * @param \optional\result<int, never>|\optional\result<never, string> $lower
+ */
+function stillReportedLowercase(Result $lower): void {
+   $_ = $lower->map(fn(string $s): int => strlen($s));
+}

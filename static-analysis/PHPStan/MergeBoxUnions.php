@@ -93,20 +93,22 @@ final class MergeBoxUnions implements ExpressionTypeResolverExtension {
       $merged = false;
 
       foreach ($type->getTypes() as $member) {
-         // a template bounded by one box names that box's class; one that may be null names none
-         $classes = $member->getObjectClassNames();
-         $held = match ($classes) {
-            ['Optional\Option'] => [$member->getTemplateType('Optional\Option', 'T')],
-            ['Optional\Result'] => [$member->getTemplateType('Optional\Result', 'T'), $member->getTemplateType('Optional\Result', 'E')],
+         // a template bounded by one box names that box's class, and one that may be
+         // null names none; a docblock may spell a class name in any case, as PHP does
+         $class = match (array_map(strtolower(...), $member->getObjectClassNames())) {
+            ['optional\option'] => 'Optional\Option',
+            ['optional\result'] => 'Optional\Result',
             default => null,
          };
 
-         if ($held === null) {
+         if ($class === null) {
             $others[] = $member;
             continue;
          }
 
-         $class = $classes[0];
+         $held = $class === 'Optional\Option'
+            ? [$member->getTemplateType($class, 'T')]
+            : [$member->getTemplateType($class, 'T'), $member->getTemplateType($class, 'E')];
 
          if (isset($params[$class])) {
             $params[$class] = array_map(TypeCombinator::union(...), $params[$class], $held);
