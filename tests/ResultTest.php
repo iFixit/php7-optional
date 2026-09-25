@@ -538,6 +538,7 @@ final class ResultTest extends TestCase {
       $this->assertSame('Ok(array)', (string) Result::ok([1, 2]), 'an array is shown by its type');
       $this->assertSame('Ok(stdClass)', (string) Result::ok(new \stdClass()), 'an object with no string form is shown by its class');
       $this->assertSame("Err(RuntimeException(boom))", (string) Result::err(new \RuntimeException('boom')), 'an exception by its class and message, not its trace');
+      $this->assertSame("Ok(Err('x'))", (string) Result::ok(Result::err('x')), 'a box in a box shows as one, not as quoted text');
    }
 
    /**

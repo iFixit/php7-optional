@@ -30,6 +30,12 @@
         // the same, so no test can kill the mutant that removes it.
         "CastBool": {
             "ignore": ["Optional\\Option::isFalsy"]
+        },
+        // The (string) in describeStringable() is also for psalm, which reports
+        // an object in a concatenation as ImplicitToStringCast. Concatenating
+        // calls __toString() anyway, so no test can kill the mutant.
+        "CastString": {
+            "ignore": ["Optional\\Internal\\DescribesValues::describeStringable"]
         }
     },
     "minMsi": 100,

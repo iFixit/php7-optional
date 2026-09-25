@@ -602,7 +602,7 @@ final class OptionTest extends TestCase {
 
       $messages = [];
 
-      foreach ([\DomainException::class, 'stdClass', 'error', 'DomainExceptionn'] as $message) {
+      foreach ([\DomainException::class, '\\DomainException', 'stdClass', 'error', 'DomainExceptionn'] as $message) {
          try {
             self::nothing()->valueOrThrow($message);
          } catch (MissingValueException $e) {
@@ -612,10 +612,33 @@ final class OptionTest extends TestCase {
 
       $this->assertSame([
          'DomainException (a class name: pass valueOrThrow() a closure to throw one)',
+         '\\DomainException (a class name: pass valueOrThrow() a closure to throw one)',
          'stdClass',
          'error',
          'DomainExceptionn',
       ], $messages, 'only an exception class, spelled with its own case, gets the hint');
+   }
+
+   /**
+    * The hint only looks at classes PHP has already loaded, so a message is
+    * never handed to an autoloader, which may require a file named after it.
+    */
+   public function testValueOrThrowNeverAutoloadsTheMessage(): void {
+      $asked = [];
+      $spy = function(string $class) use (&$asked): void {
+         $asked[] = $class;
+      };
+      spl_autoload_register($spy);
+
+      try {
+         self::nothing()->valueOrThrow('OptionTestNeverDeclared');
+      } catch (MissingValueException) {
+         // what it throws is the other test's business
+      } finally {
+         spl_autoload_unregister($spy);
+      }
+
+      $this->assertSame([], $asked, 'a message is not a class to load');
    }
 
    public function testValueOrThrowUsesTheSuppliedException(): void {
