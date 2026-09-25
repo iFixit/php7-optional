@@ -30,7 +30,7 @@ change below that breaks a caller says what to write instead.
   | `Either::left($v)`, `Either::right($e)` | `Result::ok($v)`, `Result::err($e)` |
   | `Either::notNullLeft($v, $e)` | `Option::someNotNull($v)->toResult($e)` |
   | `Either::fromArray($a, $k, $e)` | `Option::fromArray($a, $k)->toResult($e)`. A key holding `null` is now `Ok(null)` where 3.x gave a Right; add `->notNull()` before `toResult()` for the old behavior. There is no default error: 3.x made up an `Exception` when you passed none |
-  | `Either::leftWhen($v, $e, $f)` | `Result::ok($v)->filter($f, $e)` |
+  | `Either::leftWhen($v, $e, $f)` | `Result::ok($v)->filter($f(...), $e)` |
   | `Either::rightWhen($v, $e, $f)` | `Result::ok($v)->filter(fn($x) => !$f($x), $e)` |
   | `isLeft()`, `isRight()` | `isOk()`, `isErr()` |
   | `leftOr($x)`, `rightOr($x)` | `valueOr($x)`, `errOr($x)` |
@@ -40,7 +40,7 @@ change below that breaks a caller says what to write instead.
   | `flatMapLeft($f)`, `andThen($f)` | `flatMap($f)`, with `$f` returning a `Result` |
   | `orLeft($x)`, `orCreateLeft($f)` | `or($x)`, `orCreate($f)` |
   | `elseLeft($r)`, `elseCreateLeft($f)` | `else($r)`, `elseCreate($f)` |
-  | `filterLeft($c, $e)`, `filterLeftIf($f, $e)` | `filter($c, $e)`, with `$c` a bool or a callable |
+  | `filterLeft($c, $e)`, `filterLeftIf($f, $e)` | `filter($c, $e)` and `filter($f(...), $e)` |
   | `leftNotNull($e)` | `flatMap(fn($v) => Option::someNotNull($v)->toResult($e))` |
   | `leftNotFalsy($e)` | `flatMap(fn($v) => Option::someNotFalsy($v)->toResult($e))` |
   | `leftContains($v)`, `existsLeft($f)` | `contains($v)`, which compares with `===` where 3.x used `==`, and `exists($f)` |
@@ -82,9 +82,9 @@ change below that breaks a caller says what to write instead.
   | 3.x | 4.0 |
   |---|---|
   | `andThen($f)` | `flatMap($f)` |
-  | `filterIf($f)` | `filter($f)` |
+  | `filterIf($f)` | `filter($f(...))` |
   | `matchSome($f)`, `matchNone($f)` | `tap($f)`, `tapNone($f)`, which return the box rather than `void` |
-  | `Option::someWhen($v, $f)` | `Option::some($v)->filter($f)` |
+  | `Option::someWhen($v, $f)` | `Option::some($v)->filter($f(...))` |
   | `Option::noneWhen($v, $f)` | `Option::some($v)->filter(fn($x) => !$f($x))` |
 * **`Option::contains()` compares with `===`**, as `Result::contains()` does.
   Under 3.x's `==`, `Option::some(1)->contains('1')`,
@@ -132,8 +132,8 @@ Getting out of one, throwing if the value is missing:
   exception. `Result::valueOrThrow()` takes the same, adds the error's
   description to a message, keeps a `Throwable` error as the cause, and keeps
   any error as the exception's `$error`, so a catch can still read an enum.
-  A message that names an exception class, such as `DomainException::class`,
-  throws an `InvalidArgumentException` instead of becoming the message
+  A message that is exactly the name of an exception class, such as
+  `DomainException::class`, gets a hint that says to pass a closure
 
 Catching only the failure you expect, the way a `catch` clause names its
 class:
@@ -264,12 +264,13 @@ Shorthands for shapes callers otherwise spell out by hand:
   Strings are quoted, so `Some('Ada')` rather than 3.x's `Some(Ada)`, and
   `'null'` and `null` differ. Floats keep their point (`Some(1.0)`, not
   `Some(1)`), and booleans print as `true` and `false` rather than `1` and
-  nothing. An object with a string form shows its class too, so
-  `Some(SplFileInfo('5'))` is not `Some(5)`, and an exception shows as
-  `RuntimeException('boom')`. A string's control characters are escaped, and
-  so are its high bytes when it is not valid UTF-8, so the result is one line
-  that `json_encode()` can take. `MissingValueException` messages use the
-  same form: `Result is an Err: 'timeout'`
+  nothing. A box inside a box shows as `Some(Some('a'))`. An object with a
+  string form shows its class too, so `Some(SplFileInfo(5))` is not
+  `Some(5)`, and an exception shows as `RuntimeException(boom)`. Control
+  characters and Unicode line breaks are escaped, and so are high bytes in
+  text that is not valid UTF-8, so the result is one line that
+  `json_encode()` can take. `MissingValueException` messages use the same
+  form: `Result is an Err: 'timeout'`
 
 * Every method that returns a new box has PHP 8.5's `#[\NoDiscard]`, so
   `$option->map($f);` on its own line, which does nothing, warns on 8.5. psalm
@@ -303,8 +304,11 @@ Shorthands for shapes callers otherwise spell out by hand:
   closure's result counts the way `if` counts it, as `filterIf`'s did. It
   takes a closure rather than any callable so a string is never called: from
   a file without strict types, `filter($flag)` with `$flag = 'var_dump'` is
-  `filter(true)`, as in 3.x. It loses `@psalm-mutation-free`, because a method
-  that may call code you supplied is not mutation-free
+  `filter(true)`, as in 3.x. So a 3.x `filterIf('is_numeric')` has to become
+  `filter(is_numeric(...))`: written as `filter('is_numeric')` in a file
+  without strict types, it counts as `true` and keeps every value. It loses
+  `@psalm-mutation-free`, because a method that may call code you supplied
+  is not mutation-free
 
 ### Removed
 

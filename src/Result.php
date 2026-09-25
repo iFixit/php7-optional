@@ -205,10 +205,10 @@ final readonly class Result {
     *    because a string naming a function is also a message
     *  - The `MissingValueException` keeps the error as `$error`, so a catch can
     *    still read an error that is an enum or an array
-    *  - A message that names an exception class, such as
-    *    `DomainException::class`, throws an `InvalidArgumentException` on a
-    *    `Result::err`, since you meant to throw that class. Pass
-    *    `fn($error) => new \DomainException(...)` instead
+    *  - A message that is exactly the name of an exception class, such as
+    *    `DomainException::class`, gets a hint added, since you almost
+    *    certainly meant to throw that class. Pass
+    *    `fn($error) => new \DomainException(...)` for that
     *  - The closure runs only on a `Result::err`, so building the exception
     *    costs nothing on a success
     *
@@ -824,7 +824,7 @@ final readonly class Result {
     * echo (string) Result::fromCallable(fn() => 7), "\n"; // Ok(7)
     *
     * $failed = Result::fromCallable(fn() => throw new \Exception("boom"));
-    * echo (string) $failed, "\n"; // Err(Exception('boom'))
+    * echo (string) $failed, "\n"; // Err(Exception(boom))
     *
     * echo $failed->mapErr(fn(\Throwable $e) => $e->getMessage())->errOr(''), "\n"; // "boom"
     *
@@ -1032,7 +1032,7 @@ final readonly class Result {
     *
     * ```php
     * echo (string) Result::ok([1, 2]), "\n";                         // Ok(array)
-    * echo (string) Result::err(new \RuntimeException('boom')), "\n"; // Err(RuntimeException('boom'))
+    * echo (string) Result::err(new \RuntimeException('boom')), "\n"; // Err(RuntimeException(boom))
     * ```
     */
    public function __toString(): string {

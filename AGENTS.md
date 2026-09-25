@@ -221,13 +221,18 @@ it.
   `MissingValueException` that names the error and keeps it as `$error`.
 - `__toString()` never warns or throws, and never shows two different scalars
   the same way. Both boxes go through `Internal\DescribesValues`. Strings are
-  quoted with control characters escaped, and floats keep their point. An enum
-  case shows as `Class::Case`, an exception as `RuntimeException('boom')`, any
-  other object with a string form as `SplFileInfo('5')`, and anything else as
-  its type, so two arrays look alike. It catches what a value's own
-  `__toString()` throws, except `EarlyReturn`, which it rethrows. Before 4.0
-  it interpolated the value, so an array warned and an object with no
-  `__toString` threw.
+  quoted with control characters escaped, and floats keep their point. A box
+  inside a box shows as `Some(Some('a'))`, an enum case as `Class::Case`, an
+  exception as `RuntimeException(boom)`, any other object with a string form
+  as `SplFileInfo(5)`, and anything else as its type, so two arrays look
+  alike. It catches what a value's own `__toString()` throws, except
+  `EarlyReturn`, which it rethrows. Before 4.0 it interpolated the value, so
+  an array warned and an object with no `__toString` threw.
+- Never escape the quote or backslash in text an object gives itself, from
+  `__toString()` or an exception message. A box whose value prints another
+  box would have that box's text escaped again at every level, and 26 levels
+  ran out of memory that way. `testToStringOfNestedValuesStaysSmall` guards
+  it.
 - Compare boxes with `hasValue()` and `contains()`, not `==`. `==` compares
   the held values loosely, so `Option::some(1) == Option::some('1')` is true.
   `Option::none()` builds a new object each call, so two Nones are `==` but

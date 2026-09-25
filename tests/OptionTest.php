@@ -46,7 +46,7 @@ final class OptionTest extends TestCase {
 
    public function testValueOrThrowWithNoFactoryThrowsMissingValueException(): void {
       $this->expectException(MissingValueException::class);
-      $this->expectExceptionMessage("Value is missing.");
+      $this->expectExceptionMessage("Option is None");
 
       Option::none()->valueOrThrow();
    }
@@ -481,7 +481,7 @@ final class OptionTest extends TestCase {
       $this->assertSame('Some(false)', (string) Option::some(false));
       $this->assertSame('Some(array)', (string) Option::some([1, 2]), 'an array is shown by its type');
       $this->assertSame('Some(stdClass)', (string) Option::some(new \stdClass()), 'an object with no string form is shown by its class');
-      $this->assertSame("Some(RuntimeException('boom'))", (string) Option::some(new \RuntimeException('boom')), 'an exception by its class and message, not its trace');
+      $this->assertSame("Some(RuntimeException(boom))", (string) Option::some(new \RuntimeException('boom')), 'an exception by its class and message, not its trace');
    }
 
    /**
@@ -506,9 +506,12 @@ final class OptionTest extends TestCase {
          "'a\\177b'" => Option::some("a\x7fb"),
          "'caf\\351'" => Option::some("caf\xe9"),
          "'café'" => Option::some('café'),
-         "SplFileInfo('5')" => Option::some(new \SplFileInfo('5')),
-         "SplFileInfo('null')" => Option::some(new \SplFileInfo('null')),
-         "RuntimeException('two\\nlines')" => Option::some(new \RuntimeException("two\nlines")),
+         "'a\\342\\200\\250b'" => Option::some("a\u{2028}b"),
+         "'\\302\\233[31m'" => Option::some("\u{9b}[31m"),
+         'SplFileInfo(5)' => Option::some(new \SplFileInfo('5')),
+         'SplFileInfo(null)' => Option::some(new \SplFileInfo('null')),
+         'RuntimeException(two\\nlines)' => Option::some(new \RuntimeException("two\nlines")),
+         "Some('a')" => Option::some(Option::some('a')),
          'NAN' => Option::some(NAN),
          'INF' => Option::some(INF),
          'Optional\\Tests\\OptionTestSuit::Hearts' => Option::some(OptionTestSuit::Hearts),
@@ -528,7 +531,38 @@ final class OptionTest extends TestCase {
          }
       };
 
-      $this->assertSame("Some(Stringable@anonymous('order-42'))", (string) Option::some($id));
+      $this->assertSame("Some(Stringable@anonymous(order-42))", (string) Option::some($id));
+   }
+
+   /**
+    * A value whose __toString() prints another box, such as a linked list, used
+    * to have that box's quotes escaped again at every level, doubling the size
+    * each time: 30 levels ran out of memory. The text an object gives itself is
+    * kept as it is now, so the size grows with the depth, not faster.
+    */
+   public function testToStringOfNestedValuesStaysSmall(): void {
+      $list = Option::none();
+
+      for ($i = 30; $i >= 1; $i--) {
+         $list = Option::some(new OptionTestNode($i, $list));
+      }
+
+      $this->assertLessThan(2000, strlen((string) $list));
+      $this->assertStringStartsWith('Some(Optional\\Tests\\OptionTestNode(Node(1, next: Some(', (string) $list);
+   }
+
+   /**
+    * @psalm-suppress ForbiddenCode, InvalidStringClass a class name that is not
+    *    UTF-8 can only be declared, and so named, from a string
+    */
+   public function testToStringEscapesAClassNameThatIsNotUtf8(): void {
+      $class = "OptionTestCaf\xe9";
+      eval("final class {$class} {}");
+
+      $shown = (string) Option::some(new $class());
+
+      $this->assertSame('Some(OptionTestCaf\\351)', $shown);
+      $this->assertNotFalse(json_encode($shown));
    }
 
    public function testToStringNeverThrowsForAValueThatDoes(): void {
@@ -540,7 +574,7 @@ final class OptionTest extends TestCase {
       };
 
       $this->assertSame('Some(Stringable@anonymous)', (string) Option::some($throws));
-      $this->assertSame("Some(RuntimeException@anonymous('disk full'))", (string) Option::some(new class('disk full') extends \RuntimeException {}));
+      $this->assertSame("Some(RuntimeException@anonymous(disk full))", (string) Option::some(new class('disk full') extends \RuntimeException {}));
    }
 
    /**
@@ -560,26 +594,30 @@ final class OptionTest extends TestCase {
     * A class name meant as the exception to throw used to become the message.
     * Only the empty path checks, so a value costs no autoload.
     */
-   public function testValueOrThrowRejectsAnExceptionClassAsTheMessage(): void {
+   /**
+    * A message that is exactly the name of an exception class gets a hint,
+    * since it was almost certainly meant as the class to throw. It is still a
+    * MissingValueException, so a catch for one still works.
+    */
+   public function testValueOrThrowHintsWhenTheMessageNamesAnExceptionClass(): void {
       $this->assertSame(1, Option::some(1)->valueOrThrow(\DomainException::class));
 
-      /** @var Option<int> $none typed as a caller would hold it, so psalm sees the fail() after it */
-      $none = Option::none();
+      $messages = [];
 
-      try {
-         $none->valueOrThrow('stdClass');
-         $this->fail('a None must throw');
-      } catch (MissingValueException $e) {
-         $this->assertSame('stdClass', $e->getMessage(), 'a class that is not an exception is still a message');
-         $this->assertNull($e->error, 'an Option has no error');
+      foreach ([\DomainException::class, 'stdClass', 'error', 'DomainExceptionn'] as $message) {
+         try {
+            self::nothing()->valueOrThrow($message);
+         } catch (MissingValueException $e) {
+            $messages[] = $e->getMessage();
+         }
       }
 
-      $this->expectException(\InvalidArgumentException::class);
-      $this->expectExceptionMessage(
-         'valueOrThrow() takes a message, and DomainException is an exception class. To throw one, pass a closure that builds it'
-      );
-
-      Option::none()->valueOrThrow(\DomainException::class);
+      $this->assertSame([
+         'DomainException (a class name: pass valueOrThrow() a closure to throw one)',
+         'stdClass',
+         'error',
+         'DomainExceptionn',
+      ], $messages, 'only an exception class, spelled with its own case, gets the hint');
    }
 
    public function testValueOrThrowUsesTheSuppliedException(): void {
@@ -860,12 +898,32 @@ final class OptionTest extends TestCase {
    private static function text(string $text): string {
       return $text;
    }
+
+   /**
+    * A None psalm cannot see is one, so a test can check what happens after
+    *
+    * @return Option<int>
+    */
+   private static function nothing(): Option {
+      return Option::none();
+   }
 }
 
 final class SomeObject {}
 final class SomeComplexThing {
    public static function doWork(string $thing): string {
       return $thing;
+   }
+}
+
+final class OptionTestNode implements \Stringable {
+   /** @param Option<OptionTestNode> $next */
+   public function __construct(private int $value, private Option $next) {
+   }
+
+   #[\Override]
+   public function __toString(): string {
+      return "Node({$this->value}, next: {$this->next})";
    }
 }
 

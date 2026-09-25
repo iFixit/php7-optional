@@ -140,15 +140,21 @@ final class ResultTest extends TestCase {
       }
    }
 
-   public function testValueOrThrowRejectsAnExceptionClassAsTheMessage(): void {
+   public function testValueOrThrowHintsWhenTheMessageNamesAnExceptionClass(): void {
       $this->assertSame(1, Result::ok(1)->valueOrThrow(\RuntimeException::class));
+      $cause = new \RuntimeException('db down');
 
-      $this->expectException(\InvalidArgumentException::class);
-      $this->expectExceptionMessage(
-         'valueOrThrow() takes a message, and RuntimeException is an exception class. To throw one, pass a closure that builds it'
-      );
-
-      self::failure('timeout')->valueOrThrow(\RuntimeException::class);
+      try {
+         self::failure($cause)->valueOrThrow(\RuntimeException::class);
+         $this->fail('an Err must throw');
+      } catch (MissingValueException $e) {
+         $this->assertSame(
+            'RuntimeException (a class name: pass valueOrThrow() a closure to throw one): RuntimeException(db down)',
+            $e->getMessage()
+         );
+         $this->assertSame($cause, $e->error, 'the error is kept');
+         $this->assertSame($cause, $e->getPrevious(), 'and so is the cause');
+      }
    }
 
    /**
@@ -449,7 +455,7 @@ final class ResultTest extends TestCase {
          $_ = self::failure($cause)->valueOrThrow('could not load');
          $this->fail('valueOrThrow() on an Err must throw');
       } catch (MissingValueException $e) {
-         $this->assertSame("could not load: RuntimeException('the api said no')", $e->getMessage());
+         $this->assertSame("could not load: RuntimeException(the api said no)", $e->getMessage());
          $this->assertSame($cause, $e->getPrevious(), 'a Throwable error becomes the cause');
       }
    }
@@ -537,7 +543,7 @@ final class ResultTest extends TestCase {
       $this->assertSame('Ok(false)', (string) Result::ok(false));
       $this->assertSame('Ok(array)', (string) Result::ok([1, 2]), 'an array is shown by its type');
       $this->assertSame('Ok(stdClass)', (string) Result::ok(new \stdClass()), 'an object with no string form is shown by its class');
-      $this->assertSame("Err(RuntimeException('boom'))", (string) Result::err(new \RuntimeException('boom')), 'an exception by its class and message, not its trace');
+      $this->assertSame("Err(RuntimeException(boom))", (string) Result::err(new \RuntimeException('boom')), 'an exception by its class and message, not its trace');
    }
 
    /**

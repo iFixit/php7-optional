@@ -469,9 +469,9 @@ with the PHP version and the opcache.
   | 3.x | 4.0 |
   |---|---|
   | `andThen($f)` | `flatMap($f)` |
-  | `filterIf($f)` | `filter($f)` |
+  | `filterIf($f)` | `filter($f(...))` |
   | `matchSome($f)`, `matchNone($f)` | `tap($f)`, `tapNone($f)` |
-  | `Option::someWhen($v, $f)` | `Option::some($v)->filter($f)` |
+  | `Option::someWhen($v, $f)` | `Option::some($v)->filter($f(...))` |
   | `Option::noneWhen($v, $f)` | `Option::some($v)->filter(fn($x) => !$f($x))` |
 * `contains()` compares with `===` on both boxes, where 3.x used `==`, so
   `Option::some(1)->contains('1')` is false now.
