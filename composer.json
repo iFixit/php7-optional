@@ -71,6 +71,6 @@
       "benchmark": "Measure what the box costs against the plain PHP it replaces",
       "mutation": "Break the source on purpose and check a test notices; needs xdebug or pcov",
       "coverage": "Measure line coverage and fail below the floor; needs xdebug or pcov",
-      "check": "Run phpunit, psalm and PHPStan; CI also runs PHP 8.5, coverage, mutation testing and composer validate"
+      "check": "Run phpunit, psalm and PHPStan; CI also runs PHP 8.5, coverage, mutation testing, PHPStan 1.12 and composer validate"
    }
 }

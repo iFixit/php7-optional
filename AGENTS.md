@@ -34,7 +34,7 @@ git show 3.0:src/Option.php | grep "public function valueOrThrow"
 
 ```bash
 composer install
-composer check       # phpunit, psalm and PHPStan; CI also runs 8.5, coverage, mutation and validate
+composer check       # phpunit, psalm and PHPStan; CI also runs 8.5, coverage, mutation, PHPStan 1.12 and validate
 composer test        # phpunit alone
 composer psalm       # psalm alone, errorLevel 1, no baseline
 composer phpstan     # PHPStan alone, level max, no baseline
@@ -71,11 +71,12 @@ catches.
 replaces, and against `json_decode()` and a small file read for scale. The
 README has the numbers.
 
-`.github/workflows/test.yaml` is five jobs: the phpunit matrix on 8.4 and 8.5,
-then coverage plus mutation testing, psalm, PHPStan, and
-`composer validate --strict` once each on 8.4. Static analysis is out of the matrix because pinning psalm to
-the oldest PHP in it is what kept this repo on a 2022 psalm for years. Coverage
-is out because measuring the same lines once per PHP version teaches nothing.
+`.github/workflows/test.yaml` is six jobs: the phpunit matrix on 8.4 and 8.5,
+then coverage plus mutation testing, psalm, PHPStan, `StaticAnalysisTest` on
+PHPStan 1.12, and `composer validate --strict` once each on 8.4. Static
+analysis is out of the matrix because pinning psalm to the oldest PHP in it is
+what kept this repo on a 2022 psalm for years. Coverage is out because
+measuring the same lines once per PHP version teaches nothing.
 
 ## The docs are tested, and that is the point
 
@@ -112,8 +113,9 @@ Four things to know when you touch an example:
 - `eval` does not inherit `use` aliases, which is why the runner prepends its
   own imports as a `PRELUDE` string.
 - An example uses only the library and PHP's own classes. One that needs a
-  class of its own gets a real one under `tests/Fixtures/`, imported in
-  `PRELUDE`, rather than a runner taught to skip it.
+  class of its own gets a real one in a new `tests/Fixtures/` directory,
+  imported in `PRELUDE`, rather than a runner taught to skip it. No example
+  has needed one yet.
 - stdout is buffered and `error_log` redirected, so an example may print.
 
 An example that prints says what it prints in the comment on each `echo`,

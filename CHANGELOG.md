@@ -377,10 +377,10 @@ Shorthands for shapes callers otherwise spell out by hand:
 * `composer.json` names the psalm plugin and the PHPStan extension, so
   `psalm-plugin enable ifixit/php7-optional` and PHPStan's
   extension-installer find them
-* CI is five jobs: the test matrix, coverage, psalm, PHPStan, and
-  `composer validate --strict`. Static analysis and coverage are out of the
-  matrix, because pinning psalm to the oldest PHP in it is what froze the
-  toolchain for years.
+* CI is six jobs: the test matrix, coverage, psalm, PHPStan, the extension's
+  tests on PHPStan 1.12, and `composer validate --strict`. Static analysis and
+  coverage are out of the matrix, because pinning psalm to the oldest PHP in
+  it is what froze the toolchain for years.
 
 ## [3.0] - 2022-12-15
 
