@@ -299,8 +299,9 @@ Shorthands for shapes callers otherwise spell out by hand:
 * A method on an empty box hands back that same box instead of building a new
   one: `map()`, `flatMap()` and `filter()` on a None or an Err, `mapErr()` on
   an Ok, and the rest. `bin/benchmark.php` times three `map()`s on an empty
-  box at about 100 ns on both boxes, and at 284 to 335 ns with the old empty
-  path put back. The box you get back is `===` the one you had
+  box at about 100 ns on both boxes. With `map()` changed back to build a new
+  empty box, `self::none()` or `self::err($this->error)`, they take 284 to
+  335 ns. The box you get back is `===` the one you had
 * Every `Option` parameter and return has a native type, `mixed` where it
   holds a value, as on `Result`. Only `fromArray`'s key accepts less than it
   did (see Breaking)
