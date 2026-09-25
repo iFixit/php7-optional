@@ -432,6 +432,12 @@ A few things to know about each tool:
   method is called on it. A variable keeps the union, so a type you declare
   as that union, such as `@return Result<int, never>|Result<never, string>`,
   still takes it.
+* PHPStan keeps one type per variable name, and an `echo` does not reset it.
+  So in `[$row, $row->map(...)]`, or in a call right after `echo $row`, both
+  uses of `$row` get the same type. The call still comes out as one box, but:
+  * a callback there with no parameter type gets `never` for it, so type it
+  * the plain `$row` can come out as the merged box, which a type declared as
+    the union rejects, so declare that type as one box, `Result<int, string>`
 
 ## On PHP 8.5
 

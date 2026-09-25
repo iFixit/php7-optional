@@ -6,6 +6,7 @@ namespace Optional\StaticAnalysis\PHPStan;
 
 use PhpParser\Node\Expr;
 use PHPStan\Analyser\Scope;
+use PHPStan\Node\Expr\TypeExpr;
 use PHPStan\Type\ExpressionTypeResolverExtension;
 use PHPStan\Type\Generic\GenericObjectType;
 use PHPStan\Type\Type;
@@ -26,6 +27,11 @@ use PHPStan\Type\UnionType;
  * marks those expressions. Anywhere else a box keeps its union, so a
  * parameter or return declared as one still accepts it.
  *
+ * PHPStan keeps one type per expression text, such as `$row`, not per node,
+ * so a receiver read plainly first, as in an `echo` just before the call,
+ * comes back unmerged. The call is typed on one box then too. The README
+ * lists what that leaves.
+ *
  * It resolves a marked expression itself, so it hands that type back, merged
  * or not. Returning null would make PHPStan resolve it a second time.
  */
@@ -40,24 +46,43 @@ final class MergeBoxUnions implements ExpressionTypeResolverExtension {
 
    #[\Override]
    public function getType(Expr $expr, Scope $scope): ?Type {
-      if ($expr->getAttribute(MarkBoxReceivers::ATTRIBUTE) !== true) {
-         return null;
-      }
-
       $id = spl_object_id($expr);
 
       if (isset($this->resolving[$id])) {
          return null;
       }
 
+      $marked = $expr->getAttribute(MarkBoxReceivers::ATTRIBUTE) === true;
+      $onOneBox = null;
+
+      // the receiver may have the type PHPStan kept from a plain read of it, so
+      // the call is typed on one box as well
+      if ($expr instanceof Expr\MethodCall || $expr instanceof Expr\NullsafeMethodCall) {
+         $receiver = $scope->getType($expr->var);
+         $merged = self::merge($receiver);
+
+         if ($merged !== $receiver) {
+            $onOneBox = clone $expr;
+            $onOneBox->var = new TypeExpr($merged);
+         }
+      }
+
+      if (!$marked && $onOneBox === null) {
+         return null;
+      }
+
       $this->resolving[$id] = true;
 
       try {
-         $type = $scope->getType($expr);
+         $type = $scope->getType($onOneBox ?? $expr);
       } finally {
          unset($this->resolving[$id]);
       }
 
+      return $marked ? self::merge($type) : $type;
+   }
+
+   private static function merge(Type $type): Type {
       if (!$type instanceof UnionType) {
          return $type;
       }

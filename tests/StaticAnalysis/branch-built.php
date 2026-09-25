@@ -37,6 +37,17 @@ function branchBuiltTemplate(bool $flag, Result $found): void {
    /** @psalm-trace $templated */
 }
 
+/**
+ * PHPStan keeps the type it worked out for the echo and hands it to the
+ * receiver too, so the call has to merge on its own
+ */
+function branchBuiltAfterEcho(bool $flag, int $id): void {
+   $row = $flag ? Result::ok($id) : Result::err('no');
+   echo "looked up: {$row}\n";
+   $afterEcho = $row->map(fn(int $x): int => $x * 2);
+   /** @psalm-trace $afterEcho */
+}
+
 function branchBuilt(bool $flag, int $id, ?BranchBuiltUser $maybe, string $input, int $kind): void {
    $ternary = $flag ? Result::ok($id) : Result::err('no');
    /** @psalm-trace $ternary */

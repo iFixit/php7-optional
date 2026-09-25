@@ -34,6 +34,7 @@ final class StaticAnalysisTest extends TestCase {
    private const BRANCH_BUILT_TYPES = [
       'psalm' => [
          'templated' => 'Optional\\Result<int, string>',
+         'afterEcho' => "Optional\\Result<int, 'no'>",
          'ternary' => "Optional\\Result<int, never>|Optional\\Result<never, 'no'>",
          'maybeFound' => "Optional\\Result<int, never>|Optional\\Result<never, 'no'>|null",
          'maybeMapped' => "Optional\\Result<int, 'no'>|null",
@@ -48,6 +49,7 @@ final class StaticAnalysisTest extends TestCase {
       ],
       'phpstan' => [
          'templated' => 'Optional\\Result<int, string>',
+         'afterEcho' => 'Optional\\Result<int, string>',
          'ternary' => 'Optional\\Result<int, never>|Optional\\Result<never, string>',
          'maybeFound' => 'Optional\\Result<int, never>|Optional\\Result<never, string>|null',
          'maybeMapped' => 'Optional\\Result<int, string>|null',

@@ -307,8 +307,11 @@ types a box built in two branches (`Result<A, never>|Result<never, B>`) as one
 box (`Result<A, B>`), but only where a method is called on it: each tool marks
 the receiver of every method call (`MarkBoxReceivers`) and merges only a
 marked expression. Merging every expression made a property, parameter or
-return declared as such a union reject its own values. A template bounded by
-one box merges as that box, and one bounded by a box or null does not. The
+return declared as such a union reject its own values. PHPStan keeps one
+type per expression text, such as `$row`, rather than per node, so a receiver
+read plainly just before, as in an `echo`, comes back unmerged; its extension
+then types the call on one box as well. A template bounded by one box merges as that box,
+and one bounded by a box or null does not. The
 merge is exact only because a box holds one value and its type parameters are
 covariant, so never extend it to a class that can hold several values, where
 `List<A>|List<B>` is not `List<A|B>`. They live outside
