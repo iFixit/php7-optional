@@ -131,8 +131,10 @@ final class EarlyReturnTest extends TestCase {
       };
 
       $box = Option::do(fn() => 'block result: ' . (string) Option::some($value));
+      $nested = Option::do(fn() => 'block result: ' . (string) Option::some(Option::some($value)));
 
       $this->assertSame('None', (string) $box);
+      $this->assertSame('None', (string) $nested, 'a box inside a box lets it through too');
    }
 
    public function testAnythingElseTheBlockThrowsPropagates(): void {
