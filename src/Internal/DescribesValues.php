@@ -21,7 +21,9 @@ use UnitEnum;
  * It never warns and never throws, and the result is one line of valid UTF-8.
  * Two different scalars never look the same: a string is quoted, so `'null'`
  * is not `null` and `'1'` is not `1`, and a float keeps its point, so `1.0` is
- * not `1`. A box inside a box shows the same way, as `Some(Some('a'))`. An
+ * not `1`. Floats print with PHP's `serialize_precision`, whose default of -1
+ * tells every two apart; a setting below 17 can make `0.1 + 0.2` print as
+ * `0.3`. A box inside a box shows the same way, as `Some(Some('a'))`. An
  * enum case shows as `Class::Case`, an exception as its class and message, as
  * `RuntimeException(boom)`, and any other object with a string form as its
  * class and that string, as `SplFileInfo(5)`. Anything else shows as its type,

@@ -220,7 +220,8 @@ it.
   happened. With a message, or with any other error, it throws a
   `MissingValueException` that names the error and keeps it as `$error`.
 - `__toString()` never warns or throws, and never shows two different scalars
-  the same way. Both boxes go through `Internal\DescribesValues`. Strings are
+  the same way while `serialize_precision` is PHP's default, -1. Both boxes
+  go through `Internal\DescribesValues`. Strings are
   quoted with control characters escaped, and floats keep their point. A box
   inside a box shows as `Some(Some('a'))`, an enum case as `Class::Case`, an
   exception as `RuntimeException(boom)`, any other object with a string form
