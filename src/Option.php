@@ -1150,9 +1150,12 @@ final readonly class Option {
     *
     *  - `$predicate` must follow this interface `callable(TT):bool`. It runs on
     *    each value in turn and stops at the first result `if` would accept
-    *  - PHP 8.4's `array_find` does the same search, but returns `null` for no
+    *  - PHP 8.4's `array_find` searches the same way, but returns `null` for no
     *    match, which looks exactly like a match on a stored `null`, and it only
-    *    takes arrays
+    *    takes arrays. It also passes the key as a second argument, and `first()`
+    *    passes only the value, so a one-argument function such as
+    *    `is_string(...)` works here and throws an `ArgumentCountError` there,
+    *    and a predicate that reads the key works only there
     *  - A match on `null` gives you `Some(null)`, like every other factory
     *    here. Chain `notNull()` to collapse it
     *  - Returns `Option<TT>`
