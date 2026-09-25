@@ -118,14 +118,14 @@ final class DocumentedApiTest extends TestCase {
       yield 'a chain from the class' => ['Option::some(1)->map(fn($x) => $x);', 'Option', 'map', false, true];
       yield 'a chain from the other class' => ['Result::ok(1)->map(fn($x) => $x);', 'Option', 'map', false, false];
       yield 'toResult() switches the class' => ["Option::some(1)->toResult('e')->mapErr(fn(\$e) => \$e);", 'Result', 'mapErr', false, true];
-      yield 'toOption() switches it back' => ['Result::ok(1)->toOption()->isSome();', 'Option', 'isSome', false, true];
+      yield 'toOption() switches it back' => ['Result::ok(1)->toOption()->hasValue();', 'Option', 'hasValue', false, true];
       yield 'a variable assigned a box' => ["\$box = Result::ok(1);\n\$box->isOk();", 'Result', 'isOk', false, true];
-      yield 'a nullsafe call' => ["\$box = Option::some(1);\n\$box?->isSome();", 'Option', 'isSome', false, true];
+      yield 'a nullsafe call' => ["\$box = Option::some(1);\n\$box?->hasValue();", 'Option', 'hasValue', false, true];
       yield "a closure's typed parameter" => ['$check = fn(Result $box) => $box->isOk();', 'Result', 'isOk', false, true];
       yield 'a closure parameter is not the variable outside' => [
-         "\$box = Option::some(1);\n\$check = fn(Result \$box) => \$box;\n\$box->isSome();",
+         "\$box = Option::some(1);\n\$check = fn(Result \$box) => \$box;\n\$box->hasValue();",
          'Option',
-         'isSome',
+         'hasValue',
          false,
          true,
       ];
@@ -136,13 +136,13 @@ final class DocumentedApiTest extends TestCase {
          false,
          false,
       ];
-      yield 'a closure sees the variables around it' => ["\$box = Option::some(1);\n\$check = fn() => \$box->isSome();", 'Option', 'isSome', false, true];
-      yield 'a named function does not' => ["\$box = Option::some(1);\nfunction check() { return \$box->isSome(); }", 'Option', 'isSome', false, false];
-      yield 'a call in a comment' => ["// Option::some(1)->isSome()\nOption::none();", 'Option', 'isSome', false, false];
-      yield 'a call in a string' => ["\$code = 'Option::some(1)->isSome()';", 'Option', 'isSome', false, false];
+      yield 'a closure sees the variables around it' => ["\$box = Option::some(1);\n\$check = fn() => \$box->hasValue();", 'Option', 'hasValue', false, true];
+      yield 'a named function does not' => ["\$box = Option::some(1);\nfunction check() { return \$box->hasValue(); }", 'Option', 'hasValue', false, false];
+      yield 'a call in a comment' => ["// Option::some(1)->hasValue()\nOption::none();", 'Option', 'hasValue', false, false];
+      yield 'a call in a string' => ["\$code = 'Option::some(1)->hasValue()';", 'Option', 'hasValue', false, false];
       yield 'a factory by its class name' => ['Result::ok(1);', 'Result', 'ok', true, true];
       yield "a factory of the other class's name" => ['Option::some(1);', 'Result', 'some', true, false];
-      yield "a docblock's asterisks" => ["\$box = Option::some(1);\n * \$box->isSome();", 'Option', 'isSome', false, true];
+      yield "a docblock's asterisks" => ["\$box = Option::some(1);\n * \$box->hasValue();", 'Option', 'hasValue', false, true];
    }
 
    #[DataProvider('exampleCallProvider')]
