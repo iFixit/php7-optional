@@ -187,8 +187,9 @@ Turning a batch of boxes into one:
   reporting every failure at once, such as every bad field in a form
 
   All three take any iterable. A key that repeats keeps its last value, as
-  with `iterator_to_array()`, and an item that is not a box, or a key that is
-  not an int or a string, throws a `TypeError`
+  with `iterator_to_array()`, on each side for `partition()`, and an item
+  that is not a box, or a key that is not an int or a string, throws a
+  `TypeError`
 
 Staying in one through a side effect, which 3.x's `matchSome` and
 `matchNone` could not do, since they returned `void`:

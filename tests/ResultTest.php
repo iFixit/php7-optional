@@ -475,6 +475,14 @@ final class ResultTest extends TestCase {
          yield 'a' => Result::ok(2);
       })())->valueOr([]), 'as iterator_to_array() would');
       $this->assertSame([['a' => 2], ['b' => 'second']], Result::partition($repeat()));
+
+      $bothSides = function(): \Generator {
+         yield 0 => Result::ok(1);
+         yield 1 => Result::err('a');
+         yield 0 => Result::err('b');
+         yield 1 => Result::ok(4);
+      };
+      $this->assertSame([[0 => 1, 1 => 4], [1 => 'a', 0 => 'b']], Result::partition($bothSides()), 'each side keeps its own last value');
    }
 
    /**

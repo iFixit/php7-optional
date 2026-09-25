@@ -41,7 +41,7 @@ final readonly class Option {
     * "The return value of method ... should either be used or intentionally
     * ignored by casting it as (void), " followed by this.
     */
-   private const DISCARDED = 'a box never changes after it is built, so this call left it as it was; tap() runs a callback just for its side effect';
+   private const DISCARDED = 'a box never changes after it is built, so this call left it as it was; tap() and tapNone() run a callback just for its side effect';
 
    /**
     * The same, for the static factories. A factory's result dropped on its

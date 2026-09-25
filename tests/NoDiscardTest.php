@@ -83,6 +83,7 @@ final class NoDiscardTest extends TestCase {
       $this->assertCount(1, $warnings);
       $this->assertStringContainsString('Optional\Option::map() should either be used', $warnings[0]);
       $this->assertStringContainsString('a box never changes after it is built', $warnings[0]);
+      $this->assertStringContainsString('tap() and tapNone() run a callback', $warnings[0], 'each box names its own tap methods');
    }
 
    /**

@@ -571,6 +571,7 @@ final class OptionTest extends TestCase {
          "'a\\177b'" => Option::some("a\x7fb"),
          "'caf\\351'" => Option::some("caf\xe9"),
          "'café'" => Option::some('café'),
+         "'a\\342\\200\\256b'" => Option::some("a\u{202E}b"),
          "'a\\342\\200\\250b'" => Option::some("a\u{2028}b"),
          "'\\302\\233[31m'" => Option::some("\u{9b}[31m"),
          'SplFileInfo(5)' => Option::some(new \SplFileInfo('5')),
@@ -656,6 +657,33 @@ final class OptionTest extends TestCase {
             unset($this->message);
          }
       }));
+      // PHP 8.5 warns when NAN is turned into a string, which this suite fails on
+      $this->assertSame('Some(RuntimeException@anonymous(NAN))', (string) Option::some(new class() extends \RuntimeException {
+         public function __construct() {
+            parent::__construct();
+            $this->message = NAN;
+         }
+      }));
+      // a hook on the property would otherwise run, and this one throws
+      $this->assertSame('Some(RuntimeException@anonymous(kept))', (string) Option::some(new class('kept') extends \RuntimeException {
+         public $message {
+            get {
+               throw new \LogicException('the hook ran');
+            }
+         }
+      }));
+   }
+
+   /**
+    * A box whose own string form throws, as a lazy box does when its
+    * initializer fails, shows by its type, like any other value that does
+    */
+   public function testToStringNeverThrowsForABoxThatDoes(): void {
+      $ghost = (new \ReflectionClass(Option::class))->newLazyGhost(function(): never {
+         throw new \RuntimeException('db down');
+      });
+
+      $this->assertSame('Some(Optional\\Option)', (string) Option::some($ghost));
    }
 
    public function testToStringNeverThrowsForAValueThatDoes(): void {
@@ -705,6 +733,8 @@ final class OptionTest extends TestCase {
          'DomainExceptionn',
          'lookup failed with App\\PaymentFailedException',
          "App\\PaymentFailedException\n",
+         'League\\Csv\\Exception',
+         'NotFoundError',
       ];
 
       foreach ($sent as $message) {
@@ -724,7 +754,9 @@ final class OptionTest extends TestCase {
          'DomainExceptionn',
          'lookup failed with App\\PaymentFailedException',
          "App\\PaymentFailedException\n",
-      ], $messages, 'only an exception class gets the hint: a loaded one spelled with its own case, or one spelled like it');
+         'League\\Csv\\Exception (a class name: pass valueOrThrow() a closure to throw one)',
+         'NotFoundError',
+      ], $messages, 'only an exception class gets the hint: a loaded one spelled with its own case, or a namespaced one spelled like it');
    }
 
    /**

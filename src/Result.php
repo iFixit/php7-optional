@@ -50,7 +50,7 @@ final readonly class Result {
     * "The return value of method ... should either be used or intentionally
     * ignored by casting it as (void), " followed by this.
     */
-   private const DISCARDED = 'a box never changes after it is built, so this call left it as it was; tap() runs a callback just for its side effect';
+   private const DISCARDED = 'a box never changes after it is built, so this call left it as it was; tap() and tapErr() run a callback just for its side effect';
 
    /**
     * The same, for the static factories. A factory's result dropped on its
@@ -1015,7 +1015,9 @@ final readonly class Result {
     *
     *  - Keys are kept, so each error still says which input it came from.
     *    From a list, `array_values()` renumbers them
-    *  - A key that repeats keeps its last value, as with `iterator_to_array()`.
+    *  - A key that repeats keeps its last value on each side, so the same key
+    *    can be in both arrays. Within one side it works as `iterator_to_array()`
+    *    does.
     *    A key that is not an int or a string, or an item that is not a
     *    `Result`, throws a `TypeError`
     *

@@ -439,8 +439,8 @@ box never changes and the call did nothing:
 ```text
 Warning: The return value of method Optional\Option::map() should either be used
 or intentionally ignored by casting it as (void), a box never changes after it
-is built, so this call left it as it was; tap() runs a callback just for its
-side effect
+is built, so this call left it as it was; tap() and tapNone() run a callback
+just for its side effect
 ```
 
 And the pipe operator can feed a box, because a static factory is a
