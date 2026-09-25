@@ -89,9 +89,6 @@
         <InvalidOperand>
             <errorLevel type="suppress"><file name="tests/generated/DocblockExamples.php"/></errorLevel>
         </InvalidOperand>
-        <PossiblyNullOperand>
-            <errorLevel type="suppress"><file name="tests/generated/DocblockExamples.php"/></errorLevel>
-        </PossiblyNullOperand>
         <NoValue>
             <errorLevel type="suppress"><file name="tests/generated/DocblockExamples.php"/></errorLevel>
         </NoValue>
