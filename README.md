@@ -405,11 +405,11 @@ type it as one box, `Result<int, string>`. Without them, declare the variable
 (`/** @var Result<int, string> $x */`) or build it in a function declared to
 return that type.
 
-`tests/TypeInference` records what psalm and PHPStan (level max) infer for
-expressions like these, including 18 two-call chains, and fails when either
-changes. PHPStan's types are sometimes less literal than psalm's: it widens a
-literal passed through a generic method, so `Option<5>` becomes `Option<int>`.
-Neither tool infers `mixed` for any of them.
+The repository's `tests/TypeInference` records what psalm and PHPStan (level
+max) infer for expressions like these, including 18 two-call chains, and fails
+when either changes. PHPStan's types are sometimes less literal than psalm's:
+it widens a literal passed through a generic method, so `Option<5>` becomes
+`Option<int>`. Neither tool infers `mixed` for any of them.
 
 A few things to know about each tool:
 
@@ -473,8 +473,9 @@ parse `|>`, so the suite does not run it.
 ## What it costs
 
 A library that asks you to allocate an object where you used to write `??`
-should say what that buys and what it costs. `php bin/benchmark.php` measures
-it, and on PHP 8.4 with no opcache, averaged over three runs, it reports:
+should say what that buys and what it costs. `php bin/benchmark.php`, in a
+clone of the repository, measures it, and on PHP 8.4 with no opcache, averaged
+over three runs, it reports:
 
 | | plain PHP | boxed | added |
 |---|---|---|---|
@@ -570,8 +571,9 @@ The CHANGELOG lists every change, with the rest of the `Either` table.
 
 Every one has a worked example in its docblock, and every one of those
 examples is executed by the test suite. Read them in `src/Option.php` and
-`src/Result.php`. `examples/` has three longer scripts that run on their own:
-the same lookup in plain PHP and with a box, and a config reader.
+`src/Result.php`. The repository's `examples/` has three longer scripts that
+run on their own: the same lookup in plain PHP and with a box, and a config
+reader.
 
 There is no generated API site. The old one at `php7-optional.surge.sh` is
 still up but nothing has rebuilt it in years: it still serves pages for 2.x

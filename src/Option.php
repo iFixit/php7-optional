@@ -1055,7 +1055,8 @@ final readonly class Option {
     *    another box, and a generator is returned without running
     *  - The early exit is an exception, so ending early costs more than an
     *    empty `flatMap()` chain, and more the deeper the call stack, since PHP
-    *    records the stack in every exception. `bin/benchmark.php` measures it
+    *    records the stack in every exception. `bin/benchmark.php` in the
+    *    repository measures it
     *  - Anything else the block throws propagates. `fromCallable()` inside the
     *    block catches a throw, and never the early exit
     *
