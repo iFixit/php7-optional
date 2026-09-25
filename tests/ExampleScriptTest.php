@@ -12,10 +12,9 @@ use PHPUnit\Framework\TestCase;
  * PRINTS records.
  *
  * README points readers at this directory, so these are documentation too.
- * They are run in a subprocess for two reasons: several of them declare a
- * class of the same name, so loading two in one process is a fatal, and a
- * subprocess is the only way to see the warnings and deprecations a script
- * raises while its file is being compiled.
+ * They are run in a subprocess, since that is the only way to see the
+ * warnings and deprecations a script raises while its file is being
+ * compiled.
  */
 final class ExampleScriptTest extends TestCase {
    /**

@@ -75,8 +75,9 @@ trait DescribesValues {
     * always meant as the exception to throw, so the message says how to throw
     * one. A class PHP has already loaded counts if its case matches, so a
     * message such as `'error'` is left alone. One that is not loaded counts if
-    * it is spelled like a class whose name ends in `Exception` or `Error`. No
-    * autoloader runs either way.
+    * it is spelled like a namespaced class whose name ends in `Exception` or
+    * `Error`, such as `'App\NotFoundError'`; a bare `'NotFoundError'` may be an
+    * error code. No autoloader runs either way.
     */
    private static function missingMessage(?string $message, string $otherwise): string {
       if ($message === null) {
