@@ -1,15 +1,33 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<files psalm-version="5.2.0@fb685a16df3050d4c18d8a4100fe83abe6458cba">
+<files psalm-version="7.4.0@ca6d68437df9a573212d442d00556d81b6337ecd">
   <file src="tests/EitherTest.php">
-    <PropertyNotSetInConstructor occurrences="2">
-      <code>EitherTest</code>
-      <code>EitherTest</code>
-    </PropertyNotSetInConstructor>
+    <ParadoxicalCondition>
+      <code><![CDATA[int]]></code>
+      <code><![CDATA[string]]></code>
+      <code><![CDATA[string]]></code>
+      <code><![CDATA[string]]></code>
+      <code><![CDATA[string]]></code>
+    </ParadoxicalCondition>
+    <RedundantCondition>
+      <code><![CDATA[assertSame]]></code>
+      <code><![CDATA[assertSame]]></code>
+      <code><![CDATA[assertSame]]></code>
+    </RedundantCondition>
+    <RedundantConditionGivenDocblockType>
+      <code><![CDATA[assertTrue]]></code>
+    </RedundantConditionGivenDocblockType>
   </file>
   <file src="tests/OptionTest.php">
-    <PropertyNotSetInConstructor occurrences="2">
-      <code>OptionTest</code>
-      <code>OptionTest</code>
-    </PropertyNotSetInConstructor>
+    <NoValue>
+      <code><![CDATA[$x]]></code>
+    </NoValue>
+    <ParadoxicalCondition>
+      <code><![CDATA[int]]></code>
+      <code><![CDATA[string]]></code>
+    </ParadoxicalCondition>
+    <RedundantConditionGivenDocblockType>
+      <code><![CDATA[assertTrue]]></code>
+      <code><![CDATA[assertTrue]]></code>
+    </RedundantConditionGivenDocblockType>
   </file>
 </files>

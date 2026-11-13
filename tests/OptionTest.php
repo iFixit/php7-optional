@@ -8,7 +8,7 @@ use Optional\Exceptions\MissingValueException;
 use Optional\Option;
 use PHPUnit\Framework\TestCase;
 
-class OptionTest extends TestCase {
+final class OptionTest extends TestCase {
    public function testCreateAndCheckExistence(): void {
       $noneOption = Option::none();
 
@@ -399,20 +399,20 @@ class OptionTest extends TestCase {
    }
 
    public function testToString(): void {
-      $this->assertEquals("Some(null)", (string)Option::some(null));
-      $this->assertEquals("Some(10)", (string)Option::some(10));
+      $this->assertSame("Some(null)", (string)Option::some(null));
+      $this->assertSame("Some(10)", (string)Option::some(10));
 
-      $this->assertEquals("None", (string)Option::none());
+      $this->assertSame("None", (string)Option::none());
    }
 }
 
-class SomeObject {};
-class SomeComplexThing {
+final class SomeObject {};
+final class SomeComplexThing {
    /**
     * @throws \Exception
     */
-   public static function doWork(string $thing, string $ex = null): string {
-      if($ex) {
+   public static function doWork(string $thing, ?string $ex = null): string {
+      if ($ex !== null) {
          throw new \Exception($ex);
       }
 

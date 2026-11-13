@@ -11,7 +11,7 @@ use Optional\Option;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 
-class EitherTest extends TestCase
+final class EitherTest extends TestCase
 {
    public function testCreateAndCheckExistence(): void
    {
@@ -587,10 +587,10 @@ class EitherTest extends TestCase
    }
 
    public function testToString(): void {
-      $this->assertEquals("Left(null)", (string)Either::left(null));
-      $this->assertEquals("Left(10)", (string)Either::left(10));
+      $this->assertSame("Left(null)", (string)Either::left(null));
+      $this->assertSame("Left(10)", (string)Either::left(10));
 
-      $this->assertEquals("Right(null)", (string)Either::right(null));
-      $this->assertEquals("Right(10)", (string)Either::right(10));
+      $this->assertSame("Right(null)", (string)Either::right(null));
+      $this->assertSame("Right(10)", (string)Either::right(10));
    }
 }
