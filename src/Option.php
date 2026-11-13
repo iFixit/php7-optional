@@ -329,7 +329,7 @@ class Option {
     *  - Returns `Option<U>`
     *
     * @template U
-    * @psalm-param $mapFunc callable(T):U
+    * @psalm-param callable(T):U $mapFunc
     * @psalm-return Option<U>
     **/
    public function map(callable $mapFunc): self {
@@ -368,9 +368,9 @@ class Option {
     *
     * @template U
     *
-    * @psalm-param $mapFunc callable(T):U
+    * @psalm-param callable(T):U $mapFunc
     *
-    * @psalm-return self<T>
+    * @psalm-return Option<U>
     */
    public function mapSafely(callable $mapFunc): self {
       try {
