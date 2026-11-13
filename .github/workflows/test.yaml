@@ -30,4 +30,21 @@ jobs:
         with:
           composer-options: "${{ matrix.composer-options }}"
       - run: vendor/bin/phpunit --coverage-text
-      - run: vendor/bin/psalm --shepherd
+
+  psalm:
+    runs-on: ubuntu-latest
+
+    name: Psalm
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.4
+          coverage: none
+          # Psalm 7 needs a newer PHP than the oldest one we test, so it
+          # comes from its phar instead of require-dev.
+          tools: composer:v2, psalm:7.4.0
+      - name: Install dependencies
+        uses: "ramsey/composer-install@v1"
+      - run: psalm --shepherd
