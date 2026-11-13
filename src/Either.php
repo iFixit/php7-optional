@@ -76,7 +76,7 @@ class Either {
     * @psalm-mutation-free
     * @template TTLeft
     * @psalm-param TTLeft $alternative
-    * @psalm-return (TLeft is never ? TTLeft : TLeft)
+    * @psalm-return (TLeft is never ? TTLeft : (TRight is never ? TLeft : TLeft|TTLeft))
     **/
    public function leftOr($alternative) {
       return $this->isLeft
@@ -104,7 +104,7 @@ class Either {
     * @psalm-mutation-free
     * @template TTRight
     * @psalm-param TTRight $alternative
-    * @psalm-return (TRight is never ? TTRight : TRight)
+    * @psalm-return (TRight is never ? TTRight : (TLeft is never ? TRight : TRight|TTRight))
     **/
     public function rightOr($alternative) {
       return !$this->isLeft
@@ -147,7 +147,7 @@ class Either {
     *
     * @template TTLeft
     * @psalm-param callable(TRight):TTLeft $alternativeFactory
-    * @psalm-return (TRight is never ? TLeft : TTLeft)
+    * @psalm-return (TLeft is never ? TTLeft : (TRight is never ? TLeft : TLeft|TTLeft))
     **/
    public function leftOrCreate(callable $alternativeFactory) {
       return $this->isLeft
@@ -164,7 +164,7 @@ class Either {
     *
     * @template TTRight
     * @psalm-param callable(TLeft):TTRight $alternativeFactory
-    * @psalm-return (TLeft is never ? TRight : TTRight)
+    * @psalm-return (TRight is never ? TTRight : (TLeft is never ? TRight : TRight|TTRight))
     **/
    public function rightOrCreate(callable $alternativeFactory) {
       return !$this->isLeft
@@ -187,7 +187,7 @@ class Either {
     * @psalm-mutation-free
     * @template TTLeft
     * @psalm-param TTLeft $alternative
-    * @psalm-return (TRight is never ? Either<TLeft, TRight> : Either<TTLeft, never>)
+    * @psalm-return (TRight is never ? Either<TLeft, TRight> : (TLeft is never ? Either<TTLeft, never> : Either<TLeft|TTLeft, never>))
     **/
    public function orLeft($alternative): self {
       return $this->isLeft
@@ -205,7 +205,7 @@ class Either {
     * @psalm-mutation-free
     * @template TTRight
     * @psalm-param TTRight $alternative
-    * @psalm-return (TLeft is never ? Either<never, TTRight> : Either<TLeft, TRight>)
+    * @psalm-return (TLeft is never ? Either<TLeft, TRight> : (TRight is never ? Either<never, TTRight> : Either<never, TRight|TTRight>))
     **/
    public function orRight($alternative): self {
       return !$this->isLeft
@@ -230,7 +230,7 @@ class Either {
     *
     * @template TTLeft
     * @psalm-param callable(TRight):TTLeft $alternativeFactory
-    * @psalm-return (TRight is never ? Either<TLeft, TRight> : self<TTLeft, never>)
+    * @psalm-return (TRight is never ? Either<TLeft, TRight> : (TLeft is never ? Either<TTLeft, never> : Either<TLeft|TTLeft, never>))
     **/
    public function orCreateLeft(callable $alternativeFactory): self {
       return $this->isLeft
@@ -250,7 +250,7 @@ class Either {
     *
     * @template TTRight
     * @psalm-param callable(TLeft):TTRight $alternativeFactory
-    * @psalm-return (TLeft is never ? Either<TLeft, TRight> : self<never, TTRight>)
+    * @psalm-return (TLeft is never ? Either<TLeft, TRight> : (TRight is never ? Either<never, TTRight> : Either<never, TRight|TTRight>))
     **/
    public function orCreateRight(callable $alternativeFactory): self {
       return !$this->isLeft
@@ -276,7 +276,7 @@ class Either {
     * @template TLeftOther
     * @template TRightOther
     * @psalm-param Either<TLeftOther, TRightOther> $alternativeEither
-    * @psalm-return (TRight is never ? Either<TLeft, TRight> : Either<TLeftOther, TRightOther>)
+    * @psalm-return (TRight is never ? Either<TLeft, TRight> : (TLeft is never ? Either<TLeftOther, TRightOther> : Either<TLeft|TLeftOther, TRightOther>))
     **/
    public function elseLeft(self $alternativeEither): self {
       return $this->isLeft
@@ -296,7 +296,7 @@ class Either {
     * @template TLeftOther
     * @template TRightOther
     * @psalm-param Either<TLeftOther, TRightOther> $alternativeEither
-    * @psalm-return (TLeft is never ? Either<TLeft, TRight> : Either<TLeftOther, TRightOther>)
+    * @psalm-return (TLeft is never ? Either<TLeft, TRight> : (TRight is never ? Either<TLeftOther, TRightOther> : Either<TLeftOther, TRight|TRightOther>))
     **/
    public function elseRight(self $alternativeEither): self {
       return !$this->isLeft
@@ -323,7 +323,7 @@ class Either {
     * @template TLeftOther
     * @template TRightOther
     * @psalm-param callable(TRight):Either<TLeftOther, TRightOther> $alternativeEitherFactory
-    * @psalm-return (TRight is never ? Either<TLeft, TRight> : Either<TLeftOther, TRightOther>)
+    * @psalm-return (TRight is never ? Either<TLeft, TRight> : (TLeft is never ? Either<TLeftOther, TRightOther> : Either<TLeft|TLeftOther, TRightOther>))
     **/
    public function elseCreateLeft(callable $alternativeEitherFactory): self {
       return $this->isLeft
@@ -342,7 +342,7 @@ class Either {
     * @template TLeftOther
     * @template TRightOther
     * @psalm-param callable(TLeft):Either<TLeftOther, TRightOther> $alternativeEitherFactory
-    * @psalm-return (TLeft is never ? Either<TLeft, TRight> : Either<TLeftOther, TRightOther>)
+    * @psalm-return (TLeft is never ? Either<TLeft, TRight> : (TRight is never ? Either<TLeftOther, TRightOther> : Either<TLeftOther, TRight|TRightOther>))
     **/
    public function elseCreateRight(callable $alternativeEitherFactory): self {
       return !$this->isLeft
@@ -382,7 +382,7 @@ class Either {
     * @template URight
     * @psalm-param callable(TLeft):ULeft $left
     * @psalm-param callable(TRight):URight $right
-    * @psalm-return (TRight is never ? ULeft : URight)
+    * @psalm-return (TRight is never ? ULeft : (TLeft is never ? URight : ULeft|URight))
     **/
    public function match(callable $left, callable $right) {
       return $this->isLeft
@@ -494,7 +494,7 @@ class Either {
     *
     * @template URight
     * @psalm-param callable(TRight):URight $mapFunc
-    * @psalm-return (TLeft is never ? Either<TLeft, URight> : Either<TLeft, TRight>)
+    * @psalm-return Either<TLeft, URight>
     **/
     public function mapRight(callable $mapFunc): self {
       /** @psalm-var callable(TLeft):Either<TLeft, URight> **/
@@ -577,7 +577,7 @@ class Either {
     *
     * @template ULeft
     * @psalm-param callable(TLeft):Either<ULeft, TRight> $mapFunc
-    * @psalm-return (TRight is never ? Either<ULeft, TRight> : Either<TLeft, TRight>)
+    * @psalm-return Either<ULeft, TRight>
     **/
     public function andThen(callable $mapFunc): self {
       return $this->flatMapLeft($mapFunc);
@@ -601,7 +601,7 @@ class Either {
     *
     * @template ULeft
     * @psalm-param callable(TLeft):Either<ULeft, TRight> $mapFunc
-    * @psalm-return (TRight is never ? Either<ULeft, TRight> : Either<TLeft, TRight>)
+    * @psalm-return Either<ULeft, TRight>
     **/
    public function flatMapLeft(callable $mapFunc): self {
       /** @psalm-var callable(TRight):Either<ULeft, TRight> **/
@@ -621,9 +621,10 @@ class Either {
     * @psalm-param TTRight $rightValue
     * @psalm-return (
     *   $condition is true ? Either<TLeft, TRight> : (
-    *   TRight is never ? Either<never, TTRight> :
-    *   Either<TLeft, TRight>
-    * ))
+    *   TRight is never ? Either<never, TTRight> : (
+    *   TLeft is never ? Either<TLeft, TRight> :
+    *   Either<TLeft, TRight|TTRight>
+    * )))
     **/
    public function filterLeft(bool $condition, $rightValue): self {
       return $this->isLeft && !$condition
@@ -638,9 +639,10 @@ class Either {
     * @psalm-param TTLeft $leftValue
     * @psalm-return (
     *   $condition is true ? Either<TLeft, TRight> : (
-    *   TLeft is never ? Either<TTLeft, never> :
-    *   Either<TLeft, TRight>
-    * ))
+    *   TLeft is never ? Either<TTLeft, never> : (
+    *   TRight is never ? Either<TLeft, TRight> :
+    *   Either<TLeft|TTLeft, TRight>
+    * )))
     **/
    public function filterRight(bool $condition, $leftValue): self {
       return !$this->isLeft && !$condition
@@ -716,7 +718,7 @@ class Either {
     * @psalm-mutation-free
     * @template TTRight
     * @psalm-param TTRight $rightValue
-    * @psalm-return (TLeft is null ? Either<never, TTRight> : Either<TLeft, TRight>)
+    * @psalm-return (TLeft is null ? Either<never, TRight|TTRight> : Either<TLeft, TRight>)
     **/
    public function leftNotNull($rightValue): self {
       return $this->isLeft && is_null($this->leftValue)
@@ -733,7 +735,7 @@ class Either {
     * @psalm-mutation-free
     * @template TTLeft
     * @psalm-param TTLeft $leftValue
-    * @psalm-return (TRight is null ? Either<TTLeft, never> : Either<TLeft, TRight>)
+    * @psalm-return (TRight is null ? Either<TLeft|TTLeft, never> : Either<TLeft, TRight>)
     **/
     public function rightNotNull($leftValue): self {
       return !$this->isLeft && is_null($this->rightValue)
@@ -757,13 +759,13 @@ class Either {
     * @template TTRight
     * @psalm-param TTRight $rightValue
     * @psalm-return (
-    *     TLeft is null                ? self<never, TTRight> : (
-    *     TLeft is false               ? self<never, TTRight> : (
-    *     TLeft is array<never, never> ? self<never, TTRight> : (
-    *     TLeft is 0                   ? self<never, TTRight> : (
-    *     TLeft is 0.0                 ? self<never, TTRight> : (
-    *     TLeft is ''                  ? self<never, TTRight> : (
-    *     TLeft is '0'                 ? self<never, TTRight> :
+    *     TLeft is null                ? self<never, TRight|TTRight> : (
+    *     TLeft is false               ? self<never, TRight|TTRight> : (
+    *     TLeft is array<never, never> ? self<never, TRight|TTRight> : (
+    *     TLeft is 0                   ? self<never, TRight|TTRight> : (
+    *     TLeft is 0.0                 ? self<never, TRight|TTRight> : (
+    *     TLeft is ''                  ? self<never, TRight|TTRight> : (
+    *     TLeft is '0'                 ? self<never, TRight|TTRight> :
     *     self<TLeft, TRight>
     * )))))))
     **/
@@ -784,13 +786,13 @@ class Either {
     * @template TTLeft
     * @psalm-param TTLeft $leftValue
     * @psalm-return (
-    *     TRight is null                ? self<TTLeft, never> : (
-    *     TRight is false               ? self<TTLeft, never> : (
-    *     TRight is array<never, never> ? self<TTLeft, never> : (
-    *     TRight is 0                   ? self<TTLeft, never> : (
-    *     TRight is 0.0                 ? self<TTLeft, never> : (
-    *     TRight is ''                  ? self<TTLeft, never> : (
-    *     TRight is '0'                 ? self<TTLeft, never> :
+    *     TRight is null                ? self<TLeft|TTLeft, never> : (
+    *     TRight is false               ? self<TLeft|TTLeft, never> : (
+    *     TRight is array<never, never> ? self<TLeft|TTLeft, never> : (
+    *     TRight is 0                   ? self<TLeft|TTLeft, never> : (
+    *     TRight is 0.0                 ? self<TLeft|TTLeft, never> : (
+    *     TRight is ''                  ? self<TLeft|TTLeft, never> : (
+    *     TRight is '0'                 ? self<TLeft|TTLeft, never> :
     *     self<TLeft, TRight>
     * )))))))
     **/

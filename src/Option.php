@@ -61,7 +61,7 @@ class Option {
     * @psalm-mutation-free
     * @template TT
     * @psalm-param TT $alternative
-    * @psalm-return (T is never ? TT : T)
+    * @psalm-return (T is never ? TT : T|TT)
     **/
    public function valueOr($alternative) {
       return $this->hasValue
@@ -114,7 +114,7 @@ class Option {
     *
     * @template TT
     * @psalm-param callable():TT $alternativeFactory
-    * @psalm-return (T is never ? TT : T)
+    * @psalm-return (T is never ? TT : T|TT)
     **/
    public function valueOrCreate(callable $alternativeFactory) {
       return $this->hasValue
@@ -139,7 +139,7 @@ class Option {
     * @template TT
     * @psalm-param TT $alternative
     *
-    * @psalm-return (T is never ? self<TT> : self<T>)
+    * @psalm-return (T is never ? self<TT> : self<T|TT>)
     */
    public function or($alternative): self {
       return $this->hasValue
@@ -165,7 +165,7 @@ class Option {
     * @template TT
     * @psalm-param callable():TT $alternativeFactory
     *
-    * @psalm-return (T is never ? self<TT> : self<T>)
+    * @psalm-return (T is never ? self<TT> : self<T|TT>)
     */
    public function orCreate(callable $alternativeFactory): self {
       return $this->hasValue
@@ -189,7 +189,7 @@ class Option {
     * @psalm-mutation-free
     * @template TT
     * @psalm-param Option<TT> $alternativeOption
-    * @psalm-return (T is never ? Option<TT> : Option<T>)
+    * @psalm-return (T is never ? Option<TT> : Option<T|TT>)
     **/
    public function else(self $alternativeOption): self {
       return $this->hasValue
@@ -215,7 +215,7 @@ class Option {
     *
     * @template TT
     * @psalm-param callable():Option<TT> $alternativeOptionFactory
-    * @psalm-return (T is never ? Option<TT> : Option<T>)
+    * @psalm-return (T is never ? Option<TT> : Option<T|TT>)
     **/
    public function elseCreate(callable $alternativeOptionFactory): self {
       return $this->hasValue
